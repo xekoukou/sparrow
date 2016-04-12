@@ -49,6 +49,7 @@ TODO. Sparrow does not buffer data. The application needs to do that itself. The
 #include %ltassert.h%gt
 #include %ltstring.h%gt
 #include %ltfcntl.h%gt
+#include %lttime.h%gt
 #include %ltstdlib.h%gt
 #include %ltnetinet/in.h%gt
 #include %ltnetinet/tcp.h%gt
@@ -56,7 +57,38 @@ TODO. Sparrow does not buffer data. The application needs to do that itself. The
 #define MAX_EVENTS 32
 // #define MAX_DELAY 40 //in milliseconds. We wait that much before sending new data if we do not have much data.
 // #define MAX_BUFF (1500 - 68) // The ethernet MTU is 1500 bytes minus the IP/TCP headers.
+// One millisecond clock precision.
+#define CLOCK_PRECISION 1000000
 #define MAX_SEND_QUEUE 10
+
+
+int64_t os_now(void) {
+  struct timespec ts;
+  int rc = clock_gettime(CLOCK_MONOTONIC, &ts);
+  assert (rc == 0);
+  return ((int64_t) ts.tv_sec) * 1000 + (((int64_t) ts.tv_nsec) / 1000000);
+}
+
+int64_t now(void) {
+  uint32_t low;
+  uint32_t high;
+  __asm__ volatile("rdtsc" : "=a" (low), "=d" (high));
+  int64_t tsc = (int64_t)((uint64_t)high %lt%lt 32 | low);
+
+  static int64_t last_tsc = -1;
+  static int64_t last_now = -1;
+  if(__builtin_expect(!!(last_tsc %lt 0), 0)) {
+    last_tsc = tsc;
+    last_now = os_now();
+  }   
+
+  if(__builtin_expect(!!(tsc - last_tsc %lt= (CLOCK_PRECISION / 2) && tsc %gt= last_tsc), 1))
+    return last_now;
+
+  last_tsc = tsc;
+  last_now = os_now();
+  return last_now;
+}
 
 
 struct sparrow_t {
@@ -64,7 +96,8 @@ struct sparrow_t {
   int event_cur;
   int events_len;
   struct epoll_event events [MAX_EVENTS];
-  void * tr_socks; // A tree container of sockets.
+  void * fd_tr_socks; // A tree container of sockets ordered by the fd.
+  void * to_tr_socks; // A tree container of sockets ordered by the expiry.
 };
 
 typedef struct sparrow_t sparrow_t;
@@ -86,7 +119,7 @@ sparrow_t * sparrow_init(sparrow_t * sp) {
 ```c
 
 //TODO These function definitions need to be removed.
-typedef void * val_fn_t (void ** data_in,int * in_len, void * val_data); //The validator function returns the new buffer and int that is to be used
+typedef void * val_fn_t (void ** data_in,size_t * in_len, void * val_data); //The validator function returns the new buffer and int that is to be used
                                                                          // as an imput buffer. The returned data is NULL if we need more validation
                                                                          // or the data themselves that are then sent to be deserialized.
 typedef void * deser_fn_t (void *validated_data);
@@ -94,7 +127,7 @@ typedef void * ser_fn_t (void * data);
 
 struct data_out_t {
   void * data;
-  int len;
+  size_t len;
 };
 
 typedef struct data_out_t data_out_t;
@@ -102,40 +135,48 @@ typedef struct data_out_t data_out_t;
 struct sparrow_socket_t {
   int listening; //BOOL
   int fd;
-  int timeout;
+  int64_t expiry_min; //The minimum value of the two positive expirys.
+  int64_t expiry_in; // A zero expiry means that there is no expiry.
+  int64_t expiry_out; // expiry_out is the minimum value of all expiries sent to the socket when sending data, so care must be taken.
   int out_cur;
   data_out_t data_out[MAX_SEND_QUEUE];
   int out_queue_pos;
   int out_queue_frst_free_pos;
-  int in_len;
-  int in_cur;
-  int in_min;
+  int out_full;
+  size_t in_len;
+  size_t in_cur;
+  size_t in_min;
   void * data_in;
 };
 
 typedef struct sparrow_socket_t sparrow_socket_t;
 
 
-int cmp_ints(const void * sock1, const void * sock2) {
+int cmp_fds(const void * sock1, const void * sock2) {
   const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
   const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
   return (s1-%gtfd %gt s2-%gtfd) - (s1-%gtfd %lt s2-%gtfd);
 }
 
+int cmp_tos(const void * sock1, const void * sock2) {
+  const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
+  const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
+  return (s1-%gtexpiry_min %gt s2-%gtexpiry_min) - (s1-%gtexpiry_min %lt s2-%gtexpiry_min);
+}
 
 //internal use only
 void sparrow_add_socket(sparrow_t * sp, sparrow_socket_t *sock) {
-  int result;
+  int rc;
   struct epoll_event event;
   event.data.fd = sock-%gtfd;
   event.events = EPOLLIN;
-  result = epoll_ctl (sp-%gtfd, EPOLL_CTL_ADD, sock-%gtfd, &event);
-  if (result == -1) {
+  rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_ADD, sock-%gtfd, &event);
+  if (rc == -1) {
     perror(" epoll_ctl failed to add a socket to epoll");
     abort();
   }
-  assert(tfind(sock, &(sp-%gttr_socks), cmp_ints) == NULL);
-  void *rtsearch = tsearch(sock, &(sp-%gttr_socks), cmp_ints);
+  assert(tfind(sock, &(sp-%gtfd_tr_socks), cmp_fds) == NULL);
+  void *rtsearch = tsearch(sock, &(sp-%gtfd_tr_socks), cmp_fds);
   assert(rtsearch == sock);
 }
 
@@ -149,7 +190,7 @@ sparrow_socket_t * sparrow_socket_new(int fd) {
 
 //internal use only
 sparrow_socket_t * sparrow_socket_set_non_blocking(sparrow_socket_t * sock) {
-  int flags, result;
+  int flags, rc;
 
   flags = fcntl (sock-%gtfd, F_GETFL, 0);
   if (flags == -1) {
@@ -158,8 +199,8 @@ sparrow_socket_t * sparrow_socket_set_non_blocking(sparrow_socket_t * sock) {
   }
 
   flags |= O_NONBLOCK;
-  result = fcntl (sock-%gtfd, F_SETFL, flags);
-  if (result == -1) {
+  rc = fcntl (sock-%gtfd, F_SETFL, flags);
+  if (rc == -1) {
     perror ("fcntl failed to perform an action.");
     abort();
   }
@@ -168,8 +209,8 @@ sparrow_socket_t * sparrow_socket_set_non_blocking(sparrow_socket_t * sock) {
 
 //internal function
 sparrow_socket_t * sparrow_socket_listen(sparrow_socket_t * sock) {
-  int result = listen(sock-%gtfd,SOMAXCONN);
-  if ( result == -1 ) {
+  int rc = listen(sock-%gtfd,SOMAXCONN);
+  if ( rc == -1 ) {
     perror("The socket failed to listen.");
     abort();
   }
@@ -180,24 +221,24 @@ sparrow_socket_t * sparrow_socket_listen(sparrow_socket_t * sock) {
 sparrow_socket_t * sparrow_socket_bind(sparrow_t * sp, char * port) {
   struct addrinfo hints = {0};
   struct addrinfo *ret_addr;
-  int result, sfd;
+  int rc, sfd;
   int flag = 1;
 
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  result = getaddrinfo (NULL, port, &hints, &ret_addr);
-  assert(result == 0);
+  rc = getaddrinfo (NULL, port, &hints, &ret_addr);
+  assert(rc == 0);
 
   sfd = socket (ret_addr-%gtai_family, ret_addr-%gtai_socktype, ret_addr-%gtai_protocol);
   assert(sfd != -1);
   
-  result = setsockopt(sfd,IPPROTO_TCP,TCP_NODELAY, (char *) &flag,sizeof(int));
-  assert(result == 0);
+  rc = setsockopt(sfd,IPPROTO_TCP,TCP_NODELAY, (char *) &flag,sizeof(int));
+  assert(rc == 0);
 
-  result = bind (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
-  if (result != 0) {
+  rc = bind (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
+  if (rc != 0) {
     close (sfd);
     abort();
   }
@@ -214,19 +255,19 @@ sparrow_socket_t * sparrow_socket_bind(sparrow_t * sp, char * port) {
 sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char * port) {
   struct addrinfo hints = {0};
   struct addrinfo *ret_addr;
-  int result, sfd;
+  int rc, sfd;
 
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  result = getaddrinfo (address, port, &hints, &ret_addr);
-  assert(result == 0);
+  rc = getaddrinfo (address, port, &hints, &ret_addr);
+  assert(rc == 0);
 
   sfd = socket (ret_addr-%gtai_family, ret_addr-%gtai_socktype, ret_addr-%gtai_protocol);
   assert(sfd != -1);
-  result = connect (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
-  if (result != 0) {
+  rc = connect (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
+  if (rc != 0) {
     close (sfd);
     abort();
   }
@@ -240,8 +281,11 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
   close(sock-%gtfd);
   assert(sock-%gtdata_in == NULL);
-  void * isItNull  = tdelete(sock, &(sp-%gttr_socks), cmp_ints);
+  assert(sock-%gtout_queue_pos == sock-%gtout_queue_frst_free_pos);
+  assert(sock-%gtout_full != 1);
+  void * isItNull  = tdelete(sock, &(sp-%gtfd_tr_socks), cmp_fds);
   assert(isItNull != NULL);
+  tdelete(sock, &(sp-%gtto_tr_socks), cmp_tos);
   free(sock);
 }
 
@@ -254,6 +298,28 @@ void sparrow_socket_accept(sparrow_t * sp, sparrow_socket_t * lsock) {
   sparrow_add_socket(sp,sock);
 }
 
+void * sparrow_socket_clean(sparrow_t * sp, sparrow_socket_t * sock) {
+  void * data_in = sock-%gtdata_in;
+  sock-%gtdata_in = NULL;
+  while(sock-%gtout_queue_pos != sock-%gtout_queue_frst_free_pos) {
+    free(sock-%gtdata_out[sock-%gtout_queue_pos].data);
+    sock-%gtout_queue_pos = (sock-%gtout_queue_pos + 1) % MAX_SEND_QUEUE;
+  }
+  sparrow_socket_close(sp,sock);
+  return data_in;
+}
+
+
+sparrow_socket_update_expiry(sparrow_t * sp ,sparrow_socket_t * sock, int64_t expiry) {
+
+  tdelete(sock, &(sp-%gtto_tr_socks), cmp_tos);
+  if((expiry %lt sock-%gtexpiry_min) && (expiry %gt 0)) {
+    sock-%gtexpiry_min = expiry;
+    void *rtsearch = tsearch(sock, &(sp-%gtto_tr_socks), cmp_tos);
+    assert(rtsearch == sock);
+  }
+}
+
 ```
 
 Sparrow_wait returns data when all the data have been received.
@@ -262,66 +328,46 @@ Sparrow_wait returns data when all the data have been received.
 
 //Internal use only.
 //Requires an array of MAX_EVENT units.
-void * sparrow_wait(sparrow_t * sp, int timeout, int *sfd,int *in_min) {
+void * sparrow_wait(sparrow_t * sp, int64_t expiry, int *sfd,int *in_min, int *error) {
   if(sp-%gtevents_len == 0) {
-    sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, timeout);
+    sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, expiry);
     //TODO Handle the errors.
     sp-%gtevent_cur = 0;
   }
   int i;
   sparrow_socket_t find_sock;
   for( i = sp-%gtevent_cur; i %lt sp-%gtevents_len; i++) {
+    sp-%gtevent_cur++;
     find_sock.fd = sp-%gtevents[i].data.fd; 
-    sparrow_socket_t * sock = tfind(&find_sock, &(sp-%gttr_socks), cmp_ints);
+    sparrow_socket_t * sock = tfind(&find_sock, &(sp-%gtfd_tr_socks), cmp_fds);
     int event = sp-%gtevents[i].events;
-    
-    if(event & EPOLLIN) {
 
-      if(sock-%gtlistening) {
-// We accept a new client.
-        sparrow_socket_accept(sp, sock);
-      } else {
-
-        assert(sock-%gtin_len %gt sock-%gtin_cur);
-        assert(sock-%gtin_min %lt sock-%gtin_cur);
-        int result = recv(sock-%gtfd, sock-%gtdata_in + sock-%gtin_cur, sock-%gtin_len - sock-%gtin_cur, 0);
-        assert(result %gt 0); //TODO we need to throw an error when the connection was shutdown. (result =0)
-        if(result + sock-%gtin_cur %gt= sock-%gtin_min) {
-          *in_min = result + sock-%gtin_cur;
-
-          sock-%gtin_cur = 0;
-          sock-%gtin_len = 0;
-          sock-%gtin_min = 0;
-
-          if(i == sp-%gtevents_len) {
-            sp-%gtevents_len = 0;
-          }
-          *sfd = sock-%gtfd;
-          return sock-%gtdata_in;
-        } else {
-          sock-%gtin_cur += result;
-        }
-      }
-    }
+    *sfd = sock-%gtfd;
+    *error = 0;
 
     if(event & EPOLLOUT) {
-      assert(sock-%gtout_queue_pos != sock-%gtout_queue_frst_free_pos);
       data_out_t data_out = sock-%gtdata_out[sock-%gtout_queue_pos];
       assert(data_out.len %gt sock-%gtout_cur);
       int result = send(sock-%gtfd, data_out.data + sock-%gtout_cur, data_out.len - sock-%gtout_cur, 0);
-      assert(result %gt 0);
+
+      //On error
+      if(result %lt 0) {
+        *error = 1;
+        return sparrow_socket_clean(sp,sock);
+      }
 
       if(result + sock-%gtout_cur == data_out.len) {
         free(data_out.data);
         sock-%gtout_queue_pos = (sock-%gtout_queue_pos + 1) % MAX_SEND_QUEUE;
         sock-%gtout_cur = 0;
+        sock-%gtout_full = 0;
 
         if(sock-%gtout_queue_pos == sock-%gtout_queue_frst_free_pos) {
           struct epoll_event event;
           event.data.fd = sock-%gtfd;
           event.events = EPOLLIN;
-          result = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &event);
-          if (result == -1) {
+          int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &event);
+          if (rc == -1) {
             perror(" epoll_ctl failed to modify a socket to epoll");
             abort();
           }
@@ -331,14 +377,91 @@ void * sparrow_wait(sparrow_t * sp, int timeout, int *sfd,int *in_min) {
         sock-%gtout_cur += result;
       }
     }
+
+//We do not process more input events unless he have send some output first.
+// TODO We need to explain that in the documentation.
+    if((event & EPOLLIN) && !(sock-%gtout_full)) {
+
+      if(sock-%gtlistening) {
+// We accept a new client.
+        sparrow_socket_accept(sp, sock);
+      } else {
+
+        assert(sock-%gtin_len %gt sock-%gtin_cur);
+        assert(sock-%gtin_min %lt sock-%gtin_cur);
+        int result = recv(sock-%gtfd, sock-%gtdata_in + sock-%gtin_cur, sock-%gtin_len - sock-%gtin_cur, 0);
+
+        //On error
+        if(result %lt 0) {
+          *error = 1;
+          return sparrow_socket_clean(sp,sock);
+        }
+
+        if(result + sock-%gtin_cur %gt= sock-%gtin_min) {
+          *in_min = result + sock-%gtin_cur;
+
+          sock-%gtin_cur = 0;
+          sock-%gtin_len = 0;
+          sock-%gtin_min = 0;
+
+          return sock-%gtdata_in;
+        } else {
+          sock-%gtin_cur += result;
+        }
+      }
+    }
+
   }
   sp-%gtevents_len = 0;
-  return sparrow_wait(sp, timeout, sfd, in_min);
+
+  return sparrow_wait(sp, expiry, sfd, in_min,error);
 }
 
-// void  sparrow_send()
+void  sparrow_send( sparrow_t * sp, int fd, void * data, size_t len, int64_t timeout) {
+  assert(timeout %gt= 0);
 
+  sparrow_socket_t find_sock;
+  find_sock.fd = fd;
+  sparrow_socket_t * sock = tfind(&find_sock, &(sp-%gtfd_tr_socks), cmp_fds);
+  assert(sock != NULL);
+  assert(sock-%gtout_full != 1);
+  data_out_t * data_out = & sock-%gtdata_out[sock-%gtout_queue_frst_free_pos];
+  data_out-%gtdata = data;
+  data_out-%gtlen = len;
+  sock-%gtout_queue_frst_free_pos = (sock-%gtout_queue_frst_free_pos + 1) / MAX_SEND_QUEUE ;
+  if(sock-%gtout_queue_pos == sock-%gtout_queue_frst_free_pos) {
+    sock-%gtout_full = 1;       
+  }
 
+  int64_t expiry = timeout + now();
+  if(expiry %lt expiry_out
+  sock-%gtexpiry_out = expiry;
+  if((expiry %lt sock-%gtexpiry_min) && (expiry %gt 0)) {
+    sock-%gtexpiry_min = expiry;
+  }
+}
+
+void sparrow_recv( sparrow_t * sp, int fd, void *buf, size_t len, size_t min_len, int64_t timeout) {
+  assert(timeout %gt= 0);
+
+  sparrow_socket_t find_sock;
+  find_sock.fd = fd;
+  sparrow_socket_t * sock = tfind(&find_sock, &(sp-%gtfd_tr_socks), cmp_fds);
+  assert(sock != NULL);
+  assert(sock-%gtin_len == 0);
+  assert(sock-%gtexpiry_in == -1);
+
+  sock-%gtin_len = len;
+  sock-%gtin_min = min_len;
+  sock-%gtdata_in = buf;
+
+  int64_t expiry = timeout + now();
+  sock-%gtexpiry_in = expiry;
+
+  if((expiry %lt sock-%gtexpiry_min) && (expiry %gt 0)) {
+    sock-%gtexpiry_min = expiry;
+  }
+}
 
 ```
 
