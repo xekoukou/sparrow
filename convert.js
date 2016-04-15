@@ -1,5 +1,4 @@
 var fs = require('fs');
-
 var file = fs.readFileSync('source_index.c',"utf8");
 var result = [];
 var flip = false;
@@ -16,4 +15,3 @@ file.split("```c").forEach(function(each){
 });
 
 fs.writeFileSync('index.html',result.join("```c"));
-

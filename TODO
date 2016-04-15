@@ -1,0 +1,4 @@
+The serializer needs to have two buffers for both input and output (4 total) that allow it to finish his work per object. He can add data from the second object to the first and second buffer. The buffer is bigger than all fixed sized objects it will serialize.
+For variable-sized objects, one can split them into multiple fixed-sized ones or malloc a new buffer.
+
+If the variable-sized object is smaller than our buffer size, we can put it into the previous buffers and no malloc is required.
