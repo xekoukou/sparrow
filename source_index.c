@@ -392,7 +392,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
       int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
 
       //On error
-      if(result <= 0) {
+      if(result < 0) {
         spev->error = 1;
         //TODO Make Dprintf.
         printf("Send error or connection closed.");
@@ -661,7 +661,7 @@ int main(void) {
   sparrow_event_t spev;
 
 
-  char *data = malloc(50);
+  char *data = malloc(500);
 
 
   sparrow_wait(sp,&spev);
@@ -671,7 +671,7 @@ int main(void) {
       return -1;
     }
     if(spev.event & 16) {
-      sparrow_recv(sp, spev.sock, data,50);
+      sparrow_recv(sp, spev.sock, data,500);
     }
 
 
@@ -684,10 +684,10 @@ int main(void) {
       break;
     }
     if(spev.event & 4) {
-      if(spev.cur == 50) {
+      if(spev.cur == 500) {
         char * data_in = sparrow_socket_data_in(spev.sock);
         Dprintf("Received :\n%s\n",data_in);
-        sparrow_recv(sp, spev.sock, data,50);
+        sparrow_recv(sp, spev.sock, data,500);
         i++;
       }
     }
@@ -714,12 +714,12 @@ int main(void) {
   sparrow_event_t spev;
   spev.event = 0;
   int sent = 1;
-  char *data = malloc(50);
+  char *data = malloc(500);
   while(i < 2000000) {
     if((spev.event & 2) || (sent == 1)) {
 
       sprintf(data,"Hello there!");
-      sent = sparrow_send(sp, sock, data, 50, &error);
+      sent = sparrow_send(sp, sock, data, 500, &error);
       if(error == 1) {
         Dprintf("An error occured");    
         break;

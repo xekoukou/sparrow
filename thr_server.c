@@ -8,7 +8,7 @@ int main(void) {
   sparrow_event_t spev;
 
 
-  char *data = malloc(50);
+  char *data = malloc(500);
 
 
   sparrow_wait(sp,&spev);
@@ -18,7 +18,7 @@ int main(void) {
       return -1;
     }
     if(spev.event & 16) {
-      sparrow_recv(sp, spev.sock, data,50);
+      sparrow_recv(sp, spev.sock, data,500);
     }
 
 
@@ -31,10 +31,10 @@ int main(void) {
       break;
     }
     if(spev.event & 4) {
-      if(spev.cur == 50) {
+      if(spev.cur == 500) {
         char * data_in = sparrow_socket_data_in(spev.sock);
         Dprintf("Received :\n%s\n",data_in);
-        sparrow_recv(sp, spev.sock, data,50);
+        sparrow_recv(sp, spev.sock, data,500);
         i++;
       }
     }

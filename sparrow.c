@@ -344,7 +344,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
       int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
 
       //On error
-      if(result <= 0) {
+      if(result < 0) {
         spev->error = 1;
         //TODO Make Dprintf.
         printf("Send error or connection closed.");
@@ -397,9 +397,6 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         if(result <= 0) {
           //TODO Make Dprintf
           printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
-          printf("%d\n",result);
-          printf("%d\n",data_in->len);
-          printf("%d\n",data_in->cur);
           spev->error = 1;
           sparrow_socket_close(sp,sock);
           return 0;
