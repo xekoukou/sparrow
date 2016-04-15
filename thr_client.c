@@ -10,12 +10,12 @@ int main(void) {
   sparrow_event_t spev;
   spev.event = 0;
   int sent = 1;
-  char *data = malloc(50000);
-  while(i < 300) {
+  char *data = malloc(50);
+  while(i < 2000000) {
     if((spev.event & 2) || (sent == 1)) {
 
       sprintf(data,"Hello there!");
-      sent = sparrow_send(sp, sock, data, 50000, &error);
+      sent = sparrow_send(sp, sock, data, 50, &error);
       if(error == 1) {
         Dprintf("An error occured");    
         break;
@@ -31,7 +31,7 @@ int main(void) {
       i++;
     }
   }
-  sleep(4);
+  sleep(10);
 
   return 0;
 }

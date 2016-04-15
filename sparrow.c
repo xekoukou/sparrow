@@ -331,6 +331,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
 
       //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
+        printf("EPOLLERR || EPOLLHUP error.");
         spev->error = 1;
         sparrow_socket_close(sp,sock);
         return 0;
@@ -345,6 +346,8 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
       //On error
       if(result <= 0) {
         spev->error = 1;
+        //TODO Make Dprintf.
+        printf("Send error or connection closed.");
         sparrow_socket_close(sp,sock);
         return 0;
       }
@@ -379,7 +382,8 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         
         //TODO If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
         if(data_in->len == 0) {
-          Dprintf("We got data that we did not expect or we received a signal that the connection closed.\n We are closing the connection.");
+          //TODO Make Dprintf
+          printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
           spev->error = 1;
           sparrow_socket_close(sp,sock);
           return 0;
@@ -391,6 +395,11 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         //On error or connection closed.
         //TODO We need to handle closed connections differently, possibly automatically reconnecting.
         if(result <= 0) {
+          //TODO Make Dprintf
+          printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
+          printf("%d\n",result);
+          printf("%d\n",data_in->len);
+          printf("%d\n",data_in->cur);
           spev->error = 1;
           sparrow_socket_close(sp,sock);
           return 0;
@@ -435,7 +444,7 @@ void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t
   }
   sock->expiry = expiry;
   if(expiry > 0) {
-    RB_INSERT(fd_rb_t, &(sp->fd_rb_socks), sock);
+    RB_INSERT(to_rb_t, &(sp->to_rb_socks), sock);
   }
 
 }
@@ -464,7 +473,7 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
     struct epoll_event pevent;
     pevent.data.fd = sock->fd;
-    pevent.events = EPOLLIN & EPOLLOUT;
+    pevent.events = EPOLLIN | EPOLLOUT;
     int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
     if (rc == -1) {
       perror(" epoll_ctl failed to modify a socket to epoll");

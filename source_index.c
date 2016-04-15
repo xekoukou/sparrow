@@ -379,6 +379,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
 
       //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
+        printf("EPOLLERR || EPOLLHUP error.");
         spev->error = 1;
         sparrow_socket_close(sp,sock);
         return 0;
@@ -393,6 +394,8 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
       //On error
       if(result <= 0) {
         spev->error = 1;
+        //TODO Make Dprintf.
+        printf("Send error or connection closed.");
         sparrow_socket_close(sp,sock);
         return 0;
       }
@@ -427,7 +430,8 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         
         //TODO If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
         if(data_in->len == 0) {
-          Dprintf("We got data that we did not expect or we received a signal that the connection closed.\n We are closing the connection.");
+          //TODO Make Dprintf
+          printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
           spev->error = 1;
           sparrow_socket_close(sp,sock);
           return 0;
@@ -439,6 +443,8 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         //On error or connection closed.
         //TODO We need to handle closed connections differently, possibly automatically reconnecting.
         if(result <= 0) {
+          //TODO Make Dprintf
+          printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
           spev->error = 1;
           sparrow_socket_close(sp,sock);
           return 0;
@@ -483,7 +489,7 @@ void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t
   }
   sock->expiry = expiry;
   if(expiry > 0) {
-    RB_INSERT(fd_rb_t, &(sp->fd_rb_socks), sock);
+    RB_INSERT(to_rb_t, &(sp->to_rb_socks), sock);
   }
 
 }
@@ -512,7 +518,7 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
     struct epoll_event pevent;
     pevent.data.fd = sock->fd;
-    pevent.events = EPOLLIN & EPOLLOUT;
+    pevent.events = EPOLLIN | EPOLLOUT;
     int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
     if (rc == -1) {
       perror(" epoll_ctl failed to modify a socket to epoll");
@@ -653,23 +659,35 @@ int main(void) {
   sparrow_t *sp = sparrow_new();
   sparrow_socket_bind(sp,"9001");
   sparrow_event_t spev;
+
+
+  char *data = malloc(50);
+
+
+  sparrow_wait(sp,&spev);
   int64_t time = now();
-  int i = 0;
-  char *data = malloc(50000);
-  while (i < 300) {
-    sparrow_wait(sp,&spev);
     if(spev.error == 1) {
-      Dprintf("An error occured");
-      break;
+      printf("An error occured\n");
+      return -1;
     }
     if(spev.event & 16) {
-      sparrow_recv(sp, spev.sock, data,50000);
+      sparrow_recv(sp, spev.sock, data,50);
+    }
+
+
+
+  int i = 0;
+  while (i < 2000000) {
+    sparrow_wait(sp,&spev);
+    if(spev.error == 1) {
+      printf("An error occured\n");
+      break;
     }
     if(spev.event & 4) {
-      if(spev.cur == 50000) {
+      if(spev.cur == 50) {
         char * data_in = sparrow_socket_data_in(spev.sock);
         Dprintf("Received :\n%s\n",data_in);
-        sparrow_recv(sp, spev.sock, data,50000);
+        sparrow_recv(sp, spev.sock, data,50);
         i++;
       }
     }
@@ -696,12 +714,12 @@ int main(void) {
   sparrow_event_t spev;
   spev.event = 0;
   int sent = 1;
-  char *data = malloc(50000);
-  while(i < 300) {
+  char *data = malloc(50);
+  while(i < 2000000) {
     if((spev.event & 2) || (sent == 1)) {
 
       sprintf(data,"Hello there!");
-      sent = sparrow_send(sp, sock, data, 50000, &error);
+      sent = sparrow_send(sp, sock, data, 50, &error);
       if(error == 1) {
         Dprintf("An error occured");    
         break;
@@ -717,13 +735,61 @@ int main(void) {
       i++;
     }
   }
-  sleep(4);
+  sleep(10);
 
   return 0;
 }
 
 ```
 
+```c timeout_server.c
+#include "sparrow.h"
+#include <stdio.h>
+
+int main(void) {
+  sparrow_t *sp = sparrow_new();
+  sparrow_socket_bind(sp,"9003");
+  sparrow_event_t spev;
+
+  sparrow_wait(sp,&spev);
+  if(spev.error == 1)
+    return -1;
+  if(spev.event & 16) {
+    char *data = malloc(50);
+    sparrow_socket_set_timeout(sp, spev.sock, now() + 5000);
+    sparrow_recv(sp, spev.sock, data,50);
+  }
+  if(spev.event & 8) {
+    printf("Recv timeout expired\n");
+    return -1;
+  }
+
+  return 0;
+}
+
+```
+
+```c timeout_client.c
+#include "sparrow.h"
+#include <stdio.h>
+
+int main(void) {
+  sparrow_t *sp = sparrow_new();
+  sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9003");
+  char *data = malloc(50);
+  sprintf(data,"Hello there!");
+  int error;
+//Never send any data.
+//  sparrow_send(sp, sock, data, 50, &error);
+  sparrow_event_t spev;
+  sparrow_wait(sp,&spev);
+  printf("I sent : %s",data);
+  sleep(4);
+
+  return 0;
+}
+
+```
 
 
        </div>
