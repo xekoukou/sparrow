@@ -8,17 +8,17 @@ int main(void) {
   sparrow_event_t spev;
 
 
-  char *data = malloc(500);
+  char *data = malloc(50);
 
 
   sparrow_wait(sp,&spev);
   int64_t time = now();
-    if(spev.error == 1) {
+    if(spev.event & 8) {
       printf("An error occured\n");
       return -1;
     }
     if(spev.event & 16) {
-      sparrow_recv(sp, spev.sock, data,500);
+      sparrow_recv(sp, spev.sock, data,50);
     }
 
 
@@ -26,15 +26,15 @@ int main(void) {
   int i = 0;
   while (i < 2000000) {
     sparrow_wait(sp,&spev);
-    if(spev.error == 1) {
+    if(spev.event & 8) {
       printf("An error occured\n");
       break;
     }
     if(spev.event & 4) {
-      if(spev.cur == 500) {
+      if(spev.cur == 50) {
         char * data_in = sparrow_socket_data_in(spev.sock);
         Dprintf("Received :\n%s\n",data_in);
-        sparrow_recv(sp, spev.sock, data,500);
+        sparrow_recv(sp, spev.sock, data,50);
         i++;
       }
     }

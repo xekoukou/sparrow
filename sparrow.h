@@ -17,7 +17,6 @@ struct sparrow_event_t {
   sparrow_socket_t * sock;
   size_t cur;
   int event;
-  int error;
 };
 
 typedef struct sparrow_event_t sparrow_event_t;
@@ -32,10 +31,11 @@ void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev);
 
 void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t *sock, int64_t expiry);
 
-int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, int *error);
+int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
 
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);
 
+void sparrow_close(sparrow_t ** sp);
 //TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
 void * sparrow_socket_data_in(sparrow_socket_t *sock);
 void * sparrow_socket_data_out(sparrow_socket_t *sock);
