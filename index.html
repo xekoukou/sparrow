@@ -79,7 +79,7 @@ int main(void) {
 
 ```
 
-The client simply sents a Msgs. Waits till it sparrow tells it that it sent it and exits.
+The client simply sents a Msg.It waits till sparrow tells it that it sent it and exits.
 
 ```c simple_test_client.c
 #include "sparrow.h"
@@ -161,8 +161,161 @@ int main(void) {
 Network errors do happen. The client might close the connection before we finish our communication protocol. Other errors might happen as well. Sparrow does not distinguish between errors. It doesn't also distinguish between errors and timeouts.
 Timeouts lead to the closure of the connection as any other error. Sparrow returns the same event ('8') for both.
 
+### Througput test
 
-## Time
+It is time to test the performance of our library. We will transfer 2M msgs of 500 bytes size and then compute our throughput. In this test, we also check for the error event and if it happens, we exit.
+
+```c thr_server.c
+#include "sparrow.h"
+#include %ltassert.h%gt
+#include %ltstdio.h%gt
+
+int main(void) {
+  sparrow_t *sp = sparrow_new();
+  sparrow_socket_bind(sp,"9001");
+  
+  char *data = malloc(50);
+  
+  sparrow_event_t spev;
+  sparrow_wait(sp,&spev);
+  int64_t time = now();
+  if(spev.event & 8) {
+    printf("An error occured\n");
+    return -1;
+  }
+  if(spev.event & 16) {
+    sparrow_recv(sp, spev.sock, data,50);
+  }
+
+  int i = 0;
+  while (i %lt 2000000) {
+    sparrow_wait(sp,&spev);
+    if(spev.event & 8) {
+      printf("An error occured\n");
+      break;
+    }
+
+    if(spev.event & 4) {
+      if(spev.cur == 50) {
+        char * data_in = sparrow_socket_data_in(spev.sock);
+        Dprintf("Received :\n%s\n",data_in);
+        sparrow_recv(sp, spev.sock, data,50);
+        i++;
+      }
+    }
+  }
+
+  int64_t dif_time = (now() - time);
+  float rate = ((float) (i+1) * 1000) / ((float) dif_time);
+  printf("Rate: %f msgs per second.\n", rate);
+  printf("Msgs received: %d\n", i);
+
+  return 0;
+}
+
+```
+
+
+```c thr_client.c
+#include "sparrow.h"
+#include %ltassert.h%gt
+#include %ltstdio.h%gt
+
+int main(void) {
+
+  sparrow_t *sp = sparrow_new();
+  sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9001");
+
+  char *data = malloc(50);
+
+  sparrow_event_t spev;
+  spev.event = 0;
+  int sent_immediately = 1;
+  int i = 0;
+
+  while(i %lt 2000000) {
+
+    if((spev.event & 2) || (sent_immediately == 1)) {
+      sprintf(data,"Hello there!");
+      sent_immediately = sparrow_send(sp, sock, data, 50, &spev);
+      if(spev.event & 8) {
+        Dprintf("An error occured");    
+        break;
+      }
+    }
+
+    if(sent_immediately == 0) {
+      sparrow_wait(sp,&spev);
+    }
+
+    if((spev.event & 2) || (sent_immediately == 1)) {
+      char * data_out = sparrow_socket_data_out(sock);
+      Dprintf("Sent :\n%s\n",data_out);
+      i++;
+    }
+  }
+
+  sparrow_close(&sp);
+  exit(0);
+}
+
+```
+
+## Sparrow Api
+
+All the functions that are provided by the sparrow library can be found in the 'sparrow.h' header file.
+
+```c sparrow.h
+#ifndef _SPARROW_H_
+#define _SPARROW_H_
+
+#include %ltunistd.h%gt
+#include %ltstdlib.h%gt
+
+#if (defined DEBUG_LOG) 
+  #define Dprintf(x, ...) printf(x, ##__VA_ARGS__)
+#else 
+  #define Dprintf(x, ...)
+#endif  
+
+typedef struct sparrow_t sparrow_t;
+typedef struct sparrow_socket_t sparrow_socket_t;
+
+struct sparrow_event_t {
+  sparrow_socket_t * sock;
+  size_t cur;
+  int event;
+};
+
+typedef struct sparrow_event_t sparrow_event_t;
+
+sparrow_t * sparrow_new(void);
+
+void sparrow_socket_bind(sparrow_t * sp, char * port);
+
+sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char * port); 
+
+void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev);
+
+void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t *sock, int64_t expiry);
+
+int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
+
+void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);
+
+void sparrow_close(sparrow_t ** sp);
+//TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
+void * sparrow_socket_data_in(sparrow_socket_t *sock);
+void * sparrow_socket_data_out(sparrow_socket_t *sock);
+int64_t now(void);
+
+#endif
+```
+
+
+## Sparrow Implementation
+
+### Time
 
 We will get time from the system. Because clock_gettime is an expensive system call, we use the Time Stamp Counter to determine whether enough time has passed till our last call to get the time. If more than 1/2 of our clock_precision has passed, we check the system time again. 
 
@@ -208,7 +361,7 @@ int64_t now(void) {
 
 ```
 
-## Sparrow Internal Data Structs
+### Sparrow Internal Data Structs
 
 Output data buffers need to contain the point till which they had already sent because the network might not allow all the data to be transmitted at once. Both output and input data buffers need to know their length for obvious reasons:
 
@@ -281,7 +434,7 @@ struct sparrow_t {
 }
 ```
 
-## Ordering of Sockets
+### Ordering of Sockets
 
 We use Niels Provos code to generate Red Black trees to order our sockets. The relevant code is here.
 
@@ -352,7 +505,7 @@ tree_generation();
 sparrow_definition();
 ./!dots(1)
 
-
+//internal use only.
 sparrow_t * sparrow_new(void) {
   sparrow_t * sp = calloc(1,sizeof(sparrow_t));
   int fd = epoll_create1 (0);
@@ -367,10 +520,6 @@ sparrow_t * sparrow_new(void) {
   return sp;
 }
 
-```
-
-
-```c sparrow.c.dna
 
 //internal use only
 void sparrow_add_socket(sparrow_t * sp, sparrow_socket_t *sock) {
@@ -751,147 +900,11 @@ void * sparrow_socket_data_out(sparrow_socket_t *sock) {
 }
 ```
 
-```c sparrow.h
-#ifndef _SPARROW_H_
-#define _SPARROW_H_
-
-#include %ltunistd.h%gt
-#include %ltstdlib.h%gt
-
-#if (defined DEBUG_LOG) 
-  #define Dprintf(x, ...) printf(x, ##__VA_ARGS__)
-#else 
-  #define Dprintf(x, ...)
-#endif  
-
-typedef struct sparrow_t sparrow_t;
-typedef struct sparrow_socket_t sparrow_socket_t;
-
-struct sparrow_event_t {
-  sparrow_socket_t * sock;
-  size_t cur;
-  int event;
-};
-
-typedef struct sparrow_event_t sparrow_event_t;
-
-sparrow_t * sparrow_new(void);
-
-void sparrow_socket_bind(sparrow_t * sp, char * port);
-
-sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char * port); 
-
-void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev);
-
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t *sock, int64_t expiry);
-
-int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
-
-void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);
-
-void sparrow_close(sparrow_t ** sp);
-//TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
-void * sparrow_socket_data_in(sparrow_socket_t *sock);
-void * sparrow_socket_data_out(sparrow_socket_t *sock);
-int64_t now(void);
-
-#endif
-```
 
 
 
 
 
-```c thr_server.c
-#include "sparrow.h"
-#include %ltassert.h%gt
-#include %ltstdio.h%gt
-
-int main(void) {
-  sparrow_t *sp = sparrow_new();
-  sparrow_socket_bind(sp,"9001");
-  sparrow_event_t spev;
-
-
-  char *data = malloc(50);
-
-
-  sparrow_wait(sp,&spev);
-  int64_t time = now();
-    if(spev.event & 8) {
-      printf("An error occured\n");
-      return -1;
-    }
-    if(spev.event & 16) {
-      sparrow_recv(sp, spev.sock, data,50);
-    }
-
-
-
-  int i = 0;
-  while (i %lt 2000000) {
-    sparrow_wait(sp,&spev);
-    if(spev.event & 8) {
-      printf("An error occured\n");
-      break;
-    }
-    if(spev.event & 4) {
-      if(spev.cur == 50) {
-        char * data_in = sparrow_socket_data_in(spev.sock);
-        Dprintf("Received :\n%s\n",data_in);
-        sparrow_recv(sp, spev.sock, data,50);
-        i++;
-      }
-    }
-  }
-  int64_t dif_time = (now() - time);
-  float rate = ((float) (i+1) * 1000) / ((float) dif_time);
-  printf("Rate: %f msgs per second.\n", rate);
-  printf("Msgs received: %d\n", i);
-
-  return 0;
-}
-
-```
-```c thr_client.c
-#include "sparrow.h"
-#include %ltassert.h%gt
-#include %ltstdio.h%gt
-
-int main(void) {
-  sparrow_t *sp = sparrow_new();
-  sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9001");
-  int i = 0;
-  sparrow_event_t spev;
-  spev.event = 0;
-  int sent = 1;
-  char *data = malloc(50);
-  while(i %lt 2000000) {
-    if((spev.event & 2) || (sent == 1)) {
-
-      sprintf(data,"Hello there!");
-      sent = sparrow_send(sp, sock, data, 50, &spev);
-      if(spev.event & 8) {
-        Dprintf("An error occured");    
-        break;
-      }
-    }
-    if(sent == 0) {
-      sparrow_wait(sp,&spev);
-    }
-
-    if((spev.event & 2) || (sent == 1)) {
-      char * data_out = sparrow_socket_data_out(sock);
-      Dprintf("Sent :\n%s\n",data_out);
-      i++;
-    }
-  }
-
-  sparrow_close(&sp);
-  exit(0);
-}
-
-```
 
 
        </div>

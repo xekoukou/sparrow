@@ -81,7 +81,7 @@ struct sparrow_t {
   size_t already_expired;
 };
 
-
+//internal use only.
 sparrow_t * sparrow_new(void) {
   sparrow_t * sp = calloc(1,sizeof(sparrow_t));
   int fd = epoll_create1 (0);

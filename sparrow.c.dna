@@ -107,7 +107,7 @@ tree_generation();
 sparrow_definition();
 ./!dots(1)
 
-
+//internal use only.
 sparrow_t * sparrow_new(void) {
   sparrow_t * sp = calloc(1,sizeof(sparrow_t));
   int fd = epoll_create1 (0);
