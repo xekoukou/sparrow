@@ -2,6 +2,8 @@
 
 This project is written in a literate programming style. The source code resides in "source_index.c". 
 
+You can check the documentation at the [sparrow][https://xekoukou.github.io/sparrow] github page.
+
 In order to compile it, you will need to install three programs:
 
 1. Nodejs
