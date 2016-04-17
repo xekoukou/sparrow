@@ -1,4 +1,3 @@
-function set_timeout_function() {
 <!DOCTYPE html>
 <html>
 <head>
