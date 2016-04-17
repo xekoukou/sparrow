@@ -81,6 +81,82 @@ struct sparrow_t {
   size_t already_expired;
 };
 
+//The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly.
+void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t expiry) {
+
+  if(sock->expiry > 0) {
+    RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
+  }
+  sock->expiry = expiry;
+  if(expiry > 0) {
+    RB_INSERT(to_rb_t, &(sp->to_rb_socks), sock);
+  }
+
+}
+
+
+int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
+  assert(data!=NULL);
+  spev->sock = sock;
+  spev->event = 0;
+
+  data_out_t *data_out = &(sock->data_out);
+  assert(data_out->len == 0);
+  data_out->data = data;
+  data_out->len = len;
+  data_out->cur = 0;
+
+//Try to send as much as we can.
+
+  int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
+
+  //On error
+  if(result < 0 && (errno != EAGAIN)) {
+    perror("Send error inside sparrow_send.\n");
+    sparrow_socket_close(sp,sock);
+    spev->event = 8;
+  }
+
+  if(result + data_out->cur < data_out->len) {
+    data_out->cur += result;
+
+    struct epoll_event pevent;
+    pevent.data.fd = sock->fd;
+    pevent.events = EPOLLIN | EPOLLOUT;
+    int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
+    if (rc == -1) {
+      perror(" epoll_ctl failed to modify a socket to epoll");
+      abort();
+    }
+    return 0;
+  } else {
+    data_out->len = 0;
+    spev->event = 2;
+    return 1;
+  }
+
+}
+
+void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t len) {
+
+  Dprintf("Asking to receive socket:\nfd: %d\n",sock->fd);
+  data_in_t *data_in = &(sock->data_in);
+  assert(data_in->len == 0);
+  data_in->data = data;
+  data_in->len = len;
+}
+
+void * sparrow_socket_data_in(sparrow_socket_t *sock) {
+  void *data = sock->data_in.data; 
+  return data;
+}
+
+void * sparrow_socket_data_out(sparrow_socket_t *sock) {
+  void *data = sock->data_out.data; 
+  return data;
+}
+
+
 //internal use only.
 sparrow_t * sparrow_new(void) {
   sparrow_t * sp = calloc(1,sizeof(sparrow_t));
@@ -94,6 +170,14 @@ sparrow_t * sparrow_new(void) {
   RB_INIT(&(sp->fd_rb_socks));
   RB_INIT(&(sp->to_rb_socks));
   return sp;
+}
+
+
+//internal use only.
+sparrow_socket_t * sparrow_socket_new(int fd) {
+  sparrow_socket_t * sock = calloc(1,sizeof(sparrow_socket_t));
+  sock->fd = fd;
+  return sock;
 }
 
 
@@ -113,12 +197,6 @@ void sparrow_add_socket(sparrow_t * sp, sparrow_socket_t *sock) {
   assert(rtsearch == NULL);
 }
 
-//internal use only.
-sparrow_socket_t * sparrow_socket_new(int fd) {
-  sparrow_socket_t * sock = calloc(1,sizeof(sparrow_socket_t));
-  sock->fd = fd;
-  return sock;
-}
 
 //internal use only
 sparrow_socket_t * sparrow_socket_set_non_blocking(sparrow_socket_t * sock) {
@@ -216,7 +294,6 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
   return sock;
 }
 
-//Internal
 void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
   printf("Connection closed: %d", sock->fd);
   close(sock->fd);
@@ -248,7 +325,7 @@ sparrow_socket_t * sparrow_socket_accept(sparrow_t * sp, sparrow_socket_t * lsoc
 
 
 
-//Internal use only
+        //Internal use only
 int sparrow_handle_expired(sparrow_t * sp, sparrow_event_t *spev, int64_t *timeout){
   sparrow_socket_t * sock = RB_MIN(to_rb_t, &(sp->to_rb_socks));
   if(sp->already_expired > 0) {
@@ -395,77 +472,6 @@ void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   }
 }
 
-//The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly.
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t expiry) {
 
-  if(sock->expiry > 0) {
-    RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-  }
-  sock->expiry = expiry;
-  if(expiry > 0) {
-    RB_INSERT(to_rb_t, &(sp->to_rb_socks), sock);
-  }
 
-}
-
-int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
-  assert(data!=NULL);
-  spev->sock = sock;
-  spev->event = 0;
-
-  data_out_t *data_out = &(sock->data_out);
-  assert(data_out->len == 0);
-  data_out->data = data;
-  data_out->len = len;
-  data_out->cur = 0;
-
-//Try to send as much as we can.
-
-  int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
-
-  //On error
-  if(result < 0 && (errno != EAGAIN)) {
-    perror("Send error inside sparrow_send.\n");
-    sparrow_socket_close(sp,sock);
-    spev->event = 8;
-  }
-
-  if(result + data_out->cur < data_out->len) {
-    data_out->cur += result;
-
-    struct epoll_event pevent;
-    pevent.data.fd = sock->fd;
-    pevent.events = EPOLLIN | EPOLLOUT;
-    int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
-    if (rc == -1) {
-      perror(" epoll_ctl failed to modify a socket to epoll");
-      abort();
-    }
-    return 0;
-  } else {
-    data_out->len = 0;
-    spev->event = 2;
-    return 1;
-  }
-
-}
-
-void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t len) {
-
-  Dprintf("Asking to receive socket:\nfd: %d\n",sock->fd);
-  data_in_t *data_in = &(sock->data_in);
-  assert(data_in->len == 0);
-  data_in->data = data;
-  data_in->len = len;
-}
-
-void * sparrow_socket_data_in(sparrow_socket_t *sock) {
-  void *data = sock->data_in.data; 
-  return data;
-}
-
-void * sparrow_socket_data_out(sparrow_socket_t *sock) {
-  void *data = sock->data_out.data; 
-  return data;
-}
 

@@ -35,8 +35,11 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t le
 
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);
 
+void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock);
+
 void sparrow_close(sparrow_t ** sp);
-//TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
+
+//?TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
 void * sparrow_socket_data_in(sparrow_socket_t *sock);
 void * sparrow_socket_data_out(sparrow_socket_t *sock);
 int64_t now(void);
