@@ -32,6 +32,111 @@ TODO Explain the difficulties of building a network library in a functional prog
 TODO. Sparrow does not buffer data. The application needs to do that itself. The application knows better the specific needs that it has and thus the buffering that it requires. The buffer can be put inside the validation function.
 
 
+# Sparrow Multiplexer
+
+```c sparrow_multiplexer.c
+// #include "sparrow_multiplexer.h"
+
+struct sparrow_multiplexer_t {
+  int interleaved; //Boolean indicating whether we have a single sequence of communication or multiple.
+};
+
+
+
+```
+
+# Sparrow buffer {#Sparrow_buffer}
+
+//TODO Clean this.
+
+Sparrow_buffer is used to accept send and receive requests by our application, internally queue them till sparrow is able to process them. Internally,
+it uses 2 buffers per input/output per socket. Their size are supposed to be higher than the average size of an object in our application. The reason
+we use two buffers is that this way , we can serialize multiple objects without fear that we will not have space to process the second one. This way, we can put two or more objects in the same buffer and thus minimize the system calls.
+If we do this for the output, then the input of the other process will need to keep two buffers to be able to deserialize one object without having to copy it to a new memory location. 
+
+Ofcourse, this technique is only applicable when the size of an object is upper bounded or of fixed size. For objects that we do not know their size, we simply allocate a new piece of memory.
+
+Since, we may have multiple send requests that are in the queue, our output buffer queue might need to expand.
+
+
+The Maximum number of concurrent receive requests / send request are known beforehand thus, we can preallocate a number of input_timebuffers / output_buffers.
+
+
+//TODO We need to know the level of the multiplexer that an input or output is for.
+
+```c sparrow_buff.c
+#include "sparrow.h"
+//#include "sparrow_buff.h"
+//#include "sparrow_multiplexer.h"
+#include "tree.h"
+
+
+struct buffer_t {
+  void * data;
+  int64_t len;
+  struct buffer_t * next;
+};
+
+typedef struct buffer_t buffer_t;
+
+
+struct input_timebuffer_t {
+  int64_t expiry;
+  int64_t cur[2]; 
+  buffer_t * buffer;
+  RB_ENTRY (input_timebuffer_t) field;
+};
+
+typedef struct input_timebuffer_t input_timebuffer_t;
+
+struct output_timebuffer_t {
+  int64_t expiry;
+  buffer_t  * buffer;
+  RB_ENTRY (output_timebuffer_t) field;
+};
+
+typedef struct output_timebuffer_t output_timebuffer_t;
+
+int cmp_ot_timebuf(const void * ti1, const void * ti2) {
+  const output_timebuffer_t * t1 = (const output_timebuffer_t *) ti1;
+  const output_timebuffer_t * t2 = (const output_timebuffer_t *) ti2;
+  return (t1-%gtexpiry %gt t2-%gtexpiry) - (t1-%gtexpiry %lt t2-%gtexpiry);
+}
+
+int cmp_it_timebuf(const void * ti1, const void * ti2) {
+  const input_timebuffer_t * t1 = (const input_timebuffer_t *) ti1;
+  const input_timebuffer_t * t2 = (const input_timebuffer_t *) ti2;
+  return (t1-%gtexpiry %gt t2-%gtexpiry) - (t1-%gtexpiry %lt t2-%gtexpiry);
+}
+
+RB_HEAD (it_rb_t, input_timebuffer_t);
+RB_HEAD (ot_rb_t, output_timebuffer_t);
+
+RB_GENERATE (it_rb_t, input_timebuffer_t, field, cmp_it_timebuf);
+RB_GENERATE (ot_rb_t, output_timebuffer_t, field, cmp_ot_timebuf);
+
+
+struct sparrow_buff_socket_t {
+  
+  int fd;
+  struct it_rb_t it_rb; // A tree container of input_timebuffers.  
+  struct ot_rb_t ot_rb; // A tree container of input_timebuffers.
+  void * in_buffer[2];
+  void * out_buffer[2];
+//  input buffers
+//  freeable variable input buffers.
+//  output timeouts plus dynamic array of buffers
+//  freeable variable output buffers.
+  size_t buff_size;
+};
+
+
+```
+
+
+
+
+
 # Epoll Wrapper {#Epoll_Wrapper}
 
 The first thing that we need to do is to provide a wrap around linux epoll that simplifies the api for the asynchronous communications. This wrapper needs to be able to do only one thing.
@@ -512,7 +617,7 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
     int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
     if (rc == -1) {
       perror(" epoll_ctl failed to modify a socket to epoll");
-      abort();
+      exit(-1);
     }
     return 0;
   } else {
@@ -589,7 +694,7 @@ sparrow_t * sparrow_new(void) {
   int fd = epoll_create1 (0);
   if (fd == -1) {
     perror("epoll_create1 failed to create epoll.");
-    abort();
+    exit(-1);
   }
   sp-%gtfd = fd;
   sp-%gtevents_len = 0;
@@ -616,7 +721,7 @@ void sparrow_add_socket(sparrow_t * sp, sparrow_socket_t *sock) {
   rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_ADD, sock-%gtfd, &event);
   if (rc == -1) {
     perror(" epoll_ctl failed to add a socket to epoll");
-    abort();
+    exit(-1);
   }
   assert(RB_FIND(fd_rb_t, &(sp-%gtfd_rb_socks), sock) == NULL);
   void *rtsearch = RB_INSERT(fd_rb_t, &(sp-%gtfd_rb_socks), sock);
@@ -631,14 +736,14 @@ sparrow_socket_t * sparrow_socket_set_non_blocking(sparrow_socket_t * sock) {
   flags = fcntl (sock-%gtfd, F_GETFL, 0);
   if (flags == -1) {
     perror ("fcntl failed to perform an action.");
-    abort();
+    exit(-1);
   }
 
   flags |= O_NONBLOCK;
   rc = fcntl (sock-%gtfd, F_SETFL, flags);
   if (rc == -1) {
     perror ("fcntl failed to perform an action.");
-    abort();
+    exit(-1);
   }
   return sock;
 }
@@ -648,7 +753,7 @@ sparrow_socket_t * sparrow_socket_listen(sparrow_socket_t * sock) {
   int rc = listen(sock-%gtfd,SOMAXCONN);
   if ( rc == -1 ) {
     perror("The socket failed to listen.");
-    abort();
+    exit(-1);
   }
   sock-%gtlistening = 1;
   return sock;
@@ -678,7 +783,7 @@ void sparrow_socket_bind(sparrow_t * sp, char * port) {
   rc = bind (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
   if (rc != 0) {
     close (sfd);
-    abort();
+    exit(-1);
   }
   sparrow_socket_t * sock = sparrow_socket_new(sfd);
   freeaddrinfo (ret_addr);
@@ -711,7 +816,7 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
   rc = connect (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
   if (rc != 0) {
     close (sfd);
-    abort();
+    exit(-1);
   }
   sparrow_socket_t * sock = sparrow_socket_new(sfd);
   freeaddrinfo (ret_addr);
@@ -874,7 +979,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
         if (rc == -1) {
           perror(" epoll_ctl failed to modify a socket to epoll");
-          abort();
+          exit(-1);
         }
         spev-%gtevent += 2;
       } else {

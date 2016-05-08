@@ -2,3 +2,70 @@ The serializer needs to have two buffers for both input and output (4 total) tha
 For variable-sized objects, one can split them into multiple fixed-sized ones or malloc a new buffer.
 
 If the variable-sized object is smaller than our buffer size, we can put it into the previous buffers and no malloc is required.
+
+
+A. Subgraph abstraction/polymorphism
+
+  ----------------->*
+->*                 ------>
+
+
+or
+
+B. When the original and last vector correspond to the identity vectors. then the subgraph abstraction can represent communication patterns like cryptographic protocols. It would be nice if we ommited the subgraph with a new type of arrow that corresponds to that specific subgraph abstraction.
+
+*----------------------->*
+*----------------------->*
+
+
+Question:
+
+Some subgraphs might contain a common state. For example, a tcp connection requires the initialization phace to start sending messages.
+
+A tls protocol has the initial phase as well. It might have more state.
+
+I think that subgraphs should not have state that is kept from previous interactions. Can we generalize the need to initialize some state for a subgraph.
+
+The problem is that two subgraphs depend on one another and is not specified in the graph. That creates dependencies that are not visible and it will create problems.
+||
+||
+||
+^^ not necessarily. We do that anyway when we keep the state in any other program. The graph only represents the external interactions, not the internal state that is required for the application to work.
+
+====> We need to provide a rule of seperation of state between different parts of the graph. For subgraphs to be replacable, we require that the their state is independent of each other.
+
+If a subgraph depends on another's state, we need to specify it. We introduce a dependency arrow that guarantees that a specific subgraph requires another subgraph. And their order.
+
+IMPORTANT
+
+Definition : A subgraph that interacts with the higher graph through identity arrows is called a 
+
+
+Initializations that only happen once should be abstracted away.
+
+
+---------------------------------------------------------
+
+A simplex is a subgraph that has only one concurrent path and thus it does not require a label on its different concurrent paths to distinguish the messages it receives.
+
+We call a subgraph agnostic if it doesn't need to know the paths of the other subgraphs that are higher than it.
+
+We call a subgraph instant if the execution of the graph happens without continuations.
+
+
+Theorem. : A subgraph that is instant is agnostic.
+
+Theorem B : A subgraph that is only executed when the concurrent higher paths are only one is agnostic.
+
+Theorem : A subgraph that is not instant and there are multiple concurrent higher paths that use it cannot be agnostic.
+
+Theorem B does not permit combosability between specific subgraphs, thus it should be rejected.
+
+Theorem : An instant subgraph can only contain subgraphs that are instant.
+
+
+
+
+
+
+

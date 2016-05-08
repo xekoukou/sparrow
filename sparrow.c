@@ -126,7 +126,7 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
     int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
     if (rc == -1) {
       perror(" epoll_ctl failed to modify a socket to epoll");
-      abort();
+      exit(-1);
     }
     return 0;
   } else {
@@ -163,7 +163,7 @@ sparrow_t * sparrow_new(void) {
   int fd = epoll_create1 (0);
   if (fd == -1) {
     perror("epoll_create1 failed to create epoll.");
-    abort();
+    exit(-1);
   }
   sp->fd = fd;
   sp->events_len = 0;
@@ -190,7 +190,7 @@ void sparrow_add_socket(sparrow_t * sp, sparrow_socket_t *sock) {
   rc = epoll_ctl (sp->fd, EPOLL_CTL_ADD, sock->fd, &event);
   if (rc == -1) {
     perror(" epoll_ctl failed to add a socket to epoll");
-    abort();
+    exit(-1);
   }
   assert(RB_FIND(fd_rb_t, &(sp->fd_rb_socks), sock) == NULL);
   void *rtsearch = RB_INSERT(fd_rb_t, &(sp->fd_rb_socks), sock);
@@ -205,14 +205,14 @@ sparrow_socket_t * sparrow_socket_set_non_blocking(sparrow_socket_t * sock) {
   flags = fcntl (sock->fd, F_GETFL, 0);
   if (flags == -1) {
     perror ("fcntl failed to perform an action.");
-    abort();
+    exit(-1);
   }
 
   flags |= O_NONBLOCK;
   rc = fcntl (sock->fd, F_SETFL, flags);
   if (rc == -1) {
     perror ("fcntl failed to perform an action.");
-    abort();
+    exit(-1);
   }
   return sock;
 }
@@ -222,7 +222,7 @@ sparrow_socket_t * sparrow_socket_listen(sparrow_socket_t * sock) {
   int rc = listen(sock->fd,SOMAXCONN);
   if ( rc == -1 ) {
     perror("The socket failed to listen.");
-    abort();
+    exit(-1);
   }
   sock->listening = 1;
   return sock;
@@ -252,7 +252,7 @@ void sparrow_socket_bind(sparrow_t * sp, char * port) {
   rc = bind (sfd, ret_addr->ai_addr, ret_addr->ai_addrlen);
   if (rc != 0) {
     close (sfd);
-    abort();
+    exit(-1);
   }
   sparrow_socket_t * sock = sparrow_socket_new(sfd);
   freeaddrinfo (ret_addr);
@@ -285,7 +285,7 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
   rc = connect (sfd, ret_addr->ai_addr, ret_addr->ai_addrlen);
   if (rc != 0) {
     close (sfd);
-    abort();
+    exit(-1);
   }
   sparrow_socket_t * sock = sparrow_socket_new(sfd);
   freeaddrinfo (ret_addr);
@@ -412,7 +412,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
         if (rc == -1) {
           perror(" epoll_ctl failed to modify a socket to epoll");
-          abort();
+          exit(-1);
         }
         spev->event += 2;
       } else {
