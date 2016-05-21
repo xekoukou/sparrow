@@ -137,6 +137,22 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
 }
 
+//It doesn't remove the timeout. If present, you need to cancel it mannually.
+void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock) {
+  data_out_t *data_out = &(sock->data_out);
+  assert(data_out->len != 0);
+  data_out->len = 0;
+
+  struct epoll_event pevent;
+  pevent.data.fd = sock->fd;
+  pevent.events = EPOLLIN;
+  int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
+  if (rc == -1) {
+    perror(" epoll_ctl failed to modify a socket to epoll");
+    exit(-1);
+  }
+}
+
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t len) {
 
   Dprintf("Asking to receive socket:\nfd: %d\n",sock->fd);
@@ -144,6 +160,13 @@ void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t l
   assert(data_in->len == 0);
   data_in->data = data;
   data_in->len = len;
+}
+
+//It doesn't remove the timeout. If present, you need to cancel it mannually.
+void sparrow_cancel_recv( sparrow_t * sp, sparrow_socket_t * sock) {
+  data_in_t *data_in = &(sock->data_in);
+  assert(data_in->len != 0);
+  data_in->len = 0;
 }
 
 void * sparrow_socket_data_in(sparrow_socket_t *sock) {

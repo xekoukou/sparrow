@@ -36,6 +36,7 @@ The problem is that two subgraphs depend on one another and is not specified in 
 
 If a subgraph depends on another's state, we need to specify it. We introduce a dependency arrow that guarantees that a specific subgraph requires another subgraph. And their order.
 
+
 IMPORTANT
 
 Definition : A subgraph that interacts with the higher graph through identity arrows is called a 
@@ -44,9 +45,24 @@ Definition : A subgraph that interacts with the higher graph through identity ar
 Initializations that only happen once should be abstracted away.
 
 
+-----------------------------------------------------------------
+
+We call an identity arrow a data dependency between the same node. Since the input and output node are the same , the communication does not happen.
+
+A subgraph does not interact with the state of its parent unless specified by an identity arrow.
+
+Explanation: We need to explicitly specify the state dependencies between subgraphs so as to permit their combosability/modularity.  ??
+It might not be necessary.
+||
+||
+||
+^ It is up to the application to seperate the state between the different subgraphs.
+
+
+
 ---------------------------------------------------------
 
-A simplex is a subgraph that has only one concurrent path and thus it does not require a label on its different concurrent paths to distinguish the messages it receives.
+A sequenced is a subgraph that has only one concurrent path and thus it does not require a label on its different concurrent paths to distinguish the messages it receives.
 
 We call a subgraph agnostic if it doesn't need to know the paths of the other subgraphs that are higher than it.
 
@@ -64,8 +80,98 @@ Theorem B does not permit combosability between specific subgraphs, thus it shou
 Theorem : An instant subgraph can only contain subgraphs that are instant.
 
 
+---------------------------------------------------------------------------------
+
+Persistence
+
+A protocol execution is called agent-consistent if the agent that interacts for a specific type of agent in the protocol is unique and takes part in all the interactions that affect him.
+
+1. A protocol is called multi party when multiple agents interact with each other.
+
+2. A tcp connection "guarantees" that the agents that interact are the same during a multi-party protocol. Thus it guarantees agent-consistency.
+
+A protocol execution is concurrent when multiple concurrent instances of it are processed at the same time.
+
+3. A tcp connection is rare resource.
+
+4. There exist protocols that can span long periods of time or cannot guarantee s specific time duration. We call those protocols time-costly and time-unreliable.
+
+Theorem A time-costly and time-unreliable protocols require a high number of connections to guarantee agent-consistency for concurrent protocol execution, thus are impossible since tcp connections are rare.
+
+Most sessions need to have a specific  session id so as to be persisted across a multiparty protocol.
+
+Other more common protocols do not require persistence.
+
+-------
+
+Global unique id.
+
+Agent-consistency can be easily provided if we are able to produce a global unique id. The easiest way to produce such an id is if we allow a single
+peer to produce it and sign it.
+
+1. There are some problems though. That peer can potentially malevolently break agent consistency with other session that he signed himself.
+
+2. Using a (decentralized(zookeeper) or not) trusted authority to provide the unique id creates centralization points (if we have many trusted authorities, then we have a partially decentralized scheme).
+
+
+-------
+
+Local unique id.
+
+Agent-consistency can be achieved with the creation of a local unique id.
+
+
+If we have multiplte concurrent paths, the local unique id solution encounters the same problem as the global unique id produced from a single peer.
+
+Consider this example.
+
+a----->d-------e------>c
+a----->b------>c=======c
+
+The only common between e and c is the local unique id that is produced by a and sent to d and b.
+
+------------------
+
+Persistence
+
+A. We call a protocol agent-static if all the agents that are to take part in it are known in advance.
+
+Theorem A A non concurrent protocol can guarantee agent-consistency with the creation of local unique ids.
+
+proof: The unique id is created by an agent, then propagated by the other agents and sent to the same agent to continue the protocol. 
+None of the other agents is able to defraud the local id. The only thing that could happen is the failure of the protocol.
+
+Theorem B An agent-static protocol can guarantee agent-consistency with an initialization phase that produces a unique id.
+
+Theorem C
+
+
+--------
+
+Non-concurrent protocol:
+
+Using sha2 or any data structure whose values are sparse in a DOMAIN, we can guarantee that one does not find a specific value that is used by another session.
+Thus allowing only the hijuck of session ids that are already known to an agent.
+
+example. If agent A has two sessions with agent B, he could replace the id of session 1 with the id of the other and agent B wouldn't be able to notice.
+
+--------------------------------
+--------------------------------
+
+Persistence
+
+
+We use a session cookie that is signed by all participants in a dynamic fashion as soon as they are picked. Each participant then creates private cookie ids with the participants he is to talk to.
 
 
 
 
+----------------------
+maximum limits
 
+64 concurrent paths (1 byte encoding).
+16 subgraph levels (2 64bit numbers).
+
+
+
+To find all timeouts that have expired we need a trie.

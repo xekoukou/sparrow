@@ -38,11 +38,17 @@ TODO. Sparrow does not buffer data. The application needs to do that itself. The
 // #include "sparrow_multiplexer.h"
 
 struct sparrow_multiplexer_t {
-  int interleaved; //Boolean indicating whether we have a single sequence of communication or multiple.
+  int sequenced; //Boolean indicating whether we have a single sequence of communication or multiple.
+  int allInOneGo;  //All-in-one-go multiplexers are agnostic. IMPORTANT : One step before the subgraph starts, all other paths are
+  // suspended till this subgraph finishes. This way, we do not require a signal to be transmitted to initiate the allinonego subgraph, 
+  // allowing our library to be used to implement all types of protocols. (that do not have that signal).
+  int agnostic; // It requires allInOneGo. It puts the continuation state inside the data.
   //We need to be able to represent the graph of interactions that this multiplexer represents as well as the position that it currently is.
   //We also need to have a way that other multiplexers can make requests to this multiplexer without knowing whether it is the multiplexer or the sparrow buffer. Timeouts need to be given to the multiplexer that made them so as to handle them as they see fit.
   //That could produce a hierarchy of timeouts.
+  int persistent; //Needed for multi-party protocols to guarantee agent-consistency.
 };
+
 
 
 
@@ -409,7 +415,12 @@ void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t *sock, int64_t 
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
 
+//It doesn't remove the timeout. If present, you need to cancel it mannually.
+void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock);
+
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);
+
+void sparrow_cancel_recv( sparrow_t * sp, sparrow_socket_t * sock);
 
 void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock);
 
@@ -631,6 +642,22 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
 }
 
+//It doesn't remove the timeout. If present, you need to cancel it mannually.
+void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock) {
+  data_out_t *data_out = &(sock->data_out);
+  assert(data_out->len != 0);
+  data_out->len = 0;
+
+  struct epoll_event pevent;
+  pevent.data.fd = sock->fd;
+  pevent.events = EPOLLIN;
+  int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
+  if (rc == -1) {
+    perror(" epoll_ctl failed to modify a socket to epoll");
+    exit(-1);
+  }
+}
+
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t len) {
 
   Dprintf("Asking to receive socket:\nfd: %d\n",sock->fd);
@@ -638,6 +665,13 @@ void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t l
   assert(data_in->len == 0);
   data_in->data = data;
   data_in->len = len;
+}
+
+//It doesn't remove the timeout. If present, you need to cancel it mannually.
+void sparrow_cancel_recv( sparrow_t * sp, sparrow_socket_t * sock) {
+  data_in_t *data_in = &(sock->data_in);
+  assert(data_in->len != 0);
+  data_in->len = 0;
 }
 
 void * sparrow_socket_data_in(sparrow_socket_t *sock) {
