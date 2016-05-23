@@ -42,10 +42,8 @@ typedef struct data_in_t data_in_t;
 struct sparrow_socket_t {
   int listening; //BOOL
   int fd;
-  int64_t expiry;
   data_out_t data_out;
   data_in_t data_in;
-  RB_ENTRY (sparrow_socket_t) to_field;
   RB_ENTRY (sparrow_socket_t) fd_field;
 };
 
@@ -57,17 +55,7 @@ int cmp_fds(const void * sock1, const void * sock2) {
   return (s1->fd > s2->fd) - (s1->fd < s2->fd);
 }
 
-int cmp_tos(const void * sock1, const void * sock2) {
-  const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
-  const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
-  return (s1->expiry > s2->expiry) - (s1->expiry < s2->expiry);
-}
-
-
-RB_HEAD (to_rb_t, sparrow_socket_t);
 RB_HEAD (fd_rb_t, sparrow_socket_t);
-
-RB_GENERATE (to_rb_t, sparrow_socket_t, to_field,cmp_tos);
 RB_GENERATE (fd_rb_t, sparrow_socket_t, fd_field, cmp_fds);
 
 
@@ -77,21 +65,12 @@ struct sparrow_t {
   int events_len;
   struct epoll_event events [MAX_EVENTS];
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
-  struct to_rb_t to_rb_socks; // A tree container of sockets ordered by the expiry.
-  size_t already_expired;
+  int64_t timeout;
 };
 
 //The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly.
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t expiry) {
-
-  if(sock->expiry > 0) {
-    RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-  }
-  sock->expiry = expiry;
-  if(expiry > 0) {
-    RB_INSERT(to_rb_t, &(sp->to_rb_socks), sock);
-  }
-
+void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout) {
+  sp->timeout = timeout;
 }
 
 
@@ -137,7 +116,6 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
 }
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock) {
   data_out_t *data_out = &(sock->data_out);
   assert(data_out->len != 0);
@@ -162,7 +140,6 @@ void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t l
   data_in->len = len;
 }
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_recv( sparrow_t * sp, sparrow_socket_t * sock) {
   data_in_t *data_in = &(sock->data_in);
   assert(data_in->len != 0);
@@ -191,7 +168,7 @@ sparrow_t * sparrow_new(void) {
   sp->fd = fd;
   sp->events_len = 0;
   RB_INIT(&(sp->fd_rb_socks));
-  RB_INIT(&(sp->to_rb_socks));
+  sp->timeout = -1;
   return sp;
 }
 
@@ -322,7 +299,6 @@ void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
   close(sock->fd);
 //  assert(sock->data_in.len == 0);
   RB_REMOVE(fd_rb_t, &(sp->fd_rb_socks), sock);
-  RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
   free(sock);
 }
 
@@ -348,50 +324,17 @@ sparrow_socket_t * sparrow_socket_accept(sparrow_t * sp, sparrow_socket_t * lsoc
 
 
 
-        //Internal use only
-int sparrow_handle_expired(sparrow_t * sp, sparrow_event_t *spev, int64_t *timeout){
-  sparrow_socket_t * sock = RB_MIN(to_rb_t, &(sp->to_rb_socks));
-  if(sp->already_expired > 0) {
-    RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-    sp->already_expired--;
-    spev->sock = sock;
-    spev->event += 8;
-    return 1;
-  }
-  if(sock !=NULL) {
-    int64_t time = now();
-    sparrow_socket_t * iter = sock;
-    while ((iter != NULL) && (iter->expiry - time < 0 )) {
-      sp->already_expired++;
-      iter = RB_NEXT(to_rb_t, &(sp->to_rb_socks), iter);
-    }
-    if(sp->already_expired > 0) {
-      RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-      sp->already_expired--;
-      spev->sock = sock;
-      spev->event += 8;
-      return 1;
-    }
-    *timeout = sock->expiry - time;
-  } else {
-    *timeout = -1;
-  }
-  return 0;
-}
-
-
 //Internal
 //Requires an array of MAX_EVENT units.
 int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   spev->event = 0;
-  int64_t timeout;
-
-  if(sparrow_handle_expired(sp, spev, &timeout)) {
-    return 0;
-  }
 
   if(sp->events_len == 0) {
-    sp->events_len = epoll_wait(sp->fd, sp->events, MAX_EVENTS, timeout);
+    sp->events_len = epoll_wait(sp->fd, sp->events, MAX_EVENTS, sp->timeout);
+    if(sp->events_len == 0) {
+      spev->event = 32;
+      return 0;
+    }
     sp->event_cur = 0;
   }
   int i;

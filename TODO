@@ -172,6 +172,45 @@ maximum limits
 64 concurrent paths (1 byte encoding).
 16 subgraph levels (2 64bit numbers).
 
+-------------------------------------------------------
+
+The conditional problem
+
+
+In order to set timeouts so as to express failure, we need to be able to expect a specific action.
+
+If our protocol has conditional protocol paths, then the absense of a specific packet ariving at a specific path does not consitute a failure if a packet arrived at a different conditional path. We thus need to set a global timeout on the conditional itself.
+
+Or we can hide the conditional.
+
+For two agents protocols , conditionals do not pose a problem because we can hide the conditional, we can have a global timeout because we are certain that a packet should arrive at the second agent after a period of time.
+
+
+n-agent protocols with n > 2 have the above problem.  CHECK the below solution.
 
 
 To find all timeouts that have expired we need a trie.
+
+-------------------------------------------------------------------
+
+
+Failure and timeouts.
+
+A failure can only happen at a specific edge. It can be detected by the transmitter node or the receiver node. Timeouts are used to detect those failures.
+
+a ----> b ( b cannot know if a knows of the failure, so b needs to tell a of the failure. Then b waits for a response a second time. If that fails too, b can handle the problem without coordination with a.) Thus all timeouts are only required to be handled at the receiving end.
+
+-------------------------------------------------------------------
+
+The conditional solution. The receiving branch needs to verify to the transmitter that it got the msg.
+
+a ------> b -> a -> b ----> c ----> d ----> e
+          |         |
+          -----------
+
+conditionals do not have timeouts.
+
+
+FAILURES are globally known, thus parts of our protocol might run concurrently and inconsistently.
+
+Introducing a single node that takes inputs from both parts of the protocol is a good way to verify the protocol till a specific point.

@@ -221,7 +221,7 @@ int main(void) {
 
 ### A Timeout Example
 
-Everything looks great till now, but reality is different than the constructs we use to have in our heads. We might expect a msg to come but that msg might never come. We need to be able to cancel our order to receive or send a msg. The way we detect failures is by waiting for a period of time before we give up. That is the meaning of setting a timeout. Sparrow only allows a single timeout per socket, thus we need to update our timeout as we give a new receive or send command, or as soon as the timeout expires and there are pending requests. Keep in mind that we can concurrently have a single receive and a single send request at the same time.
+Everything looks great till now, but reality is different than the constructs we use to have in our heads. We might expect a msg to come but that msg might never come. We need to be able to cancel our order to receive or send a msg. The way we detect failures is by waiting for a period of time before we give up. That is the meaning of setting a timeout.
 
 Sparrow requires the precise time that a request will expire. To find the current time, we call the 'now' function.
 
@@ -238,12 +238,12 @@ int main(void) {
 
   if(spev.event & 16) {
     char *data = malloc(50);
-    sparrow_socket_set_timeout(sp, spev.sock, now() + 5000);
+    sparrow_socket_set_timeout(sp, 5000);
     sparrow_recv(sp, spev.sock, data,50);
   }
 
   sparrow_wait(sp,&spev);
-  if(spev.event & 8) {
+  if(spev.event & 32) {
     printf("Recv timeout expired\n");
     return -1;
   }
@@ -411,11 +411,10 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 
 void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev);
 
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t *sock, int64_t expiry);
+void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout);
 
-int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
+int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, int64_t timeout, sparrow_event_t * spev);
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock);
 
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);
@@ -513,11 +512,9 @@ The socket needs to know
 
 1. if it is listening for connections or not,
 2. its file descriptor obviously as the fd is used to perform system calls to the operating system,
-3. an expiration time that represents the time till we wish to wait to receive or send data. 
+3. an expiration time that represents the time till we wish to wait for the data to be sent.
 
-The socket will also contain pointers to the buffers and two fields that are used to order all the sockets according to the file descriptor and the expiry time. We will use those orderings to retrieve the apropriate socket when a new event occurs or a timeout has expired.
-
-It is important to note that we only use one expiry time for a single socket. It is up to the higher level abstraction (serializer/multiplexer) to update this expiry time for the next event it wants to track for that socket.
+The socket will also contain pointers to the buffers and one fields that are used to order all the sockets according to the file descriptor. We will use this ordering to retrieve the apropriate socket when a new event occurs.
 
 ```c sparrow.c.dna
 function sparrow_socket_definition() {
@@ -525,11 +522,11 @@ function sparrow_socket_definition() {
 struct sparrow_socket_t {
   int listening; //BOOL
   int fd;
-  int64_t expiry;
+  int64_t out_expiry;
   data_out_t data_out;
   data_in_t data_in;
-  RB_ENTRY (sparrow_socket_t) to_field;
   RB_ENTRY (sparrow_socket_t) fd_field;
+  RB_ENTRY (sparrow_socket_t) ot_field;
 };
 
 typedef struct sparrow_socket_t sparrow_socket_t;
@@ -549,8 +546,9 @@ struct sparrow_t {
   int events_len;
   struct epoll_event events [MAX_EVENTS];
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
-  struct to_rb_t to_rb_socks; // A tree container of sockets ordered by the expiry.
-  size_t already_expired;
+  struct ot_rb_t ot_rb_socks; // A tree container of sockets ordered by the expiration if their outputs.
+  int64_t default_ot;
+  int64_t timeout;
 };
 ./!dots(-1)
 }
@@ -570,19 +568,17 @@ int cmp_fds(const void * sock1, const void * sock2) {
   return (s1->fd > s2->fd) - (s1->fd < s2->fd);
 }
 
-int cmp_tos(const void * sock1, const void * sock2) {
-  const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
-  const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
-  return (s1->expiry > s2->expiry) - (s1->expiry < s2->expiry);
-}
-
-
-RB_HEAD (to_rb_t, sparrow_socket_t);
 RB_HEAD (fd_rb_t, sparrow_socket_t);
-
-RB_GENERATE (to_rb_t, sparrow_socket_t, to_field,cmp_tos);
 RB_GENERATE (fd_rb_t, sparrow_socket_t, fd_field, cmp_fds);
 
+int cmp_ots(const void * sock1, const void * sock2) {
+  const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
+  const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
+  return (s1->fd > s2->fd) - (s1->fd < s2->fd);
+}
+
+RB_HEAD (ot_rb_t, sparrow_socket_t);
+RB_GENERATE (ot_rb_t, sparrow_socket_t, ot_field, cmp_ots);
 
 ./!dots(-1)
 }
@@ -600,7 +596,7 @@ data to be sent received or the opposite that we have asked for data to be recei
 function sparrow_send_receive() {
 ./!dots(1)
 
-int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
+int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, int64_t timeout, sparrow_event_t * spev) {
   assert(data!=NULL);
   spev->sock = sock;
   spev->event = 0;
@@ -633,7 +629,14 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
       perror(" epoll_ctl failed to modify a socket to epoll");
       exit(-1);
     }
+
+    if(timeout <= 0) {
+      timeout = sp->default_ot;
+    }
+    sock->out_expiry = now() + timeout;
+    
     return 0;
+
   } else {
     data_out->len = 0;
     spev->event = 2;
@@ -642,7 +645,6 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
 }
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock) {
   data_out_t *data_out = &(sock->data_out);
   assert(data_out->len != 0);
@@ -667,7 +669,6 @@ void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t l
   data_in->len = len;
 }
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_recv( sparrow_t * sp, sparrow_socket_t * sock) {
   data_in_t *data_in = &(sock->data_in);
   assert(data_in->len != 0);
@@ -690,23 +691,15 @@ void * sparrow_socket_data_out(sparrow_socket_t *sock) {
 
 ### Set timeout {#Set_timeout}
 
-This function simply sets the expiry time for the socket (now() + timeout).
+This function simply sets the timeout for sparrow. It is up to the higher level to update this timeout if more than one timeout events need to be handled.
 
 ```c sparrow.c.dna
 function set_timeout_function() {
 ./!dots(1)
 
 //The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly.
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t expiry) {
-
-  if(sock->expiry > 0) {
-    RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-  }
-  sock->expiry = expiry;
-  if(expiry > 0) {
-    RB_INSERT(to_rb_t, &(sp->to_rb_socks), sock);
-  }
-
+void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout) {
+  sp->timeout = timeout;
 }
 
 ./!dots(-1)
@@ -736,7 +729,8 @@ sparrow_t * sparrow_new(void) {
   sp->fd = fd;
   sp->events_len = 0;
   RB_INIT(&(sp->fd_rb_socks));
-  RB_INIT(&(sp->to_rb_socks));
+  RB_INIT(&(sp->ot_rb_socks));
+  sp->timeout = -1;
   return sp;
 }
 
@@ -745,6 +739,7 @@ sparrow_t * sparrow_new(void) {
 sparrow_socket_t * sparrow_socket_new(int fd) {
   sparrow_socket_t * sock = calloc(1,sizeof(sparrow_socket_t));
   sock->fd = fd;
+  sock->out_expiry = -1;
   return sock;
 }
 
@@ -867,7 +862,9 @@ void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
   close(sock->fd);
 //  assert(sock->data_in.len == 0);
   RB_REMOVE(fd_rb_t, &(sp->fd_rb_socks), sock);
-  RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
+  if(sock->out_expiry > -1) {
+    RB_REMOVE(ot_rb_t, &(sp->ot_rb_socks), sock);
+  }
   free(sock);
 }
 
@@ -896,45 +893,13 @@ sparrow_socket_t * sparrow_socket_accept(sparrow_t * sp, sparrow_socket_t * lsoc
 }
 ```
 
-### The Sparrow_handle_expired function {#Sparrow_handle_expired}
-
-This function simply checks all the sockets whose action has expired and create an expiration event that it then passes to sparrow_wait.
-Iif more than one sockets have expired, it memorizes their number. In the next call to the function, if it has already found that some sockets have expired, it returns one of them without checking for new expirations.
-
+### Handling Output Timeout Errors
 
 ```c sparrow.c.dna
-function sparrow_handle_function() {
+function sparrow_handle_ot_errors {
 ./!dots(1)
+void sparrow_handle_ot_errors {
 
-        //Internal use only
-int sparrow_handle_expired(sparrow_t * sp, sparrow_event_t *spev, int64_t *timeout){
-  sparrow_socket_t * sock = RB_MIN(to_rb_t, &(sp->to_rb_socks));
-  if(sp->already_expired > 0) {
-    RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-    sp->already_expired--;
-    spev->sock = sock;
-    spev->event += 8;
-    return 1;
-  }
-  if(sock !=NULL) {
-    int64_t time = now();
-    sparrow_socket_t * iter = sock;
-    while ((iter != NULL) && (iter->expiry - time < 0 )) {
-      sp->already_expired++;
-      iter = RB_NEXT(to_rb_t, &(sp->to_rb_socks), iter);
-    }
-    if(sp->already_expired > 0) {
-      RB_REMOVE(to_rb_t, &(sp->to_rb_socks), sock);
-      sp->already_expired--;
-      spev->sock = sock;
-      spev->event += 8;
-      return 1;
-    }
-    *timeout = sock->expiry - time;
-  } else {
-    *timeout = -1;
-  }
-  return 0;
 }
 
 ./!dots(-1)
@@ -965,14 +930,13 @@ function sparrow_wait_function() {
 //Requires an array of MAX_EVENT units.
 int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   spev->event = 0;
-  int64_t timeout;
-
-  if(sparrow_handle_expired(sp, spev, &timeout)) {
-    return 0;
-  }
 
   if(sp->events_len == 0) {
-    sp->events_len = epoll_wait(sp->fd, sp->events, MAX_EVENTS, timeout);
+    sp->events_len = epoll_wait(sp->fd, sp->events, MAX_EVENTS, sp->timeout);
+    if(sp->events_len == 0) {
+      spev->event = 32;
+      return 0;
+    }
     sp->event_cur = 0;
   }
   int i;
@@ -1109,9 +1073,8 @@ This is the main file in which all code is inserted. What is left writing here a
 #define MAX_EVENTS 32
 // #define MAX_DELAY 40 //in milliseconds. We wait that much before sending new data if we do not have much data.
 // #define MAX_BUFF (1500 - 68) // The ethernet MTU is 1500 bytes minus the IP/TCP headers.
-#define MAX_SEND_QUEUE 10
-#define MAX_INPUT_DELAY 20
-
+// #define MAX_SEND_QUEUE 10
+// #define MAX_INPUT_DELAY 20
 
 ./!dots(-1)
 data_buffer_definitions(); 
@@ -1128,7 +1091,7 @@ sparrow_send_receive();
 
 change_of_TCP_state_functions();
 
-sparrow_handle_function();
+sparrow_handle_ot_errors(); 
 
 sparrow_wait_function();
 

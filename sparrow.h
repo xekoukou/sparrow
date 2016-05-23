@@ -29,11 +29,10 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 
 void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev);
 
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t *sock, int64_t expiry);
+void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout);
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock);
 
 void sparrow_recv( sparrow_t * sp, sparrow_socket_t *sock, void *data, size_t len);

@@ -22,10 +22,8 @@ function sparrow_socket_definition() {
 struct sparrow_socket_t {
   int listening; //BOOL
   int fd;
-  int64_t expiry;
   data_out_t data_out;
   data_in_t data_in;
-  RB_ENTRY (sparrow_socket_t) to_field;
   RB_ENTRY (sparrow_socket_t) fd_field;
 };
 
@@ -40,8 +38,7 @@ struct sparrow_t {
   int events_len;
   struct epoll_event events [MAX_EVENTS];
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
-  struct to_rb_t to_rb_socks; // A tree container of sockets ordered by the expiry.
-  size_t already_expired;
+  int64_t timeout;
 };
 ./!dots(-1)
 }
@@ -54,17 +51,7 @@ int cmp_fds(const void * sock1, const void * sock2) {
   return (s1-%gtfd %gt s2-%gtfd) - (s1-%gtfd %lt s2-%gtfd);
 }
 
-int cmp_tos(const void * sock1, const void * sock2) {
-  const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
-  const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
-  return (s1-%gtexpiry %gt s2-%gtexpiry) - (s1-%gtexpiry %lt s2-%gtexpiry);
-}
-
-
-RB_HEAD (to_rb_t, sparrow_socket_t);
 RB_HEAD (fd_rb_t, sparrow_socket_t);
-
-RB_GENERATE (to_rb_t, sparrow_socket_t, to_field,cmp_tos);
 RB_GENERATE (fd_rb_t, sparrow_socket_t, fd_field, cmp_fds);
 
 
@@ -115,7 +102,6 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
 }
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock) {
   data_out_t *data_out = &(sock-%gtdata_out);
   assert(data_out-%gtlen != 0);
@@ -140,7 +126,6 @@ void sparrow_recv( sparrow_t * sp, sparrow_socket_t * sock, void *data, size_t l
   data_in-%gtlen = len;
 }
 
-//It doesn't remove the timeout. If present, you need to cancel it mannually.
 void sparrow_cancel_recv( sparrow_t * sp, sparrow_socket_t * sock) {
   data_in_t *data_in = &(sock-%gtdata_in);
   assert(data_in-%gtlen != 0);
@@ -163,16 +148,8 @@ function set_timeout_function() {
 ./!dots(1)
 
 //The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly.
-void sparrow_socket_set_timeout(sparrow_t * sp, sparrow_socket_t * sock, int64_t expiry) {
-
-  if(sock-%gtexpiry %gt 0) {
-    RB_REMOVE(to_rb_t, &(sp-%gtto_rb_socks), sock);
-  }
-  sock-%gtexpiry = expiry;
-  if(expiry %gt 0) {
-    RB_INSERT(to_rb_t, &(sp-%gtto_rb_socks), sock);
-  }
-
+void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout) {
+  sp-%gttimeout = timeout;
 }
 
 ./!dots(-1)
@@ -191,7 +168,7 @@ sparrow_t * sparrow_new(void) {
   sp-%gtfd = fd;
   sp-%gtevents_len = 0;
   RB_INIT(&(sp-%gtfd_rb_socks));
-  RB_INIT(&(sp-%gtto_rb_socks));
+  sp-%gttimeout = -1;
   return sp;
 }
 
@@ -322,7 +299,6 @@ void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
   close(sock-%gtfd);
 //  assert(sock-%gtdata_in.len == 0);
   RB_REMOVE(fd_rb_t, &(sp-%gtfd_rb_socks), sock);
-  RB_REMOVE(to_rb_t, &(sp-%gtto_rb_socks), sock);
   free(sock);
 }
 
@@ -349,42 +325,6 @@ sparrow_socket_t * sparrow_socket_accept(sparrow_t * sp, sparrow_socket_t * lsoc
 
 ./!dots(-1)
 }
-function sparrow_handle_function() {
-./!dots(1)
-
-        //Internal use only
-int sparrow_handle_expired(sparrow_t * sp, sparrow_event_t *spev, int64_t *timeout){
-  sparrow_socket_t * sock = RB_MIN(to_rb_t, &(sp-%gtto_rb_socks));
-  if(sp-%gtalready_expired %gt 0) {
-    RB_REMOVE(to_rb_t, &(sp-%gtto_rb_socks), sock);
-    sp-%gtalready_expired--;
-    spev-%gtsock = sock;
-    spev-%gtevent += 8;
-    return 1;
-  }
-  if(sock !=NULL) {
-    int64_t time = now();
-    sparrow_socket_t * iter = sock;
-    while ((iter != NULL) && (iter-%gtexpiry - time %lt 0 )) {
-      sp-%gtalready_expired++;
-      iter = RB_NEXT(to_rb_t, &(sp-%gtto_rb_socks), iter);
-    }
-    if(sp-%gtalready_expired %gt 0) {
-      RB_REMOVE(to_rb_t, &(sp-%gtto_rb_socks), sock);
-      sp-%gtalready_expired--;
-      spev-%gtsock = sock;
-      spev-%gtevent += 8;
-      return 1;
-    }
-    *timeout = sock-%gtexpiry - time;
-  } else {
-    *timeout = -1;
-  }
-  return 0;
-}
-
-./!dots(-1)
-}
 function sparrow_wait_function() {
 ./!dots(1)
 
@@ -392,14 +332,13 @@ function sparrow_wait_function() {
 //Requires an array of MAX_EVENT units.
 int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   spev-%gtevent = 0;
-  int64_t timeout;
-
-  if(sparrow_handle_expired(sp, spev, &timeout)) {
-    return 0;
-  }
 
   if(sp-%gtevents_len == 0) {
-    sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, timeout);
+    sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, sp-%gttimeout);
+    if(sp-%gtevents_len == 0) {
+      spev-%gtevent = 32;
+      return 0;
+    }
     sp-%gtevent_cur = 0;
   }
   int i;
@@ -547,8 +486,6 @@ set_timeout_function();
 sparrow_send_receive();
 
 change_of_TCP_state_functions();
-
-sparrow_handle_function();
 
 sparrow_wait_function();
 

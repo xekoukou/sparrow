@@ -10,12 +10,12 @@ int main(void) {
 
   if(spev.event & 16) {
     char *data = malloc(50);
-    sparrow_socket_set_timeout(sp, spev.sock, now() + 5000);
+    sparrow_socket_set_timeout(sp, 5000);
     sparrow_recv(sp, spev.sock, data,50);
   }
 
   sparrow_wait(sp,&spev);
-  if(spev.event & 8) {
+  if(spev.event & 32) {
     printf("Recv timeout expired\n");
     return -1;
   }
