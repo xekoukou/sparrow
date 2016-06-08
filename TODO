@@ -214,3 +214,66 @@ conditionals do not have timeouts.
 FAILURES are globally known, thus parts of our protocol might run concurrently and inconsistently.
 
 Introducing a single node that takes inputs from both parts of the protocol is a good way to verify the protocol till a specific point.
+
+
+
+-------------------------------------------------------------------------
+
+Output timeouts and errors in general -- reconnects and a secondary layer that only gives a send and receive api.
+ |
+ |
+ |
+ |
+buffer allocation
+ |
+ |
+ |
+ |
+ |
+ |
+ |
+timeout handling
+ |
+ |
+ multiplexer/ persistence handling ???
+
+
+
+
+
+Important 
+
+Msg delimination is equivallent to keeping state of the data received. Assuming that all data sent to a higher level are always complete, then we do not need msg delimination all the time, only if there is no previous protocol that guarantees the completeness of the msg.
+
+examples: 1) TLS minght guarantee that all msgs sent will be sent to the application complete.
+          2) The TCP layer does not guarantee this, so a msg delimination is required between our protocol and the TCP layer so as to hide the bad bahahior of the TCP layer.
+          
+
+---------------------------------------------
+
+Reconnecting the socket should be handled by the session manager. This is necessary because it also needs to handle the saving of the state to hard disk anyway.
+
+     B               A                 B                  A
+in ==== out ---> in == out -----> in ==== out -----> in === out ---->
+
+                 t1               t2                 t3
+
+
+-------------------------------------------------
+
+aaaaaaaaaaaaaaaaaaaaaa     bbbbbbbbbbbbbbbbbbbbbb 
+                                      |      |     
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+                                                       |          |
+
+
+
+--------------------------------------------------
+
+Higher levels need to keep the list of sockets that are active, so as to only connect to the ones that are not active.
+
+
+------------------------------------------------------------
+
+TODO

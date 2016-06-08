@@ -21,7 +21,7 @@ struct sparrow_event_t {
 
 typedef struct sparrow_event_t sparrow_event_t;
 
-sparrow_t * sparrow_new(void);
+sparrow_t * sparrow_new(int64_t dtimeout);
 
 void sparrow_socket_bind(sparrow_t * sp, char * port);
 
@@ -43,9 +43,21 @@ void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock);
 
 void sparrow_close(sparrow_t ** sp);
 
+//Used to iterate over all sockets.
+sparrow_socket_t * sparrow_first(sparrow_t * sp);
+sparrow_socket_t * sparrow_next(sparrow_t * sp, sparrow_socket_t * sock);
+
+void sparrow_socket_set_parent(sparrow_socket_t * sock, void * parent);
+
+void * sparrow_socket_get_parent(sparrow_socket_t * sock);
+
 //?TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
 void * sparrow_socket_data_in(sparrow_socket_t *sock);
 void * sparrow_socket_data_out(sparrow_socket_t *sock);
 int64_t now(void);
+
+void * scalloc(size_t size);
+//TODO check for errors.
+void * srealloc(void * prev_pointer, size_t size);
 
 #endif

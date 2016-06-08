@@ -9,7 +9,8 @@ struct sparrow_multiplexer_t {
   //We need to be able to represent the graph of interactions that this multiplexer represents as well as the position that it currently is.
   //We also need to have a way that other multiplexers can make requests to this multiplexer without knowing whether it is the multiplexer or the sparrow buffer. Timeouts need to be given to the multiplexer that made them so as to handle them as they see fit.
   //That could produce a hierarchy of timeouts.
-  int persistent; //Needed for multi-party protocols to guarantee agent-consistency.
+  int multi_party_token_persistent; //Needed for multi-party protocols to guarantee agent-consistency.
+  int persistent;//TODO Clarification: We have a multi-party token that is kept while connections might close and we have a different concept in which we save the current state into HDrive when a timeout expires. The second case requires that we search for this token in the database when a new connection arrives.
 };
 
 

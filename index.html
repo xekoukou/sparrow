@@ -46,7 +46,8 @@ struct sparrow_multiplexer_t {
   //We need to be able to represent the graph of interactions that this multiplexer represents as well as the position that it currently is.
   //We also need to have a way that other multiplexers can make requests to this multiplexer without knowing whether it is the multiplexer or the sparrow buffer. Timeouts need to be given to the multiplexer that made them so as to handle them as they see fit.
   //That could produce a hierarchy of timeouts.
-  int persistent; //Needed for multi-party protocols to guarantee agent-consistency.
+  int multi_party_token_persistent; //Needed for multi-party protocols to guarantee agent-consistency.
+  int persistent;//TODO Clarification: We have a multi-party token that is kept while connections might close and we have a different concept in which we save the current state into HDrive when a timeout expires. The second case requires that we search for this token in the database when a new connection arrives.
 };
 
 
@@ -73,72 +74,701 @@ The Maximum number of concurrent receive requests / send request are known befor
 
 //TODO We need to know the level of the multiplexer that an input or output is for.
 
-```c sparrow_buff.c
+```c sparrow_buffer.c
 #include "sparrow.h"
 //#include "sparrow_buff.h"
 //#include "sparrow_multiplexer.h"
+#include%ltstdlib.h%gt
+#include%ltstdio.h%gt
+#include%ltstring.h%gt
+#include%ltassert.h%gt
 #include "tree.h"
 
 
-struct buffer_t {
+
+
+//TODO We need an initialization function for the buffer socket. It is performed if there are stored session in hd or if a new session is requested from the network or initiated by us.
+
+struct buffer_list_t {
   void * data;
-  int64_t len;
-  struct buffer_t * next;
+  int should_be_freed;
+  struct buffer_list_t * next;
 };
 
-typedef struct buffer_t buffer_t;
+typedef struct buffer_list_t buffer_list_t;
 
 
-struct input_timebuffer_t {
-  int64_t expiry;
-  int64_t cur[2]; 
-  buffer_t * buffer;
-  RB_ENTRY (input_timebuffer_t) field;
+struct buffer_in_t {
+  buffer_list_t * list;
+  buffer_list_t * last_item;
+  size_t total_length_received;
+  char * prev_data;  //Pointers to buffer_one, buffer_two and big_buffer.
+  int prev_data_tag;  //0 1 or 2 
+  char * new_data;   //
+  int new_data_tag;
+  size_t cur_length;
+  size_t residue_start;
+  size_t residue_length;
+  size_t new_data_len;
+  char * default_memory;     
 };
 
-typedef struct input_timebuffer_t input_timebuffer_t;
-
-struct output_timebuffer_t {
-  int64_t expiry;
-  buffer_t  * buffer;
-  RB_ENTRY (output_timebuffer_t) field;
+struct buffer_out_t {
+  size_t len;
+  char * allocated_memory;
+  char * default_memory;
 };
 
-typedef struct output_timebuffer_t output_timebuffer_t;
+typedef struct buffer_in_t buffer_in_t;
+typedef struct buffer_out_t buffer_out_t;
 
-int cmp_ot_timebuf(const void * ti1, const void * ti2) {
-  const output_timebuffer_t * t1 = (const output_timebuffer_t *) ti1;
-  const output_timebuffer_t * t2 = (const output_timebuffer_t *) ti2;
-  return (t1-%gtexpiry %gt t2-%gtexpiry) - (t1-%gtexpiry %lt t2-%gtexpiry);
+struct out_request_t {
+  char * data;
+  size_t len;
+};
+
+typedef struct out_request_t out_request_t;
+
+struct oqueue_t {
+  out_request_t * requests;
+  int len;
+  int first_free_pos;
+  int last_free_pos;
+  int pos_filled;
+};
+
+typedef struct oqueue_t oqueue_t;
+
+void oqueue_new(oqueue_t * oq) {
+ oq-%gtrequests = scalloc(sizeof(out_request_t) * 10);
+ oq-%gtlen = 10;
+ oq-%gtfirst_free_pos = 0;
+ oq-%gtlast_free_pos = 9;
 }
 
-int cmp_it_timebuf(const void * ti1, const void * ti2) {
-  const input_timebuffer_t * t1 = (const input_timebuffer_t *) ti1;
-  const input_timebuffer_t * t2 = (const input_timebuffer_t *) ti2;
-  return (t1-%gtexpiry %gt t2-%gtexpiry) - (t1-%gtexpiry %lt t2-%gtexpiry);
+int oqueue_next(oqueue_t * oq, int i) {
+  if(oq-%gtlen == (i + 1)) {
+    return 0;
+  } else {
+    return i + 1;
+  }
 }
 
-RB_HEAD (it_rb_t, input_timebuffer_t);
-RB_HEAD (ot_rb_t, output_timebuffer_t);
+void oqueue_push_req(oqueue_t * oq, out_request_t * oreq) {
+  //Increase the queue if almost full.
+  if(oq-%gtfirst_free_pos == oq-%gtlast_free_pos) {
+    out_request_t * reqs = scalloc(sizeof(out_request_t) * oq-%gtlen * 10);
+    int i;
+    int j = 0;
+    for(i = oq-%gtlast_free_pos + 1; i != oq-%gtlast_free_pos; i = oqueue_next(oq,i)) {
+      memcpy(&(reqs[j]), &(oq-%gtrequests[i]),sizeof(out_request_t));
+      j++;
+    }
+    free(oq-%gtrequests);
+    oq-%gtrequests = reqs;
+    oq-%gtfirst_free_pos = oq-%gtpos_filled;
+    oq-%gtlast_free_pos = oq-%gtlen * 10 - 1;
+    oq-%gtlen = oq-%gtlen * 10;
+  }
 
-RB_GENERATE (it_rb_t, input_timebuffer_t, field, cmp_it_timebuf);
-RB_GENERATE (ot_rb_t, output_timebuffer_t, field, cmp_ot_timebuf);
+  memcpy(&(oq-%gtrequests[oq-%gtfirst_free_pos]), oreq, sizeof(out_request_t));
+  oq-%gtfirst_free_pos = oqueue_next(oq, oq-%gtfirst_free_pos);
+  oq-%gtpos_filled++;
+}
 
+void oqueue_del_oldest_req(oqueue_t * oq) {
 
-struct sparrow_buff_socket_t {
+  if(oq-%gtpos_filled %gt 0) {
+    int pos = oqueue_next(oq, oq-%gtlast_free_pos);
+    assert(pos != oq-%gtfirst_free_pos);
   
-  int fd;
-  struct it_rb_t it_rb; // A tree container of input_timebuffers.  
-  struct ot_rb_t ot_rb; // A tree container of input_timebuffers.
-  void * in_buffer[2];
-  void * out_buffer[2];
-//  input buffers
-//  freeable variable input buffers.
-//  output timeouts plus dynamic array of buffers
-//  freeable variable output buffers.
-  size_t buff_size;
+    oq-%gtlast_free_pos = pos;
+    oq-%gtpos_filled--;
+  
+     //Decrease the queue if almost empty.
+    if((oq-%gtlen %gt 10) && (oq-%gtpos_filled %lt (oq-%gtlen / 10))) {
+      out_request_t * reqs = scalloc(sizeof(out_request_t) * oq-%gtlen / 10);
+      int i;
+      int j = 0;
+      for(i = oq-%gtlast_free_pos + 1; i != oq-%gtlast_free_pos; i = oqueue_next(oq,i)) {
+        memcpy(&(reqs[j]), &(oq-%gtrequests[i]),sizeof(out_request_t));
+        j++;
+      }
+      free(oq-%gtrequests);
+      oq-%gtrequests = reqs;
+      oq-%gtfirst_free_pos = oq-%gtpos_filled;
+      oq-%gtlast_free_pos = (oq-%gtlen / 10) - 1;
+      oq-%gtlen = oq-%gtlen / 10;
+  
+    }
+  }
+
+}
+
+//You need to pop it if you use it. The memory is owned by the queue.
+out_request_t * oqueue_oldest_req(oqueue_t * oq) {
+  out_request_t * req = NULL;
+
+  if(oq-%gtpos_filled %gt 0) {
+    int pos = oqueue_next(oq, oq-%gtlast_free_pos);
+    assert(pos != oq-%gtfirst_free_pos);
+    req = &(oq-%gtrequests[pos]);
+  }
+
+  return req;
+}
+
+
+struct bsparrow_socket_t {
+  int64_t id;
+  int we_connected;
+  char * address;
+  char * port;
+  sparrow_socket_t * sock;
+  buffer_in_t buff_in;
+  buffer_out_t buff_out;
+  oqueue_t oq;
+  int operational;
+  int retries;
+  int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
+  int idle_input;  //If the socket is idle it is destroyed since there is no use of it.
+  int idle_output;
 };
 
+typedef struct bsparrow_socket_t bsparrow_socket_t;
+
+
+struct non_op_bsock_list_t {
+  bsparrow_socket_t * bsock;
+  struct non_op_bsock_list_t * next;
+};
+
+typedef struct non_op_bsock_list_t non_op_bsock_list_t;
+
+non_op_bsock_list_t * non_op_bsock_list_add(non_op_bsock_list_t * list, bsparrow_socket_t * bsock) {
+  assert(bsock-%gtoperational == 0);
+  non_op_bsock_list_t * item = scalloc(sizeof(non_op_bsock_list_t));
+  item-%gtbsock = bsock;
+
+  if(list != NULL) {
+    item-%gtnext = list-%gtnext;
+    list-%gtnext = item-%gtnext;
+    return list;
+  } else {
+    return item;
+  }
+}
+
+//Returns the list because we might remove the first element of the list.
+non_op_bsock_list_t * non_op_bsock_list_rem_next(non_op_bsock_list_t * list, non_op_bsock_list_t * prev_item) {
+  if(list == NULL) {
+    return NULL;
+  }
+
+  if(prev_item == NULL) {
+    non_op_bsock_list_t * next_item = list-%gtnext;
+    free(list);
+    return next_item;
+  }
+
+  non_op_bsock_list_t * next_item = prev_item-%gtnext;
+  if(next_item !=NULL) {
+    prev_item-%gtnext = next_item-%gtnext;
+    free(next_item);
+  }
+  return list;
+}
+
+struct bsparrow_event_t {
+  int event;
+  bsparrow_socket_t * bsock;
+  char * first_buffer;
+  size_t first_buffer_length;
+  buffer_list_t * list;
+  char * last_buffer;
+  size_t last_buffer_length;
+};
+
+typedef struct bsparrow_event_t bsparrow_event_t;
+
+struct bsparrow_event_list_t {
+  bsparrow_event_t * bspev;
+  struct bsparrow_event_list_t * next;
+};
+
+typedef struct bsparrow_event_list_t bsparrow_event_list_t;
+
+bsparrow_event_list_t * bsparrow_event_list_add(bsparrow_event_list_t * list, bsparrow_event_t * bspev) {
+  assert(bspev-%gtoperational == 0);
+  bsparrow_event_list_t * item = scalloc(sizeof(bsparrow_event_list_t));
+  item-%gtbspev = bspev;
+
+  if(list != NULL) {
+    item-%gtnext = list-%gtnext;
+    list-%gtnext = item-%gtnext;
+    return list;
+  } else {
+    return item;
+  }
+}
+
+//Returns the list because we might remove the first element of the list.
+bsparrow_event_list_t * bsparrow_event_list_rem_next(bsparrow_event_list_t * list, bsparrow_event_list_t * prev_item) {
+  if(list == NULL) {
+    return NULL;
+  }
+
+  if(prev_item == NULL) {
+    bsparrow_event_list_t * next_item = list-%gtnext;
+    free(list);
+    return next_item;
+  }
+
+  bsparrow_event_list_t * next_item = prev_item-%gtnext;
+  if(next_item !=NULL) {
+    prev_item-%gtnext = next_item-%gtnext;
+    free(next_item);
+  }
+  return list;
+}
+
+
+struct bsparrow_t {
+  sparrow_t * sp;
+  size_t buffer_size; // The maximum memomry of most of the objects * 2.
+  int default_max_retries;
+  non_op_bsock_list_t * non_op_list;
+  bsparrow_event_list_t ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
+  // to be handled by bsparrow_wait itself (rather than handled separately.)
+};
+
+typedef struct bsparrow_t bsparrow_t;
+
+
+//Internal use
+bsparrow_socket_t * bsparrow_socket_initialize_internal(bsparrow_t * bsp,sparrow_socket_t * sock, int64_t id, int we_connected, char * address, char * port) {
+  bsparrow_socket_t * bsock = scalloc(sizeof(bsparrow_socket_t));
+  bsock-%gtsock = sock;
+  if(sock != NULL) {
+    bsock-%gtoperational = 1;
+  } else {
+    //This can only happen when we connect, not when we accept a new connection.
+    assert(we_connected == 1);
+    bsock-%gtoperational = 0;
+    bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
+  }
+  bsock-%gtid = id;
+  bsock-%gtwe_connected = we_connected;
+  if(we_connected) {
+    bsock-%gtaddress = scalloc(strlen(address) + 1);
+    bsock-%gtport = scalloc(strlen(port) + 1);
+    strcpy(bsock-%gtaddress, address);
+    strcpy(bsock-%gtport, port);
+  }
+  sparrow_socket_set_parent(bsock-%gtsock, bsock);
+  bsock-%gtbuff_in.default_memory = scalloc(bsp-%gtbuffer_size);
+  bsock-%gtbuff_in.new_data = bsock-%gtbuff_in.default_memory;
+  bsock-%gtbuff_in.new_data_tag = 0;
+  bsock-%gtbuff_in.prev_data = bsock-%gtbuff_in.default_memory + bsp-%gtbuffer_size / 2;
+  bsock-%gtbuff_in.prev_data_tag = 1;
+  bsock-%gtbuff_in.cur_length = 0;
+  bsock-%gtbuff_in.residue_start = 0;
+  bsock-%gtbuff_in.residue_length = 0;
+  bsock-%gtbuff_in.list = NULL;
+  bsock-%gtbuff_in.total_length_received = 0;
+  bsock-%gtbuff_in.new_data_len = bsp-%gtbuffer_size / 2;
+
+  bsock-%gtbuff_in.new_data_len = bsp-%gtbuffer_size;
+  bsock-%gtbuff_out.allocated_memory = scalloc(bsp-%gtbuffer_size);
+  bsock-%gtbuff_out.default_memory = bsock-%gtbuff_out.allocated_memory;
+  bsock-%gtbuff_out.len = bsp-%gtbuffer_size;
+
+  bsock-%gtidle_input = 0;
+  bsock-%gtidle_output = 0;
+
+  oqueue_new(&(bsock-%gtoq));
+
+  return bsock;
+}
+
+bsparrow_socket_t * bsparrow_socket_connect(bsparrow_t * bsp, int64_t id, char * address, char * port) {
+  sparrow_socket_t * sock = sparrow_socket_connect(bsp-%gtsp, address, port);
+  return bsparrow_socket_initialize_internal(bsp, sock, id, 1, address, port); 
+}
+
+//Internal use only We need to pass it to the higher levels to be given an id.
+bsparrow_socket_t * bsparrow_socket_accept(bsparrow_t * bsp, sparrow_socket_t * sock) {
+  return bsparrow_socket_initialize_internal(bsp, sock, -1 , 0, NULL, NULL);
+}
+
+void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id) {
+  bsock-%gtid = id;
+}
+
+
+//Internal use only
+void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
+  if(bsock-%gtwe_connected) {
+    free(bsock-%gtaddress);
+    free(bsock-%gtport);
+  }
+  if(bsock-%gtoperational) {
+    sparrow_socket_close(bsp-%gtsp, bsock-%gtsock);
+  }
+  free(bsock-%gtbuff_in.default_memory);
+  free(bsock-%gtbuff_out.default_memory);
+
+  //Clean input buffer list
+  buffer_in_t * buffer = &(bsock-%gtbuff_in);
+  buffer_list_t * item = buffer-%gtlist;
+  buffer_list_t * prev_item;
+  while(item != NULL) {
+    prev_item = item;
+    item = item-%gtnext;
+    if(prev_item-%gtshould_be_freed) {
+      free(prev_item-%gtdata);
+    }
+    free(prev_item);
+  }
+
+  //Clean the rest probable big_buffers
+  if(buffer-%gtprev_data_tag == 2) {
+    free(buffer-%gtprev_data);
+  }
+  if(buffer-%gtnew_data_tag == 2) {
+    free(buffer-%gtnew_data);
+  }
+
+  free(bsock);
+}
+
+bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int listening, char * port) {
+
+  if( ((buffer_size/2) * 2) != buffer_size) {
+    printf("Buffer size should be a multiple of 2.\n");
+    exit(1);
+  }
+
+  bsparrow_t * bsp = scalloc(sizeof(bsparrow_t));
+  bsp-%gtsp = sparrow_new(dtimeout);
+  bsp-%gtbuffer_size = buffer_size;
+  if(listening) {
+    sparrow_socket_bind(bsp-%gtsp,port);
+  }
+  return bsp;
+}
+
+void bsparrow_socket_set_timeout(bsparrow_t * bsp, int64_t timeout) {
+  sparrow_socket_set_timeout(bsp-%gtsp, timeout);
+}
+
+
+
+//Internal use only
+int bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
+  int more = 1;
+  out_request_t * req;
+  sparrow_event_t spev = {0};
+
+  while(bsock-%gtoperational && more && ((req = oqueue_oldest_req(&(bsock-%gtoq))) != NULL) ) {
+  
+    buffer_out_t buffer = bsock-%gtbuff_out;
+  
+    //Free memory if you have to.
+    if(buffer.len %gt bsp-%gtbuffer_size) {
+      free(buffer.allocated_memory);
+      buffer.allocated_memory = buffer.default_memory;
+      buffer.len = bsp-%gtbuffer_size;
+    }
+    
+    
+    if(req-%gtlen %gt buffer.len) {
+      buffer.allocated_memory = req-%gtdata;
+      buffer.len = req-%gtlen;
+      more = sparrow_send(bsp-%gtsp, bsock-%gtsock, buffer.allocated_memory, buffer.len, &spev);
+      oqueue_del_oldest_req(&(bsock-%gtoq));
+    } else {
+      buffer.len = 0;
+      while(buffer.len + req-%gtlen %lt= bsp-%gtbuffer_size) {
+        memcpy(buffer.allocated_memory + buffer.len, req-%gtdata, req-%gtlen);
+        free(req-%gtdata);
+        buffer.len += req-%gtlen;
+        oqueue_del_oldest_req(&(bsock-%gtoq));
+        req = oqueue_oldest_req(&(bsock-%gtoq));
+      }
+      more = sparrow_send(bsp-%gtsp, bsock-%gtsock, buffer.allocated_memory, buffer.len, &spev);
+    }
+  }
+  bsock-%gtout_more = more;
+  if(spev.event == 8) {
+    assert(bsock-%gtoperational == 1);
+    assert(bsock-%gtretries == 0);
+    if(!bsock-%gtwe_connected) {
+      bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
+      bspev-%gtevent = 8;
+      bspev-%gtbsock = bsock;
+      bsp-%gtibspev_list = bsparrow_event_list_add(bsp-%gtibspev, bspev);
+    } else {
+      bsock-%gtoperational = 0;
+      bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
+    }
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+// If one fails completely, return the apropriate event
+void bsparrow_retry(bsparrow_t * bsp, bsparrow_event_t * bspev) {
+  bspev-%gtevent = 0;
+
+  non_op_bsock_list_t * list = bsp-%gtnon_op_bsock_list;
+  non_op_bsock_list_t * iter = bsp-%gtnon_op_bsock_list;
+  non_op_bsock_list_t * prev_iter = NULL;
+  
+  while(iter) {
+    bspev-%gtbsock = iter-%gtbsock;
+    bsparrow_retry_single(bsp, iter-%gtbsock, bspev);
+    if(bsock-%gtoperational == 1) {
+      bsp-%gtnon_op_bsock_list = non_op_block_list_rem_next(list, prev_iter);
+    } else {
+      if(bsock-%gtretries %gt bsp-%gtmax_retries) {
+        bsp-%gtnon_op_bsock_list = non_op_block_list_rem_next(list, prev_iter);
+        bspev-%gtevent = 8;
+        break;
+      }
+    }
+    prev_iter = iter;
+    iter = iter-%gtnext;
+  }
+}
+
+bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev) {
+  sparrow_socket_t * sock = sparrow_socket_connect(bsp-%gtsp, bsock-%gtaddress, bsock-%gtport);
+  if(sock != NULL) {
+    bsock-%gtsock = sock;
+    sparrow_socket_set_parent(sock, bsock);
+    bsock-%gtoperational = 1;
+
+    //retry input and output.
+    if(bsock-%gtidle_output == 0) {
+      sparrow_event spev = {0};
+      int more = sparrow_send(bsp, bsock-%gtsock, bsock-%gtbuff_out.allocated_memory, bsock-%gtbuff_out.len, spev);  
+      bsock-%gtout_more = more;
+      if(spev.event == 8) {
+        bsock-%gtretries++;
+        return;
+      }
+    }
+   
+    if(bsock-%gtidle_input == 0) {
+      sparrow_recv(bsp-%gtsp, bsock-%gtsock, buffer-%gtnew_data + buffer-%gtcur_length, buffer-%gtnew_data_len - buffer-%gtcur_length); 
+    }
+  } else {
+    bsock-%gtretries++;
+  }
+}
+
+
+int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
+  bspev-%gtevent = 0;
+  
+  //IMPORTANT This should always be first because the socket might be considered idle while it already has data. Thus it might be destroyed.
+  //Handle Immediate Events first.
+  if(bsp-%gtibspev_list != NULL) {
+    memcpy(bspev, bsp-%gtibspev_list-%gtbspev, sizeof(bsparrow_event_t));
+    free(bsp-%gtibspev_list-%gtbspev);
+    bsp-%gtibspev_list = non_op_block_list_rem_next(bsp-%gtibspev_list, bspev-%gtibspev_list);
+  }
+
+  //Handle Events created due to retry efforts.
+  if(bspev-%gtevent == 0) {
+    bsparrow_retry(bsp, bspev);
+  }
+
+  //New events from the network.
+  sparrow_event_t spev;
+  bsparrow_socket_t * bsock;
+  if(bspev-%gtevent == 0) {
+    
+    sparrow_wait(bsp-%gtsp, &spev);
+    int ev = spev.event;
+    bsock = sparrow_socket_get_parent(spev.sock);
+    bspev-%gtbsock = bsock;
+  }
+
+  if((ev %gt%gt 1) & 1) {
+    if(bsock-%gtoq.pos_filled == 0) {
+      bsock-%gtidle_output = 1;
+      if(bsock-%gtidle_input == 1) {
+        bsparrow_socket_destroy(bsp, bsock);
+        bspev-%gtevent = 2;
+        return 0;
+      }
+    } 
+    if(bsparrow_socket_process_next_out_req(bsp, bsock)) {
+      return 0;
+    }
+    return 1;
+  }
+
+  //Error or timeout
+  if(((ev %gt%gt 5) & 1) || ((ev %gt%gt 3) & 1)) {
+    assert(bsock-%gtoperational == 1);
+    bsock-%gtoperational = 0;
+    if(bsock-%gtwe_connected) {
+      assert(bsock-%gtretries == 0);
+      bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
+    } else {
+      bspev-%gtevent = 8;
+      return 0;
+    }
+  }
+
+  if((ev %gt%gt 2) & 1) {
+    buffer_in_t * buffer = &(bsock-%gtbuff_in);
+
+    if(buffer-%gtresidue_length) {
+      bspev-%gtfirst_buffer_length = buffer-%gtresidue_length;
+      bspev-%gtfirst_buffer = buffer-%gtprev_data + buffer-%gtresidue_start;
+    } else {
+      bspev-%gtresidue_length = 0;
+      bspev-%gtresidue = NULL;
+    }
+    bspev-%gtlist = buffer-%gtlist;
+    bspev-%gtsecond_buffer = buffer-%gtnew_data;
+    buffer-%gtcur_length = buffer-%gtcur_length + spev.cur;
+    buffer-%gttotal_length_received += spev.cur;
+    bspev-%gtsecond_buffer_length = buffer-%gtcur_length;
+    bsock-%gtidle_input = 1;
+    if(bsock-%gtidle_output == 1) {
+        bsparrow_socket_destroy(bsp, bsock);
+        bspev-%gtevent = 2;
+    }
+
+    bspev-%gtevent += 4;
+  }
+  //New connection.
+  if((ev %gt%gt 4) & 1) {
+    bsparrow_socket_accept(bsp, spev.sock);
+    bspev-%gtevent = 16;
+  }
+
+  return 0;
+}
+
+void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, void * data, size_t len) {
+  bsock-%gtidle_output = 0;
+  out_request_t req;
+  req.data = data;
+  req.len = len;
+  oqueue_push_req(&(bsock-%gtoq), &req);
+
+  if(bsock-%gtout_more) {
+    bsparrow_socket_process_next_out_req(bsp, bsock);
+  }
+}
+
+
+//The len should never decrease.
+void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
+  buffer_in_t * buffer = &(bsock-%gtbuff_in);
+  assert(len %gt buffer-%gttotal_length_received);
+  
+  //We already have the data.
+  if(buffer-%gtresidue_length %gt len) {
+    bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
+    bspev-%gtevent = 4;
+    bspev-%gtlist = NULL;
+    bspev-%gtfirst_buffer_length = len;
+    bspev-%gtfirst_buffer = buffer-%gtprev_data + buffer-%gtresidue_start;  
+    bspev-%gtsecond_buffer_length = 0;
+    bspev-%gtsecond_buffer = NULL;
+    bsp-%gtibspev_list = bsparrow_event_list_add(bsp-%gtibspev, bspev);
+    return;
+  }
+
+  bsock-%gtidle_input = 0;
+
+  //If there is still some memory left from the previous buffer keep receiving in it.
+  if((len %gt buffer-%gttotal_length_received) & (buffer-%gtnew_data_len == buffer-%gtcur_length)) { 
+
+    //We push the new data into the list
+    buffer_list_t * item = scalloc(sizeof(buffer_list_t));
+    if(buffer-%gtnew_data_tag !=2) {
+      item-%gtshould_be_freed = 0;
+    } else {
+      item-%gtshould_be_freed = 1;
+    }
+    item-%gtdata = buffer-%gtnew_data;
+    item-%gtnext = NULL;
+    buffer-%gtlast_item-%gtnext = item;
+    buffer-%gtlast_item = item;
+
+    void * new_memory;
+    new_memory = scalloc(len - buffer-%gttotal_length_received);
+    buffer-%gtcur_length = 0;
+
+
+    buffer-%gtnew_data = new_memory;
+    buffer-%gtnew_data_tag = 2;
+    buffer-%gtnew_data_len = len - buffer-%gttotal_length_received;
+  }
+
+  sparrow_recv(bsp-%gtsp, bsock-%gtsock, buffer-%gtnew_data + buffer-%gtcur_length, buffer-%gtnew_data_len - buffer-%gtcur_length); 
+}
+
+
+void bsparrow_got_some(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t that_much) {
+  buffer_in_t * buffer = &(bsock-%gtbuff_in);
+
+  //We get all the data that we requested, no less, except the last request.
+  assert((buffer-%gtlist == NULL) || (that_much %gt= buffer-%gttotal_length_received - buffer-%gtcur_length));
+  assert(that_much %lt= buffer-%gttotal_length_received);
+
+
+
+  if(that_much %lt buffer-%gtresidue_length) {
+    buffer-%gtresidue_start = buffer-%gtresidue_start + that_much; 
+    buffer-%gtresidue_length = buffer-%gtresidue_length - that_much;
+    return;
+  }
+
+  if((buffer-%gtresidue_length) && (buffer-%gtprev_data_tag = 2)) {
+    free(buffer-%gtprev_data);  
+  }
+
+  buffer-%gtresidue_length = 0;
+  
+  //Clean list
+  buffer_list_t * item = buffer-%gtlist;
+  buffer_list_t * prev_item;
+  while(item != NULL) {
+    prev_item = item;
+    item = item-%gtnext;
+    if(prev_item-%gtshould_be_freed) {
+      free(prev_item-%gtdata);
+    }
+    free(prev_item);
+  }
+
+  //Update the new residue.
+  buffer-%gtresidue_start = buffer-%gtcur_length - (buffer-%gttotal_length_received - that_much);  
+  buffer-%gtresidue_length = buffer-%gttotal_length_received - that_much;
+  buffer-%gtcur_length = 0;
+  buffer-%gtprev_data_tag = buffer-%gtnew_data_tag;
+  buffer-%gtprev_data = buffer-%gtnew_data;
+
+  buffer-%gttotal_length_received = buffer-%gtresidue_length;
+  
+  if(buffer-%gtprev_data_tag != 0) {
+    buffer-%gtnew_data = buffer-%gtdefault_memory;
+    buffer-%gtnew_data_tag = 0;
+  } else {
+    buffer-%gtnew_data = buffer-%gtdefault_memory + bsp-%gtbuffer_size / 2;
+    buffer-%gtnew_data_tag = 1;
+  }
+}
 
 ```
 
@@ -168,7 +798,7 @@ First of all, we need to include our library header 'sparrow.h'. Then, we create
 #include %ltstdio.h%gt
 
 int main(void) {
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_bind(sp,"9003");
 
   sparrow_event_t spev;
@@ -200,7 +830,7 @@ The client simply sents a Msg.It waits till sparrow tells it that it sent it and
 #include %ltstdio.h%gt
 
 int main(void) {
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9003");
 
   char *data = malloc(50);
@@ -230,7 +860,7 @@ Sparrow requires the precise time that a request will expire. To find the curren
 #include %ltstdio.h%gt
 
 int main(void) {
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_bind(sp,"9003");
 
   sparrow_event_t spev;
@@ -260,7 +890,7 @@ Our client does not send any msgs so as to test that sparrow returns an event wh
 #include %ltstdio.h%gt
 
 int main(void) {
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9003");
 
   sleep(7);
@@ -272,8 +902,65 @@ int main(void) {
 
 ### Network Errors {#Network_Errors}
 
-Network errors do happen. The client might close the connection before we finish our communication protocol. Other errors might happen as well. Sparrow does not distinguish between errors. It doesn't also distinguish between errors and timeouts.
+Network errors do happen. The client might close the connection before we finish our communication protocol. Other errors might happen as well. Sparrow does not distinguish between errors.
+If an output is not sent after the timeout has expired, it is treated as an error. 
 Timeouts lead to the closure of the connection as any other error. Sparrow returns the same event ('8') for both.
+
+It is important to note that timeouts set on sparrow_wait is not an error. Sparrow_wait expects input timeouts to be given and we treat input timeouts differently than output timeouts.
+In essence, in case of error, like the non-transmission of a message, the input timeout will always trigger while the output timeout won't necessarily. 
+
+//TODO It is assumed that in case the second agent crashes, there are more reliable ways of reacting to it than knowing that the ouptput msg never reached the destination. The msg might have been on the wire before the agent crashed.
+
+```c ot_test_server.c
+#include "sparrow.h"
+#include %ltstdio.h%gt
+#include %ltunistd.h%gt
+
+int main(void) {
+  sparrow_t *sp = sparrow_new(5000);
+  sparrow_socket_bind(sp,"9003");
+
+  sparrow_event_t spev;
+  sparrow_wait(sp,&spev);
+
+  if(spev.event & 16) {
+    printf("we connected and now we will wait for a period so that the client output timeout expires.\n");
+    sleep(4);
+  }
+
+  sparrow_wait(sp,&spev);
+  return 0;
+}
+
+```
+
+
+```c ot_test_client.c
+#include "sparrow.h"
+#include %ltstdio.h%gt
+
+int main(void) {
+  sparrow_t *sp = sparrow_new(1000);
+  sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9003");
+
+  char *data = malloc(50);
+  sprintf(data,"Hello there!");
+
+  sparrow_event_t spev;
+  sparrow_send(sp, sock, data, 50, &spev);
+
+  sparrow_wait(sp,&spev);
+
+  if(spev.event & 8) {
+    printf("An error occured, in this case an output timeout expiry since the server crashed.\n");
+  }
+  
+  sparrow_close(&sp);
+  return 0;
+}
+
+```
+
 
 ### Throughput test {#Throughput_Test}
 
@@ -285,7 +972,7 @@ It is time to test the performance of our library. We will transfer 2M msgs of 5
 #include %ltstdio.h%gt
 
 int main(void) {
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_bind(sp,"9001");
   
   char *data = malloc(50);
@@ -337,7 +1024,7 @@ int main(void) {
 
 int main(void) {
 
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9001");
 
   char *data = malloc(50);
@@ -403,7 +1090,7 @@ struct sparrow_event_t {
 
 typedef struct sparrow_event_t sparrow_event_t;
 
-sparrow_t * sparrow_new(void);
+sparrow_t * sparrow_new(int64_t dtimeout);
 
 void sparrow_socket_bind(sparrow_t * sp, char * port);
 
@@ -425,10 +1112,22 @@ void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock);
 
 void sparrow_close(sparrow_t ** sp);
 
+//Used to iterate over all sockets.
+sparrow_socket_t * sparrow_first(sparrow_t * sp);
+sparrow_socket_t * sparrow_next(sparrow_t * sp, sparrow_socket_t * sock);
+
+void sparrow_socket_set_parent(sparrow_socket_t * sock, void * parent);
+
+void * sparrow_socket_get_parent(sparrow_socket_t * sock);
+
 //?TODO Remove these, the serializer/multiplexer is supposed to keep a pointer to its buffer.
 void * sparrow_socket_data_in(sparrow_socket_t *sock);
 void * sparrow_socket_data_out(sparrow_socket_t *sock);
 int64_t now(void);
+
+void * scalloc(size_t size);
+//TODO check for errors.
+void * srealloc(void * prev_pointer, size_t size);
 
 #endif
 ```
@@ -493,12 +1192,12 @@ function data_buffer_definitions() {
 struct data_out_t {
   size_t cur;
   void * data;
-  size_t len;
+  size_t len;    //Len indicates that there is an output request.
 };
 
 struct data_in_t { 
   void * data;
-  size_t len;
+  size_t len;   //Len indicates that there is an input request.
 };
 
 typedef struct data_out_t data_out_t;
@@ -512,7 +1211,7 @@ The socket needs to know
 
 1. if it is listening for connections or not,
 2. its file descriptor obviously as the fd is used to perform system calls to the operating system,
-3. an expiration time that represents the time till we wish to wait to receive or send data. 
+3. an expiration time that represents the time till we wish to wait for the data to be sent.
 
 The socket will also contain pointers to the buffers and one fields that are used to order all the sockets according to the file descriptor. We will use this ordering to retrieve the apropriate socket when a new event occurs.
 
@@ -522,9 +1221,12 @@ function sparrow_socket_definition() {
 struct sparrow_socket_t {
   int listening; //BOOL
   int fd;
+  int64_t out_expiry;
   data_out_t data_out;
   data_in_t data_in;
   RB_ENTRY (sparrow_socket_t) fd_field;
+  RB_ENTRY (sparrow_socket_t) ot_field;
+  void * parent; // a pointer to the higher level structure.
 };
 
 typedef struct sparrow_socket_t sparrow_socket_t;
@@ -544,6 +1246,9 @@ struct sparrow_t {
   int events_len;
   struct epoll_event events [MAX_EVENTS];
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
+  struct ot_rb_t ot_rb_socks; // A tree container of sockets ordered by the expiration if their outputs.
+  int64_t default_ot;
+  int ot_already_expired;
   int64_t timeout;
 };
 ./!dots(-1)
@@ -567,6 +1272,35 @@ int cmp_fds(const void * sock1, const void * sock2) {
 RB_HEAD (fd_rb_t, sparrow_socket_t);
 RB_GENERATE (fd_rb_t, sparrow_socket_t, fd_field, cmp_fds);
 
+int cmp_ots(const void * sock1, const void * sock2) {
+  const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
+  const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
+  return (s1-%gtfd %gt s2-%gtfd) - (s1-%gtfd %lt s2-%gtfd);
+}
+
+RB_HEAD (ot_rb_t, sparrow_socket_t);
+RB_GENERATE (ot_rb_t, sparrow_socket_t, ot_field, cmp_ots);
+
+./!dots(-1)
+}
+```
+
+### External Socket Traversal {#External_Socket_Traversal}
+
+We also create an api for others to iterate over the sockets.
+
+```c sparrow.c.dna
+function external_socket_traversal() {
+./!dots(1)
+
+//Used to iterate over all sockets.
+sparrow_socket_t * sparrow_first(sparrow_t * sp) {
+  return RB_MIN(fd_rb_t, &(sp-%gtfd_rb_socks));
+}
+
+sparrow_socket_t * sparrow_next(sparrow_t * sp, sparrow_socket_t * sock) {
+  return RB_NEXT(fd_rb_t, &(sp-%gtfd_rb_socks), sock);
+}
 
 ./!dots(-1)
 }
@@ -585,6 +1319,7 @@ function sparrow_send_receive() {
 ./!dots(1)
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
+
   assert(data!=NULL);
   spev-%gtsock = sock;
   spev-%gtevent = 0;
@@ -604,6 +1339,7 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
     perror("Send error inside sparrow_send.\n");
     sparrow_socket_close(sp,sock);
     spev-%gtevent = 8;
+    return 0;
   }
 
   if(result + data_out-%gtcur %lt data_out-%gtlen) {
@@ -617,7 +1353,11 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
       perror(" epoll_ctl failed to modify a socket to epoll");
       exit(-1);
     }
+
+    sock-%gtout_expiry = now() + sp-%gtdefault_ot;
+    
     return 0;
+
   } else {
     data_out-%gtlen = 0;
     spev-%gtevent = 2;
@@ -670,9 +1410,31 @@ void * sparrow_socket_data_out(sparrow_socket_t *sock) {
 }
 ```
 
+### Reference to parent structure
+
+We want to be able to reference the structure of the higher level structure, the buffered socket in particular from the socket struct.
+We do not want to expose the sparrow socket struct to the higher levels, thus we implement accesor functions.
+
+```c sparrow.c.dna
+function sparrow_socket_parent_reference() {
+./!dots(1)
+
+void sparrow_socket_set_parent(sparrow_socket_t * sock, void * parent) {
+  sock-%gtparent = parent;
+}
+
+void * sparrow_socket_get_parent(sparrow_socket_t * sock) {
+  return sock-%gtparent;
+}
+
+./!dots(-1)
+}
+
+```
+
 ### Set timeout {#Set_timeout}
 
-This function simply sets the expiry time for the socket (now() + timeout).
+This function simply sets the timeout for sparrow. It is up to the higher level to update this timeout if more than one timeout events need to be handled.
 
 ```c sparrow.c.dna
 function set_timeout_function() {
@@ -700,8 +1462,8 @@ function change_of_TCP_state_functions() {
 ./!dots(1)
 
 //internal use only.
-sparrow_t * sparrow_new(void) {
-  sparrow_t * sp = calloc(1,sizeof(sparrow_t));
+sparrow_t * sparrow_new(int64_t dtimeout) {
+  sparrow_t * sp = scalloc(sizeof(sparrow_t));
   int fd = epoll_create1 (0);
   if (fd == -1) {
     perror("epoll_create1 failed to create epoll.");
@@ -710,15 +1472,19 @@ sparrow_t * sparrow_new(void) {
   sp-%gtfd = fd;
   sp-%gtevents_len = 0;
   RB_INIT(&(sp-%gtfd_rb_socks));
+  RB_INIT(&(sp-%gtot_rb_socks));
   sp-%gttimeout = -1;
+  sp-%gtot_already_expired = 0;
+  sp-%gtdefault_ot = dtimeout;
   return sp;
 }
 
 
 //internal use only.
 sparrow_socket_t * sparrow_socket_new(int fd) {
-  sparrow_socket_t * sock = calloc(1,sizeof(sparrow_socket_t));
+  sparrow_socket_t * sock = scalloc(sizeof(sparrow_socket_t));
   sock-%gtfd = fd;
+  sock-%gtout_expiry = -1;
   return sock;
 }
 
@@ -827,7 +1593,7 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
   rc = connect (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
   if (rc != 0) {
     close (sfd);
-    exit(-1);
+    return NULL;
   }
   sparrow_socket_t * sock = sparrow_socket_new(sfd);
   freeaddrinfo (ret_addr);
@@ -837,10 +1603,13 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 }
 
 void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
-  printf("Connection closed: %d", sock-%gtfd);
+  printf("Connection closed: %d\n", sock-%gtfd);
   close(sock-%gtfd);
 //  assert(sock-%gtdata_in.len == 0);
   RB_REMOVE(fd_rb_t, &(sp-%gtfd_rb_socks), sock);
+  if(sock-%gtout_expiry %gt -1) {
+    RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+  }
   free(sock);
 }
 
@@ -864,6 +1633,51 @@ sparrow_socket_t * sparrow_socket_accept(sparrow_t * sp, sparrow_socket_t * lsoc
   return sock;
 }
 
+
+./!dots(-1)
+}
+```
+
+### Handling Output Timeout Errors
+
+```c sparrow.c.dna
+function sparrow_handle_ot_errors() {
+./!dots(1)
+
+        //Internal use only
+int sparrow_handle_expired_ot(sparrow_t * sp, sparrow_event_t *spev, int64_t *timeout){
+  sparrow_socket_t * sock = RB_MIN(ot_rb_t, &(sp-%gtot_rb_socks));
+  if(sp-%gtot_already_expired %gt 0) {
+    RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+    sp-%gtot_already_expired--;
+    spev-%gtsock = sock;
+    spev-%gtevent = 8;
+    return 1;
+  }
+  if(sock !=NULL) {
+    int64_t time = now();
+    sparrow_socket_t * iter = sock;
+    while ((iter != NULL) && (iter-%gtout_expiry - time %lt 0 )) {
+      sp-%gtot_already_expired++;
+      iter = RB_NEXT(ot_rb_t, &(sp-%gtot_rb_socks), iter);
+    }
+    if(sp-%gtot_already_expired %gt 0) {
+      RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+      sp-%gtot_already_expired--;
+      spev-%gtsock = sock;
+      sparrow_socket_close(sp, sock);
+      spev-%gtevent = 8;
+      return 1;
+    }
+    *timeout = sock-%gtout_expiry - time;
+    if(sp-%gttimeout %lt *timeout) {
+      *timeout = sp-%gttimeout;
+    }
+  } else {
+    *timeout = sp-%gttimeout;
+  }
+  return 0;
+}
 
 ./!dots(-1)
 }
@@ -893,6 +1707,11 @@ function sparrow_wait_function() {
 //Requires an array of MAX_EVENT units.
 int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   spev-%gtevent = 0;
+  int64_t timeout;
+
+  if(sparrow_handle_expired_ot(sp, spev, &timeout)) {
+    return 0;
+  }
 
   if(sp-%gtevents_len == 0) {
     sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, sp-%gttimeout);
@@ -914,7 +1733,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
 
       //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
-        printf("EPOLLERR || EPOLLHUP error.");
+        printf("EPOLLERR || EPOLLHUP error.\n");
         spev-%gtevent = 8;
         sparrow_socket_close(sp,sock);
         return 0;
@@ -1036,9 +1855,25 @@ This is the main file in which all code is inserted. What is left writing here a
 #define MAX_EVENTS 32
 // #define MAX_DELAY 40 //in milliseconds. We wait that much before sending new data if we do not have much data.
 // #define MAX_BUFF (1500 - 68) // The ethernet MTU is 1500 bytes minus the IP/TCP headers.
-#define MAX_SEND_QUEUE 10
-#define MAX_INPUT_DELAY 20
+// #define MAX_SEND_QUEUE 10
+// #define MAX_INPUT_DELAY 20
 
+void * scalloc(size_t size) {
+  void * result = calloc(1,size);
+  if(result == NULL) {
+    exit(-1);
+  }
+  return result;
+}
+
+//TODO check for errors.
+void * srealloc(void * prev_pointer, size_t size) {
+  void * result = realloc(prev_pointer, size);
+  if(result == NULL) {
+    exit(-1);
+  }
+  return result;
+}
 
 ./!dots(-1)
 data_buffer_definitions(); 
@@ -1049,11 +1884,17 @@ tree_generation();
 
 sparrow_definition();
 
+external_socket_traversal();
+
 set_timeout_function();
 
 sparrow_send_receive();
 
+sparrow_socket_parent_reference();
+
 change_of_TCP_state_functions();
+
+sparrow_handle_ot_errors(); 
 
 sparrow_wait_function();
 

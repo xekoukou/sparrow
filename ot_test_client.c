@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(void) {
-  sparrow_t *sp = sparrow_new(5000);
+  sparrow_t *sp = sparrow_new(1000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9003");
 
   char *data = malloc(50);
@@ -12,7 +12,10 @@ int main(void) {
   sparrow_send(sp, sock, data, 50, &spev);
 
   sparrow_wait(sp,&spev);
-  printf("I sent : %s",data);
+
+  if(spev.event & 8) {
+    printf("An error occured, in this case an output timeout expiry since the server crashed.\n");
+  }
   
   sparrow_close(&sp);
   return 0;

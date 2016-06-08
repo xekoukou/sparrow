@@ -7,18 +7,22 @@ protein sparrow.c.dna > sparrow.c
 litprog -html index.html "c sparrow.h" > sparrow.h
 litprog -html index.html "c simple_test_server.c" > simple_test_server.c
 litprog -html index.html "c simple_test_client.c" > simple_test_client.c
+litprog -html index.html "c ot_test_server.c" > ot_test_server.c
+litprog -html index.html "c ot_test_client.c" > ot_test_client.c
 litprog -html index.html "c thr_client.c" > thr_client.c
 litprog -html index.html "c thr_server.c" > thr_server.c
 litprog -html index.html "c timeout_client.c" > timeout_client.c
 litprog -html index.html "c timeout_server.c" > timeout_server.c
-litprog -html index.html "c sparrow_buff.c" > sparrow_buff.c
+litprog -html index.html "c sparrow_buffer.c" > sparrow_buffer.c
 litprog -html index.html "c sparrow_multiplexer.c" > sparrow_multiplexer.c
-node convert_code.js sparrow.c sparrow.h simple_test_server.c simple_test_client.c thr_client.c thr_server.c timeout_client.c timeout_server.c time.c sparrow_buff.c
+node convert_code.js sparrow.c sparrow.h ot_test_server.c ot_test_client.c simple_test_server.c simple_test_client.c thr_client.c thr_server.c timeout_client.c timeout_server.c time.c sparrow_buffer.c
 gcc -c -Wall time.c sparrow.c sparrow.h
 gcc -g -Wall -DDEBUG_LOG time.c sparrow.c sparrow.h simple_test_server.c -o simple_test_server
 gcc -g -Wall -DDEBUG_LOG time.c sparrow.c sparrow.h simple_test_client.c -o simple_test_client
+gcc -g -Wall -DDEBUG_LOG time.c sparrow.c sparrow.h ot_test_server.c -o ot_test_server
+gcc -g -Wall -DDEBUG_LOG time.c sparrow.c sparrow.h ot_test_client.c -o ot_test_client
 gcc -Wall -O3 time.c sparrow.c sparrow.h thr_client.c -o thr_client
 gcc -Wall -O3 time.c sparrow.c sparrow.h thr_server.c -o thr_server
 gcc -g -Wall -DDEBUG_LOG time.c sparrow.c sparrow.h timeout_client.c -o timeout_client
 gcc -g -Wall -DDEBUG_LOG time.c sparrow.c sparrow.h timeout_server.c -o timeout_server
-gcc -c -Wall time.c sparrow.c sparrow_buff.c sparrow_multiplexer.c sparrow.h 
+gcc -c -Wall time.c sparrow.c sparrow_buffer.c sparrow_multiplexer.c sparrow.h 

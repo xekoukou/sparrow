@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(void) {
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_bind(sp,"9003");
 
   sparrow_event_t spev;
