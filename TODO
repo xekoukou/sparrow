@@ -276,4 +276,4 @@ Higher levels need to keep the list of sockets that are active, so as to only co
 
 ------------------------------------------------------------
 
-TODO
+TODO After retry issue a sesssion initialization event.

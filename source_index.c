@@ -299,7 +299,6 @@ struct bsparrow_event_list_t {
 typedef struct bsparrow_event_list_t bsparrow_event_list_t;
 
 bsparrow_event_list_t * bsparrow_event_list_add(bsparrow_event_list_t * list, bsparrow_event_t * bspev) {
-  assert(bspev->operational == 0);
   bsparrow_event_list_t * item = scalloc(sizeof(bsparrow_event_list_t));
   item->bspev = bspev;
 
@@ -336,9 +335,9 @@ bsparrow_event_list_t * bsparrow_event_list_rem_next(bsparrow_event_list_t * lis
 struct bsparrow_t {
   sparrow_t * sp;
   size_t buffer_size; // The maximum memomry of most of the objects * 2.
-  int default_max_retries;
-  non_op_bsock_list_t * non_op_list;
-  bsparrow_event_list_t ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
+  int max_retries;
+  non_op_bsock_list_t * non_op_bsock_list;
+  bsparrow_event_list_t * ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
   // to be handled by bsparrow_wait itself (rather than handled separately.)
 };
 
@@ -465,7 +464,7 @@ void bsparrow_socket_set_timeout(bsparrow_t * bsp, int64_t timeout) {
 
 
 //Internal use only
-int bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
+void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
   int more = 1;
   out_request_t * req;
   sparrow_event_t spev = {0};
@@ -502,21 +501,47 @@ int bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * b
   bsock->out_more = more;
   if(spev.event == 8) {
     assert(bsock->operational == 1);
+    bsock->operational = 0;
     assert(bsock->retries == 0);
     if(!bsock->we_connected) {
       bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
       bspev->event = 8;
       bspev->bsock = bsock;
-      bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev, bspev);
+      bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev_list, bspev);
     } else {
-      bsock->operational = 0;
       bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
     }
-    return 1;
+  } 
+}
+
+
+void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev) {
+  sparrow_socket_t * sock = sparrow_socket_connect(bsp->sp, bsock->address, bsock->port);
+  if(sock != NULL) {
+    bsock->sock = sock;
+    sparrow_socket_set_parent(sock, bsock);
+    bsock->operational = 1;
+
+    //retry input and output.
+    if(bsock->idle_output == 0) {
+      sparrow_event_t spev = {0};
+      int more = sparrow_send(bsp->sp, bsock->sock, bsock->buff_out.allocated_memory, bsock->buff_out.len, &spev);  
+      bsock->out_more = more;
+      if(spev.event == 8) {
+        bsock->retries++;
+        return;
+      }
+    }
+   
+    if(bsock->idle_input == 0) {
+      buffer_in_t * buffer = &(bsock->buff_in);
+      sparrow_recv(bsp->sp, bsock->sock, buffer->new_data + buffer->cur_length, buffer->new_data_len - buffer->cur_length); 
+    }
   } else {
-    return 0;
+    bsock->retries++;
   }
 }
+
 
 // If one fails completely, return the apropriate event
 void bsparrow_retry(bsparrow_t * bsp, bsparrow_event_t * bspev) {
@@ -529,43 +554,17 @@ void bsparrow_retry(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   while(iter) {
     bspev->bsock = iter->bsock;
     bsparrow_retry_single(bsp, iter->bsock, bspev);
-    if(bsock->operational == 1) {
-      bsp->non_op_bsock_list = non_op_block_list_rem_next(list, prev_iter);
+    if(iter->bsock->operational == 1) {
+      bsp->non_op_bsock_list = non_op_bsock_list_rem_next(list, prev_iter);
     } else {
-      if(bsock->retries > bsp->max_retries) {
-        bsp->non_op_bsock_list = non_op_block_list_rem_next(list, prev_iter);
+      if(iter->bsock->retries > bsp->max_retries) {
+        bsp->non_op_bsock_list = non_op_bsock_list_rem_next(list, prev_iter);
         bspev->event = 8;
         break;
       }
     }
     prev_iter = iter;
     iter = iter->next;
-  }
-}
-
-bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev) {
-  sparrow_socket_t * sock = sparrow_socket_connect(bsp->sp, bsock->address, bsock->port);
-  if(sock != NULL) {
-    bsock->sock = sock;
-    sparrow_socket_set_parent(sock, bsock);
-    bsock->operational = 1;
-
-    //retry input and output.
-    if(bsock->idle_output == 0) {
-      sparrow_event spev = {0};
-      int more = sparrow_send(bsp, bsock->sock, bsock->buff_out.allocated_memory, bsock->buff_out.len, spev);  
-      bsock->out_more = more;
-      if(spev.event == 8) {
-        bsock->retries++;
-        return;
-      }
-    }
-   
-    if(bsock->idle_input == 0) {
-      sparrow_recv(bsp->sp, bsock->sock, buffer->new_data + buffer->cur_length, buffer->new_data_len - buffer->cur_length); 
-    }
-  } else {
-    bsock->retries++;
   }
 }
 
@@ -578,24 +577,24 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   if(bsp->ibspev_list != NULL) {
     memcpy(bspev, bsp->ibspev_list->bspev, sizeof(bsparrow_event_t));
     free(bsp->ibspev_list->bspev);
-    bsp->ibspev_list = non_op_block_list_rem_next(bsp->ibspev_list, bspev->ibspev_list);
+    bsp->ibspev_list = bsparrow_event_list_rem_next(bsp->ibspev_list, bsp->ibspev_list);
+    return 0;
   }
 
   //Handle Events created due to retry efforts.
-  if(bspev->event == 0) {
-    bsparrow_retry(bsp, bspev);
+  bsparrow_retry(bsp, bspev);
+  if(bspev->event != 0) {
+    return 0;
   }
 
   //New events from the network.
   sparrow_event_t spev;
   bsparrow_socket_t * bsock;
-  if(bspev->event == 0) {
     
-    sparrow_wait(bsp->sp, &spev);
-    int ev = spev.event;
-    bsock = sparrow_socket_get_parent(spev.sock);
-    bspev->bsock = bsock;
-  }
+  sparrow_wait(bsp->sp, &spev);
+  int ev = spev.event;
+  bsock = sparrow_socket_get_parent(spev.sock);
+  bspev->bsock = bsock;
 
   if((ev >> 1) & 1) {
     if(bsock->oq.pos_filled == 0) {
@@ -606,10 +605,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
         return 0;
       }
     } 
-    if(bsparrow_socket_process_next_out_req(bsp, bsock)) {
-      return 0;
-    }
-    return 1;
+    bsparrow_socket_process_next_out_req(bsp, bsock);
   }
 
   //Error or timeout
@@ -632,14 +628,14 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
       bspev->first_buffer_length = buffer->residue_length;
       bspev->first_buffer = buffer->prev_data + buffer->residue_start;
     } else {
-      bspev->residue_length = 0;
-      bspev->residue = NULL;
+      bspev->first_buffer_length = 0;
+      bspev->first_buffer = NULL;
     }
     bspev->list = buffer->list;
-    bspev->second_buffer = buffer->new_data;
+    bspev->last_buffer = buffer->new_data;
     buffer->cur_length = buffer->cur_length + spev.cur;
     buffer->total_length_received += spev.cur;
-    bspev->second_buffer_length = buffer->cur_length;
+    bspev->last_buffer_length = buffer->cur_length;
     bsock->idle_input = 1;
     if(bsock->idle_output == 1) {
         bsparrow_socket_destroy(bsp, bsock);
@@ -682,12 +678,13 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
     bspev->list = NULL;
     bspev->first_buffer_length = len;
     bspev->first_buffer = buffer->prev_data + buffer->residue_start;  
-    bspev->second_buffer_length = 0;
-    bspev->second_buffer = NULL;
-    bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev, bspev);
+    bspev->last_buffer_length = 0;
+    bspev->last_buffer = NULL;
+    bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev_list, bspev);
     return;
   }
 
+  assert(bsock->idle_input == 1);
   bsock->idle_input = 0;
 
   //If there is still some memory left from the previous buffer keep receiving in it.
@@ -715,7 +712,9 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
     buffer->new_data_len = len - buffer->total_length_received;
   }
 
-  sparrow_recv(bsp->sp, bsock->sock, buffer->new_data + buffer->cur_length, buffer->new_data_len - buffer->cur_length); 
+  if(bsock->operational == 1) {
+    sparrow_recv(bsp->sp, bsock->sock, buffer->new_data + buffer->cur_length, buffer->new_data_len - buffer->cur_length); 
+  }
 }
 
 
