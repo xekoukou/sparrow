@@ -344,6 +344,32 @@ struct bsparrow_t {
 typedef struct bsparrow_t bsparrow_t;
 
 
+//Internal use only
+void bsparrow_socket_clean(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
+  //Clean input buffer list
+  buffer_in_t * buffer = &(bsock->buff_in);
+  buffer_list_t * item = buffer->list;
+  buffer_list_t * prev_item;
+  while(item != NULL) {
+    prev_item = item;
+    item = item->next;
+    if(prev_item->should_be_freed) {
+      free(prev_item->data);
+    }
+    free(prev_item);
+  }
+
+  //Clean the rest probable big_buffers
+  if(buffer->prev_data_tag == 2) {
+    free(buffer->prev_data);
+  }
+  if(buffer->new_data_tag == 2) {
+    free(buffer->new_data);
+  }
+
+}
+
+
 //Internal use
 bsparrow_socket_t * bsparrow_socket_initialize_internal(bsparrow_t * bsp,sparrow_socket_t * sock, int64_t id, int we_connected, char * address, char * port) {
   bsparrow_socket_t * bsock = scalloc(sizeof(bsparrow_socket_t));
@@ -354,6 +380,7 @@ bsparrow_socket_t * bsparrow_socket_initialize_internal(bsparrow_t * bsp,sparrow
     //This can only happen when we connect, not when we accept a new connection.
     assert(we_connected == 1);
     bsock->operational = 0;
+    bsparrow_socket_clean(bsp, bsock);
     bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
   }
   bsock->id = id;
@@ -417,26 +444,7 @@ void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
   free(bsock->buff_in.default_memory);
   free(bsock->buff_out.default_memory);
 
-  //Clean input buffer list
-  buffer_in_t * buffer = &(bsock->buff_in);
-  buffer_list_t * item = buffer->list;
-  buffer_list_t * prev_item;
-  while(item != NULL) {
-    prev_item = item;
-    item = item->next;
-    if(prev_item->should_be_freed) {
-      free(prev_item->data);
-    }
-    free(prev_item);
-  }
-
-  //Clean the rest probable big_buffers
-  if(buffer->prev_data_tag == 2) {
-    free(buffer->prev_data);
-  }
-  if(buffer->new_data_tag == 2) {
-    free(buffer->new_data);
-  }
+  bsparrow_socket_clean(bsp, bsock);
 
   free(bsock);
 }
@@ -509,6 +517,7 @@ void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * 
       bspev->bsock = bsock;
       bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev_list, bspev);
     } else {
+      bsparrow_socket_clean(bsp, bsock);
       bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
     }
   } 
@@ -522,21 +531,11 @@ void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow
     sparrow_socket_set_parent(sock, bsock);
     bsock->operational = 1;
 
-    //retry input and output.
-    if(bsock->idle_output == 0) {
-      sparrow_event_t spev = {0};
-      int more = sparrow_send(bsp->sp, bsock->sock, bsock->buff_out.allocated_memory, bsock->buff_out.len, &spev);  
-      bsock->out_more = more;
-      if(spev.event == 8) {
-        bsock->retries++;
-        return;
-      }
-    }
-   
-    if(bsock->idle_input == 0) {
-      buffer_in_t * buffer = &(bsock->buff_in);
-      sparrow_recv(bsp->sp, bsock->sock, buffer->new_data + buffer->cur_length, buffer->new_data_len - buffer->cur_length); 
-    }
+    bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
+    bspev->event = 32;
+    bspev->bsock = bsock;
+    bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev_list, bspev);
+
   } else {
     bsock->retries++;
   }
@@ -614,6 +613,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
     bsock->operational = 0;
     if(bsock->we_connected) {
       assert(bsock->retries == 0);
+      bsparrow_socket_clean(bsp, bsock);
       bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
     } else {
       bspev->event = 8;
@@ -675,6 +675,7 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
   if(buffer->residue_length > len) {
     bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
     bspev->event = 4;
+    bspev->bsock = bsock;
     bspev->list = NULL;
     bspev->first_buffer_length = len;
     bspev->first_buffer = buffer->prev_data + buffer->residue_start;  

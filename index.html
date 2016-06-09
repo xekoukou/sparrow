@@ -344,6 +344,32 @@ struct bsparrow_t {
 typedef struct bsparrow_t bsparrow_t;
 
 
+//Internal use only
+void bsparrow_socket_clean(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
+  //Clean input buffer list
+  buffer_in_t * buffer = &(bsock-%gtbuff_in);
+  buffer_list_t * item = buffer-%gtlist;
+  buffer_list_t * prev_item;
+  while(item != NULL) {
+    prev_item = item;
+    item = item-%gtnext;
+    if(prev_item-%gtshould_be_freed) {
+      free(prev_item-%gtdata);
+    }
+    free(prev_item);
+  }
+
+  //Clean the rest probable big_buffers
+  if(buffer-%gtprev_data_tag == 2) {
+    free(buffer-%gtprev_data);
+  }
+  if(buffer-%gtnew_data_tag == 2) {
+    free(buffer-%gtnew_data);
+  }
+
+}
+
+
 //Internal use
 bsparrow_socket_t * bsparrow_socket_initialize_internal(bsparrow_t * bsp,sparrow_socket_t * sock, int64_t id, int we_connected, char * address, char * port) {
   bsparrow_socket_t * bsock = scalloc(sizeof(bsparrow_socket_t));
@@ -354,6 +380,7 @@ bsparrow_socket_t * bsparrow_socket_initialize_internal(bsparrow_t * bsp,sparrow
     //This can only happen when we connect, not when we accept a new connection.
     assert(we_connected == 1);
     bsock-%gtoperational = 0;
+    bsparrow_socket_clean(bsp, bsock);
     bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
   }
   bsock-%gtid = id;
@@ -417,26 +444,7 @@ void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
   free(bsock-%gtbuff_in.default_memory);
   free(bsock-%gtbuff_out.default_memory);
 
-  //Clean input buffer list
-  buffer_in_t * buffer = &(bsock-%gtbuff_in);
-  buffer_list_t * item = buffer-%gtlist;
-  buffer_list_t * prev_item;
-  while(item != NULL) {
-    prev_item = item;
-    item = item-%gtnext;
-    if(prev_item-%gtshould_be_freed) {
-      free(prev_item-%gtdata);
-    }
-    free(prev_item);
-  }
-
-  //Clean the rest probable big_buffers
-  if(buffer-%gtprev_data_tag == 2) {
-    free(buffer-%gtprev_data);
-  }
-  if(buffer-%gtnew_data_tag == 2) {
-    free(buffer-%gtnew_data);
-  }
+  bsparrow_socket_clean(bsp, bsock);
 
   free(bsock);
 }
@@ -509,6 +517,7 @@ void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * 
       bspev-%gtbsock = bsock;
       bsp-%gtibspev_list = bsparrow_event_list_add(bsp-%gtibspev_list, bspev);
     } else {
+      bsparrow_socket_clean(bsp, bsock);
       bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
     }
   } 
@@ -522,21 +531,11 @@ void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow
     sparrow_socket_set_parent(sock, bsock);
     bsock-%gtoperational = 1;
 
-    //retry input and output.
-    if(bsock-%gtidle_output == 0) {
-      sparrow_event_t spev = {0};
-      int more = sparrow_send(bsp-%gtsp, bsock-%gtsock, bsock-%gtbuff_out.allocated_memory, bsock-%gtbuff_out.len, &spev);  
-      bsock-%gtout_more = more;
-      if(spev.event == 8) {
-        bsock-%gtretries++;
-        return;
-      }
-    }
-   
-    if(bsock-%gtidle_input == 0) {
-      buffer_in_t * buffer = &(bsock-%gtbuff_in);
-      sparrow_recv(bsp-%gtsp, bsock-%gtsock, buffer-%gtnew_data + buffer-%gtcur_length, buffer-%gtnew_data_len - buffer-%gtcur_length); 
-    }
+    bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
+    bspev-%gtevent = 32;
+    bspev-%gtbsock = bsock;
+    bsp-%gtibspev_list = bsparrow_event_list_add(bsp-%gtibspev_list, bspev);
+
   } else {
     bsock-%gtretries++;
   }
@@ -614,6 +613,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
     bsock-%gtoperational = 0;
     if(bsock-%gtwe_connected) {
       assert(bsock-%gtretries == 0);
+      bsparrow_socket_clean(bsp, bsock);
       bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
     } else {
       bspev-%gtevent = 8;
@@ -675,6 +675,7 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
   if(buffer-%gtresidue_length %gt len) {
     bsparrow_event_t * bspev = scalloc(sizeof(bsparrow_event_t));
     bspev-%gtevent = 4;
+    bspev-%gtbsock = bsock;
     bspev-%gtlist = NULL;
     bspev-%gtfirst_buffer_length = len;
     bspev-%gtfirst_buffer = buffer-%gtprev_data + buffer-%gtresidue_start;  
