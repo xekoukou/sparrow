@@ -9,7 +9,7 @@ int main(void) {
   sparrow_wait(sp,&spev);
 
   if(spev.event & 16) {
-    char *data = malloc(50);
+    char *data = scalloc(1, 50);
     sparrow_socket_set_timeout(sp, 5000);
     sparrow_recv(sp, spev.sock, data,50);
   }

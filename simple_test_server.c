@@ -10,7 +10,7 @@ int main(void) {
 
 
   if(spev.event & 16) {
-    char *data = malloc(50);
+    char *data = scalloc(1, 50);
     sparrow_recv(sp, spev.sock, data,50);
   }
   //New Msg

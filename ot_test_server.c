@@ -11,10 +11,10 @@ int main(void) {
 
   if(spev.event & 16) {
     printf("we connected and now we will wait for a period so that the client output timeout expires.\n");
-    sleep(4);
+    sleep(3);
   }
 
-  sparrow_wait(sp,&spev);
+  sparrow_close(&sp);
   return 0;
 }
 

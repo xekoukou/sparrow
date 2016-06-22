@@ -43,8 +43,8 @@ struct sparrow_t {
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
   struct ot_rb_t ot_rb_socks; // A tree container of sockets ordered by the expiration if their outputs.
   int64_t default_ot;
-  int ot_already_expired;
-  int64_t timeout;
+  int64_t t_expiry;  // The time that the timeout expires.
+  int64_t oltime; //Last time we checked for output expirations.
 };
 ./!dots(-1)
 }
@@ -88,10 +88,54 @@ sparrow_socket_t * sparrow_next(sparrow_t * sp, sparrow_socket_t * sock) {
 function sparrow_send_receive() {
 ./!dots(1)
 
+int sparrow_try_immediate_send(sparrow_t * sp, sparrow_socket_t * sock) {
+//Try to send as much as we can.
+
+  data_out_t *data_out = &(sock-%gtdata_out);
+  assert(data_out-%gtlen != 0);
+
+  int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
+
+  //On error
+  if(result %lt 0 && (errno != EAGAIN)) {
+    perror("Send error inside sparrow_send.\n");
+    sparrow_socket_close(sp,sock);
+    return -1;
+  }
+  
+  if(result + data_out-%gtcur %lt data_out-%gtlen) {
+    if(result %gt 0) {
+      data_out-%gtcur += result;
+    }
+    return 0;
+
+  } else {
+
+    //We remove the socket from the output expiration tree.
+    RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+    sock-%gtout_expiry = -1;
+    data_out-%gtlen = 0;
+
+    struct epoll_event pevent;
+    pevent.data.fd = sock-%gtfd;
+    pevent.events = EPOLLIN;
+    int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
+    if (rc == -1) {
+      perror(" epoll_ctl failed to modify a socket to epoll");
+      exit(-1);
+    }
+
+    return 1;
+  }
+
+}
+
 int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
 
   assert(data!=NULL);
   spev-%gtsock = sock;
+  spev-%gtfd = sock-%gtfd;
+  spev-%gtparent = sock-%gtparent;
   spev-%gtevent = 0;
 
   data_out_t *data_out = &(sock-%gtdata_out);
@@ -113,9 +157,11 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
   }
 
   if(result + data_out-%gtcur %lt data_out-%gtlen) {
-    data_out-%gtcur += result;
+    if(result %gt 0) {
+      data_out-%gtcur += result;
+    }
 
-    struct epoll_event pevent;
+    struct epoll_event pevent = {0};
     pevent.data.fd = sock-%gtfd;
     pevent.events = EPOLLIN | EPOLLOUT;
     int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
@@ -124,7 +170,10 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
       exit(-1);
     }
 
+    //We add the socket to the output expiration tree.
     sock-%gtout_expiry = now() + sp-%gtdefault_ot;
+    RB_INSERT(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+    Dprintf("I have more to send. Adding the socket to output expiry.\n");
     
     return 0;
 
@@ -195,9 +244,13 @@ void * sparrow_socket_get_parent(sparrow_socket_t * sock) {
 function set_timeout_function() {
 ./!dots(1)
 
-//The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly.
+//The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly. TODO update the comment
 void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout) {
-  sp-%gttimeout = timeout;
+  if(timeout %gt 0) {
+    sp-%gtt_expiry = now() + timeout;
+  } else {
+    sp-%gtt_expiry = -1;
+  }
 }
 
 ./!dots(-1)
@@ -207,7 +260,7 @@ function change_of_TCP_state_functions() {
 
 //internal use only.
 sparrow_t * sparrow_new(int64_t dtimeout) {
-  sparrow_t * sp = scalloc(sizeof(sparrow_t));
+  sparrow_t * sp = scalloc(1, sizeof(sparrow_t));
   int fd = epoll_create1 (0);
   if (fd == -1) {
     perror("epoll_create1 failed to create epoll.");
@@ -217,8 +270,8 @@ sparrow_t * sparrow_new(int64_t dtimeout) {
   sp-%gtevents_len = 0;
   RB_INIT(&(sp-%gtfd_rb_socks));
   RB_INIT(&(sp-%gtot_rb_socks));
-  sp-%gttimeout = -1;
-  sp-%gtot_already_expired = 0;
+  sp-%gtt_expiry = -1;
+  sp-%gtoltime = now();
   sp-%gtdefault_ot = dtimeout;
   return sp;
 }
@@ -226,9 +279,11 @@ sparrow_t * sparrow_new(int64_t dtimeout) {
 
 //internal use only.
 sparrow_socket_t * sparrow_socket_new(int fd) {
-  sparrow_socket_t * sock = scalloc(sizeof(sparrow_socket_t));
+  sparrow_socket_t * sock = scalloc(1, sizeof(sparrow_socket_t));
   sock-%gtfd = fd;
   sock-%gtout_expiry = -1;
+  sock-%gtlistening = 0;
+  sock-%gtparent = NULL;
   return sock;
 }
 
@@ -236,7 +291,7 @@ sparrow_socket_t * sparrow_socket_new(int fd) {
 //internal use only
 void sparrow_add_socket(sparrow_t * sp, sparrow_socket_t *sock) {
   int rc;
-  struct epoll_event event;
+  struct epoll_event event = {0};
   event.data.fd = sock-%gtfd;
   event.events = EPOLLIN;
   rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_ADD, sock-%gtfd, &event);
@@ -277,6 +332,7 @@ sparrow_socket_t * sparrow_socket_listen(sparrow_socket_t * sock) {
     exit(-1);
   }
   sock-%gtlistening = 1;
+  sock-%gtparent = NULL;
   return sock;
 }
 
@@ -385,35 +441,36 @@ function sparrow_handle_ot_errors() {
 
         //Internal use only
 int sparrow_handle_expired_ot(sparrow_t * sp, sparrow_event_t *spev, int64_t *timeout){
-  sparrow_socket_t * sock = RB_MIN(ot_rb_t, &(sp-%gtot_rb_socks));
-  if(sp-%gtot_already_expired %gt 0) {
-    RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
-    sp-%gtot_already_expired--;
-    spev-%gtsock = sock;
-    spev-%gtevent = 8;
-    return 1;
+  int64_t time = now();
+
+  if(time - sp-%gtoltime %gt MIN_OTIMEOUT_SAMPLE_INTERVAL) {
+    sparrow_socket_t * sock = RB_MIN(ot_rb_t, &(sp-%gtot_rb_socks));
+    if(sock !=NULL) {
+      if(sock-%gtout_expiry - time %lt 0) {
+        Dprintf("Output expiration error\n");
+        RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+        spev-%gtsock = NULL;
+        spev-%gtfd = sock-%gtfd;
+        spev-%gtparent = sock-%gtparent;
+        sparrow_socket_close(sp, sock);
+        spev-%gtevent = 8;
+        return 1;
+      }
+      //If there is no new expirations update the time.
+      sp-%gtoltime = time;
+      if((sp-%gtt_expiry %lt 0) || (sock-%gtout_expiry %lt sp-%gtt_expiry)) {
+        *timeout = sock-%gtout_expiry - time;
+        return 0;
+      }
+    }
   }
-  if(sock !=NULL) {
-    int64_t time = now();
-    sparrow_socket_t * iter = sock;
-    while ((iter != NULL) && (iter-%gtout_expiry - time %lt 0 )) {
-      sp-%gtot_already_expired++;
-      iter = RB_NEXT(ot_rb_t, &(sp-%gtot_rb_socks), iter);
-    }
-    if(sp-%gtot_already_expired %gt 0) {
-      RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
-      sp-%gtot_already_expired--;
-      spev-%gtsock = sock;
-      sparrow_socket_close(sp, sock);
-      spev-%gtevent = 8;
-      return 1;
-    }
-    *timeout = sock-%gtout_expiry - time;
-    if(sp-%gttimeout %lt *timeout) {
-      *timeout = sp-%gttimeout;
-    }
+  if(sp-%gtt_expiry %lt 0) {
+    *timeout = -1;
   } else {
-    *timeout = sp-%gttimeout;
+    *timeout = sp-%gtt_expiry - time;
+    if(*timeout %lt 0) {
+      *timeout = 0;
+    }
   }
   return 0;
 }
@@ -434,10 +491,14 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   }
 
   if(sp-%gtevents_len == 0) {
-    sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, sp-%gttimeout);
+    Dprintf("Timeout: %ld\n", timeout);
+    sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, timeout);
     if(sp-%gtevents_len == 0) {
-      spev-%gtevent = 32;
-      return 0;
+      if((sp-%gtt_expiry %gt 0) && (sp-%gtt_expiry - now() %lt 0)) {
+        sp-%gtt_expiry = -1;
+        spev-%gtevent = 32;
+        return 0;
+      }
     }
     sp-%gtevent_cur = 0;
   }
@@ -450,12 +511,14 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
     int event = sp-%gtevents[i].events;
 
     spev-%gtsock = sock;
+    spev-%gtfd = sock-%gtfd;
+    spev-%gtparent = sock-%gtparent;
 
       //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
-        printf("EPOLLERR || EPOLLHUP error.\n");
-        spev-%gtevent = 8;
+        Dprintf("EPOLLERR || EPOLLHUP error\n");
         sparrow_socket_close(sp,sock);
+        spev-%gtevent = 8;
         return 0;
       }
 
@@ -467,13 +530,16 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
 
       //On error
       if(result %lt 0) {
+        sparrow_socket_close(sp,sock);
         spev-%gtevent = 8;
         Dprintf("Send error inside _sparrow_wait.\n");
-        sparrow_socket_close(sp,sock);
         return 0;
       }
 
       if(result + data_out-%gtcur == data_out-%gtlen) {
+        //We remove the socket from the output expiration tree.
+        RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+        sock-%gtout_expiry = -1;
         data_out-%gtlen = 0;
 
         struct epoll_event pevent;
@@ -497,6 +563,8 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
       // We accept a new client.
         spev-%gtsock = sparrow_socket_accept(sp, sock);
         Dprintf("Listening Socket:\nfd:%d\n",sock-%gtfd);
+        spev-%gtfd = spev-%gtsock-%gtfd;
+        spev-%gtparent = spev-%gtsock-%gtparent;
         spev-%gtevent += 16;
       } else {
         Dprintf("Receiving Socket:\nfd:%d\n",sock-%gtfd);
@@ -504,19 +572,18 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         //If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
         if(data_in-%gtlen == 0) {
           Dprintf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
-          spev-%gtevent = 8;
           sparrow_socket_close(sp,sock);
+          spev-%gtevent = 8;
           return 0;
         }
 
         int result = recv(sock-%gtfd, data_in-%gtdata , data_in-%gtlen , 0);
 
         //On error or connection closed.
-        //TODO We need to handle closed connections differently, possibly automatically reconnecting.
         if(result %lt= 0) {
           Dprintf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
-          spev-%gtevent = 8;
           sparrow_socket_close(sp,sock);
+          spev-%gtevent = 8;
           return 0;
         }
 
@@ -570,9 +637,10 @@ void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
 // #define MAX_BUFF (1500 - 68) // The ethernet MTU is 1500 bytes minus the IP/TCP headers.
 // #define MAX_SEND_QUEUE 10
 // #define MAX_INPUT_DELAY 20
+#define MIN_OTIMEOUT_SAMPLE_INTERVAL 100
 
-void * scalloc(size_t size) {
-  void * result = calloc(1,size);
+void * scalloc(size_t num, size_t size) {
+  void * result = calloc(num, size);
   if(result == NULL) {
     exit(-1);
   }

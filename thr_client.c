@@ -7,7 +7,7 @@ int main(void) {
   sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9001");
 
-  char *data = malloc(50);
+  char *data = scalloc(1, 50);
 
   sparrow_event_t spev;
   spev.event = 0;
