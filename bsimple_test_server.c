@@ -4,7 +4,7 @@
 
 int main(void) {
 
-  bsparrow_t * bsp = bsparrow_new(100, 5000, 1, "9003");
+  bsparrow_t * bsp = bsparrow_new(100, 5000, 100, 1, "9003");
 
   bsparrow_event_t bspev;
   bsparrow_wait(bsp, &bspev);

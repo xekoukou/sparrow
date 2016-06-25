@@ -12,7 +12,7 @@
 
 typedef struct buffer_list_t buffer_list_t;
 
-buffer_list_t * buffer_list_next(buffer_list_t * list, void ** data, size_t * length);
+buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length);
 
 typedef struct bsparrow_socket_t bsparrow_socket_t;
 
@@ -25,6 +25,7 @@ struct bsparrow_event_t {
   buffer_list_t * list;
   char * last_buffer;
   size_t last_buffer_length;
+  size_t total_length;
 };
 
 typedef struct bsparrow_event_t bsparrow_event_t;
@@ -32,7 +33,7 @@ typedef struct bsparrow_event_t bsparrow_event_t;
 typedef struct bsparrow_t bsparrow_t;
 
 
-bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int listening, char * port);
+bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int listening, char * port);
 
 void bsparrow_destroy(bsparrow_t ** bsp);
 

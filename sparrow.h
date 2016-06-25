@@ -29,6 +29,7 @@ void sparrow_socket_bind(sparrow_t * sp, char * port);
 
 sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char * port); 
 
+//Only one event can be given at a time.
 void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev);
 
 void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout);
