@@ -282,3 +282,6 @@ TODO After retry issue a sesssion initialization event.
 ---------------------------------------------
 
 same datatype sent between the same agents should have a tag so as to differentiate them. This is important because each agents has a different knowledge of the global state and these knowledges do not need to be consistent with each other.
+
+
+------------------------------------------

@@ -26,7 +26,7 @@ int main(void) {
     }
 
     if(sent_immediately == 0) {
-      sparrow_wait(sp,&spev);
+      sparrow_wait(sp,&spev, 0);
     }
 
     if((spev.event & 2) || (sent_immediately == 1)) {

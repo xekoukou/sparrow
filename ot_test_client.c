@@ -11,7 +11,7 @@ int main(void) {
   sparrow_event_t spev;
   sparrow_send(sp, sock, data, 50000000, &spev);
 
-  sparrow_wait(sp,&spev);
+  sparrow_wait(sp,&spev, 0);
 
   if(spev.event & 8) {
     printf("An error occured.\n");

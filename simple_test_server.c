@@ -6,7 +6,7 @@ int main(void) {
   sparrow_socket_bind(sp,"9003");
 
   sparrow_event_t spev;
-  sparrow_wait(sp,&spev);
+  sparrow_wait(sp,&spev, 0);
 
 
   if(spev.event & 16) {
@@ -14,7 +14,7 @@ int main(void) {
     sparrow_recv(sp, spev.sock, data,50);
   }
   //New Msg
-  sparrow_wait(sp,&spev);
+  sparrow_wait(sp,&spev, 0);
   if(spev.event & 4) {
     char * data_out = sparrow_socket_data_in(spev.sock);
     printf("Received :\n%s\n",data_out);

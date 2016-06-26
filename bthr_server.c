@@ -4,104 +4,129 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MSG_SIZE 40000
 
-void results(int i, int64_t time) {
+void printmsg(bsparrow_event_t *bspev, size_t size) {
+  //Copy the msg to a new buffer.
+  char * msg = scalloc(1, size);
+
+  size_t position = 0;
+  if(bspev->first_buffer_length > 0) {
+    if(size > bspev->first_buffer_length) {
+      memcpy(msg, bspev->first_buffer, bspev->first_buffer_length);
+      position = bspev->first_buffer_length;
+    } else {
+      memcpy(msg, bspev->first_buffer, size);
+      position = size;
+    }
+  }
+
+  buffer_list_t * iter = bspev->list;
+  while(iter != NULL) {
+    char * buffer;
+    size_t length;
+    iter = buffer_list_next(iter, &buffer, &length);
+    memcpy(msg + position, buffer, length);
+    position += length;
+  }
+ 
+  if(bspev->last_buffer_length) {
+    memcpy(msg + position, bspev->last_buffer, size - position);
+  }
+  Dprintf("Received :\n\n%s\n\n", msg);
+  Dprintf("Length : %d\n", size);
+
+  free(msg);
+
+}
+
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, size_t size) {
+  while(1) {
+    bsparrow_recv(bsp, bsock, size);
+    bsparrow_immediate_event(bsp, bspev);
+
+    if(bspev->event & 4) {
+      if(bspev->total_length >= size) {
+        break;
+      }
+      continue;
+    }
+
+    bsparrow_set_timeout(bsp, 5000);
+    bsparrow_wait(bsp, bspev, 0);
+
+    if(bspev->event & 4) {
+      bsparrow_set_timeout(bsp, -1);
+      if(bspev->total_length >= size) {
+        break;
+      }
+    }
+
+    if(bspev->event & 32) {
+      printf("timeout error. The client must have crushed");
+      exit(-1);
+    }
+    assert(bspev->event & 4);
+  }
+}
+
+
+void results(int i, int64_t time, int msg_size) {
   int64_t dif_time = (now() - time);
   float rate = ((float) (i+1) * 1000) / ((float) dif_time);
   printf("Rate: %f msgs per second.\n", rate);
-  printf("Length : %d\n", MSG_SIZE);
+  printf("Length : %d\n", msg_size);
   printf("Msgs received: %d\n", i);
 }
 
-int main(void) {
+int main(int argc, char ** argv) {
 
-  bsparrow_t * bsp = bsparrow_new(50000, 1000, 100, 1, "9003");
+  assert(argc == 3);
+  int msg_size = atoi(argv[1]);
+  int loop_length = atoi(argv[2]);
+
+  bsparrow_t * bsp = bsparrow_new(50000, 10000, 2, 1, "9003");
 
   bsparrow_event_t bspev;
-  bsparrow_wait(bsp, &bspev);
+  bsparrow_socket_t * bsock;
+  bsparrow_wait(bsp, &bspev, 0);
 
   if(bspev.event & 16) {
-    bsparrow_socket_assign_id(bspev.bsock, 1);
+    bsock = bspev.bsock;
+    bsparrow_socket_assign_id(bsock, 1);
+  } else {
+    exit(-1);
   }
   
   int j = 0;
   int64_t time = now();
-  while(j < 20000) {
+  while(j < loop_length) {
     int i = 0;
-    while(i < 100) {
-      if(i == 50) {
+    while(i < 1000) {
+      if(i == 500) {
         char *data = scalloc(1, 100);
         sprintf(data,"Got 50, need mooooreee!");
-        bsparrow_send(bsp, bspev.bsock, &data, 100);
+        bsparrow_send(bsp, bsock, &data, 100);
+        Dprintf("I am sending an aknowledge msg at msg number: %lu\n", j*100 + 50);
       }
-      while(1) {
-        bsparrow_recv(bsp, bspev.bsock, MSG_SIZE);
-        bsparrow_immediate_event(bsp, &bspev);
+      get_msg(bsp, bsock, &bspev, msg_size); 
     
-    
-        if(bspev.event & 8) {
-          printf("An error occured.\n");
-          results(j*100 + i, time);
-          exit(1);
-        }
-        if(bspev.event & 4) {
-          if(bspev.total_length >= MSG_SIZE) {
-            break;
-          }
-          continue;
-        }
-    
-    
-        bsparrow_wait(bsp, &bspev);
-        if(bspev.event & 8) {
-          printf("An error occured.\n");
-          results(j*100 + i, time);
-          exit(1);
-        }
-    
-        if(bspev.event & 4) {
-          if(bspev.total_length >= MSG_SIZE) {
-            break;
-          }
-        }
-    
-      }
-      
-      //Copy the msg to a new buffer.
-      char * msg = scalloc(1, MSG_SIZE);
-      size_t position = 0;
-      if(bspev.first_buffer_length > 0) {
-        memcpy(msg, bspev.first_buffer, bspev.first_buffer_length);
-        position = bspev.first_buffer_length;
-      }
-      buffer_list_t * iter = bspev.list;
-  
-      while(iter != NULL) {
-        char * buffer;
-        size_t length;
-        iter = buffer_list_next(iter, &buffer, &length);
-        memcpy(msg + position, buffer, length);
-        position += length;
-      }
-  
-      memcpy(msg + position, bspev.last_buffer, bspev.last_buffer_length);
-      Dprintf("Received :\n\n%s\n\n", msg);
-      Dprintf("Length : %d\n", MSG_SIZE);
-      Dprintf("Msgs received : %d\n", i);
-  
-      bsparrow_got_some(bsp, bspev.bsock, MSG_SIZE);
-      free(msg);
+      Dprintf("i: %d\n", i); 
       i++;
+      Dprintf("Remaining length: %lu\n", bspev.total_length -msg_size);
+      printmsg(&bspev, msg_size);
+      bsparrow_got_some(bsp, bsock, msg_size);
     }
+    Dprintf("j: %d\n", j); 
+    Dprintf("Remaining length: %lu\n", bspev.total_length -msg_size);
     j++;
   }
 
+  printf("Sending: Got them all, thanks!\n");
   char *data = scalloc(1, 100);
   sprintf(data,"Got them all, thanks!");
-  bsparrow_send(bsp, bspev.bsock, &data, 100);
+  bsparrow_send(bsp, bsock, &data, 100);
 
-  results(j*100, time);
+  results(j*1000, time, msg_size);
 
   bsparrow_destroy(&bsp);
   return 0;

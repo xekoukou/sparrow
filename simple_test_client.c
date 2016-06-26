@@ -11,7 +11,7 @@ int main(void) {
   sparrow_event_t spev;
   sparrow_send(sp, sock, data, 50, &spev);
 
-  sparrow_wait(sp,&spev);
+  sparrow_wait(sp,&spev, 0);
   printf("I sent : %s",data);
   
   sparrow_close(&sp);

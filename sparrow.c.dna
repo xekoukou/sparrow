@@ -90,10 +90,10 @@ function sparrow_send_receive() {
 
 int sparrow_try_immediate_send(sparrow_t * sp, sparrow_socket_t * sock) {
 //Try to send as much as we can of there are data to send.
-
+  printf("Inside sparrow immediate send\n");
   data_out_t *data_out = &(sock-%gtdata_out);
   if(data_out-%gtlen != 0) {
-  
+    Dprintf("Send msg size: %lu\n", data_out-%gtlen - data_out-%gtcur);
     int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
   
     //On error
@@ -149,6 +149,7 @@ int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t l
 
 //Try to send as much as we can.
 
+  Dprintf("Send msg size: %lu\n", data_out-%gtlen - data_out-%gtcur);
   int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
 
   //On error
@@ -248,7 +249,7 @@ function set_timeout_function() {
 ./!dots(1)
 
 //The timeout should be changed when the data have been sent received. It is the job of the serializer/multiplexer to do that but care must be taken to do it correctly. TODO update the comment
-void sparrow_socket_set_timeout(sparrow_t * sp, int64_t timeout) {
+void sparrow_set_timeout(sparrow_t * sp, int64_t timeout) {
   if(timeout %gt 0) {
     sp-%gtt_expiry = now() + timeout;
   } else {
@@ -406,7 +407,7 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 }
 
 void sparrow_socket_close(sparrow_t * sp, sparrow_socket_t * sock) {
-  Dprintf("Connection closed: %d\n", sock-%gtfd);
+  printf("Connection closed: %d\n", sock-%gtfd);
   close(sock-%gtfd);
 //  assert(sock-%gtdata_in.len == 0);
   RB_REMOVE(fd_rb_t, &(sp-%gtfd_rb_socks), sock);
@@ -487,7 +488,7 @@ function sparrow_wait_function() {
 
 //Internal
 //Requires an array of MAX_EVENT units.
-int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
+int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
   spev-%gtevent = 0;
   int64_t timeout;
 
@@ -495,12 +496,17 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
     return 0;
   }
 
+  // We immediately return if there are no outputs to send
+  if(only_output) {
+    timeout = 0;
+  }
+
   if(sp-%gtevents_len == 0) {
     Dprintf("Timeout: %ld\n", timeout);
     sp-%gtevent_cur = 0;
     sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, timeout);
 
-    if((sp-%gtt_expiry %gt 0) && (sp-%gtt_expiry - now() %lt 0)) {
+    if((sp-%gtt_expiry %gt= 0) && (sp-%gtt_expiry - now() %lt 0)) {
       sp-%gtt_expiry = -1;
       spev-%gtevent = 32;
       return 0;
@@ -513,14 +519,18 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
     sparrow_socket_t * sock = RB_FIND(fd_rb_t, &(sp-%gtfd_rb_socks), &find_sock);
     int event = sp-%gtevents[i].events;
 
+    //The socket might have been destroyed even though we still had events to process. TODO??
+    if(sock == NULL) {
+      continue;
+    }
     spev-%gtsock = sock;
     spev-%gtfd = sock-%gtfd;
     spev-%gtparent = sock-%gtparent;
 
       //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
-        Dprintf("EPOLLERR || EPOLLHUP error\n");
-        sparrow_socket_close(sp,sock);
+        printf("EPOLLERR || EPOLLHUP error\n");
+        sparrow_socket_close(sp, sock);
         spev-%gtevent = 8;
         sp-%gtevents[i].events = 0;
         return 0;
@@ -530,6 +540,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
       data_out_t *data_out = &(sock-%gtdata_out);
       assert(data_out-%gtlen %gt data_out-%gtcur);
       assert(data_out-%gtlen != 0);
+      Dprintf("Send msg size: %lu\n", data_out-%gtlen - data_out-%gtcur);
       int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
 
       //On error
@@ -537,7 +548,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         sparrow_socket_close(sp,sock);
         spev-%gtevent = 8;
         sp-%gtevents[i].events = 0;
-        Dprintf("Send error inside _sparrow_wait.\n");
+        printf("Send error inside _sparrow_wait.\n");
         return 0;
       }
 
@@ -566,7 +577,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
     }
 
     data_in_t *data_in = &(sock-%gtdata_in);
-    if(event & EPOLLIN) {
+    if((event & EPOLLIN) && !only_output) {
 
       if(sock-%gtlistening) {
       // We accept a new client.
@@ -583,7 +594,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
         
         //If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
         if(data_in-%gtlen == 0) {
-          Dprintf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
+          printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
           sparrow_socket_close(sp,sock);
           spev-%gtevent = 8;
           sp-%gtevents[i].events = 0;
@@ -594,7 +605,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
 
         //On error or connection closed.
         if(result %lt= 0) {
-          Dprintf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
+          printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
           sparrow_socket_close(sp,sock);
           spev-%gtevent = 8;
           sp-%gtevents[i].events = 0;
@@ -616,9 +627,9 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
   return 1;
 }
 
-void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev) {
+void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
 
-  while(_sparrow_wait(sp, spev)) {
+  while(_sparrow_wait(sp, spev, only_output)) {
   }
 }
 

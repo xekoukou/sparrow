@@ -9,7 +9,7 @@ int main(void) {
   char *data = scalloc(1, 50);
   
   sparrow_event_t spev;
-  sparrow_wait(sp,&spev);
+  sparrow_wait(sp,&spev, 0);
   int64_t time = now();
   if(spev.event & 8) {
     printf("An error occured\n");
@@ -21,7 +21,7 @@ int main(void) {
 
   int i = 0;
   while (i < 2000000) {
-    sparrow_wait(sp,&spev);
+    sparrow_wait(sp,&spev, 0);
     if(spev.event & 8) {
       printf("An error occured\n");
       break;

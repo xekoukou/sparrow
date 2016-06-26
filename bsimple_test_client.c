@@ -14,7 +14,7 @@ int main(void) {
   bsparrow_send(bsp, bsock, &data, 50);
 
   bsparrow_set_timeout(bsp, 5000);
-  bsparrow_wait(bsp, &bspev);
+  bsparrow_wait(bsp, &bspev, 0);
 
   assert(bspev.event == 32);
   printf("I sent : Hello there!");

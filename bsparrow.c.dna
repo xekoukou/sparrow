@@ -1,12 +1,7 @@
-function creating_error_code() {
+function handle_error() {
 ./!dots(1)
 if(!bsock-%gtwe_connected) {
-  bsparrow_event_t * bspev = scalloc(1, sizeof(bsparrow_event_t));
-  bspev-%gtevent = 8;
-  bspev-%gtid = bsock-%gtid;
-  bsparrow_socket_internal_destroy(bsp, &bsock);
-  bspev-%gtbsock = NULL;
-  bsp-%gtibspev_list = bsparrow_event_list_add(bsp-%gtibspev_list, bspev);
+  bsparrow_socket_internal_destroy(bsp, bsock);
 } else {
   bsock-%gtsock = NULL;
   bsparrow_socket_clean(bsp, bsock);
@@ -202,11 +197,9 @@ struct bsparrow_socket_t {
   buffer_out_t buff_out;
   oqueue_t oq;
   int operational;
+  int internally_destroyed;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
-  int idle_input;  //If the socket is idle it is destroyed since there is no use of it.
-  int idle_output;
-  int should_be_destroyed;  //When the socket is idle, destroy it.
 };
 
 
@@ -308,7 +301,7 @@ struct bsparrow_t {
 ./!dots(-1)
 function default_socket_values() {
 ./!dots(1)
-bsock-%gtshould_be_destroyed = 0;
+bsock-%gtinternally_destroyed = 0;
 bsock-%gtout_more = 1;
 bsock-%gtbuff_in.new_data = bsock-%gtbuff_in.default_memory;
 bsock-%gtbuff_in.new_data_tag = 0;
@@ -322,8 +315,6 @@ bsock-%gtbuff_in.total_length_received = 0;
 bsock-%gtbuff_in.new_data_len = bsp-%gtbuffer_size / 2;
 bsock-%gtbuff_out.allocated_memory = bsock-%gtbuff_out.default_memory;
 bsock-%gtbuff_out.is_it_default = 1;
-bsock-%gtidle_input = 1;
-bsock-%gtidle_output = 1;
 ./!dots(-1)
 }
 ./!dots(1)
@@ -413,14 +404,14 @@ void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id) {
 
 
 //Internal use only
-void bsparrow_socket_internal_destroy(bsparrow_t * bsp, bsparrow_socket_t ** bsock_) {
-  bsparrow_socket_t * bsock = *bsock_;
+void bsparrow_socket_internal_destroy(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
 
   if(bsock-%gtwe_connected) {
     free(bsock-%gtaddress);
     free(bsock-%gtport);
   }
   if(bsock-%gtoperational) {
+    printf("Destroying socket.\n");
     sparrow_socket_close(bsp-%gtsp, bsock-%gtsock);
     bsock-%gtoperational = 0;
     bsock-%gtsock = NULL;
@@ -433,18 +424,16 @@ void bsparrow_socket_internal_destroy(bsparrow_t * bsp, bsparrow_socket_t ** bso
   bsparrow_socket_clean(bsp, bsock);
   oqueue_destroy(&(bsock-%gtoq));
 
-  free(bsock);
   bsock = NULL;
 }
 
 void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t ** bsock_) {
   bsparrow_socket_t * bsock = *bsock_;
-  assert(bsock-%gtshould_be_destroyed == 0);
-  if(bsock-%gtidle_input && bsock-%gtidle_output) {
-    bsparrow_socket_internal_destroy(bsp, bsock_);
-  } else {
-    bsock-%gtshould_be_destroyed = 1;
+  if(!bsock-%gtinternally_destroyed) {
+    bsparrow_socket_internal_destroy(bsp, bsock);
   }
+  free(bsock);
+  bsock = NULL;
 }
 
 bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int listening, char * port) {
@@ -472,33 +461,11 @@ void bsparrow_destroy(bsparrow_t ** bsp_) {
   bsparrow_socket_t * prev_iter;
   while(iter != NULL) {
     prev_iter = sparrow_socket_get_parent(iter);
-    //TODO This is only NULL when PREV_ITER is the listening socket. We need to provide an assert.
-    if(prev_iter != NULL) {
-    //We make sure that all the data have been sent before destroying the bsocket.
-      while((prev_iter-%gtoperational == 1) && ((prev_iter-%gtidle_input == 0) || (prev_iter-%gtidle_output == 0))) {
-        Dprintf("Sending remaining data before the destruction of the socket.\n");
-        bsparrow_event_t bspev = {0};
-        bsparrow_set_timeout(bsp, 1000);
-        bsparrow_wait(bsp, &bspev);
-
-        Dprintf("Event number: %d\n", bspev.event);
-        Dprintf("idle_input: %d\n", prev_iter-%gtidle_input);
-        Dprintf("idle_output: %d\n", prev_iter-%gtidle_output);
-      }
-      if(prev_iter-%gtoperational == 1) {
-        bsparrow_socket_internal_destroy(bsp, &prev_iter);
-      }
+    //This is only NULL when PREV_ITER is the listening socket. We need to provide an assert.
+    if(prev_iter!=NULL) {
+      bsparrow_socket_destroy(bsp, &prev_iter);
     }
-
-    //We use sparrow_first because due to errors, some sockets might be gone from the tree.
-    sparrow_socket_t * niter = sparrow_first(bsp-%gtsp);
-
-    //In case we have a listening socket that we do not destroy.
-    if(niter == iter) {
-      assert(NULL == sparrow_socket_get_parent(niter));
-      break;
-    }
-    iter = niter;
+    iter = sparrow_next(bsp-%gtsp, iter);
   }
 
   bsparrow_event_list_t * eviter = bsp-%gtibspev_list; 
@@ -509,7 +476,7 @@ void bsparrow_destroy(bsparrow_t ** bsp_) {
 
   non_op_bsock_list_t * nopiter = bsp-%gtnon_op_bsock_list; 
   while(nopiter != NULL) {
-    bsparrow_socket_internal_destroy(bsp, &(nopiter-%gtbsock));
+    bsparrow_socket_destroy(bsp, &(nopiter-%gtbsock));
     nopiter = non_op_bsock_list_rem_next(nopiter, NULL);
   }
 
@@ -519,7 +486,7 @@ void bsparrow_destroy(bsparrow_t ** bsp_) {
 }
 
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout) {
-  sparrow_socket_set_timeout(bsp-%gtsp, timeout);
+  sparrow_set_timeout(bsp-%gtsp, timeout);
 }
 
 
@@ -563,11 +530,6 @@ void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * 
   }
 
   bsock-%gtout_more = more;
-  if(more) {
-    bsock-%gtidle_output = 1;
-  } else {
-    bsock-%gtidle_output = 0;
-  }
 
   if(spev.event == 8) {
     assert(bsock-%gtoperational == 1);
@@ -575,24 +537,19 @@ void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * 
     bsock-%gtsock = NULL;
     assert(bsock-%gtretries == 0);
 ./!dots(-1)
-.    @{creating_error_code()}
+.    @{handle_error()}
 ./!dots(1)
   } 
 }
 
 
-void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev) {
+void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
   sparrow_socket_t * sock = sparrow_socket_connect(bsp-%gtsp, bsock-%gtaddress, bsock-%gtport);
   if(sock != NULL) {
+
     bsock-%gtsock = sock;
     sparrow_socket_set_parent(sock, bsock);
     bsock-%gtoperational = 1;
-
-    bsparrow_event_t * bspev = scalloc(1, sizeof(bsparrow_event_t));
-    bspev-%gtevent = 64;
-    bspev-%gtid = bsock-%gtid;
-    bspev-%gtbsock = bsock;
-    bsp-%gtibspev_list = bsparrow_event_list_add(bsp-%gtibspev_list, bspev);
 
   } else {
     bsock-%gtretries++;
@@ -601,26 +558,20 @@ void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow
 
 
 // If one fails completely, return the apropriate event
-void bsparrow_retry(bsparrow_t * bsp, bsparrow_event_t * bspev) {
-  bspev-%gtevent = 0;
+void bsparrow_retry(bsparrow_t * bsp) {
 
   non_op_bsock_list_t * list = bsp-%gtnon_op_bsock_list;
   non_op_bsock_list_t * iter = bsp-%gtnon_op_bsock_list;
   non_op_bsock_list_t * prev_iter = NULL;
   
-  while(iter) {
-    bspev-%gtbsock = iter-%gtbsock;
-    bsparrow_retry_single(bsp, iter-%gtbsock, bspev);
+  while(iter != NULL) {
+    bsparrow_retry_single(bsp, iter-%gtbsock);
     if(iter-%gtbsock-%gtoperational == 1) {
       bsp-%gtnon_op_bsock_list = non_op_bsock_list_rem_next(list, prev_iter);
     } else {
       if(iter-%gtbsock-%gtretries %gt bsp-%gtmax_retries) {
+        bsparrow_socket_internal_destroy(bsp, iter-%gtbsock);
         bsp-%gtnon_op_bsock_list = non_op_bsock_list_rem_next(list, prev_iter);
-        bspev-%gtid = bspev-%gtbsock-%gtid;
-        bsparrow_socket_internal_destroy(bsp, &(bspev-%gtbsock));
-        bspev-%gtbsock = NULL;
-        bspev-%gtevent = 8;
-        break;
       }
     }
     prev_iter = iter;
@@ -634,40 +585,30 @@ void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   if(bsp-%gtibspev_list != NULL) {
     memcpy(bspev, bsp-%gtibspev_list-%gtbspev, sizeof(bsparrow_event_t));
     free(bsp-%gtibspev_list-%gtbspev);
-    bsp-%gtibspev_list = bsparrow_event_list_rem_next(bsp-%gtibspev_list, bsp-%gtibspev_list);
+    bsp-%gtibspev_list = bsparrow_event_list_rem_next(bsp-%gtibspev_list, NULL);
   }
 }
 
-int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
+int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) {
   bspev-%gtevent = 0;
   
   //All immediate events should have already be handled before waiting for more.
   assert(bsp-%gtibspev_list == NULL);
 
-  //Handle Events created due to retry efforts.
-  bsparrow_retry(bsp, bspev);
-  if(bspev-%gtevent != 0) {
-    return 0;
-  }
+  //Handle Events created due to retry efforts. Put a time rate when we retry a new connection.
+  bsparrow_retry(bsp);
 
   //New events from the network.
   sparrow_event_t spev;
   bsparrow_socket_t * bsock;
     
-  sparrow_wait(bsp-%gtsp, &spev);
+  sparrow_wait(bsp-%gtsp, &spev, only_output);
   int ev = spev.event;
   bsock = spev.parent;
   bspev-%gtbsock = bsock;
 
   if((ev %gt%gt 1) & 1) {
-    if(bsock-%gtoq.pos_filled == 0) {
-      bsock-%gtidle_output = 1;
-      if(bsock-%gtshould_be_destroyed && (bsock-%gtidle_input == 1)) {
-        bsparrow_socket_internal_destroy(bsp, &bsock);
-      }
-    } else {
-      bsparrow_socket_process_next_out_req(bsp, bsock);
-    }
+    bsparrow_socket_process_next_out_req(bsp, bsock);
   }
 
   //Error
@@ -680,12 +621,12 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
       bsparrow_socket_clean(bsp, bsock);
       bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
     } else {
-      bspev-%gtid = bsock-%gtid;
-      bsparrow_socket_internal_destroy(bsp, &bsock);
-      bspev-%gtbsock = NULL;
-      bspev-%gtevent = 8;
-      return 0;
+      bsparrow_socket_internal_destroy(bsp, bsock);
     }
+  }
+
+  if(only_output) {
+    return 0;
   }
   
   //Input timeout
@@ -703,12 +644,8 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
 ./!dots(-1)
 .    @{fill_input_event()}
 ./!dots(1)
-
-    bsock-%gtidle_input = 1;
-    if(bsock-%gtshould_be_destroyed && (bsock-%gtidle_output == 1)) {
-      bsparrow_socket_internal_destroy(bsp, &bsock);
-    }
     return 0;
+
   }
   //New connection.
   if((ev %gt%gt 4) & 1) {
@@ -722,8 +659,8 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev) {
 }
 
 
-void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev) {
-  while(bsparrow_wait_(bsp, bspev)) {
+void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) {
+  while(bsparrow_wait_(bsp, bspev, 0)) {
   }
 }
 
@@ -751,7 +688,7 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
     int is_result = sparrow_try_immediate_send(bsp-%gtsp, bsock-%gtsock);
     if(is_result == -1) {
 ./!dots(-1)
-.      @{creating_error_code()}
+.      @{handle_error()}
 ./!dots(1)
       return;
     } else {
@@ -772,19 +709,15 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
       printf("The maximum output queue length was reached\n");
       bsock-%gtoperational = 0;
       sparrow_socket_close(bsp-%gtsp, bsock-%gtsock);
+      bsock-%gtsock = NULL;
       assert(bsock-%gtretries == 0);
 
 ./!dots(-1)
-.      @{creating_error_code()}
+.      @{handle_error()}
 ./!dots(1)
     }
   }
 
-  if(bsock-%gtoq.pos_filled == 0) {
-    bsock-%gtidle_output = 1;
-  } else {
-    bsock-%gtidle_output = 0;
-  }
 }
 
 ./!dots(-1)
@@ -817,7 +750,7 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
     buffer_in_t * buffer = &(bsock-%gtbuff_in);
     
     //We already have the data.
-    if(buffer-%gttotal_length_received %gt len) {
+    if(buffer-%gttotal_length_received %gt= len) {
       bsparrow_event_t * bspev = scalloc(1, sizeof(bsparrow_event_t));
   
 ./!dots(-1)
@@ -828,8 +761,6 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
       return;
     }
   
-    assert(bsock-%gtidle_input == 1);
-    bsock-%gtidle_input = 0;
   
     //If there is still some memory left from the previous buffer keep receiving in it.
     if(buffer-%gtnew_data_len == buffer-%gtcur_length) { 
@@ -876,9 +807,10 @@ void bsparrow_got_some(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t that_
 
 
 
-  if(that_much %lt buffer-%gtresidue_length) {
+  if(that_much %lt= buffer-%gtresidue_length) {
     buffer-%gtresidue_start = buffer-%gtresidue_start + that_much; 
     buffer-%gtresidue_length = buffer-%gtresidue_length - that_much;
+    buffer-%gttotal_length_received = buffer-%gttotal_length_received - that_much;
     return;
   }
 
@@ -908,7 +840,7 @@ void bsparrow_got_some(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t that_
     buffer-%gtnew_data = buffer-%gtdefault_memory;
     buffer-%gtnew_data_tag = 0;
   } else {
-    buffer-%gtnew_data = buffer-%gtdefault_memory + bsp-%gtbuffer_size / 2;
+    buffer-%gtnew_data = buffer-%gtdefault_memory + (bsp-%gtbuffer_size / 2);
     buffer-%gtnew_data_tag = 1;
   }
   buffer-%gtnew_data_len = bsp-%gtbuffer_size / 2;

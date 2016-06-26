@@ -45,7 +45,7 @@ void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id);
 
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout);
 
-void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev);
+void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output);
 
 void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev);
 
