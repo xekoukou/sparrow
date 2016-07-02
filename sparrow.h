@@ -36,9 +36,6 @@ void sparrow_set_timeout(sparrow_t * sp, int64_t timeout);
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
 
-//Used when we have multiple sends and we do not want to check for other events from sparrow_wait.
-int sparrow_try_immediate_send(sparrow_t * sp, sparrow_socket_t * sock);
-
 //TODO Is this needed?
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock);
 

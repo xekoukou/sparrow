@@ -44,14 +44,6 @@ void printmsg(bsparrow_event_t *bspev, size_t size) {
 void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, size_t size) {
   while(1) {
     bsparrow_recv(bsp, bsock, size);
-    bsparrow_immediate_event(bsp, bspev);
-
-    if(bspev->event & 4) {
-      if(bspev->total_length >= size) {
-        break;
-      }
-      continue;
-    }
 
     bsparrow_set_timeout(bsp, 6000);
     bsparrow_wait(bsp, bspev, 0);
@@ -79,13 +71,13 @@ int main(int argc, char ** argv) {
   int msg_size = atoi(argv[1]);
   int loop_length = atoi(argv[2]);
 
-  bsparrow_t * bsp = bsparrow_new(50000, 100, 1501, 0, NULL);
+  bsparrow_t * bsp = bsparrow_new(50000, 4000, 15001, 2, 0, NULL);
   bsparrow_socket_t * bsock = bsparrow_socket_connect(bsp, 1, "127.0.0.1", "9003");
   
   int j = 0;
   while(j < loop_length) {
     int i = 0;
-    while(i < 1000) {
+    while(i < 10000) {
       char *data = scalloc(1, msg_size);
       sprintf(data,"Hello there!");
       bsparrow_send(bsp, bsock, &data, msg_size);

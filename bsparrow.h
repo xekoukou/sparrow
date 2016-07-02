@@ -10,6 +10,8 @@
   #define Dprintf(x, ...)
 #endif  
 
+#define MIN_RETRY_INTERVAL 1000
+
 typedef struct buffer_list_t buffer_list_t;
 
 buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length);
@@ -33,7 +35,7 @@ typedef struct bsparrow_event_t bsparrow_event_t;
 typedef struct bsparrow_t bsparrow_t;
 
 
-bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int listening, char * port);
+bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int max_output_sockets, int listening, char * port);
 
 void bsparrow_destroy(bsparrow_t ** bsp);
 
@@ -46,8 +48,6 @@ void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id);
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout);
 
 void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output);
-
-void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev);
 
 //The memory is owned by bsparrow. It will block if the queue becomes large. //TODO Is this the correct way to handle this?
 void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, size_t len);

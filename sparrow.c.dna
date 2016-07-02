@@ -38,6 +38,7 @@ function sparrow_definition() {
 struct sparrow_t {
   int fd;
   int event_cur;
+  int is_cur_output; // On the output loop or on the input loop.
   int events_len;
   struct epoll_event events [MAX_EVENTS];
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
@@ -87,51 +88,6 @@ sparrow_socket_t * sparrow_next(sparrow_t * sp, sparrow_socket_t * sock) {
 }
 function sparrow_send_receive() {
 ./!dots(1)
-
-int sparrow_try_immediate_send(sparrow_t * sp, sparrow_socket_t * sock) {
-//Try to send as much as we can of there are data to send.
-  printf("Inside sparrow immediate send\n");
-  data_out_t *data_out = &(sock-%gtdata_out);
-  if(data_out-%gtlen != 0) {
-    Dprintf("Send msg size: %lu\n", data_out-%gtlen - data_out-%gtcur);
-    int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
-  
-    //On error
-    if(result %lt 0 && (errno != EAGAIN)) {
-      perror("Send error inside sparrow_send.\n");
-      sparrow_socket_close(sp,sock);
-      return -1;
-    }
-    
-    if(result + data_out-%gtcur %lt data_out-%gtlen) {
-      if(result %gt 0) {
-        data_out-%gtcur += result;
-      }
-      return 0;
-  
-    } else {
-  
-      //We remove the socket from the output expiration tree.
-      RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
-      sock-%gtout_expiry = -1;
-      data_out-%gtlen = 0;
-  
-      struct epoll_event pevent = {0};
-      pevent.data.fd = sock-%gtfd;
-      pevent.events = EPOLLIN;
-      int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
-      if (rc == -1) {
-        perror(" epoll_ctl failed to modify a socket to epoll");
-        exit(-1);
-      }
-  
-      return 1;
-    }
-  }
-
-  return 1;
-
-}
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
 
@@ -361,6 +317,12 @@ void sparrow_socket_bind(sparrow_t * sp, char * port) {
   rc = setsockopt(sfd,SOL_SOCKET,SO_REUSEPORT, (char *) &flag,sizeof(int));
   assert(rc == 0);
 
+  struct linger ling_flag;
+  ling_flag.l_onoff = 1;
+  ling_flag.l_linger = sp-%gtdefault_ot / 1000;
+  rc = setsockopt(sfd,SOL_SOCKET,SO_LINGER, (char *) &ling_flag,sizeof(struct linger));
+  assert(rc == 0);
+
   rc = bind (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
   if (rc != 0) {
     close (sfd);
@@ -393,6 +355,13 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 
   rc = setsockopt(sfd,IPPROTO_TCP,TCP_NODELAY, (char *) &flag,sizeof(int));
   assert(rc == 0);
+
+  struct linger ling_flag;
+  ling_flag.l_onoff = 1;
+  ling_flag.l_linger = sp-%gtdefault_ot / 1000;
+  rc = setsockopt(sfd,SOL_SOCKET,SO_LINGER, (char *) &ling_flag,sizeof(struct linger));
+  assert(rc == 0);
+
 
   rc = connect (sfd, ret_addr-%gtai_addr, ret_addr-%gtai_addrlen);
   if (rc != 0) {
@@ -486,6 +455,19 @@ int sparrow_handle_expired_ot(sparrow_t * sp, sparrow_event_t *spev, int64_t *ti
 function sparrow_wait_function() {
 ./!dots(1)
 
+//internal use in sparrow_wait
+sparrow_socket_t * find_sock(sparrow_t * sp, sparrow_event_t * spev, int fd) {
+  sparrow_socket_t find_sock;
+  find_sock.fd = fd; 
+  sparrow_socket_t * sock = RB_FIND(fd_rb_t, &(sp-%gtfd_rb_socks), &find_sock);
+
+  spev-%gtsock = sock;
+  spev-%gtfd = sock-%gtfd;
+  spev-%gtparent = sock-%gtparent;
+
+  return sock;
+}
+
 //Internal
 //Requires an array of MAX_EVENT units.
 int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
@@ -504,6 +486,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
   if(sp-%gtevents_len == 0) {
     Dprintf("Timeout: %ld\n", timeout);
     sp-%gtevent_cur = 0;
+    sp-%gtis_cur_output = 1;
     sp-%gtevents_len = epoll_wait(sp-%gtfd, sp-%gtevents, MAX_EVENTS, timeout);
 
     if((sp-%gtt_expiry %gt= 0) && (sp-%gtt_expiry - now() %lt 0)) {
@@ -512,117 +495,159 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
       return 0;
     }
   }
+
   int i;
-  sparrow_socket_t find_sock;
-  for( i = sp-%gtevent_cur; i %lt sp-%gtevents_len; i++) {
-    find_sock.fd = sp-%gtevents[i].data.fd; 
-    sparrow_socket_t * sock = RB_FIND(fd_rb_t, &(sp-%gtfd_rb_socks), &find_sock);
-    int event = sp-%gtevents[i].events;
-
-    //The socket might have been destroyed even though we still had events to process. TODO??
-    if(sock == NULL) {
-      continue;
-    }
-    spev-%gtsock = sock;
-    spev-%gtfd = sock-%gtfd;
-    spev-%gtparent = sock-%gtparent;
-
-      //On error
+  if(sp-%gtis_cur_output) {
+    for( i = sp-%gtevent_cur; i %lt sp-%gtevents_len; i++) {
+      int event = sp-%gtevents[i].events;
+  
+  
+        //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
+        //The socket might have been destroyed even though we still had events to process.
+        sparrow_socket_t * sock = find_sock(sp, spev, sp-%gtevents[i].data.fd);
+        if(sock == NULL) {
+          continue;
+        }
+
         printf("EPOLLERR || EPOLLHUP error\n");
         sparrow_socket_close(sp, sock);
         spev-%gtevent = 8;
         sp-%gtevents[i].events = 0;
+
+        sp-%gtevent_cur++;
         return 0;
       }
 
-    if(event & EPOLLOUT) {
-      data_out_t *data_out = &(sock-%gtdata_out);
-      assert(data_out-%gtlen %gt data_out-%gtcur);
-      assert(data_out-%gtlen != 0);
-      Dprintf("Send msg size: %lu\n", data_out-%gtlen - data_out-%gtcur);
-      int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
-
-      //On error
-      if(result %lt 0) {
-        sparrow_socket_close(sp,sock);
-        spev-%gtevent = 8;
-        sp-%gtevents[i].events = 0;
-        printf("Send error inside _sparrow_wait.\n");
-        return 0;
-      }
-
-      if(result + data_out-%gtcur == data_out-%gtlen) {
-        //We remove the socket from the output expiration tree.
-        Dprintf("We remove the socket from the output expiration tree.\n");
-        RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
-        sock-%gtout_expiry = -1;
-        data_out-%gtlen = 0;
-
-        struct epoll_event pevent;
-        pevent.data.fd = sock-%gtfd;
-        pevent.events = EPOLLIN;
-        int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
-        if (rc == -1) {
-          perror(" epoll_ctl failed to modify a socket to epoll");
-          exit(-1);
+      if(event & EPOLLOUT) {
+        //The socket might have been destroyed even though we still had events to process.
+        sparrow_socket_t * sock = find_sock(sp, spev, sp-%gtevents[i].data.fd);
+        if(sock == NULL) {
+          continue;
         }
-        spev-%gtevent += 2;
-        //Clear the bit
-        sp-%gtevents[i].events &= ~EPOLLOUT;
-        return 0;
-      } else {
-        data_out-%gtcur += result;
-      }
-    }
 
-    data_in_t *data_in = &(sock-%gtdata_in);
-    if((event & EPOLLIN) && !only_output) {
-
-      if(sock-%gtlistening) {
-      // We accept a new client.
-        spev-%gtsock = sparrow_socket_accept(sp, sock);
-        Dprintf("Listening Socket:\nfd:%d\n",sock-%gtfd);
-        spev-%gtfd = spev-%gtsock-%gtfd;
-        spev-%gtparent = spev-%gtsock-%gtparent;
-        spev-%gtevent += 16;
-        //Clear the bit
-        sp-%gtevents[i].events &= ~EPOLLIN;
-        return 0;
-      } else {
-        Dprintf("Receiving Socket:\nfd:%d\n",sock-%gtfd);
-        
-        //If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
-        if(data_in-%gtlen == 0) {
-          printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
+        data_out_t *data_out = &(sock-%gtdata_out);
+        assert(data_out-%gtlen %gt data_out-%gtcur);
+        assert(data_out-%gtlen != 0);
+        Dprintf("Send msg size: %lu\n", data_out-%gtlen - data_out-%gtcur);
+        int result = send(sock-%gtfd, data_out-%gtdata + data_out-%gtcur, data_out-%gtlen - data_out-%gtcur, 0);
+  
+        //On error
+        if(result %lt 0) {
           sparrow_socket_close(sp,sock);
           spev-%gtevent = 8;
           sp-%gtevents[i].events = 0;
+          printf("Send error inside _sparrow_wait.\n");
+          sp-%gtevent_cur++;
           return 0;
         }
+  
+        if(result + data_out-%gtcur == data_out-%gtlen) {
+          //We remove the socket from the output expiration tree.
+          Dprintf("We remove the socket from the output expiration tree.\n");
+          RB_REMOVE(ot_rb_t, &(sp-%gtot_rb_socks), sock);
+          sock-%gtout_expiry = -1;
+          data_out-%gtlen = 0;
+  
+          struct epoll_event pevent;
+          pevent.data.fd = sock-%gtfd;
+          pevent.events = EPOLLIN;
+          int rc = epoll_ctl (sp-%gtfd, EPOLL_CTL_MOD, sock-%gtfd, &pevent);
+          if (rc == -1) {
+            perror(" epoll_ctl failed to modify a socket to epoll");
+            exit(-1);
+          }
+          spev-%gtevent += 2;
+          //Clear the bit
+          sp-%gtevents[i].events &= ~EPOLLOUT;
 
-        int result = recv(sock-%gtfd, data_in-%gtdata , data_in-%gtlen , 0);
-
-        //On error or connection closed.
-        if(result %lt= 0) {
-          printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
-          sparrow_socket_close(sp,sock);
-          spev-%gtevent = 8;
-          sp-%gtevents[i].events = 0;
+          sp-%gtevent_cur++;
           return 0;
-        }
+        } else {
+          data_out-%gtcur += result;
 
-        spev-%gtcur = result;
-        spev-%gtevent += 4;
-        data_in-%gtlen = 0;
-        sp-%gtevents[i].events &= ~EPOLLIN;
-        return 0;
+          sp-%gtevent_cur++;
+          return 1;
+        }
       }
     }
+    sp-%gtevent_cur = 0;
+    sp-%gtis_cur_output = 0;
+  } 
 
-    sp-%gtevent_cur++;
+  if(!sp-%gtis_cur_output) {
+    if(only_output) {
+      sp-%gtevents_len = 0;
+      //We do not care for the timeout. We immediately return.
+      return 0;
+    }
+
+    for( i = sp-%gtevent_cur; i %lt sp-%gtevents_len; i++) {
+      int event = sp-%gtevents[i].events;
+  
+      if(event & EPOLLIN) {
+
+        //The socket might have been destroyed even though we still had events to process.
+        sparrow_socket_t * sock = find_sock(sp, spev, sp-%gtevents[i].data.fd);
+        if(sock == NULL) {
+          continue;
+        }
+
+
+        if(sock-%gtlistening) {
+        // We accept a new client.
+          spev-%gtsock = sparrow_socket_accept(sp, sock);
+          Dprintf("Listening Socket:\nfd:%d\n",sock-%gtfd);
+          spev-%gtfd = spev-%gtsock-%gtfd;
+          spev-%gtparent = spev-%gtsock-%gtparent;
+          spev-%gtevent += 16;
+          //Clear the bit
+          sp-%gtevents[i].events &= ~EPOLLIN;
+
+          sp-%gtevent_cur++;
+          return 0;
+
+        } else {
+          data_in_t *data_in = &(sock-%gtdata_in);
+
+          Dprintf("Receiving Socket:\nfd:%d\n",sock-%gtfd);
+          
+          //If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
+          if(data_in-%gtlen == 0) {
+            printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
+            sparrow_socket_close(sp,sock);
+            spev-%gtevent = 8;
+            sp-%gtevents[i].events = 0;
+
+            sp-%gtevent_cur++;
+            return 0;
+          }
+  
+          int result = recv(sock-%gtfd, data_in-%gtdata , data_in-%gtlen , 0);
+  
+          //On error or connection closed.
+          if(result %lt= 0) {
+            printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
+            sparrow_socket_close(sp,sock);
+            spev-%gtevent = 8;
+            sp-%gtevents[i].events = 0;
+
+            sp-%gtevent_cur++;
+            return 0;
+          }
+  
+          spev-%gtcur = result;
+          spev-%gtevent += 4;
+          data_in-%gtlen = 0;
+          sp-%gtevents[i].events &= ~EPOLLIN;
+
+          sp-%gtevent_cur++;
+          return 0;
+        }
+      }
+    }
+    sp-%gtevents_len = 0;
   }
-  sp-%gtevents_len = 0;
 
   return 1;
 }

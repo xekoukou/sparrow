@@ -87,6 +87,7 @@ void oqueue_new(oqueue_t * oq) {
 
 
 void oqueue_destroy(oqueue_t * oq) {
+  assert(oq->len > 0);
   assert(oq->pos_filled == 0);
   free(oq->requests);
   oq->requests = NULL;
@@ -94,6 +95,7 @@ void oqueue_destroy(oqueue_t * oq) {
 
 
 int oqueue_next(oqueue_t * oq, int i) {
+  assert(oq->len > 0);
   if(oq->len == (i + 1)) {
     return 0;
   } else {
@@ -102,6 +104,7 @@ int oqueue_next(oqueue_t * oq, int i) {
 }
 
 void oqueue_push_req(oqueue_t * oq, out_request_t * oreq) {
+  assert(oq->len > 0);
   //Increase the queue if almost full.
   if(oq->first_free_pos == oq->last_free_pos) {
     out_request_t * reqs = scalloc(oq->len * 10, sizeof(out_request_t));
@@ -124,8 +127,9 @@ void oqueue_push_req(oqueue_t * oq, out_request_t * oreq) {
 }
 
 void oqueue_del_oldest_req(oqueue_t * oq) {
-
+  assert(oq->len > 0);
   assert(oq->pos_filled > 0);
+
   int pos = oqueue_next(oq, oq->last_free_pos);
   assert(pos != oq->first_free_pos);
 
@@ -153,6 +157,7 @@ void oqueue_del_oldest_req(oqueue_t * oq) {
 
 //You need to pop it if you use it. The memory is owned by the queue.
 out_request_t * oqueue_oldest_req(oqueue_t * oq) {
+  assert(oq->len > 0);
   out_request_t * req = NULL;
 
   if(oq->pos_filled > 0) {
@@ -166,6 +171,7 @@ out_request_t * oqueue_oldest_req(oqueue_t * oq) {
 
 
 void oqueue_empty(oqueue_t * oq) {
+  assert(oq->len > 0);
   out_request_t * req;
   while((req = oqueue_oldest_req(oq)) != NULL) {
     free(req->data);
@@ -283,6 +289,9 @@ struct bsparrow_t {
   bsparrow_event_list_t * ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
   // to be handled by bsparrow_wait itself (rather than handled separately.)
   int max_output_queue; //The maximum size of the output queue of a socket.
+  int64_t rltime; //Last time we retried to connect to destroyed connections.
+  int max_output_sockets;  //The number of sockets that have output data till bsparrow stops receiving new connections.
+  int total_output_sockets;
 };
 
 
@@ -426,7 +435,7 @@ void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t ** bsock_) {
   bsock = NULL;
 }
 
-bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int listening, char * port) {
+bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int max_output_sockets,  int listening, char * port) {
 
   if( ((buffer_size/2) * 2) != buffer_size) {
     printf("Buffer size should be a multiple of 2.\n");
@@ -436,7 +445,11 @@ bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_q
   bsparrow_t * bsp = scalloc(1, sizeof(bsparrow_t));
   bsp->sp = sparrow_new(dtimeout);
   bsp->max_output_queue = max_output_queue;
+  bsp->max_output_sockets = max_output_sockets;
+  bsp->total_output_sockets = 0;
   bsp->buffer_size = buffer_size;
+  bsp->rltime = now();
+
   if(listening) {
     sparrow_socket_bind(bsp->sp,port);
   }
@@ -515,9 +528,13 @@ void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * 
         oqueue_del_oldest_req(&(bsock->oq));
         req = oqueue_oldest_req(&(bsock->oq));
       }
+      Dprintf("Total memory sent: %lu\n", total_req_len);
       more = sparrow_send(bsp->sp, bsock->sock, buffer->allocated_memory, total_req_len, &spev);
     }
   }
+
+  //Adds the socket to the output sockets if it wasn't already in it.
+  bsp->total_output_sockets = bsock->out_more - more;
 
   bsock->out_more = more;
 
@@ -554,6 +571,12 @@ void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
 // If one fails completely, return the apropriate event
 void bsparrow_retry(bsparrow_t * bsp) {
 
+  int64_t time = now();
+  if(bsp->rltime + MIN_RETRY_INTERVAL > time) {
+    return;
+  }
+  bsp->rltime = time;
+
   non_op_bsock_list_t * list = bsp->non_op_bsock_list;
   non_op_bsock_list_t * iter = bsp->non_op_bsock_list;
   non_op_bsock_list_t * prev_iter = NULL;
@@ -573,7 +596,7 @@ void bsparrow_retry(bsparrow_t * bsp) {
   }
 }
 
-
+//Internal
 void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   bspev->event = 0;
   if(bsp->ibspev_list != NULL) {
@@ -584,10 +607,16 @@ void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
 }
 
 int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) {
-  bspev->event = 0;
   
-  //All immediate events should have already be handled before waiting for more.
-  assert(bsp->ibspev_list == NULL);
+//handle immediate events. At this moment, only the bsparrow_send function creates immediate events.
+//So that we handle all events in a single function, we save the immediate events so as to be sent out
+//by bsparrow_wait.
+  if(!only_output) {
+    bsparrow_immediate_event(bsp, bspev);
+    if(bspev->event != 0) {
+      return 0;
+    }
+  }
 
   //Handle Events created due to retry efforts. Put a time rate when we retry a new connection.
   bsparrow_retry(bsp);
@@ -599,10 +628,11 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   sparrow_wait(bsp->sp, &spev, only_output);
   int ev = spev.event;
   bsock = spev.parent;
-  bspev->bsock = bsock;
 
+  int at_least_once_output = 0;
   if((ev >> 1) & 1) {
     bsparrow_socket_process_next_out_req(bsp, bsock);
+    at_least_once_output = 1;
   }
 
   //Error
@@ -620,8 +650,16 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   }
 
   if(only_output) {
-    return 0;
+    if(at_least_once_output) {
+      return 1;
+    } else {
+      return 0;
+    }
   }
+
+
+  bspev->event = 0;
+  bspev->bsock = bsock;
   
   //Input timeout
   if((ev >> 5) & 1) {
@@ -664,7 +702,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
 
 
 void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) {
-  while(bsparrow_wait_(bsp, bspev, 0)) {
+  while(bsparrow_wait_(bsp, bspev, only_output)) {
   }
 }
 
@@ -686,50 +724,38 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
   req.len = len;
 
   oqueue_push_req(&(bsock->oq), &req);
-
-  //Opportunistically try to send the remaining data put on the socket.
-  if(!(bsock->out_more)) {
-    int is_result = sparrow_try_immediate_send(bsp->sp, bsock->sock);
-    if(is_result == -1) {
-      if(!bsock->we_connected) {
-        bsparrow_socket_internal_destroy(bsp, bsock);
-      } else {
-        bsock->sock = NULL;
-        bsparrow_socket_clean(bsp, bsock);
-        bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
-      }
-      return;
-    } else {
-      bsock->out_more = is_result;
-    }
-  }
-
+  
   if(bsock->out_more) {
     bsparrow_socket_process_next_out_req(bsp, bsock);
   } else {
-
-    // If the queue is bigger than the maximum allowed queue, destroy the socket.
-    //TODO For these cases, it is better not to reconnect, since that will not help.
-    //TODO The same is true for output timeouts.
-    //TODO More information is required as to the type of errors that can occur and the special handling that they might require.
-    
-    if(bsock->oq.pos_filled > bsp->max_output_queue) {
-      printf("The maximum output queue length was reached\n");
-      bsock->operational = 0;
-      sparrow_socket_close(bsp->sp, bsock->sock);
-      bsock->sock = NULL;
-      assert(bsock->retries == 0);
-
-      if(!bsock->we_connected) {
-        bsparrow_socket_internal_destroy(bsp, bsock);
-      } else {
-        bsock->sock = NULL;
-        bsparrow_socket_clean(bsp, bsock);
-        bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
-      }
-    }
+    bsparrow_wait(bsp, NULL, 1);
   }
 
+  //If we still have a number of output sockets that exceed the maximum number, then continue to wait till they decrease.
+  while(bsp->total_output_sockets >= bsp->max_output_sockets) {
+    bsparrow_wait(bsp, NULL, 1);
+  }
+
+// If the queue is bigger than the maximum allowed queue, destroy the socket.
+//TODO For these cases, it is better not to reconnect, since that will not help.
+//TODO The same is true for output timeouts.
+//TODO More information is required as to the type of errors that can occur and the special handling that they might require.
+
+  if(bsock->operational && (bsock->oq.pos_filled > bsp->max_output_queue)) {
+    printf("The maximum output queue length was reached\n");
+    bsock->operational = 0;
+    sparrow_socket_close(bsp->sp, bsock->sock);
+    bsock->sock = NULL;
+    assert(bsock->retries == 0);
+  
+    if(!bsock->we_connected) {
+      bsparrow_socket_internal_destroy(bsp, bsock);
+    } else {
+      bsock->sock = NULL;
+      bsparrow_socket_clean(bsp, bsock);
+      bsp->non_op_bsock_list = non_op_bsock_list_add(bsp->non_op_bsock_list, bsock);
+    }
+  }
 }
 
 

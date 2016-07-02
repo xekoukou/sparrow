@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 void printmsg(bsparrow_event_t *bspev, size_t size) {
@@ -42,14 +43,6 @@ void printmsg(bsparrow_event_t *bspev, size_t size) {
 void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, size_t size) {
   while(1) {
     bsparrow_recv(bsp, bsock, size);
-    bsparrow_immediate_event(bsp, bspev);
-
-    if(bspev->event & 4) {
-      if(bspev->total_length >= size) {
-        break;
-      }
-      continue;
-    }
 
     bsparrow_set_timeout(bsp, 5000);
     bsparrow_wait(bsp, bspev, 0);
@@ -84,7 +77,7 @@ int main(int argc, char ** argv) {
   int msg_size = atoi(argv[1]);
   int loop_length = atoi(argv[2]);
 
-  bsparrow_t * bsp = bsparrow_new(50000, 10000, 2, 1, "9003");
+  bsparrow_t * bsp = bsparrow_new(50000, 4000, 2, 2, 1, "9003");
 
   bsparrow_event_t bspev;
   bsparrow_socket_t * bsock;
@@ -101,8 +94,8 @@ int main(int argc, char ** argv) {
   int64_t time = now();
   while(j < loop_length) {
     int i = 0;
-    while(i < 1000) {
-      if(i == 500) {
+    while(i < 10000) {
+      if(i == 5000) {
         char *data = scalloc(1, 100);
         sprintf(data,"Got 50, need mooooreee!");
         bsparrow_send(bsp, bsock, &data, 100);
@@ -126,7 +119,7 @@ int main(int argc, char ** argv) {
   sprintf(data,"Got them all, thanks!");
   bsparrow_send(bsp, bsock, &data, 100);
 
-  results(j*1000, time, msg_size);
+  results(j*10000, time, msg_size);
 
   bsparrow_destroy(&bsp);
   return 0;

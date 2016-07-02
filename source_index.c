@@ -57,10 +57,32 @@ struct sparrow_multiplexer_t {
 
 # Buffered Sparrow {#BSparrow}
 
-The sparrow buffer is used to keep the data that are to be sent and received from the socket. Thus it handles the memory allocations for the buffers needed. It also automates some functions. For example, it destroys sockets that are idle and it tries to reconnect to agents that have been disconnected.
+The buffered sparrow handles the buffers needed for the sockets. It tries to batch together requests when it can. In case of input events, it receives data of at least the length of its buffer (if there are data) even though the requested data are less than than. Thus in subsequent requests, the data will already be there. For send requests, we have disabled Nagle's algorithm and we batch send requests when the throughput pushes back the number of sends we can send.
+
+Secondly, in case there is a failure in a socket, it tries to reconnect.
+
+The api of this layer is such so as to be able to be able to get complete messages in the upper layer, without the upper layer having to keep the data in another buffer while the message is received. That is why we have the ```bsparrow_got_some``` function that tells bsparrow that the buffer specified completes a single message, we have copied the data and thus is free to use the memory for new messages.
 
 
 ## Examples {#bsparrow_examples}
+
+First, we initialize bsparrow. The parameters it takes are
+
+* The buffer size of the sockets that should be above the average size of the message multiplied by two.
+* The output timeout that is used to close the connection if a socket is not able to send the data after the specified amount of time.
+* The maximum output queue that sets a limit on the number of withstanding output requests. Again we close the socket if the limit is reached.
+* The maximum number of sockets that have a pending output request. If it is reached we only handle output requests till it goes back to normal.
+* A boolean value whether we are listening to a port or not.
+* The port itself.
+
+Then we wait for a connection event. The event is saved into bspev. The third parameter of bsparrow_wait is used to tell bsparrow_wait whether we want to only wait for outputs to be processed. Here we want an input event, thus we set it to ```0```.
+
+When the connection is received, we tell bsparrow that we expect to receive an amount of data. If we didn't do that, bsparrow would throw the received data and probably close the connection.
+//TODO I think that we need to keep the connection and only throw the data.
+
+After that, we wait for the data to be received. bspev exposes the internal buffers of bsparrow. The data will be in pultiple buffers because of the batching process we try to do. For a correct way to get a msg, look at the throughput test.
+
+When we have received the complete msg, we tell bsparrow that we got part of the buffer and that it can reuse it.
 
 ### Simple Test {#Bsparrow_Simple_Test} 
 
@@ -72,7 +94,7 @@ The sparrow buffer is used to keep the data that are to be sent and received fro
 
 int main(void) {
 
-  bsparrow_t * bsp = bsparrow_new(100, 5000, 100, 1, "9003");
+  bsparrow_t * bsp = bsparrow_new(100, 5000, 100, 2, 1, "9003");
 
   bsparrow_event_t bspev;
   bsparrow_wait(bsp, &bspev, 0);
@@ -100,6 +122,10 @@ int main(void) {
 
 ```
 
+When we send data, withere bsparrow_send sends them immediately or we need to call bsparrow_wait so that bsparrow sends them when the other end is able to receive more. bsparrow_wait does not return an event that it has sent the data. 
+
+That is why here, we use a timeout to return after a few seconds.
+
 ```c bsimple_test_client.c
 #include "bsparrow.h"
 #include <stdio.h>
@@ -107,7 +133,7 @@ int main(void) {
 
 int main(void) {
 
-  bsparrow_t * bsp = bsparrow_new(100, 5000, 100, 0, NULL);
+  bsparrow_t * bsp = bsparrow_new(100, 5000, 100, 2, 0, NULL);
   bsparrow_socket_t * bsock = bsparrow_socket_connect(bsp, 1, "127.0.0.1", "9003");
 
   char *data = scalloc(1, 50);
@@ -116,9 +142,9 @@ int main(void) {
   bsparrow_event_t bspev;
   bsparrow_send(bsp, bsock, &data, 50);
 
-  bsparrow_set_timeout(bsp, 5000);
   bsparrow_wait(bsp, &bspev, 0);
 
+  bsparrow_set_timeout(bsp, 5000);
   assert(bspev.event == 32);
   printf("I sent : Hello there!");
   
@@ -130,12 +156,15 @@ int main(void) {
 
 ### Throughput Test {#Bsparrow_throughput_Test} 
 
+Setting the timeout here allows to close a connection if we fail to receive data after a specific period of time. This is the normal way to use the timeout. Timeouts are the only way to find if a connection or the other end have problems. This leads to the simplification of error handling. 
+
 ```c bthr_server.c
 #include "bsparrow.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 void printmsg(bsparrow_event_t *bspev, size_t size) {
@@ -175,14 +204,6 @@ void printmsg(bsparrow_event_t *bspev, size_t size) {
 void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, size_t size) {
   while(1) {
     bsparrow_recv(bsp, bsock, size);
-    bsparrow_immediate_event(bsp, bspev);
-
-    if(bspev->event & 4) {
-      if(bspev->total_length >= size) {
-        break;
-      }
-      continue;
-    }
 
     bsparrow_set_timeout(bsp, 5000);
     bsparrow_wait(bsp, bspev, 0);
@@ -217,7 +238,7 @@ int main(int argc, char ** argv) {
   int msg_size = atoi(argv[1]);
   int loop_length = atoi(argv[2]);
 
-  bsparrow_t * bsp = bsparrow_new(50000, 10000, 2, 1, "9003");
+  bsparrow_t * bsp = bsparrow_new(50000, 4000, 2, 2, 1, "9003");
 
   bsparrow_event_t bspev;
   bsparrow_socket_t * bsock;
@@ -234,8 +255,8 @@ int main(int argc, char ** argv) {
   int64_t time = now();
   while(j < loop_length) {
     int i = 0;
-    while(i < 1000) {
-      if(i == 500) {
+    while(i < 10000) {
+      if(i == 5000) {
         char *data = scalloc(1, 100);
         sprintf(data,"Got 50, need mooooreee!");
         bsparrow_send(bsp, bsock, &data, 100);
@@ -259,7 +280,7 @@ int main(int argc, char ** argv) {
   sprintf(data,"Got them all, thanks!");
   bsparrow_send(bsp, bsock, &data, 100);
 
-  results(j*1000, time, msg_size);
+  results(j*10000, time, msg_size);
 
   bsparrow_destroy(&bsp);
   return 0;
@@ -315,14 +336,6 @@ void printmsg(bsparrow_event_t *bspev, size_t size) {
 void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, size_t size) {
   while(1) {
     bsparrow_recv(bsp, bsock, size);
-    bsparrow_immediate_event(bsp, bspev);
-
-    if(bspev->event & 4) {
-      if(bspev->total_length >= size) {
-        break;
-      }
-      continue;
-    }
 
     bsparrow_set_timeout(bsp, 6000);
     bsparrow_wait(bsp, bspev, 0);
@@ -350,13 +363,13 @@ int main(int argc, char ** argv) {
   int msg_size = atoi(argv[1]);
   int loop_length = atoi(argv[2]);
 
-  bsparrow_t * bsp = bsparrow_new(50000, 100, 1501, 0, NULL);
+  bsparrow_t * bsp = bsparrow_new(50000, 4000, 15001, 2, 0, NULL);
   bsparrow_socket_t * bsock = bsparrow_socket_connect(bsp, 1, "127.0.0.1", "9003");
   
   int j = 0;
   while(j < loop_length) {
     int i = 0;
-    while(i < 1000) {
+    while(i < 10000) {
       char *data = scalloc(1, msg_size);
       sprintf(data,"Hello there!");
       bsparrow_send(bsp, bsock, &data, msg_size);
@@ -408,6 +421,8 @@ int main(int argc, char ** argv) {
   #define Dprintf(x, ...)
 #endif  
 
+#define MIN_RETRY_INTERVAL 1000
+
 typedef struct buffer_list_t buffer_list_t;
 
 buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length);
@@ -431,7 +446,7 @@ typedef struct bsparrow_event_t bsparrow_event_t;
 typedef struct bsparrow_t bsparrow_t;
 
 
-bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int listening, char * port);
+bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int max_output_sockets, int listening, char * port);
 
 void bsparrow_destroy(bsparrow_t ** bsp);
 
@@ -444,8 +459,6 @@ void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id);
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout);
 
 void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output);
-
-void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev);
 
 //The memory is owned by bsparrow. It will block if the queue becomes large. //TODO Is this the correct way to handle this?
 void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, size_t len);
@@ -580,6 +593,7 @@ void oqueue_new(oqueue_t * oq) {
 
 
 void oqueue_destroy(oqueue_t * oq) {
+  assert(oq->len > 0);
   assert(oq->pos_filled == 0);
   free(oq->requests);
   oq->requests = NULL;
@@ -587,6 +601,7 @@ void oqueue_destroy(oqueue_t * oq) {
 
 
 int oqueue_next(oqueue_t * oq, int i) {
+  assert(oq->len > 0);
   if(oq->len == (i + 1)) {
     return 0;
   } else {
@@ -595,6 +610,7 @@ int oqueue_next(oqueue_t * oq, int i) {
 }
 
 void oqueue_push_req(oqueue_t * oq, out_request_t * oreq) {
+  assert(oq->len > 0);
   //Increase the queue if almost full.
   if(oq->first_free_pos == oq->last_free_pos) {
     out_request_t * reqs = scalloc(oq->len * 10, sizeof(out_request_t));
@@ -617,8 +633,9 @@ void oqueue_push_req(oqueue_t * oq, out_request_t * oreq) {
 }
 
 void oqueue_del_oldest_req(oqueue_t * oq) {
-
+  assert(oq->len > 0);
   assert(oq->pos_filled > 0);
+
   int pos = oqueue_next(oq, oq->last_free_pos);
   assert(pos != oq->first_free_pos);
 
@@ -646,6 +663,7 @@ void oqueue_del_oldest_req(oqueue_t * oq) {
 
 //You need to pop it if you use it. The memory is owned by the queue.
 out_request_t * oqueue_oldest_req(oqueue_t * oq) {
+  assert(oq->len > 0);
   out_request_t * req = NULL;
 
   if(oq->pos_filled > 0) {
@@ -659,6 +677,7 @@ out_request_t * oqueue_oldest_req(oqueue_t * oq) {
 
 
 void oqueue_empty(oqueue_t * oq) {
+  assert(oq->len > 0);
   out_request_t * req;
   while((req = oqueue_oldest_req(oq)) != NULL) {
     free(req->data);
@@ -776,6 +795,9 @@ struct bsparrow_t {
   bsparrow_event_list_t * ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
   // to be handled by bsparrow_wait itself (rather than handled separately.)
   int max_output_queue; //The maximum size of the output queue of a socket.
+  int64_t rltime; //Last time we retried to connect to destroyed connections.
+  int max_output_sockets;  //The number of sockets that have output data till bsparrow stops receiving new connections.
+  int total_output_sockets;
 };
 
 
@@ -917,7 +939,7 @@ void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t ** bsock_) {
   bsock = NULL;
 }
 
-bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int listening, char * port) {
+bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int max_output_sockets,  int listening, char * port) {
 
   if( ((buffer_size/2) * 2) != buffer_size) {
     printf("Buffer size should be a multiple of 2.\n");
@@ -927,7 +949,11 @@ bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_q
   bsparrow_t * bsp = scalloc(1, sizeof(bsparrow_t));
   bsp->sp = sparrow_new(dtimeout);
   bsp->max_output_queue = max_output_queue;
+  bsp->max_output_sockets = max_output_sockets;
+  bsp->total_output_sockets = 0;
   bsp->buffer_size = buffer_size;
+  bsp->rltime = now();
+
   if(listening) {
     sparrow_socket_bind(bsp->sp,port);
   }
@@ -1006,9 +1032,13 @@ void bsparrow_socket_process_next_out_req(bsparrow_t * bsp, bsparrow_socket_t * 
         oqueue_del_oldest_req(&(bsock->oq));
         req = oqueue_oldest_req(&(bsock->oq));
       }
+      Dprintf("Total memory sent: %lu\n", total_req_len);
       more = sparrow_send(bsp->sp, bsock->sock, buffer->allocated_memory, total_req_len, &spev);
     }
   }
+
+  //Adds the socket to the output sockets if it wasn't already in it.
+  bsp->total_output_sockets = bsock->out_more - more;
 
   bsock->out_more = more;
 
@@ -1041,6 +1071,12 @@ void bsparrow_retry_single(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
 // If one fails completely, return the apropriate event
 void bsparrow_retry(bsparrow_t * bsp) {
 
+  int64_t time = now();
+  if(bsp->rltime + MIN_RETRY_INTERVAL > time) {
+    return;
+  }
+  bsp->rltime = time;
+
   non_op_bsock_list_t * list = bsp->non_op_bsock_list;
   non_op_bsock_list_t * iter = bsp->non_op_bsock_list;
   non_op_bsock_list_t * prev_iter = NULL;
@@ -1060,7 +1096,7 @@ void bsparrow_retry(bsparrow_t * bsp) {
   }
 }
 
-
+//Internal
 void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   bspev->event = 0;
   if(bsp->ibspev_list != NULL) {
@@ -1071,10 +1107,16 @@ void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
 }
 
 int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) {
-  bspev->event = 0;
   
-  //All immediate events should have already be handled before waiting for more.
-  assert(bsp->ibspev_list == NULL);
+//handle immediate events. At this moment, only the bsparrow_send function creates immediate events.
+//So that we handle all events in a single function, we save the immediate events so as to be sent out
+//by bsparrow_wait.
+  if(!only_output) {
+    bsparrow_immediate_event(bsp, bspev);
+    if(bspev->event != 0) {
+      return 0;
+    }
+  }
 
   //Handle Events created due to retry efforts. Put a time rate when we retry a new connection.
   bsparrow_retry(bsp);
@@ -1086,10 +1128,11 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   sparrow_wait(bsp->sp, &spev, only_output);
   int ev = spev.event;
   bsock = spev.parent;
-  bspev->bsock = bsock;
 
+  int at_least_once_output = 0;
   if((ev >> 1) & 1) {
     bsparrow_socket_process_next_out_req(bsp, bsock);
+    at_least_once_output = 1;
   }
 
   //Error
@@ -1107,8 +1150,16 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   }
 
   if(only_output) {
-    return 0;
+    if(at_least_once_output) {
+      return 1;
+    } else {
+      return 0;
+    }
   }
+
+
+  bspev->event = 0;
+  bspev->bsock = bsock;
   
   //Input timeout
   if((ev >> 5) & 1) {
@@ -1141,7 +1192,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
 
 
 void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) {
-  while(bsparrow_wait_(bsp, bspev, 0)) {
+  while(bsparrow_wait_(bsp, bspev, only_output)) {
   }
 }
 
@@ -1163,42 +1214,34 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
   req.len = len;
 
   oqueue_push_req(&(bsock->oq), &req);
-
-  //Opportunistically try to send the remaining data put on the socket.
-  if(!(bsock->out_more)) {
-    int is_result = sparrow_try_immediate_send(bsp->sp, bsock->sock);
-    if(is_result == -1) {
-./!dots(-1)
-.      @{handle_error()}
-./!dots(1)
-      return;
-    } else {
-      bsock->out_more = is_result;
-    }
-  }
-
+  
   if(bsock->out_more) {
     bsparrow_socket_process_next_out_req(bsp, bsock);
   } else {
-
-    // If the queue is bigger than the maximum allowed queue, destroy the socket.
-    //TODO For these cases, it is better not to reconnect, since that will not help.
-    //TODO The same is true for output timeouts.
-    //TODO More information is required as to the type of errors that can occur and the special handling that they might require.
-    
-    if(bsock->oq.pos_filled > bsp->max_output_queue) {
-      printf("The maximum output queue length was reached\n");
-      bsock->operational = 0;
-      sparrow_socket_close(bsp->sp, bsock->sock);
-      bsock->sock = NULL;
-      assert(bsock->retries == 0);
-
-./!dots(-1)
-.      @{handle_error()}
-./!dots(1)
-    }
+    bsparrow_wait(bsp, NULL, 1);
   }
 
+  //If we still have a number of output sockets that exceed the maximum number, then continue to wait till they decrease.
+  while(bsp->total_output_sockets >= bsp->max_output_sockets) {
+    bsparrow_wait(bsp, NULL, 1);
+  }
+
+// If the queue is bigger than the maximum allowed queue, destroy the socket.
+//TODO For these cases, it is better not to reconnect, since that will not help.
+//TODO The same is true for output timeouts.
+//TODO More information is required as to the type of errors that can occur and the special handling that they might require.
+
+  if(bsock->operational && (bsock->oq.pos_filled > bsp->max_output_queue)) {
+    printf("The maximum output queue length was reached\n");
+    bsock->operational = 0;
+    sparrow_socket_close(bsp->sp, bsock->sock);
+    bsock->sock = NULL;
+    assert(bsock->retries == 0);
+  
+./!dots(-1)
+.    @{handle_error()}
+./!dots(1)
+  }
 }
 
 ./!dots(-1)
@@ -1587,7 +1630,6 @@ int main(void) {
   sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9001");
 
-  char *data = scalloc(1, 50);
 
   sparrow_event_t spev;
   spev.event = 0;
@@ -1597,12 +1639,14 @@ int main(void) {
   while(i < 2000000) {
 
     if((spev.event & 2) || (sent_immediately == 1)) {
+      char *data = scalloc(1, 50);
       sprintf(data,"Hello there!");
       sent_immediately = sparrow_send(sp, sock, data, 50, &spev);
       if(spev.event & 8) {
         Dprintf("An error occured");    
         break;
       }
+      free(data);
     }
 
     if(sent_immediately == 0) {
@@ -1664,9 +1708,6 @@ void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output);
 void sparrow_set_timeout(sparrow_t * sp, int64_t timeout);
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t *sock, void * data, size_t len, sparrow_event_t * spev);
-
-//Used when we have multiple sends and we do not want to check for other events from sparrow_wait.
-int sparrow_try_immediate_send(sparrow_t * sp, sparrow_socket_t * sock);
 
 //TODO Is this needed?
 void sparrow_cancel_send( sparrow_t * sp, sparrow_socket_t * sock);
@@ -1811,6 +1852,7 @@ function sparrow_definition() {
 struct sparrow_t {
   int fd;
   int event_cur;
+  int is_cur_output; // On the output loop or on the input loop.
   int events_len;
   struct epoll_event events [MAX_EVENTS];
   struct fd_rb_t fd_rb_socks; // A tree container of sockets ordered by the fd.
@@ -1885,51 +1927,6 @@ data to be sent received or the opposite that we have asked for data to be recei
 ```c sparrow.c.dna
 function sparrow_send_receive() {
 ./!dots(1)
-
-int sparrow_try_immediate_send(sparrow_t * sp, sparrow_socket_t * sock) {
-//Try to send as much as we can of there are data to send.
-  printf("Inside sparrow immediate send\n");
-  data_out_t *data_out = &(sock->data_out);
-  if(data_out->len != 0) {
-    Dprintf("Send msg size: %lu\n", data_out->len - data_out->cur);
-    int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
-  
-    //On error
-    if(result < 0 && (errno != EAGAIN)) {
-      perror("Send error inside sparrow_send.\n");
-      sparrow_socket_close(sp,sock);
-      return -1;
-    }
-    
-    if(result + data_out->cur < data_out->len) {
-      if(result > 0) {
-        data_out->cur += result;
-      }
-      return 0;
-  
-    } else {
-  
-      //We remove the socket from the output expiration tree.
-      RB_REMOVE(ot_rb_t, &(sp->ot_rb_socks), sock);
-      sock->out_expiry = -1;
-      data_out->len = 0;
-  
-      struct epoll_event pevent = {0};
-      pevent.data.fd = sock->fd;
-      pevent.events = EPOLLIN;
-      int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
-      if (rc == -1) {
-        perror(" epoll_ctl failed to modify a socket to epoll");
-        exit(-1);
-      }
-  
-      return 1;
-    }
-  }
-
-  return 1;
-
-}
 
 int sparrow_send( sparrow_t * sp, sparrow_socket_t * sock, void * data, size_t len, sparrow_event_t * spev) {
 
@@ -2185,6 +2182,12 @@ void sparrow_socket_bind(sparrow_t * sp, char * port) {
   rc = setsockopt(sfd,SOL_SOCKET,SO_REUSEPORT, (char *) &flag,sizeof(int));
   assert(rc == 0);
 
+  struct linger ling_flag;
+  ling_flag.l_onoff = 1;
+  ling_flag.l_linger = sp->default_ot / 1000;
+  rc = setsockopt(sfd,SOL_SOCKET,SO_LINGER, (char *) &ling_flag,sizeof(struct linger));
+  assert(rc == 0);
+
   rc = bind (sfd, ret_addr->ai_addr, ret_addr->ai_addrlen);
   if (rc != 0) {
     close (sfd);
@@ -2217,6 +2220,13 @@ sparrow_socket_t * sparrow_socket_connect(sparrow_t * sp, char * address, char *
 
   rc = setsockopt(sfd,IPPROTO_TCP,TCP_NODELAY, (char *) &flag,sizeof(int));
   assert(rc == 0);
+
+  struct linger ling_flag;
+  ling_flag.l_onoff = 1;
+  ling_flag.l_linger = sp->default_ot / 1000;
+  rc = setsockopt(sfd,SOL_SOCKET,SO_LINGER, (char *) &ling_flag,sizeof(struct linger));
+  assert(rc == 0);
+
 
   rc = connect (sfd, ret_addr->ai_addr, ret_addr->ai_addrlen);
   if (rc != 0) {
@@ -2334,6 +2344,19 @@ If we have new data, we receive as much as we can and immediately return a "RECV
 function sparrow_wait_function() {
 ./!dots(1)
 
+//internal use in sparrow_wait
+sparrow_socket_t * find_sock(sparrow_t * sp, sparrow_event_t * spev, int fd) {
+  sparrow_socket_t find_sock;
+  find_sock.fd = fd; 
+  sparrow_socket_t * sock = RB_FIND(fd_rb_t, &(sp->fd_rb_socks), &find_sock);
+
+  spev->sock = sock;
+  spev->fd = sock->fd;
+  spev->parent = sock->parent;
+
+  return sock;
+}
+
 //Internal
 //Requires an array of MAX_EVENT units.
 int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
@@ -2352,6 +2375,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
   if(sp->events_len == 0) {
     Dprintf("Timeout: %ld\n", timeout);
     sp->event_cur = 0;
+    sp->is_cur_output = 1;
     sp->events_len = epoll_wait(sp->fd, sp->events, MAX_EVENTS, timeout);
 
     if((sp->t_expiry >= 0) && (sp->t_expiry - now() < 0)) {
@@ -2360,117 +2384,159 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
       return 0;
     }
   }
+
   int i;
-  sparrow_socket_t find_sock;
-  for( i = sp->event_cur; i < sp->events_len; i++) {
-    find_sock.fd = sp->events[i].data.fd; 
-    sparrow_socket_t * sock = RB_FIND(fd_rb_t, &(sp->fd_rb_socks), &find_sock);
-    int event = sp->events[i].events;
-
-    //The socket might have been destroyed even though we still had events to process. TODO??
-    if(sock == NULL) {
-      continue;
-    }
-    spev->sock = sock;
-    spev->fd = sock->fd;
-    spev->parent = sock->parent;
-
-      //On error
+  if(sp->is_cur_output) {
+    for( i = sp->event_cur; i < sp->events_len; i++) {
+      int event = sp->events[i].events;
+  
+  
+        //On error
       if((event & EPOLLERR) || (event & EPOLLHUP)) {
+        //The socket might have been destroyed even though we still had events to process.
+        sparrow_socket_t * sock = find_sock(sp, spev, sp->events[i].data.fd);
+        if(sock == NULL) {
+          continue;
+        }
+
         printf("EPOLLERR || EPOLLHUP error\n");
         sparrow_socket_close(sp, sock);
         spev->event = 8;
         sp->events[i].events = 0;
+
+        sp->event_cur++;
         return 0;
       }
 
-    if(event & EPOLLOUT) {
-      data_out_t *data_out = &(sock->data_out);
-      assert(data_out->len > data_out->cur);
-      assert(data_out->len != 0);
-      Dprintf("Send msg size: %lu\n", data_out->len - data_out->cur);
-      int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
-
-      //On error
-      if(result < 0) {
-        sparrow_socket_close(sp,sock);
-        spev->event = 8;
-        sp->events[i].events = 0;
-        printf("Send error inside _sparrow_wait.\n");
-        return 0;
-      }
-
-      if(result + data_out->cur == data_out->len) {
-        //We remove the socket from the output expiration tree.
-        Dprintf("We remove the socket from the output expiration tree.\n");
-        RB_REMOVE(ot_rb_t, &(sp->ot_rb_socks), sock);
-        sock->out_expiry = -1;
-        data_out->len = 0;
-
-        struct epoll_event pevent;
-        pevent.data.fd = sock->fd;
-        pevent.events = EPOLLIN;
-        int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
-        if (rc == -1) {
-          perror(" epoll_ctl failed to modify a socket to epoll");
-          exit(-1);
+      if(event & EPOLLOUT) {
+        //The socket might have been destroyed even though we still had events to process.
+        sparrow_socket_t * sock = find_sock(sp, spev, sp->events[i].data.fd);
+        if(sock == NULL) {
+          continue;
         }
-        spev->event += 2;
-        //Clear the bit
-        sp->events[i].events &= ~EPOLLOUT;
-        return 0;
-      } else {
-        data_out->cur += result;
-      }
-    }
 
-    data_in_t *data_in = &(sock->data_in);
-    if((event & EPOLLIN) && !only_output) {
-
-      if(sock->listening) {
-      // We accept a new client.
-        spev->sock = sparrow_socket_accept(sp, sock);
-        Dprintf("Listening Socket:\nfd:%d\n",sock->fd);
-        spev->fd = spev->sock->fd;
-        spev->parent = spev->sock->parent;
-        spev->event += 16;
-        //Clear the bit
-        sp->events[i].events &= ~EPOLLIN;
-        return 0;
-      } else {
-        Dprintf("Receiving Socket:\nfd:%d\n",sock->fd);
-        
-        //If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
-        if(data_in->len == 0) {
-          printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
+        data_out_t *data_out = &(sock->data_out);
+        assert(data_out->len > data_out->cur);
+        assert(data_out->len != 0);
+        Dprintf("Send msg size: %lu\n", data_out->len - data_out->cur);
+        int result = send(sock->fd, data_out->data + data_out->cur, data_out->len - data_out->cur, 0);
+  
+        //On error
+        if(result < 0) {
           sparrow_socket_close(sp,sock);
           spev->event = 8;
           sp->events[i].events = 0;
+          printf("Send error inside _sparrow_wait.\n");
+          sp->event_cur++;
           return 0;
         }
+  
+        if(result + data_out->cur == data_out->len) {
+          //We remove the socket from the output expiration tree.
+          Dprintf("We remove the socket from the output expiration tree.\n");
+          RB_REMOVE(ot_rb_t, &(sp->ot_rb_socks), sock);
+          sock->out_expiry = -1;
+          data_out->len = 0;
+  
+          struct epoll_event pevent;
+          pevent.data.fd = sock->fd;
+          pevent.events = EPOLLIN;
+          int rc = epoll_ctl (sp->fd, EPOLL_CTL_MOD, sock->fd, &pevent);
+          if (rc == -1) {
+            perror(" epoll_ctl failed to modify a socket to epoll");
+            exit(-1);
+          }
+          spev->event += 2;
+          //Clear the bit
+          sp->events[i].events &= ~EPOLLOUT;
 
-        int result = recv(sock->fd, data_in->data , data_in->len , 0);
-
-        //On error or connection closed.
-        if(result <= 0) {
-          printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
-          sparrow_socket_close(sp,sock);
-          spev->event = 8;
-          sp->events[i].events = 0;
+          sp->event_cur++;
           return 0;
-        }
+        } else {
+          data_out->cur += result;
 
-        spev->cur = result;
-        spev->event += 4;
-        data_in->len = 0;
-        sp->events[i].events &= ~EPOLLIN;
-        return 0;
+          sp->event_cur++;
+          return 1;
+        }
       }
     }
+    sp->event_cur = 0;
+    sp->is_cur_output = 0;
+  } 
 
-    sp->event_cur++;
+  if(!sp->is_cur_output) {
+    if(only_output) {
+      sp->events_len = 0;
+      //We do not care for the timeout. We immediately return.
+      return 0;
+    }
+
+    for( i = sp->event_cur; i < sp->events_len; i++) {
+      int event = sp->events[i].events;
+  
+      if(event & EPOLLIN) {
+
+        //The socket might have been destroyed even though we still had events to process.
+        sparrow_socket_t * sock = find_sock(sp, spev, sp->events[i].data.fd);
+        if(sock == NULL) {
+          continue;
+        }
+
+
+        if(sock->listening) {
+        // We accept a new client.
+          spev->sock = sparrow_socket_accept(sp, sock);
+          Dprintf("Listening Socket:\nfd:%d\n",sock->fd);
+          spev->fd = spev->sock->fd;
+          spev->parent = spev->sock->parent;
+          spev->event += 16;
+          //Clear the bit
+          sp->events[i].events &= ~EPOLLIN;
+
+          sp->event_cur++;
+          return 0;
+
+        } else {
+          data_in_t *data_in = &(sock->data_in);
+
+          Dprintf("Receiving Socket:\nfd:%d\n",sock->fd);
+          
+          //If we get data that we did not expect we close the connection. This could also happen when the other closes the connection.
+          if(data_in->len == 0) {
+            printf("We got data that we did not expect or we received a signal that the connection closed.\nWe are closing the connection.\n");
+            sparrow_socket_close(sp,sock);
+            spev->event = 8;
+            sp->events[i].events = 0;
+
+            sp->event_cur++;
+            return 0;
+          }
+  
+          int result = recv(sock->fd, data_in->data , data_in->len , 0);
+  
+          //On error or connection closed.
+          if(result <= 0) {
+            printf("Receive error or we received a signal that the connection closed.\nWe are closing the connection.\n");
+            sparrow_socket_close(sp,sock);
+            spev->event = 8;
+            sp->events[i].events = 0;
+
+            sp->event_cur++;
+            return 0;
+          }
+  
+          spev->cur = result;
+          spev->event += 4;
+          data_in->len = 0;
+          sp->events[i].events &= ~EPOLLIN;
+
+          sp->event_cur++;
+          return 0;
+        }
+      }
+    }
+    sp->events_len = 0;
   }
-  sp->events_len = 0;
 
   return 1;
 }

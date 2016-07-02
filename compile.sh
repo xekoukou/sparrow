@@ -36,7 +36,7 @@ gcc -g -Wall -DDEBUG_LOG time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bsimpl
 gcc -g -Wall -DDEBUG_LOG time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bsimple_test_client.c -o bsimple_test_client
 #gcc -g -Wall -DDEBUG_LOG time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_client.c -o bthr_client
 #gcc -g -Wall -DDEBUG_LOG time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_server.c -o bthr_server
-gcc -g -Wall time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_client.c -o bthr_client
-gcc -g -Wall time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_server.c -o bthr_server
-#gcc -Wall -O3 time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_client.c -o bthr_client
-#gcc -Wall -O3 time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_server.c -o bthr_server
+#gcc -g -Wall time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_client.c -o bthr_client
+#gcc -g -Wall time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_server.c -o bthr_server
+gcc -Wall -O3 time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_client.c -o bthr_client
+gcc -Wall -O3 time.c sparrow.c bsparrow.c sparrow.h bsparrow.h bthr_server.c -o bthr_server
