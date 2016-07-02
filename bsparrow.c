@@ -10,6 +10,7 @@
 
 //TODO We need an initialization function for the buffer socket. It is performed if there are stored session in hd or if a new session is requested from the network or initiated by us.
 
+
 struct buffer_list_t {
   void * data;
   size_t len;
@@ -52,13 +53,15 @@ struct buffer_in_t {
   char * default_memory;     
 };
 
+typedef struct buffer_in_t buffer_in_t;
+
+
 struct buffer_out_t {
   int is_it_default;
   char * allocated_memory;
   char * default_memory;
 };
 
-typedef struct buffer_in_t buffer_in_t;
 typedef struct buffer_out_t buffer_out_t;
 
 struct out_request_t {
@@ -181,6 +184,7 @@ void oqueue_empty(oqueue_t * oq) {
 }
 
 
+
 struct bsparrow_socket_t {
   int64_t id;
   int we_connected;
@@ -190,8 +194,8 @@ struct bsparrow_socket_t {
   buffer_in_t buff_in;
   buffer_out_t buff_out;
   oqueue_t oq;
-  int operational;
   int internally_destroyed;
+  int operational;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
 };
@@ -289,10 +293,15 @@ struct bsparrow_t {
   bsparrow_event_list_t * ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
   // to be handled by bsparrow_wait itself (rather than handled separately.)
   int max_output_queue; //The maximum size of the output queue of a socket.
-  int64_t rltime; //Last time we retried to connect to destroyed connections.
+  int64_t rltime; //Last time we retried to connect to nonoperational connections.
   int max_output_sockets;  //The number of sockets that have output data till bsparrow stops receiving new connections.
   int total_output_sockets;
 };
+
+
+
+
+
 
 
 
@@ -650,7 +659,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   }
 
   if(only_output) {
-    if(at_least_once_output) {
+    if(at_least_once_output && bsp->total_output_sockets) {
       return 1;
     } else {
       return 0;
