@@ -4,10 +4,9 @@
 
 int main(void) {
 
-  sparrow_t *sp = sparrow_new();
+  sparrow_t *sp = sparrow_new(5000);
   sparrow_socket_t * sock = sparrow_socket_connect(sp,"127.0.0.1", "9001");
 
-  char *data = malloc(50);
 
   sparrow_event_t spev;
   spev.event = 0;
@@ -17,16 +16,18 @@ int main(void) {
   while(i < 2000000) {
 
     if((spev.event & 2) || (sent_immediately == 1)) {
+      char *data = scalloc(1, 50);
       sprintf(data,"Hello there!");
       sent_immediately = sparrow_send(sp, sock, data, 50, &spev);
       if(spev.event & 8) {
         Dprintf("An error occured");    
         break;
       }
+      free(data);
     }
 
     if(sent_immediately == 0) {
-      sparrow_wait(sp,&spev);
+      sparrow_wait(sp,&spev, 0);
     }
 
     if((spev.event & 2) || (sent_immediately == 1)) {
