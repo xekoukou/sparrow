@@ -485,78 +485,22 @@ The events that are sent by the bsparrow functions are as follows:
 
 ## BSparrow implementation {#BSparrow_implementation}
 
-//TODO Move this piece of code to the correct paragraph.
+
+### Buffer data Structures {#Buffer_data_structures}
+
+The most noteworthy part of bsparrow are the buffer structures it uses so as to reduce the number of systems calls.
+
+### Output buffer data structure {#Output_Buffer_data_structure}
+
+The output buffer is very simple. When we send some data, bsparrow takes control of the specific memory and is thus responsible of freeing it. If the memory exceeds the size of the output buffer as set in the ```bsparrow_new``` function, then we use the original memory as the buffer. We specify the is_it_default boolean to know to free it if it is the original memory. When the memory of the output request is smaller than our buffer, then we batch multiple requests together if there are any other reqs pending. In this case, we copy the data to our buffer and free the memory of the request.
+
+Apart from the output buffer, we also have the queue of pending output requests per socket. The queue is cyclical and expands and contructs according to the number of requests that we have. The queue is FIFO. Keep in mind the way we use it.
+
+First, we request the oldest request. If we have enough buffer memory to batch it with other previous requests, then we pop it out of the queue. So it is a two stage process.
 
 ```c bsparrow.c.dna
-function handle_error() {
+function output_buffer_structures() {
 ./!dots(1)
-if(!bsock-%gtwe_connected) {
-  bsparrow_socket_internal_destroy(bsp, bsock);
-} else {
-  bsock-%gtsock = NULL;
-  bsparrow_socket_clean(bsp, bsock);
-  bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
-}
-./!dots(-1)
-}
-```
-
-
-```c bsparrow.c.dna
-./!dots(1)
-
-#include "sparrow.h"
-#include "bsparrow.h"
-#include%ltstdlib.h%gt
-#include%ltstdio.h%gt
-#include%ltstring.h%gt
-#include%ltassert.h%gt
-#include "tree.h"
-
-
-//TODO We need an initialization function for the buffer socket. It is performed if there are stored session in hd or if a new session is requested from the network or initiated by us.
-
-struct buffer_list_t {
-  void * data;
-  size_t len;
-  int should_be_freed;
-  struct buffer_list_t * next;
-};
-
-buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length) {
-  *data = list-%gtdata;
-  *length = list-%gtlen;
-  return list-%gtnext;
-}
-
-void buffer_list_destroy(buffer_list_t ** list_) {
-  buffer_list_t * item = *list_;
-  buffer_list_t * prev_item;
-  while(item != NULL) {
-    prev_item = item;
-    item = item-%gtnext;
-    if(prev_item-%gtshould_be_freed) {
-      free(prev_item-%gtdata);
-    }
-    free(prev_item);
-  }
-  *list_ = NULL;
-}
-
-struct buffer_in_t {
-  buffer_list_t * list;
-  buffer_list_t * last_item;
-  size_t total_length_received;
-  char * prev_data;  //Pointers to buffer_one, buffer_two and big_buffer.
-  int prev_data_tag;  //0 1 or 2 
-  char * new_data;   //
-  int new_data_tag;
-  size_t cur_length;
-  size_t residue_start;
-  size_t residue_length;
-  size_t new_data_len;
-  char * default_memory;     
-};
 
 struct buffer_out_t {
   int is_it_default;
@@ -564,7 +508,6 @@ struct buffer_out_t {
   char * default_memory;
 };
 
-typedef struct buffer_in_t buffer_in_t;
 typedef struct buffer_out_t buffer_out_t;
 
 struct out_request_t {
@@ -687,6 +630,94 @@ void oqueue_empty(oqueue_t * oq) {
 }
 
 
+./!dots(-1)
+}
+```
+
+### Input buffer data structure {#Input_Buffer_data_structure}
+
+The input buffer data structures are a bit more complicated but the basic idea is simple. We want to be able to receive msgs without having to malloc enough memory to store the data every time a msg arrives. If we assume that the average msg size is AS, then a buffer that is size AS will suffice to receive that msg. The main problem though is that in most cases, we would want to request more data, than the data that our next msg contains. Thus, after our application receives the next msg, a residue will remain in our buffer.
+(The reason we request more data is so that we reduce the number of system calls.)
+
+The residue can be in any part of the buffer, thus blocking us in using it to get more msgs. In order to avoid this, we use two buffers, where the first is used to receive new data and the other is used to keep the residue if it exists.
+
+Things get even more complicated because of two reasons. 
+
+1. First, the msg can exceed the size of our bufferm thus we would need to allocate a new piece of memory to save the input data. We also need to maintain a tag that will tell us whether a specific memory is not part of the default buffer and thus should be deleted.
+
+2. Secondly, the application might not know the size of the msg, and thus continually request more data. Keep in mind that bsparrow is responsible in keeping all the data till the complete msg is received. In order to solve that problem, I have introduced a buffer list with the number of buffer that we had to use to save all the input data. As in the previous cases, we have boolean that tells us if we have to free the buffer when the complete msg is received.
+
+```c bsparrow.c.dna
+function input_buffer_structures() {
+./!dots(1)
+
+struct buffer_list_t {
+  void * data;
+  size_t len;
+  int should_be_freed;
+  struct buffer_list_t * next;
+};
+
+buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length) {
+  *data = list-%gtdata;
+  *length = list-%gtlen;
+  return list-%gtnext;
+}
+
+void buffer_list_destroy(buffer_list_t ** list_) {
+  buffer_list_t * item = *list_;
+  buffer_list_t * prev_item;
+  while(item != NULL) {
+    prev_item = item;
+    item = item-%gtnext;
+    if(prev_item-%gtshould_be_freed) {
+      free(prev_item-%gtdata);
+    }
+    free(prev_item);
+  }
+  *list_ = NULL;
+}
+
+struct buffer_in_t {
+  buffer_list_t * list;
+  buffer_list_t * last_item;
+  size_t total_length_received;
+  char * prev_data;  //Pointers to buffer_one, buffer_two and big_buffer.
+  int prev_data_tag;  //0 1 or 2 
+  char * new_data;   //
+  int new_data_tag;
+  size_t cur_length;
+  size_t residue_start;
+  size_t residue_length;
+  size_t new_data_len;
+  char * default_memory;     
+};
+
+typedef struct buffer_in_t buffer_in_t;
+
+./!dots(-1)
+}
+```
+
+## Bsparrow socket {#Bsparrow_socket}
+
+The bsparrow socket structure contains:
+
+* In case we connected, the address and port so that in case of failure, we can automatically try to reconnect.
+* The sparrow socket needed to perform the operations as well as the buffers and output queue.
+* Boolean values that indicate whether the socket is operational or destroyed.
+* The retries of reconnection.
+* Whether our sparrow socket is able to send more data or not.
+
+We need out_more because bsparrow_wait doesn't return output events, thus we are unable to know if we can send more.
+
+The boolean internally destroyed indicates that we have freed all the memory that this sockets allocates but we haven't freed the socket itself. The internal destruction happens when an error is unrecoverable. BUT we do not send error events to the higher levels. The only way that higher levels can witness the error is through an input timeout. Thus, because higher levels might own the bsocket, we do not free its memory. When new requests from higher levels arrive, they immediately silently fail.
+
+
+```c bsparrow.c.dna
+function bsparrow_socket() {
+./!dots(1)
+
 struct bsparrow_socket_t {
   int64_t id;
   int we_connected;
@@ -696,12 +727,32 @@ struct bsparrow_socket_t {
   buffer_in_t buff_in;
   buffer_out_t buff_out;
   oqueue_t oq;
-  int operational;
   int internally_destroyed;
+  int operational;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
 };
 
+./!dots(-1)
+}
+```
+
+## Bsparrow {#Bsparrow_impl}
+
+Bsparrow contains many properties that are set when it is initiated.
+
+* MAX RETRIES : It specifies the maximum number of reconnection retries before the socket is considered unrecoverable ans is destroyed.
+* MAX OUTPUT QUEUE: The maximum number of pending output requests. To protect from slow end points that could trigger memory depletion, we close the connection when it is reached. Also, look at sparrow's output timeout option that protects from end points that do not receive new data or very slowly.
+* MAX OUTPUT SOCKETS: It is used so that we block creating many sockets that have output requests. Again, we protect against memory depletion.
+
+Bsparrow also contains two lists. The first list is the list of non operational sockets that we try to reconnect. The second list contains events that are triggered independent of bsparrow_wait. We save them and send them to the higher levels from bsparrow_wait so that the higher level's code is simpler at processing events.
+
+
+//TODO The list api is a bit tricky. It might require some explanation.
+
+```c bsparrow.c.dna
+function bsparrow() {
+./!dots(1)
 
 struct non_op_bsock_list_t {
   bsparrow_socket_t * bsock;
@@ -795,10 +846,56 @@ struct bsparrow_t {
   bsparrow_event_list_t * ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
   // to be handled by bsparrow_wait itself (rather than handled separately.)
   int max_output_queue; //The maximum size of the output queue of a socket.
-  int64_t rltime; //Last time we retried to connect to destroyed connections.
+  int64_t rltime; //Last time we retried to connect to nonoperational connections.
   int max_output_sockets;  //The number of sockets that have output data till bsparrow stops receiving new connections.
   int total_output_sockets;
 };
+
+
+
+./!dots(-1)
+}
+```
+
+## The remaining Bsparrow implementation {#Bsparrow_rem_impl}
+
+
+```c bsparrow.c.dna
+function handle_error() {
+./!dots(1)
+if(!bsock-%gtwe_connected) {
+  bsparrow_socket_internal_destroy(bsp, bsock);
+} else {
+  bsock-%gtsock = NULL;
+  bsparrow_socket_clean(bsp, bsock);
+  bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
+}
+./!dots(-1)
+}
+```
+
+```c bsparrow.c.dna
+./!dots(1)
+
+#include "sparrow.h"
+#include "bsparrow.h"
+#include%ltstdlib.h%gt
+#include%ltstdio.h%gt
+#include%ltstring.h%gt
+#include%ltassert.h%gt
+#include "tree.h"
+
+
+//TODO We need an initialization function for the buffer socket. It is performed if there are stored session in hd or if a new session is requested from the network or initiated by us.
+
+./!dots(-1)
+input_buffer_structures();
+output_buffer_structures();
+bsparrow_socket();
+bsparrow();
+./!dots(+1)
+
+
 
 
 ./!dots(-1)
@@ -1150,7 +1247,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   }
 
   if(only_output) {
-    if(at_least_once_output) {
+    if(at_least_once_output && bsp-%gttotal_output_sockets) {
       return 1;
     } else {
       return 0;
@@ -1374,7 +1471,17 @@ void bsparrow_got_some(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t that_
 ```
 
 
+## The output expiry problem {#output_expiry_problem}
 
+Let me give you an example. Let us assume that we have two connections.
+One of them is a bit slow, so we send as much data as we can and continue processing the input of second connection. 
+
+If the second connection requires processing that takes a lot of time, the first connection might be able to receive new data but we were bizzy to be able to send the remaining data.
+Thus, the output expiry might trigger not because the initial connection was very slow but because we were bizzy doing other things.
+
+If on the other hand, we waited for the initial connection to finish getting the data, we are prone to an attack in which the first connection slows on purpose.
+
+I have defined that we wait at least MIN_OUTPUT_WAIT time. Whether this is correct is another thing. Maybe it needs to be set by the user in the bsparrow_new function.  //TODO
 
 
 # Epoll Wrapper {#Epoll_Wrapper}
@@ -2369,7 +2476,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
 
   // We immediately return if there are no outputs to send
   if(only_output) {
-    timeout = 0;
+    timeout = MIN_OUTPUT_WAIT;
   }
 
   if(sp-%gtevents_len == 0) {
@@ -2583,6 +2690,7 @@ This is the main file in which all code is inserted. What is left writing here a
 // #define MAX_SEND_QUEUE 10
 // #define MAX_INPUT_DELAY 20
 #define MIN_OTIMEOUT_SAMPLE_INTERVAL 100
+#define MIN_OUTPUT_WAIT 10
 
 void * scalloc(size_t num, size_t size) {
   void * result = calloc(num, size);

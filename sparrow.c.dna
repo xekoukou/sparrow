@@ -480,7 +480,7 @@ int _sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
 
   // We immediately return if there are no outputs to send
   if(only_output) {
-    timeout = 0;
+    timeout = MIN_OUTPUT_WAIT;
   }
 
   if(sp-%gtevents_len == 0) {
@@ -687,6 +687,7 @@ void sparrow_wait(sparrow_t * sp, sparrow_event_t * spev, int only_output) {
 // #define MAX_SEND_QUEUE 10
 // #define MAX_INPUT_DELAY 20
 #define MIN_OTIMEOUT_SAMPLE_INTERVAL 100
+#define MIN_OUTPUT_WAIT 10
 
 void * scalloc(size_t num, size_t size) {
   void * result = calloc(num, size);

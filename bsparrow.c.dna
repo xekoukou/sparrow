@@ -1,68 +1,5 @@
-function handle_error() {
+function output_buffer_structures() {
 ./!dots(1)
-if(!bsock-%gtwe_connected) {
-  bsparrow_socket_internal_destroy(bsp, bsock);
-} else {
-  bsock-%gtsock = NULL;
-  bsparrow_socket_clean(bsp, bsock);
-  bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
-}
-./!dots(-1)
-}
-./!dots(1)
-
-#include "sparrow.h"
-#include "bsparrow.h"
-#include%ltstdlib.h%gt
-#include%ltstdio.h%gt
-#include%ltstring.h%gt
-#include%ltassert.h%gt
-#include "tree.h"
-
-
-//TODO We need an initialization function for the buffer socket. It is performed if there are stored session in hd or if a new session is requested from the network or initiated by us.
-
-struct buffer_list_t {
-  void * data;
-  size_t len;
-  int should_be_freed;
-  struct buffer_list_t * next;
-};
-
-buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length) {
-  *data = list-%gtdata;
-  *length = list-%gtlen;
-  return list-%gtnext;
-}
-
-void buffer_list_destroy(buffer_list_t ** list_) {
-  buffer_list_t * item = *list_;
-  buffer_list_t * prev_item;
-  while(item != NULL) {
-    prev_item = item;
-    item = item-%gtnext;
-    if(prev_item-%gtshould_be_freed) {
-      free(prev_item-%gtdata);
-    }
-    free(prev_item);
-  }
-  *list_ = NULL;
-}
-
-struct buffer_in_t {
-  buffer_list_t * list;
-  buffer_list_t * last_item;
-  size_t total_length_received;
-  char * prev_data;  //Pointers to buffer_one, buffer_two and big_buffer.
-  int prev_data_tag;  //0 1 or 2 
-  char * new_data;   //
-  int new_data_tag;
-  size_t cur_length;
-  size_t residue_start;
-  size_t residue_length;
-  size_t new_data_len;
-  char * default_memory;     
-};
 
 struct buffer_out_t {
   int is_it_default;
@@ -70,7 +7,6 @@ struct buffer_out_t {
   char * default_memory;
 };
 
-typedef struct buffer_in_t buffer_in_t;
 typedef struct buffer_out_t buffer_out_t;
 
 struct out_request_t {
@@ -193,6 +129,60 @@ void oqueue_empty(oqueue_t * oq) {
 }
 
 
+./!dots(-1)
+}
+function input_buffer_structures() {
+./!dots(1)
+
+struct buffer_list_t {
+  void * data;
+  size_t len;
+  int should_be_freed;
+  struct buffer_list_t * next;
+};
+
+buffer_list_t * buffer_list_next(buffer_list_t * list, char ** data, size_t * length) {
+  *data = list-%gtdata;
+  *length = list-%gtlen;
+  return list-%gtnext;
+}
+
+void buffer_list_destroy(buffer_list_t ** list_) {
+  buffer_list_t * item = *list_;
+  buffer_list_t * prev_item;
+  while(item != NULL) {
+    prev_item = item;
+    item = item-%gtnext;
+    if(prev_item-%gtshould_be_freed) {
+      free(prev_item-%gtdata);
+    }
+    free(prev_item);
+  }
+  *list_ = NULL;
+}
+
+struct buffer_in_t {
+  buffer_list_t * list;
+  buffer_list_t * last_item;
+  size_t total_length_received;
+  char * prev_data;  //Pointers to buffer_one, buffer_two and big_buffer.
+  int prev_data_tag;  //0 1 or 2 
+  char * new_data;   //
+  int new_data_tag;
+  size_t cur_length;
+  size_t residue_start;
+  size_t residue_length;
+  size_t new_data_len;
+  char * default_memory;     
+};
+
+typedef struct buffer_in_t buffer_in_t;
+
+./!dots(-1)
+}
+function bsparrow_socket() {
+./!dots(1)
+
 struct bsparrow_socket_t {
   int64_t id;
   int we_connected;
@@ -202,12 +192,16 @@ struct bsparrow_socket_t {
   buffer_in_t buff_in;
   buffer_out_t buff_out;
   oqueue_t oq;
-  int operational;
   int internally_destroyed;
+  int operational;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
 };
 
+./!dots(-1)
+}
+function bsparrow() {
+./!dots(1)
 
 struct non_op_bsock_list_t {
   bsparrow_socket_t * bsock;
@@ -301,10 +295,47 @@ struct bsparrow_t {
   bsparrow_event_list_t * ibspev_list;  //An event that is triggered immediate after a function call and that we want to save so as
   // to be handled by bsparrow_wait itself (rather than handled separately.)
   int max_output_queue; //The maximum size of the output queue of a socket.
-  int64_t rltime; //Last time we retried to connect to destroyed connections.
+  int64_t rltime; //Last time we retried to connect to nonoperational connections.
   int max_output_sockets;  //The number of sockets that have output data till bsparrow stops receiving new connections.
   int total_output_sockets;
 };
+
+
+
+./!dots(-1)
+}
+function handle_error() {
+./!dots(1)
+if(!bsock-%gtwe_connected) {
+  bsparrow_socket_internal_destroy(bsp, bsock);
+} else {
+  bsock-%gtsock = NULL;
+  bsparrow_socket_clean(bsp, bsock);
+  bsp-%gtnon_op_bsock_list = non_op_bsock_list_add(bsp-%gtnon_op_bsock_list, bsock);
+}
+./!dots(-1)
+}
+./!dots(1)
+
+#include "sparrow.h"
+#include "bsparrow.h"
+#include%ltstdlib.h%gt
+#include%ltstdio.h%gt
+#include%ltstring.h%gt
+#include%ltassert.h%gt
+#include "tree.h"
+
+
+//TODO We need an initialization function for the buffer socket. It is performed if there are stored session in hd or if a new session is requested from the network or initiated by us.
+
+./!dots(-1)
+input_buffer_structures();
+output_buffer_structures();
+bsparrow_socket();
+bsparrow();
+./!dots(+1)
+
+
 
 
 ./!dots(-1)
@@ -656,7 +687,7 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
   }
 
   if(only_output) {
-    if(at_least_once_output) {
+    if(at_least_once_output && bsp-%gttotal_output_sockets) {
       return 1;
     } else {
       return 0;
