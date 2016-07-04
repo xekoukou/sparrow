@@ -51,9 +51,358 @@ struct sparrow_multiplexer_t {
 };
 
 
+```
 
+# Simple MSG delimination
+
+The simple message delimination is very.. simple. We.. simply add a 64bit number at the beginning of each message that indicates the size of the msg.
+
+```c msparrow.h
+#ifndef _MSPARROW_H_
+#define _MSPARROW_H_
+
+#include "bsparrow.h"
+#include%ltstring.h%gt 
+#include%ltstdint.h%gt 
+
+struct msparrow_msg_t {
+  char * data;
+  uint64_t len;
+};
+
+typedef struct msparrow_msg_t msparrow_msg_t;
+
+void msparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock);
+
+int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t * msg);
+#endif
+```
+
+```c msparrow.c.dna
+./!dots(1)
+#include "msparrow.h"
+#include "bsparrow.h"
+#include%ltstring.h%gt 
+#include%ltassert.h%gt 
+
+void msparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
+  bsparrow_recv(bsp, bsock, 8);
+}
+
+./!dots(-1)
+function do_we_have_all_data() {
+./!dots(+1)
+
+if(*size + 8 %gt bspev-%gttotal_length) {
+  return NULL;
+} else {
+  data = scalloc(1, *size);
+}
+
+./!dots(-1)
+}
+./!dots(+1)
+
+//Internal use only.
+void * get_data(bsparrow_event_t * bspev,  uint64_t * size) {
+  char * data = NULL;
+
+  size_t position = 0;
+  size_t step_position = 0;
+  buffer_list_t * iter = bspev-%gtlist;
+
+  if(bspev-%gtfirst_buffer_length %gt 0) {
+     if(8 %gt bspev-%gtfirst_buffer_length) {
+      memcpy(size, bspev-%gtfirst_buffer, bspev-%gtfirst_buffer_length);
+      position = bspev-%gtfirst_buffer_length;
+    } else {
+      memcpy(size, bspev-%gtfirst_buffer, 8);
+./!dots(-1)
+.      @{do_we_have_all_data()}
+./!dots(+1)
+      goto step_zero;
+    }
+  }
+
+  if(iter != NULL) {
+    char * buffer;
+    size_t length;
+    iter = buffer_list_next(iter, &buffer, &length);    //length here must be big enough to have the 8 bits.
+    assert(length %gt= (8 - position));
+    memcpy(size + position, buffer, 8 - position);
+./!dots(-1)
+.    @{do_we_have_all_data()}
+./!dots(+1)
+    memcpy(data, buffer - (8 - position), length - (8 - position));   
+    position = length - (8 - position);
+    goto step_one;
+  }
+ 
+  if(bspev-%gtlast_buffer_length %gt 8 - position) {
+    memcpy(size + position, bspev-%gtlast_buffer, 8 - position);
+./!dots(-1)
+.    @{do_we_have_all_data()}
+./!dots(+1)
+    step_position = 8 - position;
+    position = 0;
+    goto step_two;
+  }
+
+  assert(1 == 0);
+
+step_zero: ;
+
+  if(bspev-%gtfirst_buffer_length - 8 %gt 0) {
+    if(*size %gt bspev-%gtfirst_buffer_length - 8) {
+      memcpy(data, bspev-%gtfirst_buffer + 8, bspev-%gtfirst_buffer_length - 8);
+      position = bspev-%gtfirst_buffer_length;
+    } else {
+      memcpy(data, bspev-%gtfirst_buffer + 8, *size);
+      return data;
+    }
+  }
+
+step_one: ;
+
+  while(iter != NULL) {
+    char * buffer;
+    size_t length;
+    iter = buffer_list_next(iter, &buffer, &length);
+    memcpy(data + position, buffer, length);
+    position += length;
+  }
+
+step_two: ;
+ 
+  if(bspev-%gtlast_buffer_length) {
+    memcpy(data + position, bspev-%gtlast_buffer + step_position, *size - position);
+  }
+
+  return data;
+}
+
+int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+  assert(bspev-%gtevent == 4);
+  
+  if(bspev-%gttotal_length %lt 8) {
+    bsparrow_recv(bsp, bspev-%gtbsock, 8);
+    return 0;
+  } else {
+    msg-%gtdata = get_data(bspev, &(msg-%gtlen));
+    if(msg-%gtdata == NULL) {
+      bsparrow_recv(bsp, bspev-%gtbsock, msg-%gtlen + 8);
+      return 0;
+    } else {
+      bsparrow_got_some(bsp, bspev-%gtbsock, msg-%gtlen + 8);
+      return 1; 
+    }
+  }
+}
+
+./!dots(-1)
+```
+
+## Examples {#msparrow_examples}
+
+### Throughput Test {#Msparrow_throughput_Test} 
+
+```c mthr_server.c
+#include "msparrow.h"
+#include "bsparrow.h"
+#include %ltassert.h%gt
+#include %ltstdio.h%gt
+#include %ltstdlib.h%gt
+#include %ltstring.h%gt
+#include %ltunistd.h%gt
+#include %ltstdint.h%gt
+
+
+void printmsg(msparrow_msg_t msg) {
+
+  Dprintf("Received :\n\n%s\n\n", msg.data);
+  Dprintf("Length : %lu\n", msg.len);
+
+  free(msg.data);
+
+}
+
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+  msparrow_recv(bsp, bsock);
+
+  while(1) {
+    bsparrow_set_timeout(bsp, 5000);
+    bsparrow_wait(bsp, bspev, 0);
+
+    if(bspev-%gtevent & 4) {
+      bsparrow_set_timeout(bsp, -1);
+      if(msparrow_get_msg(bsp, bspev, msg)) {
+        return;
+      }
+    }
+
+    if(bspev-%gtevent & 32) {
+      printf("timeout error. The client must have crushed");
+      exit(-1);
+    }
+  }
+}
+
+
+void results(int i, int64_t time, int msg_size) {
+  int64_t dif_time = (now() - time);
+  float rate = ((float) (i+1) * 1000) / ((float) dif_time);
+  printf("Rate: %f msgs per second.\n", rate);
+  printf("Length : %d\n", msg_size);
+  printf("Msgs received: %d\n", i);
+}
+
+int main(int argc, char ** argv) {
+  
+  assert(argc == 3);
+  uint64_t msg_size = atoi(argv[1]);
+  int loop_length = atoi(argv[2]);
+
+  bsparrow_t * bsp = bsparrow_new(50000, 4000, 2, 2, 1, "9003");
+
+  bsparrow_event_t bspev;
+  bsparrow_socket_t * bsock;
+  bsparrow_wait(bsp, &bspev, 0);
+
+  if(bspev.event & 16) {
+    bsock = bspev.bsock;
+    bsparrow_socket_assign_id(bsock, 1);
+  } else {
+    exit(-1);
+  }
+  
+  msparrow_msg_t msg;
+  int j = 0;
+  int64_t time = now();
+  while(j %lt loop_length) {
+    int i = 0;
+    while(i %lt 10000) {
+      if(i == 5000) {
+        char *data = scalloc(1, 100);
+        uint64_t temp = 92;
+        memcpy(data, &temp, 8);
+        sprintf(data + 8,"Got 50, need mooooreee!");
+        bsparrow_send(bsp, bsock, &data, 100);
+        Dprintf("I am sending an aknowledge msg at msg number: %lu\n", j*100 + 50);
+      }
+      get_msg(bsp, bsock, &bspev, &msg); 
+    
+      Dprintf("i: %d\n", i); 
+      Dprintf("Remaining length: %lu\n", bspev.total_length -msg_size);
+      printmsg(msg);
+      i++;
+    }
+    Dprintf("j: %d\n", j); 
+    Dprintf("Remaining length: %lu\n", bspev.total_length -msg_size);
+    j++;
+  }
+
+  printf("Sending: Got them all, thanks!\n");
+  char *data = scalloc(1, 100);
+  uint64_t temp = 92;
+  memcpy(data, &temp, 8);
+  sprintf(data + 8, "Got them all, thanks!");
+  bsparrow_send(bsp, bsock, &data, 100);
+  results(j*10000, time, msg_size);
+
+  bsparrow_destroy(&bsp);
+  return 0;
+}
 
 ```
+
+
+```c mthr_client.c
+#include "msparrow.h"
+#include "bsparrow.h"
+#include %ltassert.h%gt
+#include %ltstdio.h%gt
+#include %ltstdlib.h%gt
+#include %ltstring.h%gt
+#include %ltstdint.h%gt
+
+void printmsg(msparrow_msg_t msg) {
+
+  Dprintf("Received :\n\n%s\n\n", msg.data);
+  Dprintf("Length : %lu\n", msg.len);
+
+  free(msg.data);
+
+}
+
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+  msparrow_recv(bsp, bsock);
+
+  while(1) {
+    bsparrow_set_timeout(bsp, 5000);
+    bsparrow_wait(bsp, bspev, 0);
+
+    if(bspev-%gtevent & 4) {
+      bsparrow_set_timeout(bsp, -1);
+      if(msparrow_get_msg(bsp, bspev, msg)) {
+        return;
+      }
+    }
+
+    if(bspev-%gtevent & 32) {
+      printf("timeout error. The client must have crushed");
+      exit(-1);
+    }
+  }
+}
+
+
+int main(int argc, char ** argv) {
+  
+  assert(argc == 3);
+  int msg_size = atoi(argv[1]);
+  int loop_length = atoi(argv[2]);
+
+  bsparrow_t * bsp = bsparrow_new(50000, 4000, 15001, 2, 0, NULL);
+  bsparrow_socket_t * bsock = bsparrow_socket_connect(bsp, 1, "127.0.0.1", "9003");
+  
+  int j = 0;
+  while(j %lt loop_length) {
+    int i = 0;
+    while(i %lt 10000) {
+      char *data = scalloc(1, msg_size);
+      uint64_t temp = msg_size - 8;
+      memcpy(data, &temp, 8);
+      sprintf(data + 8,"Hello there!");
+      bsparrow_send(bsp, bsock, &data, msg_size);
+      Dprintf("I: %d\n", i);
+      i++;
+    }
+
+    //Getting an unknowledge msg after every 100 msgs
+    bsparrow_event_t bspev ={0};
+    msparrow_msg_t msg;
+    get_msg(bsp, bsock, &bspev, &msg);
+    printmsg(msg);
+    Dprintf("J: %d\n", j);
+    j++;
+
+  }
+  printf("I finished sending the data.\n");
+
+
+  //Getting an unknowledge msg
+  bsparrow_event_t bspev ={0};
+  msparrow_msg_t msg;
+  get_msg(bsp, bsock, &bspev, &msg);
+  printmsg(msg);
+
+  bsparrow_destroy(&bsp);
+  return 0;
+
+}
+
+```
+
 
 # Buffered Sparrow {#BSparrow}
 
@@ -481,7 +830,6 @@ The events that are sent by the bsparrow functions are as follows:
 * (4) Input event triggered when new input has arrived.
 * (16) New Accepted Connection triggered when a new client connects to our listening port.
 * (32) Timeout event triggered when the timeout set has expired. Used to set the input timeout.
-* (64) Reconnection Event triggered when we have managed to reconnect to a destination.
 
 ## BSparrow implementation {#BSparrow_implementation}
 
@@ -731,6 +1079,7 @@ struct bsparrow_socket_t {
   int operational;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
+  bsparrow_event_t imbspev;
 };
 
 ./!dots(-1)
@@ -1198,7 +1547,6 @@ void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   bspev-%gtevent = 0;
   if(bsp-%gtibspev_list != NULL) {
     memcpy(bspev, bsp-%gtibspev_list-%gtbspev, sizeof(bsparrow_event_t));
-    free(bsp-%gtibspev_list-%gtbspev);
     bsp-%gtibspev_list = bsparrow_event_list_rem_next(bsp-%gtibspev_list, NULL);
   }
 }
@@ -1355,13 +1703,15 @@ bspev-%gtlist = buffer-%gtlist;
 bspev-%gtlast_buffer = buffer-%gtnew_data;
 bspev-%gtlast_buffer_length = buffer-%gtcur_length;
 bspev-%gttotal_length = buffer-%gttotal_length_received;
-bspev-%gtevent += 4;
+bspev-%gtevent = 4;
 bspev-%gtid = bsock-%gtid;
+bspev-%gtbsock = bsock;
+
 ./!dots(-1)
 }
 ./!dots(1)
 
-//The len should never decrease.
+//TODO The len should never decrease.
 void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
 
   if(bsock-%gtoperational == 1) {
@@ -1372,7 +1722,7 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
     
     //We already have the data.
     if(buffer-%gttotal_length_received %gt= len) {
-      bsparrow_event_t * bspev = scalloc(1, sizeof(bsparrow_event_t));
+      bsparrow_event_t * bspev = &(bsock-%gtimbspev);
   
 ./!dots(-1)
 .      @{fill_input_event()}
