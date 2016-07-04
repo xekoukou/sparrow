@@ -198,6 +198,7 @@ struct bsparrow_socket_t {
   int operational;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
+  bsparrow_event_t imbspev;
 };
 
 
@@ -610,7 +611,6 @@ void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   bspev->event = 0;
   if(bsp->ibspev_list != NULL) {
     memcpy(bspev, bsp->ibspev_list->bspev, sizeof(bsparrow_event_t));
-    free(bsp->ibspev_list->bspev);
     bsp->ibspev_list = bsparrow_event_list_rem_next(bsp->ibspev_list, NULL);
   }
 }
@@ -693,8 +693,9 @@ int bsparrow_wait_(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output) 
     bspev->last_buffer = buffer->new_data;
     bspev->last_buffer_length = buffer->cur_length;
     bspev->total_length = buffer->total_length_received;
-    bspev->event += 4;
+    bspev->event = 4;
     bspev->id = bsock->id;
+    bspev->bsock = bsock;
     return 0;
 
   }
@@ -768,7 +769,7 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
 }
 
 
-//The len should never decrease.
+//TODO The len should never decrease.
 void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
 
   if(bsock->operational == 1) {
@@ -779,7 +780,7 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
     
     //We already have the data.
     if(buffer->total_length_received >= len) {
-      bsparrow_event_t * bspev = scalloc(1, sizeof(bsparrow_event_t));
+      bsparrow_event_t * bspev = &(bsock->imbspev);
   
       if(buffer->residue_length) {
         bspev->first_buffer_length = buffer->residue_length;
@@ -792,8 +793,9 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
       bspev->last_buffer = buffer->new_data;
       bspev->last_buffer_length = buffer->cur_length;
       bspev->total_length = buffer->total_length_received;
-      bspev->event += 4;
+      bspev->event = 4;
       bspev->id = bsock->id;
+      bspev->bsock = bsock;
   
       bsp->ibspev_list = bsparrow_event_list_add(bsp->ibspev_list, bspev);
       return;

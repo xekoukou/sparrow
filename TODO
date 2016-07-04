@@ -211,7 +211,7 @@ a ------> b -> a -> b ----> c ----> d ----> e
 conditionals do not have timeouts.
 
 
-FAILURES are globally known, thus parts of our protocol might run concurrently and inconsistently.
+FAILURES are not globally known, thus parts of our protocol might run concurrently and inconsistently.
 
 Introducing a single node that takes inputs from both parts of the protocol is a good way to verify the protocol till a specific point.
 

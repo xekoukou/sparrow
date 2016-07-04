@@ -196,6 +196,7 @@ struct bsparrow_socket_t {
   int operational;
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
+  bsparrow_event_t imbspev;
 };
 
 ./!dots(-1)
@@ -638,7 +639,6 @@ void bsparrow_immediate_event(bsparrow_t * bsp, bsparrow_event_t * bspev) {
   bspev-%gtevent = 0;
   if(bsp-%gtibspev_list != NULL) {
     memcpy(bspev, bsp-%gtibspev_list-%gtbspev, sizeof(bsparrow_event_t));
-    free(bsp-%gtibspev_list-%gtbspev);
     bsp-%gtibspev_list = bsparrow_event_list_rem_next(bsp-%gtibspev_list, NULL);
   }
 }
@@ -795,13 +795,15 @@ bspev-%gtlist = buffer-%gtlist;
 bspev-%gtlast_buffer = buffer-%gtnew_data;
 bspev-%gtlast_buffer_length = buffer-%gtcur_length;
 bspev-%gttotal_length = buffer-%gttotal_length_received;
-bspev-%gtevent += 4;
+bspev-%gtevent = 4;
 bspev-%gtid = bsock-%gtid;
+bspev-%gtbsock = bsock;
+
 ./!dots(-1)
 }
 ./!dots(1)
 
-//The len should never decrease.
+//TODO The len should never decrease.
 void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
 
   if(bsock-%gtoperational == 1) {
@@ -812,7 +814,7 @@ void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len) {
     
     //We already have the data.
     if(buffer-%gttotal_length_received %gt= len) {
-      bsparrow_event_t * bspev = scalloc(1, sizeof(bsparrow_event_t));
+      bsparrow_event_t * bspev = &(bsock-%gtimbspev);
   
 ./!dots(-1)
 .      @{fill_input_event()}
