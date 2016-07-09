@@ -53,6 +53,30 @@ struct sparrow_multiplexer_t {
 
 ```
 
+# Salty MSG Cryptography
+
+//TODO In the future
+
+```c csparrow.h
+#ifndef _CSPARROW_H_
+#define _CSPARROW_H_
+
+#include<libsodium.h>
+
+
+#endif
+```
+
+```c csparrow.c
+
+struct csparrow_t {
+  
+}
+
+
+```
+
+
 # Simple MSG delimination
 
 The simple message delimination is very.. simple. We.. simply add a 64bit number at the beginning of each message that indicates the size of the msg.
