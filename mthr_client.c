@@ -6,16 +6,16 @@
 #include <string.h>
 #include <stdint.h>
 
-void printmsg(msparrow_msg_t msg) {
+void printmsg(sparrow_msg_t msg) {
 
   Dprintf("Received :\n\n%s\n\n", msg.data);
-  Dprintf("Length : %lu\n", msg.len);
+  Dprintf("Length : %ld\n", msg.len);
 
   free(msg.data);
 
 }
 
-void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, sparrow_msg_t * msg) {
   msparrow_recv(bsp, bsock);
 
   while(1) {
@@ -61,7 +61,7 @@ int main(int argc, char ** argv) {
 
     //Getting an unknowledge msg after every 100 msgs
     bsparrow_event_t bspev ={0};
-    msparrow_msg_t msg;
+    sparrow_msg_t msg;
     get_msg(bsp, bsock, &bspev, &msg);
     printmsg(msg);
     Dprintf("J: %d\n", j);
@@ -73,11 +73,11 @@ int main(int argc, char ** argv) {
 
   //Getting an unknowledge msg
   bsparrow_event_t bspev ={0};
-  msparrow_msg_t msg;
+  sparrow_msg_t msg;
   get_msg(bsp, bsock, &bspev, &msg);
   printmsg(msg);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 
 }

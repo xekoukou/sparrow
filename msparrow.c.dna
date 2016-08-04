@@ -2,6 +2,7 @@
 #include "msparrow.h"
 #include "bsparrow.h"
 #include%ltstring.h%gt 
+#include%ltstdio.h%gt 
 #include%ltassert.h%gt 
 
 void msparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
@@ -23,17 +24,18 @@ if(*size + 8 %gt bspev-%gttotal_length) {
 ./!dots(+1)
 
 //Internal use only.
-void * get_data(bsparrow_event_t * bspev,  uint64_t * size) {
+void * get_data(bsparrow_event_t * bspev,  int64_t * size) {
   char * data = NULL;
 
-  size_t position = 0;
-  size_t step_position = 0;
+  size_t position_of_next_copy = 0;
+  size_t eight_position = 0;
+  size_t position_on_last_buffer = 0;
   buffer_list_t * iter = bspev-%gtlist;
 
   if(bspev-%gtfirst_buffer_length %gt 0) {
      if(8 %gt bspev-%gtfirst_buffer_length) {
       memcpy(size, bspev-%gtfirst_buffer, bspev-%gtfirst_buffer_length);
-      position = bspev-%gtfirst_buffer_length;
+      eight_position = bspev-%gtfirst_buffer_length;
     } else {
       memcpy(size, bspev-%gtfirst_buffer, 8);
 ./!dots(-1)
@@ -47,38 +49,34 @@ void * get_data(bsparrow_event_t * bspev,  uint64_t * size) {
     char * buffer;
     size_t length;
     iter = buffer_list_next(iter, &buffer, &length);    //length here must be big enough to have the 8 bits.
-    assert(length %gt= (8 - position));
-    memcpy(size + position, buffer, 8 - position);
+    assert(length %gt= (8 - eight_position));
+    memcpy((char *) size + eight_position, buffer, 8 - eight_position);
 ./!dots(-1)
 .    @{do_we_have_all_data()}
 ./!dots(+1)
-    memcpy(data, buffer - (8 - position), length - (8 - position));   
-    position = length - (8 - position);
+    memcpy(data, buffer + (8 - eight_position), length - (8 - eight_position));   
+    position_of_next_copy = length - (8 - eight_position);
     goto step_one;
   }
- 
-  if(bspev-%gtlast_buffer_length %gt 8 - position) {
-    memcpy(size + position, bspev-%gtlast_buffer, 8 - position);
-./!dots(-1)
-.    @{do_we_have_all_data()}
-./!dots(+1)
-    step_position = 8 - position;
-    position = 0;
-    goto step_two;
-  }
 
-  assert(1 == 0);
+  assert(bspev-%gtlast_buffer_length %gt= 8 - eight_position);
+
+  memcpy((char *) size + eight_position, bspev-%gtlast_buffer, 8 - eight_position);
+./!dots(-1)
+.  @{do_we_have_all_data()}
+./!dots(+1)
+  position_on_last_buffer = 8 - eight_position;
+  goto step_two;
+
 
 step_zero: ;
 
-  if(bspev-%gtfirst_buffer_length - 8 %gt 0) {
-    if(*size %gt bspev-%gtfirst_buffer_length - 8) {
-      memcpy(data, bspev-%gtfirst_buffer + 8, bspev-%gtfirst_buffer_length - 8);
-      position = bspev-%gtfirst_buffer_length;
-    } else {
-      memcpy(data, bspev-%gtfirst_buffer + 8, *size);
-      return data;
-    }
+  if(*size %gt bspev-%gtfirst_buffer_length - 8) {
+    memcpy(data, bspev-%gtfirst_buffer + 8, bspev-%gtfirst_buffer_length - 8);
+    position_of_next_copy = bspev-%gtfirst_buffer_length - 8;
+  } else {
+    memcpy(data, bspev-%gtfirst_buffer + 8, *size);
+    return data;
   }
 
 step_one: ;
@@ -87,20 +85,20 @@ step_one: ;
     char * buffer;
     size_t length;
     iter = buffer_list_next(iter, &buffer, &length);
-    memcpy(data + position, buffer, length);
-    position += length;
+    memcpy(data + position_of_next_copy, buffer, length);
+    position_of_next_copy += length;
   }
 
 step_two: ;
  
   if(bspev-%gtlast_buffer_length) {
-    memcpy(data + position, bspev-%gtlast_buffer + step_position, *size - position);
+    memcpy(data + position_of_next_copy, bspev-%gtlast_buffer + position_on_last_buffer, *size - position_of_next_copy);
   }
 
   return data;
 }
 
-int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, sparrow_msg_t * msg) {
   assert(bspev-%gtevent == 4);
   
   if(bspev-%gttotal_length %lt 8) {
@@ -118,4 +116,20 @@ int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t 
   }
 }
 
+void msparrow_print_msg(sparrow_msg_t *msg) {
+
+  printf("Received :\n\n%.*s\n\n", (int) msg-%gtlen, msg-%gtdata);
+  printf("Length : %ld\n", msg-%gtlen);
+
+  free(msg-%gtdata);
+
+}
+
+char * sparrow_msg_get_data(sparrow_msg_t * msg) {
+  return msg-%gtdata;
+}
+
+int64_t sparrow_msg_get_length(sparrow_msg_t * msg) {
+  return msg-%gtlen;
+}
 ./!dots(-1)

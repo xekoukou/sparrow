@@ -32,26 +32,168 @@ TODO Explain the difficulties of building a network library in a functional prog
 TODO. Sparrow does not buffer data. The application needs to do that itself. The application knows better the specific needs that it has and thus the buffering that it requires. The buffer can be put inside the validation function.
 
 
-# Sparrow Multiplexer
+# Interleaved Sparrow 
 
-```c sparrow_multiplexer.c
-// #include "sparrow_multiplexer.h"
+```c isparrow.h
+#ifndef _ISPARROW_H_
+#define _ISPARROW_H_
 
-struct sparrow_multiplexer_t {
-  int sequenced; //Boolean indicating whether we have a single sequence of communication or multiple.
-  int allInOneGo;  //All-in-one-go multiplexers are agnostic. IMPORTANT : One step before the subgraph starts, all other paths are
-  // suspended till this subgraph finishes. This way, we do not require a signal to be transmitted to initiate the allinonego subgraph, 
-  // allowing our library to be used to implement all types of protocols. (that do not have that signal).
-  int agnostic; // It requires allInOneGo. It puts the continuation state inside the data.
-  //We need to be able to represent the graph of interactions that this multiplexer represents as well as the position that it currently is.
-  //We also need to have a way that other multiplexers can make requests to this multiplexer without knowing whether it is the multiplexer or the sparrow buffer. Timeouts need to be given to the multiplexer that made them so as to handle them as they see fit.
-  //That could produce a hierarchy of timeouts.
-  int multi_party_token_persistent; //Needed for multi-party protocols to guarantee agent-consistency.
-  int persistent;//TODO Clarification: We have a multi-party token that is kept while connections might close and we have a different concept in which we save the current state into HDrive when a timeout expires. The second case requires that we search for this token in the database when a new connection arrives.
+
+#endif
+```
+
+```c isparrow.c.dna
+./!dots(1)
+
+#include"bsparrow.h"
+#include"msparrow.h"
+#include%ltsodium.h%gt
+#include%ltassert.h%gt
+#include"tree.h"
+
+struct isparrow_timeout_t {
+  int64_t expiry;
+  int fd;
+  unsigned char path_hash[crypto_generichash_BYTES];
+  uint64_t counter;
+  RB_ENTRY (isparrow_timeout_t) tm_field;
 };
+
+typedef struct isparrow_timeout_t isparrow_timeout_t;
+
+int cmp_tm(const void * tm1_, const void * tm2_) {
+  const isparrow_timeout_t * tm1 = (const isparrow_timeout_t *) tm1_;
+  const isparrow_timeout_t * tm2 = (const isparrow_timeout_t *) tm2_;
+  int64_t xp = (tm1-%gtexpiry %gt tm2-%gtexpiry) - (tm1-%gtexpiry %lt tm2-%gtexpiry);
+  if(xp != 0) {
+    return xp;
+  } else {
+    int fd = (tm1-%gtfd %gt tm2-%gtfd) - (tm1-%gtfd %lt tm2-%gtfd);
+    if (fd != 0) {
+      return fd;
+    } else {
+      return memcmp(tm1-%gtpath_hash, tm2-%gtpath_hash, crypto_generichash_BYTES);
+    }
+  }
+}
+
+RB_HEAD (tm_rb_t, isparrow_timeout_t);
+RB_GENERATE (tm_rb_t, isparrow_timeout_t, tm_field, cmp_tm);
+
+struct isparrow_t {
+  struct tm_rb_t tm_rb;
+};
+
+typedef struct isparrow_t isparrow_t;
+//4 bytes for the counter
+//32 bytes for the path crypto_generichash
+
+
+//TODO Should we return the path or just the hash?
+isparrow_timeout_t * isparrow_add_path(isparrow_t * isp, int fd, unsigned char * prev_hash, uint64_t new_local_id) {
+  isparrow_timeout_t * tm = scalloc(1, sizeof(isparrow_timeout_t));
+  tm-%gtfd = fd;
+  tm-%gtexpiry = -1;
+  tm-%gtcounter = 0;
+
+  size_t all_together_length = crypto_generichash_BYTES + sizeof(int64_t);
+  unsigned char all_together[all_together_length];
+  if(prev_hash !=NULL) {
+    memcpy(all_together, prev_hash, crypto_generichash_BYTES);
+    memcpy(all_together + crypto_generichash_BYTES, (unsigned char *) &new_local_id, sizeof(new_local_id));
+    crypto_generichash(tm-%gtpath_hash, crypto_generichash_BYTES, all_together, all_together_length, NULL, 0);
+  } else {
+    crypto_generichash(tm-%gtpath_hash, crypto_generichash_BYTES,(unsigned char *) &new_local_id, sizeof(uint64_t), NULL, 0);
+  }
+
+  void *rtsearch = RB_INSERT(tm_rb_t, &(isp-%gttm_rb), tm);
+  assert(rtsearch == NULL);
+
+  return tm;
+}
+
+int compare_hashes(const void *pointer1,const void *pointer2) {
+  unsigned char * h1 = *((unsigned char **) pointer1);
+  unsigned char * h2 = *((unsigned char **) pointer2);
+
+  return memcmp(h1, h2, crypto_generichash_BYTES);
+}
+
+
+isparrow_timeout_t * isparrow_merge_paths(isparrow_t * isp,int fd, isparrow_timeout_t **tms, int length) {
+
+  qsort(tms, length, sizeof(void *), &compare_hashes);
+
+  isparrow_timeout_t * tm = scalloc(1, sizeof(isparrow_timeout_t));
+  tm-%gtfd = fd;
+  tm-%gtexpiry = -1;
+  tm-%gtcounter = 0;
+  assert(tm-%gtpath_hash[0] == 0);
+
+  size_t all_together_length = 2 * crypto_generichash_BYTES;
+  unsigned char all_together[all_together_length];
+
+  int i;
+  for(i = 0; i %lt length; i++) {
+    memcpy(all_together, tms[i], crypto_generichash_BYTES);
+    memcpy(all_together + crypto_generichash_BYTES, tm-%gtpath_hash, crypto_generichash_BYTES);
+    crypto_generichash(tm-%gtpath_hash, crypto_generichash_BYTES, all_together, all_together_length, NULL, 0);
+  }
+
+  void *rtsearch = RB_INSERT(tm_rb_t, &(isp-%gttm_rb), tm);
+  assert(rtsearch == NULL);
+
+  return tm;
+}
+
+
+
+void isparrow_prep_send(isparrow_t *isp, char * data, int64_t counter, unsigned char * prev_hash, uint64_t new_local_id) {
+  size_t all_together_length = crypto_generichash_BYTES + sizeof(int64_t);
+  unsigned char all_together[all_together_length];
+  memcpy(all_together, prev_hash, crypto_generichash_BYTES);
+  memcpy(all_together + crypto_generichash_BYTES, &new_local_id, sizeof(new_local_id));
+  crypto_generichash((unsigned char *) data, crypto_generichash_BYTES, all_together, all_together_length, NULL, 0);
+
+//  void *rtsearch = RB_INSERT(fd_rb_t, &(sp-%gtfd_rb_socks), sock);
+//  assert(rtsearch == NULL);
+//  memcpy(data + crypto_generichash_BYTES, counter + 1
+}
+
+
+//It needs to either return a timeout event or return the hash of the path of the socket.
+void isparrow_route_msg(isparrow_t * isp, int fd, sparrow_msg_t *msg) {
+   
+}
+
+
+
+./!dots(-1)
+```
+
+# Salty MSG Cryptography
+
+//TODO In the future
+
+```c csparrow.h
+#ifndef _CSPARROW_H_
+#define _CSPARROW_H_
+
+#include%ltlibsodium.h%gt
+
+
+#endif
+```
+
+```c csparrow.c
+
+struct csparrow_t {
+  
+}
 
 
 ```
+
 
 # Simple MSG delimination
 
@@ -65,16 +207,20 @@ The simple message delimination is very.. simple. We.. simply add a 64bit number
 #include%ltstring.h%gt 
 #include%ltstdint.h%gt 
 
-struct msparrow_msg_t {
+struct sparrow_msg_t {
   char * data;
-  uint64_t len;
+  int64_t len;
 };
 
-typedef struct msparrow_msg_t msparrow_msg_t;
+typedef struct sparrow_msg_t sparrow_msg_t;
 
 void msparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock);
 
-int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t * msg);
+int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, sparrow_msg_t * msg);
+
+void msparrow_print_msg(sparrow_msg_t *msg);
+char * sparrow_msg_get_data(sparrow_msg_t * msg);
+int64_t sparrow_msg_get_length(sparrow_msg_t * msg);
 #endif
 ```
 
@@ -83,6 +229,7 @@ int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t 
 #include "msparrow.h"
 #include "bsparrow.h"
 #include%ltstring.h%gt 
+#include%ltstdio.h%gt 
 #include%ltassert.h%gt 
 
 void msparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
@@ -104,17 +251,18 @@ if(*size + 8 %gt bspev-%gttotal_length) {
 ./!dots(+1)
 
 //Internal use only.
-void * get_data(bsparrow_event_t * bspev,  uint64_t * size) {
+void * get_data(bsparrow_event_t * bspev,  int64_t * size) {
   char * data = NULL;
 
-  size_t position = 0;
-  size_t step_position = 0;
+  size_t position_of_next_copy = 0;
+  size_t eight_position = 0;
+  size_t position_on_last_buffer = 0;
   buffer_list_t * iter = bspev-%gtlist;
 
   if(bspev-%gtfirst_buffer_length %gt 0) {
      if(8 %gt bspev-%gtfirst_buffer_length) {
       memcpy(size, bspev-%gtfirst_buffer, bspev-%gtfirst_buffer_length);
-      position = bspev-%gtfirst_buffer_length;
+      eight_position = bspev-%gtfirst_buffer_length;
     } else {
       memcpy(size, bspev-%gtfirst_buffer, 8);
 ./!dots(-1)
@@ -128,38 +276,34 @@ void * get_data(bsparrow_event_t * bspev,  uint64_t * size) {
     char * buffer;
     size_t length;
     iter = buffer_list_next(iter, &buffer, &length);    //length here must be big enough to have the 8 bits.
-    assert(length %gt= (8 - position));
-    memcpy(size + position, buffer, 8 - position);
+    assert(length %gt= (8 - eight_position));
+    memcpy((char *) size + eight_position, buffer, 8 - eight_position);
 ./!dots(-1)
 .    @{do_we_have_all_data()}
 ./!dots(+1)
-    memcpy(data, buffer - (8 - position), length - (8 - position));   
-    position = length - (8 - position);
+    memcpy(data, buffer + (8 - eight_position), length - (8 - eight_position));   
+    position_of_next_copy = length - (8 - eight_position);
     goto step_one;
   }
- 
-  if(bspev-%gtlast_buffer_length %gt 8 - position) {
-    memcpy(size + position, bspev-%gtlast_buffer, 8 - position);
-./!dots(-1)
-.    @{do_we_have_all_data()}
-./!dots(+1)
-    step_position = 8 - position;
-    position = 0;
-    goto step_two;
-  }
 
-  assert(1 == 0);
+  assert(bspev-%gtlast_buffer_length %gt= 8 - eight_position);
+
+  memcpy((char *) size + eight_position, bspev-%gtlast_buffer, 8 - eight_position);
+./!dots(-1)
+.  @{do_we_have_all_data()}
+./!dots(+1)
+  position_on_last_buffer = 8 - eight_position;
+  goto step_two;
+
 
 step_zero: ;
 
-  if(bspev-%gtfirst_buffer_length - 8 %gt 0) {
-    if(*size %gt bspev-%gtfirst_buffer_length - 8) {
-      memcpy(data, bspev-%gtfirst_buffer + 8, bspev-%gtfirst_buffer_length - 8);
-      position = bspev-%gtfirst_buffer_length;
-    } else {
-      memcpy(data, bspev-%gtfirst_buffer + 8, *size);
-      return data;
-    }
+  if(*size %gt bspev-%gtfirst_buffer_length - 8) {
+    memcpy(data, bspev-%gtfirst_buffer + 8, bspev-%gtfirst_buffer_length - 8);
+    position_of_next_copy = bspev-%gtfirst_buffer_length - 8;
+  } else {
+    memcpy(data, bspev-%gtfirst_buffer + 8, *size);
+    return data;
   }
 
 step_one: ;
@@ -168,20 +312,20 @@ step_one: ;
     char * buffer;
     size_t length;
     iter = buffer_list_next(iter, &buffer, &length);
-    memcpy(data + position, buffer, length);
-    position += length;
+    memcpy(data + position_of_next_copy, buffer, length);
+    position_of_next_copy += length;
   }
 
 step_two: ;
  
   if(bspev-%gtlast_buffer_length) {
-    memcpy(data + position, bspev-%gtlast_buffer + step_position, *size - position);
+    memcpy(data + position_of_next_copy, bspev-%gtlast_buffer + position_on_last_buffer, *size - position_of_next_copy);
   }
 
   return data;
 }
 
-int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, sparrow_msg_t * msg) {
   assert(bspev-%gtevent == 4);
   
   if(bspev-%gttotal_length %lt 8) {
@@ -199,6 +343,22 @@ int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t 
   }
 }
 
+void msparrow_print_msg(sparrow_msg_t *msg) {
+
+  printf("Received :\n\n%.*s\n\n", (int) msg-%gtlen, msg-%gtdata);
+  printf("Length : %ld\n", msg-%gtlen);
+
+  free(msg-%gtdata);
+
+}
+
+char * sparrow_msg_get_data(sparrow_msg_t * msg) {
+  return msg-%gtdata;
+}
+
+int64_t sparrow_msg_get_length(sparrow_msg_t * msg) {
+  return msg-%gtlen;
+}
 ./!dots(-1)
 ```
 
@@ -217,16 +377,16 @@ int msparrow_get_msg(bsparrow_t * bsp, bsparrow_event_t * bspev, msparrow_msg_t 
 #include %ltstdint.h%gt
 
 
-void printmsg(msparrow_msg_t msg) {
+void printmsg(sparrow_msg_t msg) {
 
   Dprintf("Received :\n\n%s\n\n", msg.data);
-  Dprintf("Length : %lu\n", msg.len);
+  Dprintf("Length : %ld\n", msg.len);
 
   free(msg.data);
 
 }
 
-void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, sparrow_msg_t * msg) {
   msparrow_recv(bsp, bsock);
 
   while(1) {
@@ -275,7 +435,7 @@ int main(int argc, char ** argv) {
     exit(-1);
   }
   
-  msparrow_msg_t msg;
+  sparrow_msg_t msg;
   int j = 0;
   int64_t time = now();
   while(j %lt loop_length) {
@@ -309,7 +469,7 @@ int main(int argc, char ** argv) {
   bsparrow_send(bsp, bsock, &data, 100);
   results(j*10000, time, msg_size);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 
@@ -325,16 +485,16 @@ int main(int argc, char ** argv) {
 #include %ltstring.h%gt
 #include %ltstdint.h%gt
 
-void printmsg(msparrow_msg_t msg) {
+void printmsg(sparrow_msg_t msg) {
 
   Dprintf("Received :\n\n%s\n\n", msg.data);
-  Dprintf("Length : %lu\n", msg.len);
+  Dprintf("Length : %ld\n", msg.len);
 
   free(msg.data);
 
 }
 
-void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, sparrow_msg_t * msg) {
   msparrow_recv(bsp, bsock);
 
   while(1) {
@@ -380,7 +540,7 @@ int main(int argc, char ** argv) {
 
     //Getting an unknowledge msg after every 100 msgs
     bsparrow_event_t bspev ={0};
-    msparrow_msg_t msg;
+    sparrow_msg_t msg;
     get_msg(bsp, bsock, &bspev, &msg);
     printmsg(msg);
     Dprintf("J: %d\n", j);
@@ -392,11 +552,11 @@ int main(int argc, char ** argv) {
 
   //Getting an unknowledge msg
   bsparrow_event_t bspev ={0};
-  msparrow_msg_t msg;
+  sparrow_msg_t msg;
   get_msg(bsp, bsock, &bspev, &msg);
   printmsg(msg);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 
 }
@@ -465,7 +625,7 @@ int main(void) {
     bsparrow_got_some(bsp, bspev.bsock, last_buffer_length);
   }
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 
@@ -497,7 +657,7 @@ int main(void) {
   assert(bspev.event == 32);
   printf("I sent : Hello there!");
   
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 
@@ -631,7 +791,7 @@ int main(int argc, char ** argv) {
 
   results(j*10000, time, msg_size);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 
@@ -746,7 +906,7 @@ int main(int argc, char ** argv) {
   printmsg(&bspev, 100);
   bsparrow_got_some(bsp, bspev.bsock, 100);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 
 }
@@ -797,13 +957,17 @@ typedef struct bsparrow_t bsparrow_t;
 
 bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_queue, int max_output_sockets, int listening, char * port);
 
-void bsparrow_destroy(bsparrow_t ** bsp);
+void bsparrow_destroy(bsparrow_t * bsp);
 
 bsparrow_socket_t * bsparrow_socket_connect(bsparrow_t * bsp, int64_t id, char * address, char * port);
 
 void bsparrow_socket_destroy(bsparrow_t * bsp, bsparrow_socket_t ** bsock);
 
 void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id);
+
+void bsparrow_socket_set_parent(bsparrow_socket_t * bsock, void * parent);
+
+void * bsparrow_socket_get_parent(bsparrow_socket_t * bsock);
 
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout);
 
@@ -812,10 +976,28 @@ void bsparrow_wait(bsparrow_t * bsp, bsparrow_event_t * bspev, int only_output);
 //The memory is owned by bsparrow. It will block if the queue becomes large. //TODO Is this the correct way to handle this?
 void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, size_t len);
 
+//Idris can give me a pointer , not a pointer of a pointer.
+void bsparrow_send_idris(bsparrow_t * bsp, bsparrow_socket_t * bsock, char * data, size_t len);
+
 //The len should never decrease.
 void bsparrow_recv(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t len);
 
 void bsparrow_got_some(bsparrow_t * bsp, bsparrow_socket_t * bsock, size_t that_much);
+
+//Getters - Setters
+
+int64_t bsparrow_event_get_id(bsparrow_event_t * bspev);
+
+void bsparrow_event_set_id(bsparrow_event_t * bspev, int64_t id);
+
+int bsparrow_event_get_event(bsparrow_event_t * bspev);
+
+void bsparrow_event_set_event(bsparrow_event_t * bspev, int event);
+
+bsparrow_socket_t * bsparrow_event_get_bsock(bsparrow_event_t * bspev);
+
+void bsparrow_event_set_bsock(bsparrow_event_t * bspev, bsparrow_socket_t * bsock);
+
 
 int64_t now(void);
 
@@ -1080,6 +1262,7 @@ struct bsparrow_socket_t {
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
   bsparrow_event_t imbspev;
+  void * parent;
 };
 
 ./!dots(-1)
@@ -1205,6 +1388,45 @@ struct bsparrow_t {
 ./!dots(-1)
 }
 ```
+## Convenient Setters/Getters {#Bsparrow_set_get}
+
+The idris language does not at the moment provide a convinient way to access the fields of a struct. That is why we implement setters and getters for "bsparrow_event_t"
+
+```c bsparrow.c.dna
+function get_set_functions() {
+./!dots(1)
+
+int64_t bsparrow_event_get_id(bsparrow_event_t * bspev) {
+  return bspev-%gtid;
+}
+
+void bsparrow_event_set_id(bsparrow_event_t * bspev, int64_t id) {
+  bspev-%gtid = id;
+}
+
+int bsparrow_event_get_event(bsparrow_event_t * bspev) {
+  return bspev-%gtevent;
+}
+
+void bsparrow_event_set_event(bsparrow_event_t * bspev, int event) {
+  bspev-%gtevent = event;
+}
+
+bsparrow_socket_t * bsparrow_event_get_bsock(bsparrow_event_t * bspev) {
+  return bspev-%gtbsock;
+}
+
+void bsparrow_event_set_bsock(bsparrow_event_t * bspev, bsparrow_socket_t * bsock) {
+  bspev-%gtbsock = bsock;
+}
+
+
+
+
+
+./!dots(-1)
+}
+```
 
 ## The remaining Bsparrow implementation {#Bsparrow_rem_impl}
 
@@ -1242,6 +1464,7 @@ input_buffer_structures();
 output_buffer_structures();
 bsparrow_socket();
 bsparrow();
+get_set_functions();
 ./!dots(+1)
 
 
@@ -1351,6 +1574,13 @@ void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id) {
   bsock-%gtid = id;
 }
 
+void bsparrow_socket_set_parent(bsparrow_socket_t * bsock, void * parent) {
+  bsock-%gtparent = parent;
+}
+
+void * bsparrow_socket_get_parent(bsparrow_socket_t * bsock) {
+  return bsock-%gtparent;
+}
 
 //Internal use only
 void bsparrow_socket_internal_destroy(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
@@ -1406,9 +1636,8 @@ bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_q
   return bsp;
 }
 
-void bsparrow_destroy(bsparrow_t ** bsp_) {
+void bsparrow_destroy(bsparrow_t * bsp) {
   Dprintf("Inside bsparrow_destroy.\n");
-  bsparrow_t * bsp = *bsp_;
 
   sparrow_socket_t * iter = sparrow_first(bsp-%gtsp);
   bsparrow_socket_t * prev_iter;
@@ -1435,7 +1664,6 @@ void bsparrow_destroy(bsparrow_t ** bsp_) {
 
   sparrow_close(&(bsp-%gtsp));
   free(bsp);
-  bsp = NULL;
 }
 
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout) {
@@ -1688,6 +1916,14 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
 ./!dots(1)
   }
 }
+
+
+void bsparrow_send_idris(bsparrow_t * bsp, bsparrow_socket_t * bsock, char * data, size_t len) {
+  char * data_ = data;
+  bsparrow_send(bsp, bsock, &data_, len);
+}
+
+
 
 ./!dots(-1)
 function fill_input_event() {
@@ -2244,7 +2480,6 @@ int64_t now(void) {
   return last_now;
 }
 
-
 ```
 
 ### Sparrow Internal Data Structs {#Sparrow_Internal_Data_structs}
@@ -2342,7 +2577,12 @@ RB_GENERATE (fd_rb_t, sparrow_socket_t, fd_field, cmp_fds);
 int cmp_ots(const void * sock1, const void * sock2) {
   const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
   const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
-  return (s1-%gtfd %gt s2-%gtfd) - (s1-%gtfd %lt s2-%gtfd);
+  int64_t ot = (s1-%gtout_expiry %gt s2-%gtout_expiry) - (s1-%gtout_expiry %lt s2-%gtout_expiry);
+  if(ot != 0) {
+    return ot;
+  } else {
+    return (s1-%gtfd %gt s2-%gtfd) - (s1-%gtfd %lt s2-%gtfd);
+  }
 }
 
 RB_HEAD (ot_rb_t, sparrow_socket_t);

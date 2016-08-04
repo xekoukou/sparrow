@@ -82,7 +82,12 @@ RB_GENERATE (fd_rb_t, sparrow_socket_t, fd_field, cmp_fds);
 int cmp_ots(const void * sock1, const void * sock2) {
   const sparrow_socket_t * s1 = (const sparrow_socket_t *) sock1;
   const sparrow_socket_t * s2 = (const sparrow_socket_t *) sock2;
-  return (s1->fd > s2->fd) - (s1->fd < s2->fd);
+  int64_t ot = (s1->out_expiry > s2->out_expiry) - (s1->out_expiry < s2->out_expiry);
+  if(ot != 0) {
+    return ot;
+  } else {
+    return (s1->fd > s2->fd) - (s1->fd < s2->fd);
+  }
 }
 
 RB_HEAD (ot_rb_t, sparrow_socket_t);

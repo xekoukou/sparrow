@@ -321,3 +321,25 @@ IMPORTANT: Introduction of Abstract subgraphs.
 
 Types on nodes and on subgraphs.
 
+
+
+----------------------------------------------------------------------
+
+Local types need to have unique ids. ---------->
+
+The local graph does not correspond to the global graph that is, all the dependencies of incoming data before a computation can start.
+
+
+----------------------------------------------------------------------
+
+function calls
+
+f
+|
+f-------f--------f
+        |
+        |                 
+        f-----------------b
+
+
+------

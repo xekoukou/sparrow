@@ -19,7 +19,7 @@ int main(void) {
   assert(bspev.event == 32);
   printf("I sent : Hello there!");
   
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 
