@@ -199,6 +199,7 @@ struct bsparrow_socket_t {
   int retries;
   int out_more; //Indicates whether the last time we sent data, the socket was ready to receive more immediately.
   bsparrow_event_t imbspev;
+  void * parent;
 };
 
 
@@ -298,6 +299,35 @@ struct bsparrow_t {
   int max_output_sockets;  //The number of sockets that have output data till bsparrow stops receiving new connections.
   int total_output_sockets;
 };
+
+
+
+
+int64_t bsparrow_event_get_id(bsparrow_event_t * bspev) {
+  return bspev->id;
+}
+
+void bsparrow_event_set_id(bsparrow_event_t * bspev, int64_t id) {
+  bspev->id = id;
+}
+
+int bsparrow_event_get_event(bsparrow_event_t * bspev) {
+  return bspev->event;
+}
+
+void bsparrow_event_set_event(bsparrow_event_t * bspev, int event) {
+  bspev->event = event;
+}
+
+bsparrow_socket_t * bsparrow_event_get_bsock(bsparrow_event_t * bspev) {
+  return bspev->bsock;
+}
+
+void bsparrow_event_set_bsock(bsparrow_event_t * bspev, bsparrow_socket_t * bsock) {
+  bspev->bsock = bsock;
+}
+
+
 
 
 
@@ -411,6 +441,13 @@ void bsparrow_socket_assign_id(bsparrow_socket_t *bsock, int64_t id) {
   bsock->id = id;
 }
 
+void bsparrow_socket_set_parent(bsparrow_socket_t * bsock, void * parent) {
+  bsock->parent = parent;
+}
+
+void * bsparrow_socket_get_parent(bsparrow_socket_t * bsock) {
+  return bsock->parent;
+}
 
 //Internal use only
 void bsparrow_socket_internal_destroy(bsparrow_t * bsp, bsparrow_socket_t * bsock) {
@@ -466,9 +503,8 @@ bsparrow_t * bsparrow_new(size_t buffer_size, int64_t dtimeout, int max_output_q
   return bsp;
 }
 
-void bsparrow_destroy(bsparrow_t ** bsp_) {
+void bsparrow_destroy(bsparrow_t * bsp) {
   Dprintf("Inside bsparrow_destroy.\n");
-  bsparrow_t * bsp = *bsp_;
 
   sparrow_socket_t * iter = sparrow_first(bsp->sp);
   bsparrow_socket_t * prev_iter;
@@ -495,7 +531,6 @@ void bsparrow_destroy(bsparrow_t ** bsp_) {
 
   sparrow_close(&(bsp->sp));
   free(bsp);
-  bsp = NULL;
 }
 
 void bsparrow_set_timeout(bsparrow_t * bsp, int64_t timeout) {
@@ -767,6 +802,14 @@ void bsparrow_send(bsparrow_t * bsp, bsparrow_socket_t * bsock, char ** data, si
     }
   }
 }
+
+
+void bsparrow_send_idris(bsparrow_t * bsp, bsparrow_socket_t * bsock, char * data, size_t len) {
+  char * data_ = data;
+  bsparrow_send(bsp, bsock, &data_, len);
+}
+
+
 
 
 //TODO The len should never decrease.

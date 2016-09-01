@@ -33,4 +33,3 @@ int64_t now(void) {
   return last_now;
 }
 
-

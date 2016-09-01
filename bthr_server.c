@@ -121,7 +121,7 @@ int main(int argc, char ** argv) {
 
   results(j*10000, time, msg_size);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 

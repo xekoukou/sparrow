@@ -26,7 +26,7 @@ int main(void) {
     bsparrow_got_some(bsp, bspev.bsock, last_buffer_length);
   }
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 

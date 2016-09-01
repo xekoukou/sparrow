@@ -8,16 +8,16 @@
 #include <stdint.h>
 
 
-void printmsg(msparrow_msg_t msg) {
+void printmsg(sparrow_msg_t msg) {
 
   Dprintf("Received :\n\n%s\n\n", msg.data);
-  Dprintf("Length : %lu\n", msg.len);
+  Dprintf("Length : %ld\n", msg.len);
 
   free(msg.data);
 
 }
 
-void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, msparrow_msg_t * msg) {
+void get_msg(bsparrow_t * bsp, bsparrow_socket_t * bsock, bsparrow_event_t * bspev, sparrow_msg_t * msg) {
   msparrow_recv(bsp, bsock);
 
   while(1) {
@@ -66,7 +66,7 @@ int main(int argc, char ** argv) {
     exit(-1);
   }
   
-  msparrow_msg_t msg;
+  sparrow_msg_t msg;
   int j = 0;
   int64_t time = now();
   while(j < loop_length) {
@@ -100,7 +100,7 @@ int main(int argc, char ** argv) {
   bsparrow_send(bsp, bsock, &data, 100);
   results(j*10000, time, msg_size);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 }
 

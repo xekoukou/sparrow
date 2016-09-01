@@ -105,7 +105,7 @@ int main(int argc, char ** argv) {
   printmsg(&bspev, 100);
   bsparrow_got_some(bsp, bspev.bsock, 100);
 
-  bsparrow_destroy(&bsp);
+  bsparrow_destroy(bsp);
   return 0;
 
 }

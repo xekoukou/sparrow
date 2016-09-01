@@ -285,3 +285,61 @@ same datatype sent between the same agents should have a tag so as to differenti
 
 
 ------------------------------------------
+
+
+
+
+////////////////////////////////////////
+
+    Version 2
+
+
+    A local path of a graph is the comunnication path of an agent with the remaining agents.
+    We need to preserve the order of the communications.
+
+
+Consider this.
+
+
+
+A ---> B -----> C ------> D -----> B -----> A
+
+The communication between A and B is represented by this disjoint graph.
+
+
+A ----> B               B -------> A
+
+This disjoint graph has lost the order of its disjoint subcomponents.
+
+Thus we need to add an abstract subgraph in the middle so that the order is preserved.
+
+A -----> B -------> C_a ------> B -----> A
+
+There are multiple ways to add abstract subgraphs that lead to the same ordering of events.
+
+IMPORTANT: Introduction of Abstract subgraphs.
+
+Types on nodes and on subgraphs.
+
+
+
+----------------------------------------------------------------------
+
+Local types need to have unique ids. ---------->
+
+The local graph does not correspond to the global graph that is, all the dependencies of incoming data before a computation can start.
+
+
+----------------------------------------------------------------------
+
+function calls
+
+f
+|
+f-------f--------f
+        |
+        |                 
+        f-----------------b
+
+
+------
