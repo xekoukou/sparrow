@@ -170,7 +170,8 @@ correctEndPoints (CNGEdge g tr dT no c {e=e}) y {m= (S k)} = (foldr (\ ((s ** ne
 
 
 
--- Dependent types should only dependent on data that are received by the node.
+-- Dependent types should only dependent on data that are received by the node. TODO Also they should depend only on previous data, not future. When there are circles, future data can not depend on the data of the circle except on the part that it is certain to have
+-- been traversed.
 correctDependence : NGraph m -> Bool
 correctDependence NGNil = True
 correctDependence (CNGEdge g tr dT no {so=so} c) = (foldr(\x, r => r && (checkOne g x) ) True tr) && (correctDependence g) where
@@ -186,6 +187,12 @@ correctDependence (CNGEdge g tr dT no {so=so} c) = (foldr(\x, r => r && (checkOn
 
 data ValidNGraph : NGraph m -> Type where
   MkValidNGraph : (g : NGraph m) -> {auto prf1 : (nextEdgesExist m g = True)} -> {auto prf2 : (correctEndPoints g g = True) } -> ValidNGraph g
+
+
+generateLocalGraph : NGraph m -> (r : Nat ** NGraph r)
+generateLocalGraph NGNil = (Z ** NGNil)
+generateLocalGraph (CNGEdge g tr dT no c) = ?generateLocalGraph_rhs_2
+
 
 
 
