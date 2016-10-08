@@ -25,7 +25,7 @@ data Role : Type where
 
 -- Currying can happen asynchronously
 -- The number of arguments/Types are not determined at the beginning.
--- The Types of the next arguments can also be determined by a computation that is in the types.
+-- The Types of the next arguments can also be determined by a computation that is not in the types.
 -- Two operators:
 
 -- If a or b in the type system.
@@ -57,10 +57,6 @@ data Role : Type where
 
 
 
-data FunRoles : Type where
-  MkFunRoles : Vect n Role -> FunRoles
-
-
 data FunLang: Type where
   Atom : FunLang
   And : FunLang -> FunLang -> FunLang
@@ -84,15 +80,36 @@ data FunT : FunLang -> Type where
 --  IsIn : Eq a => (x : a) -> {xs : Vect n a} -> {prf : ((elem x xs) = True)} -> InSet xs
 --
 
-
-data TInSet : Eq FunLang => Vect n FunLang -> Type where
-  TIsIn : Eq FunLang => FunT x -> {xs : Vect n FunLang} -> {prf : ((elem x xs) = True)} -> TInSet xs
-
-
-funT : d -> (v : Vect n FunLang) -> TInSet v
+-- Maybe this needs to be simplified.
+data XorSet : Eq FunLang => Vect n FunLang -> Type where
+  XorOpt : Eq FunLang => FunT x -> (xs : Vect n FunLang) -> {prf : ((elem x xs) = True)} -> XorSet xs
 
 
+
+funT : d -> (v : Vect n FunLang) -> XorSet v
 
 -- For the function that sends the actual data, we need to express the Uor in the same way that we expressed Xor in funT.
+
+-- FunInst : d -> (v : Vect n FunLang) -> XorSet v
+
+data FunInst : FunT a -> Type where
+  IAtom : (a : Type) -> FunInst $ TAtom a
+  IAnd : FunInst a -> FunInst b -> FunInst $ TAnd a b
+  IUor : Either (FunInst a) (FunInst b) -> FunInst $ TUor a b
+
+funInst : d -> (v : Vect n FunLang) -> let XorOpt x xs = funT d v in FunInst x
+
+
+-- Giving Roles based on the FunLang you have, need to be given for all FunLang in the Vect.
+
+data FunRoles : FunLang -> Type where
+    RAtom : Role -> FunRoles Atom
+    RAnd : FunRoles a -> FunRoles b -> FunRoles $ And a b
+    RUor : FunRoles a -> FunRoles b -> FunRoles $ Uor a b
+
+
+
+
+-- Composabolity or the Graph 
 
 
