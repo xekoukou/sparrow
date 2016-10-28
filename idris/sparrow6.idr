@@ -293,30 +293,6 @@ indTrFT (TXor (Right r)) (LLeftXor w) op = TXor (Right r)
 indTrFT (TXor (Left l)) (LRightXor w) op = TXor (Left l)
 indTrFT (TXor (Right r)) (LRightXor w) op =  TXor (Right $ indTrFT r w op)
 
--- Here com turns Uor into Xor because based on thr input Uor we have knowledge of whether the f will be executed or not, without going into an FunInst function.
-comFL : (fl : FunLang) -> IndexFL fl pfl -> ((fnT : FunT pfl) -> FunInst fnT -> FunT rfl) -> FunLang
-comFL fl LHere f {rfl}   = rfl
-comFL (And x z) (LLeftAnd w) f  = And (comFL x w f) z
-comFL (And x z) (LRightAnd w) f = And x (comFL z w f)
-comFL (Uor x z) (LLeftUor w) f  = Xor (comFL x w f) z
-comFL (Uor x z) (LRightUor w) f = Xor x (comFL z w f)
-comFL (Xor x z) (LLeftXor w) f  = Xor (comFL x w f) z
-comFL (Xor x z) (LRightXor w) f = Xor x (comFL z w f)
-
-
-comFT : (fT : FunT fl) -> FunInst fT -> (i : IndexFL fl pfl) -> (df : ((fnT : FunT pfl) -> FunInst fnT -> FunT rfl)) -> FunT $ comFL fl i df
-comFT fT x LHere df = df fT x
-comFT (TAnd y z) (IAnd x s) (LLeftAnd w) df    = TAnd (comFT y x w df) z
-comFT (TAnd y z) (IAnd x s) (LRightAnd w) df   = TAnd y (comFT z s w df)
-comFT (TUor y z) (IUor (Left l)) (LLeftUor w) df    = TXor $ Left $ comFT y l w df
-comFT (TUor y z) (IUor (Right r)) (LLeftUor w) df   = TXor $ Right z
-comFT (TUor y z) (IUor (Left l)) (LRightUor w) df   = TXor $ Left y
-comFT (TUor y z) (IUor (Right r)) (LRightUor w) df  = TXor $ Right $ comFT z r w df
-comFT (TXor (Left l)) (IXorLeft x) (LLeftXor w) df    = TXor $ Left $ comFT l x w df
-comFT (TXor (Right r)) (IXorRight x) (LLeftXor w) df  = TXor $ Right r
-comFT (TXor (Left l)) (IXorLeft x) (LRightXor w) df   = TXor $ Left l
-comFT (TXor (Right r)) (IXorRight x) (LRightXor w) df = TXor $ Right $ comFT r x w df
-
 
 truncFT : FunT fl -> (i : IndexFL fl pfl) -> Maybe $ FunT pfl
 truncFT x LHere = Just x
@@ -454,21 +430,23 @@ indGrInd (LRightXor z) gr = LRightXor $ indGrInd z gr
 
 data EList : IndexFL ofl pfl -> Gr pfl _ -> Gr afl _ -> Nat -> Type where
   ENil : EList (LHere {fl=fl}) (GrId {fl=fl}) (GrId {fl=fl}) Z
-  EL : (fl : FunLang) -> (ni : IndexFL fl pfl) -> (nfgr : Gr pfl efl) -> (ngr : Gr (xreplFL fl ni efl) rfl) -> EList i fgr gr k -> EList ni nfgr ngr (S k)
+  EL : (ni : IndexFL fl pfl) -> (nfgr : Gr pfl efl) -> (ngr : Gr (xreplFL fl ni efl) rfl) 
+  -> {fgr : Gr _ rfl} -> EList i fgr gr k -> EList ni nfgr ngr (S k)
 
-data EVect : (fl : FunLang) -> Nat -> Type where
-  EVNill : EVect (Atom {dt=[]} ()) Z
-  EV : (prL : FunT fl) -> EVect pfl k-> EVect fl (S k)
+data EVect : EList ni nfgr ngr n -> Type where
+  EVNill : EVect ENil
+  EV : {ni : IndexFL fl pfl} -> {nfgr : Gr pfl efl} -> {ngr : Gr (xreplFL fl ni efl) rfl} -> {fgr : Gr _ rfl} 
+  -> {prEL : EList i fgr gr k} -> (prL : FunT fl) ->  EVect prEL -> EVect $ EL ni nfgr ngr prEL
 
 mutual
-  genDFT : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> ((EVect (Atom {dt=[]} ()) Z) -> FunT fl -> Type)
+  genDFT : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> ((EVect (ENil {fl=rfl})) -> FunT fl -> Type)
   genDFT gr = genDFT' gr ENil {n=Z} where
-    genDFT' : (gr : Gr fl rfl) -> {fgr : Gr pfl rfl} -> EList ei fgr egr n -> (EVect ofl n -> FunT fl -> Type)
+    genDFT' : (gr : Gr fl rfl) -> {fgr : Gr pfl rfl} -> (el : EList ei fgr egr n) -> (EVect el -> FunT fl -> Type)
     genDFT' GrId ENil {fl} = (\vhv, x => FunT fl)
-    genDFT' GrId (EL ofl ei nfgr egr z ) = (\ev, x =>  let EV prL prEV = ev in
-                                                       (genDFT' egr) prEV (replFT prL ei x) )
-    genDFT' (Emb ni nfgr ngr {fl}) y = (\ hv, x => case (truncFT x ni) of
-                                            Just tx => ?fsfdg --(genDFT' nfgr (EL fl ni nfgr ngr y)) (x :: hv) tx
+    genDFT' GrId (EL ei nfgr egr pEL) = (\ev, x =>  let EV prL prEV = ev in
+                                                        (genDFT' egr pEL) prEV (xreplFT prL ei x))
+    genDFT' (Emb ni nfgr ngr ) y = (\ ev, x => case (truncFT x ni) of
+                                            Just tx => genDFT' nfgr (EL ni nfgr ngr y) (EV x ev) tx
                                             Nothing => ?dsf--genDFT' y x
                                                                            )
     genDFT' (Trans i op z) y = ?fgfg_3
