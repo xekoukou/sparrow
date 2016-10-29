@@ -138,6 +138,58 @@ data IndexFL : FunLang -> FunLang -> Type where
   LRightXor : IndexFL y rfl -> IndexFL (Xor x y) rfl
 
 
+truncFT : FunT fl -> (i : IndexFL fl pfl) -> Maybe $ FunT pfl
+truncFT x LHere = Just x
+truncFT (TAnd x y) (LLeftAnd w)  = truncFT x w
+truncFT (TAnd x y) (LRightAnd w) = truncFT y w
+truncFT (TUor x y) (LLeftUor w)  = truncFT x w
+truncFT (TUor x y) (LRightUor w) = truncFT y w
+truncFT (TXor (Left l)) (LLeftXor w)   = truncFT l w
+truncFT (TXor (Right r)) (LLeftXor w)  = Nothing
+truncFT (TXor (Left l)) (LRightXor w)  = Nothing
+truncFT (TXor (Right r)) (LRightXor w) = truncFT r w
+
+
+
+replFL : (fl : FunLang) -> IndexFL fl _ -> FunLang -> FunLang
+replFL fl LHere y = y
+replFL (And x z) (LLeftAnd w) y  = And (replFL x w y) z
+replFL (And x z) (LRightAnd w) y = And x (replFL z w y)
+replFL (Uor x z) (LLeftUor w) y  = Uor (replFL x w y) z
+replFL (Uor x z) (LRightUor w) y = Uor x (replFL z w y)
+replFL (Xor x z) (LLeftXor w) y  = Xor (replFL x w y) z
+replFL (Xor x z) (LRightXor w) y = Xor x (replFL z w y)
+
+
+replFT : FunT fl -> (i: IndexFL fl _) -> FunT $ nfl -> FunT $ replFL fl i nfl
+replFT x LHere nfT  = nfT
+replFT (TAnd x y) (LLeftAnd w) nfT   = TAnd (replFT x w nfT) y
+replFT (TAnd x y) (LRightAnd w) nfT  = TAnd x $ replFT y w nfT
+replFT (TUor x y) (LLeftUor w) nfT   = TUor (replFT x w nfT) y
+replFT (TUor x y) (LRightUor w) nfT  = TUor x $ replFT y w nfT
+replFT (TXor (Left l)) (LLeftXor w) nfT   = TXor (Left $ replFT l w nfT)
+replFT (TXor (Right r)) (LLeftXor w) nfT  = TXor (Right r)
+replFT (TXor (Left l)) (LRightXor w) nfT  = TXor (Left l)
+replFT (TXor (Right r)) (LRightXor w) nfT =  TXor (Right $ replFT r w nfT)
+
+isTruncFTNothing : (fnT : FunT fl) -> (i: IndexFL fl pfl) -> Bool
+isTruncFTNothing fnT i = let tr = truncFT fnT i in
+                                               case (tr) of
+                                                     Just tx => False
+                                                     Nothing => True
+
+ifNotTruncFT : (fnT : FunT fl) -> (i: IndexFL fl pfl) -> (rfl : FunLang) -> Maybe $ FunT $ replFL fl i rfl
+ifNotTruncFT x LHere  rfl = Nothing
+ifNotTruncFT (TAnd x y) (LLeftAnd w) rfl        = pure $ TAnd !(ifNotTruncFT x w rfl) y 
+ifNotTruncFT (TAnd x y) (LRightAnd w) rfl       = pure $ TAnd x  !(ifNotTruncFT y w rfl) 
+ifNotTruncFT (TUor x y) (LLeftUor w) rfl        = pure $ TUor !(ifNotTruncFT x w rfl) y 
+ifNotTruncFT (TUor x y) (LRightUor w) rfl       = pure $ TUor x !(ifNotTruncFT y w rfl) 
+ifNotTruncFT (TXor (Left l)) (LLeftXor w) rfl   = pure $ TXor (Left  !(ifNotTruncFT l w rfl)) 
+ifNotTruncFT (TXor (Right r)) (LLeftXor w) rfl  = pure $ TXor (Right r) 
+ifNotTruncFT (TXor (Left l)) (LRightXor w) rfl  = pure $ TXor (Left l) 
+ifNotTruncFT (TXor (Right r)) (LRightXor w) rfl = pure $ TXor (Right !(ifNotTruncFT r w rfl)) 
+
+
 
 data SetFL : FunLang -> Type where
   SElem      : SetFL fl
@@ -156,14 +208,14 @@ data MSetFL : FunLang -> Type where
   SEmpty : MSetFL fl
   SSome : SetFL fl -> MSetFL fl
 
-setFLAddEmpty : IndexFL fl _ -> SetFL fl
-setFLAddEmpty LHere = SElem
-setFLAddEmpty (LLeftAnd z)  = SLeftAnd $ setFLAddEmpty z
-setFLAddEmpty (LRightAnd z) = SRightAnd $ setFLAddEmpty z
-setFLAddEmpty (LLeftUor z)  = SLeftUor $ setFLAddEmpty z
-setFLAddEmpty (LRightUor z) = SRightUor $ setFLAddEmpty z
-setFLAddEmpty (LLeftXor z)  = SLeftXor $ setFLAddEmpty z
-setFLAddEmpty (LRightXor z) =  SRightXor $ setFLAddEmpty z
+setFLAddEmpty : (i: IndexFL fl _) -> (rfl : FunLang) -> SetFL $ replFL fl i rfl
+setFLAddEmpty LHere rfl = SElem
+setFLAddEmpty (LLeftAnd z)  rfl = SLeftAnd $ setFLAddEmpty z rfl
+setFLAddEmpty (LRightAnd z) rfl = SRightAnd $ setFLAddEmpty z rfl
+setFLAddEmpty (LLeftUor z)  rfl = SLeftUor $ setFLAddEmpty z rfl
+setFLAddEmpty (LRightUor z) rfl = SRightUor $ setFLAddEmpty z rfl
+setFLAddEmpty (LLeftXor z)  rfl = SLeftXor $ setFLAddEmpty z rfl
+setFLAddEmpty (LRightXor z) rfl =  SRightXor $ setFLAddEmpty z rfl
 
 contructSetFL : SetFL fl -> SetFL fl
 contructSetFL (SBothAnd SElem SElem)  = SElem
@@ -190,43 +242,32 @@ contructSetFL (SBothXor z w) = let  cr = (SBothXor (contructSetFL z) (contructSe
                                         _                      => cr
 
 
-setFLAdd : SetFL fl -> IndexFL fl _ -> SetFL fl
-setFLAdd SElem y = SElem
-setFLAdd x LHere = SElem
-setFLAdd (SLeftAnd x) (LLeftAnd w)    = SLeftAnd $ setFLAdd x w
-setFLAdd (SRightAnd x) (LLeftAnd w)   = SBothAnd (setFLAddEmpty w) x
-setFLAdd (SBothAnd x y) (LLeftAnd w)  = SBothAnd (setFLAdd x w) y
-setFLAdd (SRightAnd x) (LRightAnd w)  = SRightAnd $ setFLAdd x w
-setFLAdd (SLeftAnd x) (LRightAnd w)   = SBothAnd x (setFLAddEmpty w)
-setFLAdd (SBothAnd x y) (LRightAnd w) = SBothAnd x (setFLAdd y w)
-setFLAdd (SLeftUor x) (LLeftUor w)    = SLeftUor $ setFLAdd x w
-setFLAdd (SRightUor x) (LLeftUor w)   = SBothUor (setFLAddEmpty w) x
-setFLAdd (SBothUor x y) (LLeftUor w)  = SBothUor (setFLAdd x w) y
-setFLAdd (SRightUor x) (LRightUor w)  = SRightUor $ setFLAdd x w
-setFLAdd (SLeftUor x) (LRightUor w)   = SBothUor x (setFLAddEmpty w)
-setFLAdd (SBothUor x y) (LRightUor w) = SBothUor x (setFLAdd y w)
-setFLAdd (SLeftXor x) (LLeftXor w)    = SLeftXor $ setFLAdd x w
-setFLAdd (SRightXor x) (LLeftXor w)   = SBothXor (setFLAddEmpty w) x
-setFLAdd (SBothXor x y) (LLeftXor w)  = SBothXor (setFLAdd x w) y
-setFLAdd (SRightXor x) (LRightXor w)  = SRightXor $ setFLAdd x w
-setFLAdd (SLeftXor x) (LRightXor w)   = SBothXor x (setFLAddEmpty w)
-setFLAdd (SBothXor x y) (LRightXor w) = SBothXor x (setFLAdd y w)
-
-
-
-indTrFL : (fl : FunLang) -> IndexFL fl pfl -> FunLangOp pfl rfl -> FunLang
-indTrFL fl LHere y {rfl} = rfl
-indTrFL (And x z) (LLeftAnd w) y  = And (indTrFL x w y) z
-indTrFL (And x z) (LRightAnd w) y = And x (indTrFL z w y)
-indTrFL (Uor x z) (LLeftUor w) y  = Uor (indTrFL x w y) z
-indTrFL (Uor x z) (LRightUor w) y = Uor x (indTrFL z w y)
-indTrFL (Xor x z) (LLeftXor w) y  = Xor (indTrFL x w y) z
-indTrFL (Xor x z) (LRightXor w) y = Xor x (indTrFL z w y)
+setFLAdd : SetFL fl -> (i : IndexFL fl _) -> (rfl : FunLang) -> SetFL $ replFL fl i rfl
+setFLAdd SElem y rfl = SElem
+setFLAdd x LHere rfl = SElem
+setFLAdd (SLeftAnd x) (LLeftAnd w)    rfl = SLeftAnd $ setFLAdd x w rfl
+setFLAdd (SRightAnd x) (LLeftAnd w)   rfl = SBothAnd (setFLAddEmpty w rfl) x
+setFLAdd (SBothAnd x y) (LLeftAnd w)  rfl = SBothAnd (setFLAdd x w rfl) y
+setFLAdd (SRightAnd x) (LRightAnd w)  rfl = SRightAnd $ setFLAdd x w rfl
+setFLAdd (SLeftAnd x) (LRightAnd w)   rfl = SBothAnd x (setFLAddEmpty w rfl)
+setFLAdd (SBothAnd x y) (LRightAnd w) rfl = SBothAnd x (setFLAdd y w rfl)
+setFLAdd (SLeftUor x) (LLeftUor w)    rfl = SLeftUor $ setFLAdd x w rfl
+setFLAdd (SRightUor x) (LLeftUor w)   rfl = SBothUor (setFLAddEmpty w rfl) x
+setFLAdd (SBothUor x y) (LLeftUor w)  rfl = SBothUor (setFLAdd x w rfl) y
+setFLAdd (SRightUor x) (LRightUor w)  rfl = SRightUor $ setFLAdd x w rfl
+setFLAdd (SLeftUor x) (LRightUor w)   rfl = SBothUor x (setFLAddEmpty w rfl)
+setFLAdd (SBothUor x y) (LRightUor w) rfl = SBothUor x (setFLAdd y w rfl)
+setFLAdd (SLeftXor x) (LLeftXor w)    rfl = SLeftXor $ setFLAdd x w rfl
+setFLAdd (SRightXor x) (LLeftXor w)   rfl = SBothXor (setFLAddEmpty w rfl) x
+setFLAdd (SBothXor x y) (LLeftXor w)  rfl = SBothXor (setFLAdd x w rfl) y
+setFLAdd (SRightXor x) (LRightXor w)  rfl = SRightXor $ setFLAdd x w rfl
+setFLAdd (SLeftXor x) (LRightXor w)   rfl = SBothXor x (setFLAddEmpty w rfl)
+setFLAdd (SBothXor x y) (LRightXor w) rfl = SBothXor x (setFLAdd y w rfl)
 
 
 
 
-trSetFL : SetFL fl -> (op : FunLangOp fl rfl) -> SetFL $ trFL fl op
+trSetFL : SetFL fl -> (op : FunLangOp fl rfl) -> SetFL $ replFL fl LHere rfl
 trSetFL SElem op = SElem
 trSetFL x Id = x
 trSetFL (SLeftXor x) (XorC y)   = trSetFL (SRightXor x) y
@@ -258,7 +299,7 @@ trSetFL (SBothAnd (SRightUor x) z) (AndUorD y) =  trSetFL (SRightUor $ SBothAnd 
 trSetFL (SBothAnd (SBothUor x w) z) (AndUorD y) = trSetFL (SBothUor (SBothAnd x z) (SBothAnd w z)) y
 
 
-indTrSetFL : SetFL fl -> (i : IndexFL fl pfl) -> (op : FunLangOp pfl rfl) -> SetFL $ indTrFL fl i op
+indTrSetFL : SetFL fl -> (i : IndexFL fl pfl) -> (op : FunLangOp pfl rfl) -> SetFL $ replFL fl i rfl
 indTrSetFL SElem i op = SElem
 indTrSetFL x LHere op = trSetFL x op
 indTrSetFL (SLeftAnd x) (LLeftAnd w) op    = SLeftAnd $ indTrSetFL x w op
@@ -282,7 +323,7 @@ indTrSetFL (SBothXor x y) (LRightXor w) op = SBothXor x (indTrSetFL y w op)
 
 
 
-indTrFT : FunT fl -> (i: IndexFL fl pfl) -> (op : FunLangOp pfl rfl) -> FunT $ indTrFL fl i op
+indTrFT : FunT fl -> (i: IndexFL fl pfl) -> (op : FunLangOp pfl rfl) -> FunT $ replFL fl i rfl
 indTrFT x LHere op = trFT x op
 indTrFT (TAnd x y) (LLeftAnd w) op = TAnd (indTrFT x w op) y
 indTrFT (TAnd x y) (LRightAnd w) op = TAnd x $ indTrFT y w op
@@ -294,59 +335,6 @@ indTrFT (TXor (Left l)) (LRightXor w) op = TXor (Left l)
 indTrFT (TXor (Right r)) (LRightXor w) op =  TXor (Right $ indTrFT r w op)
 
 
-truncFT : FunT fl -> (i : IndexFL fl pfl) -> Maybe $ FunT pfl
-truncFT x LHere = Just x
-truncFT (TAnd x y) (LLeftAnd w)  = truncFT x w
-truncFT (TAnd x y) (LRightAnd w) = truncFT y w
-truncFT (TUor x y) (LLeftUor w)  = truncFT x w
-truncFT (TUor x y) (LRightUor w) = truncFT y w
-truncFT (TXor (Left l)) (LLeftXor w)   = truncFT l w
-truncFT (TXor (Right r)) (LLeftXor w)  = Nothing
-truncFT (TXor (Left l)) (LRightXor w)  = Nothing
-truncFT (TXor (Right r)) (LRightXor w) = truncFT r w
-
-replFL : (fl : FunLang) -> IndexFL fl _ -> FunLang -> FunLang
-replFL fl LHere y = y
-replFL (And x z) (LLeftAnd w) y  = And (replFL x w y) z
-replFL (And x z) (LRightAnd w) y = And x (replFL z w y)
-replFL (Uor x z) (LLeftUor w) y  = Uor (replFL x w y) z
-replFL (Uor x z) (LRightUor w) y = Uor x (replFL z w y)
-replFL (Xor x z) (LLeftXor w) y  = Xor (replFL x w y) z
-replFL (Xor x z) (LRightXor w) y = Xor x (replFL z w y)
-
-
-replFT : FunT fl -> (i: IndexFL fl _) -> FunT $ nfl -> FunT $ replFL fl i nfl
-replFT x LHere nfT  = nfT
-replFT (TAnd x y) (LLeftAnd w) nfT   = TAnd (replFT x w nfT) y
-replFT (TAnd x y) (LRightAnd w) nfT  = TAnd x $ replFT y w nfT
-replFT (TUor x y) (LLeftUor w) nfT   = TUor (replFT x w nfT) y
-replFT (TUor x y) (LRightUor w) nfT  = TUor x $ replFT y w nfT
-replFT (TXor (Left l)) (LLeftXor w) nfT   = TXor (Left $ replFT l w nfT)
-replFT (TXor (Right r)) (LLeftXor w) nfT  = TXor (Right r)
-replFT (TXor (Left l)) (LRightXor w) nfT  = TXor (Left l)
-replFT (TXor (Right r)) (LRightXor w) nfT =  TXor (Right $ replFT r w nfT)
-
-
-xreplFL : (fl : FunLang) -> IndexFL fl _ -> FunLang -> FunLang
-xreplFL fl LHere y = y
-xreplFL (And x z) (LLeftAnd w) y  = And (xreplFL x w y) z
-xreplFL (And x z) (LRightAnd w) y = And x (xreplFL z w y)
-xreplFL (Uor x z) (LLeftUor w) y  = Xor (xreplFL x w y) z
-xreplFL (Uor x z) (LRightUor w) y = Xor x (xreplFL z w y)
-xreplFL (Xor x z) (LLeftXor w) y  = Xor (xreplFL x w y) z
-xreplFL (Xor x z) (LRightXor w) y = Xor x (xreplFL z w y)
-
-
-xreplFT : FunT fl -> (i: IndexFL fl _) -> FunT $ nfl -> FunT $ xreplFL fl i nfl
-xreplFT x LHere nfT  = nfT
-xreplFT (TAnd x y) (LLeftAnd w) nfT   = TAnd (xreplFT x w nfT) y
-xreplFT (TAnd x y) (LRightAnd w) nfT  = TAnd x $ xreplFT y w nfT
-xreplFT (TUor x y) (LLeftUor w) nfT   = TXor (Left $ xreplFT x w nfT)
-xreplFT (TUor x y) (LRightUor w) nfT  = TXor (Right $ xreplFT y w nfT)
-xreplFT (TXor (Left l)) (LLeftXor w) nfT   = TXor (Left $ xreplFT l w nfT)
-xreplFT (TXor (Right r)) (LLeftXor w) nfT  = TXor (Right r)
-xreplFT (TXor (Left l)) (LRightXor w) nfT  = TXor (Left l)
-xreplFT (TXor (Right r)) (LRightXor w) nfT =  TXor (Right $ xreplFT r w nfT)
 
 
 indReplInd : (i: IndexFL fl pfl) -> (nfl : FunLang) ->  IndexFL (replFL fl i nfl) nfl
@@ -364,52 +352,17 @@ mutual
 
   data Gr : (fl : FunLang) -> (rfl : FunLang) -> Type where
     GrId : Gr fl fl
-    Emb : (i : IndexFL fl pfl) -> (gr : Gr pfl efl) -> {auto prf : grUsesIn gr = True} -> Gr (xreplFL fl i efl) rfl -> Gr fl rfl
-    Trans : (i : IndexFL fl pfl) -> (op : FunLangOp pfl _) -> Gr (indTrFL fl i op) rfl -> Gr fl rfl
+    Emb : (i : IndexFL fl pfl) -> (gr : Gr pfl efl) -> {auto prf : grUsesIn gr = True} -> Gr (replFL fl i efl) rfl -> Gr fl rfl
+    Trans : (i : IndexFL fl pfl) -> (op : FunLangOp pfl orfl) -> Gr (replFL fl i orfl) rfl -> Gr fl rfl
     Com : {rfl : FunLang} -> (df : ((fnT : FunT fl) -> FunInst fnT -> FunT rfl)) -> Gr rfl nrfl -> Gr fl nrfl
   
-
--- IndGrSetFL actually adds i inside SetFL 
-  indGrSetFL : SetFL fl  -> (i: IndexFL fl pfl) -> (gr : Gr pfl rfl) -> SetFL (xreplFL fl i rfl)
-  indGrSetFL SElem i gr = SElem
-  indGrSetFL x LHere gr = SElem
-  indGrSetFL (SLeftAnd x) (LLeftAnd w) gr    = SLeftAnd $ indGrSetFL x w gr
-  indGrSetFL (SRightAnd x) (LLeftAnd w) gr   = SRightAnd x
-  indGrSetFL (SBothAnd x y) (LLeftAnd w) gr  = SBothAnd (indGrSetFL x w gr) y
-  indGrSetFL (SLeftAnd x) (LRightAnd w) gr   = SLeftAnd x
-  indGrSetFL (SRightAnd x) (LRightAnd w) gr  = SRightAnd $ indGrSetFL x w gr
-  indGrSetFL (SBothAnd x y) (LRightAnd w) gr = SBothAnd x (indGrSetFL y w gr)
-  indGrSetFL (SLeftUor x) (LLeftUor w) gr    = SLeftXor $ indGrSetFL x w gr
-  indGrSetFL (SRightUor x) (LLeftUor w) gr   = SRightXor x
-  indGrSetFL (SBothUor x y) (LLeftUor w) gr  = SBothXor (indGrSetFL x w gr) y
-  indGrSetFL (SLeftUor x) (LRightUor w) gr   = SLeftXor x
-  indGrSetFL (SRightUor x) (LRightUor w) gr  = SRightXor $ indGrSetFL x w gr
-  indGrSetFL (SBothUor x y) (LRightUor w) gr = SBothXor x (indGrSetFL y w gr)
-  indGrSetFL (SLeftXor x) (LLeftXor w) gr    = SLeftXor $ indGrSetFL x w gr
-  indGrSetFL (SRightXor x) (LLeftXor w) gr   = SRightXor x
-  indGrSetFL (SBothXor x y) (LLeftXor w) gr  = SBothXor (indGrSetFL x w gr) y
-  indGrSetFL (SLeftXor x) (LRightXor w) gr   = SLeftXor x
-  indGrSetFL (SRightXor x) (LRightXor w) gr  = SRightXor $ indGrSetFL x w gr
-  indGrSetFL (SBothXor x y) (LRightXor w) gr = SBothXor x (indGrSetFL y w gr)
-  
-
-  indGrSetFLEmpty : (i: IndexFL fl pfl) -> (gr : Gr pfl rfl) -> SetFL (xreplFL fl i rfl)
-  indGrSetFLEmpty LHere gr = SElem
-  indGrSetFLEmpty (LLeftAnd z) gr  = SLeftAnd $ indGrSetFLEmpty z gr
-  indGrSetFLEmpty (LRightAnd z) gr = SRightAnd $ indGrSetFLEmpty z gr
-  indGrSetFLEmpty (LLeftUor z)  gr = SLeftXor $ indGrSetFLEmpty z gr
-  indGrSetFLEmpty (LRightUor z) gr = SRightXor $ indGrSetFLEmpty z gr
-  indGrSetFLEmpty (LLeftXor z)  gr = SLeftXor $ indGrSetFLEmpty z gr
-  indGrSetFLEmpty (LRightXor z) gr =  SRightXor $ indGrSetFLEmpty z gr
-  
-
 
   grUsesIn : Gr fl rfl -> Bool
   grUsesIn x = grUsesIn' x SEmpty where
     grUsesIn' : Gr fl rfl -> MSetFL fl -> Bool
     grUsesIn' GrId s = False
-    grUsesIn' (Emb i gr x) SEmpty = grUsesIn' x $ SSome $ indGrSetFLEmpty i gr
-    grUsesIn' (Emb i gr x) (SSome s) = let ns = contructSetFL $ indGrSetFL s i gr in case (ns) of
+    grUsesIn' (Emb i gr x {efl}) SEmpty = grUsesIn' x $ SSome $ setFLAddEmpty i efl
+    grUsesIn' (Emb i gr x {efl}) (SSome s) = let ns = contructSetFL $ setFLAdd s i efl in case (ns) of
                                                                             SElem => True
                                                                             _     => grUsesIn' x $ SSome ns
     grUsesIn' (Trans i op y) SEmpty = grUsesIn' y $ SEmpty
@@ -417,68 +370,54 @@ mutual
     grUsesIn' (Com df x) s   = True
 
 
-indGrInd : (i: IndexFL fl pfl) -> (gr : Gr pfl efl) ->  IndexFL (xreplFL fl i efl) efl
-indGrInd LHere gr = LHere
-indGrInd (LLeftAnd z) gr  = LLeftAnd $ indGrInd z gr
-indGrInd (LRightAnd z) gr = LRightAnd $ indGrInd z gr
-indGrInd (LLeftUor z)  gr = LLeftXor $ indGrInd z gr
-indGrInd (LRightUor z) gr = LRightXor $ indGrInd z gr
-indGrInd (LLeftXor z)  gr = LLeftXor $ indGrInd z gr
-indGrInd (LRightXor z) gr = LRightXor $ indGrInd z gr
-
 
 
 data EList : IndexFL ofl pfl -> Gr pfl _ -> Gr afl _ -> Nat -> Type where
   ENil : EList (LHere {fl=fl}) (GrId {fl=fl}) (GrId {fl=fl}) Z
-  EL : (ni : IndexFL fl pfl) -> (nfgr : Gr pfl efl) -> (ngr : Gr (xreplFL fl ni efl) rfl) 
+  EL : (ni : IndexFL fl pfl) -> (nfgr : Gr pfl efl) -> (ngr : Gr (replFL fl ni efl) rfl) 
   -> {fgr : Gr _ rfl} -> EList i fgr gr k -> EList ni nfgr ngr (S k)
 
 data EVect : EList ni nfgr ngr n -> Type where
   EVNill : EVect ENil
-  EV : {ni : IndexFL fl pfl} -> {nfgr : Gr pfl efl} -> {ngr : Gr (xreplFL fl ni efl) rfl} -> {fgr : Gr _ rfl} 
+  EV : (ni : IndexFL fl pfl) -> {nfgr : Gr pfl efl} -> (ngr : Gr (replFL fl ni efl) rfl) -> {fgr : Gr _ rfl} 
   -> {prEL : EList i fgr gr k} -> (prL : FunT fl) ->  EVect prEL -> EVect $ EL ni nfgr ngr prEL
 
-mutual
-  genDFT : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> ((EVect (ENil {fl=rfl})) -> FunT fl -> Type)
-  genDFT gr = genDFT' gr ENil {n=Z} where
-    genDFT' : (gr : Gr fl rfl) -> {fgr : Gr pfl rfl} -> (el : EList ei fgr egr n) -> (EVect el -> FunT fl -> Type)
-    genDFT' GrId ENil {fl} = (\vhv, x => FunT fl)
-    genDFT' GrId (EL ei nfgr egr pEL) = (\ev, x =>  let EV prL prEV = ev in
-                                                        (genDFT' egr pEL) prEV (xreplFT prL ei x))
-    genDFT' (Emb ni nfgr ngr ) y = (\ ev, x => case (truncFT x ni) of
-                                            Just tx => genDFT' nfgr (EL ni nfgr ngr y) (EV x ev) tx
-                                            Nothing => ?dsf--genDFT' y x
-                                                                           )
-    genDFT' (Trans i op z) y = ?fgfg_3
-    genDFT' (Com df x) y = ?fgfg_4
 
---mutual 
---  genDFT : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> (FunT fl -> Type)
---  genDFT gr {rfl=rfl'} = genDFT' gr Nothing {nu=rfl'} where
---    genDFT' : (gr : Gr fl rfl) -> Maybe $ (IndexFL rfl nu, FunLang) -> (FunT fl -> Type)
---    genDFT' GrId {fl} mExt = (\x => case (mExt) of
---                                        Nothing => FunT fl
---                                        Just (i, efl) => FunT $ replFL fl i efl )
---    genDFT' (Emb i gr y) mExt {fl} = (\x => case (truncFT x i) of
---                                            Just tx => (genDFT' gr (indGrInd i gr, indGrExtFL fl i gr)) tx
---                                            Nothing => ?dsf--genDFT' y x
---                                                                       )
---    genDFT' (Trans i op z) mExt = (\x => (genDFT' z mExt) $ indTrFT x i op )
---    genDFT' (Com df y) mExt = (\x => (fi : FunInst x) -> (genDFT' y mExt) $ df x fi)
---      
-    
-  --genDFT GI {fl} = (\x => FunT fl)  -- This is the identity type
-  --genDFT (Tr i op y) {fl} = (\x => FunInst x -> (genDFT y) $ indTrFT x i op)
-  --genDFT (Com i df y) = (\x => (fi : FunInst x) -> (genDFT y) $ comFT x fi i df)
-  --
-  --
---  genDF : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> ((fnT : FunT fl) -> genDFT gr fnT)
-  --genDF GI = (\x => x)
-  --genDF (Tr i op gr) = (\x, y => genDF gr $ indTrFT x i op)
-  --genDF (Com i df gr) = (\x, y => genDF gr $ comFT x y i df) 
-  --
 
---  extGenDF : FunT fl -> (i : IndexFL fl pfl) -> (gr : Gr pfl rfl) -> 
+
+
+genDFT' : (gr : Gr fl rfl) -> {fgr : Gr pfl rfl} -> (el : EList ei fgr egr n) -> (EVect el -> FunT fl -> Type)
+genDFT' GrId ENil {fl} = (\vhv, x => FunT fl)
+genDFT' GrId (EL ei nfgr egr pEL) = (\ev, x =>  let EV _ _ prL prEV = ev in
+                                                    (genDFT' egr pEL) prEV (replFT prL ei x))
+genDFT' (Emb ni nfgr ngr {efl}) y = (\ ev, x => let tr = truncFT x ni in
+                                                case (tr) of
+                                                 Just tx => genDFT' nfgr (EL ni nfgr ngr y) (EV ni ngr x ev) tx
+                                                 Nothing => let ntr = ifNotTruncFT x ni efl in
+                                                            case (ntr) of
+                                                              Just ntx => (genDFT' ngr y) ev ntx
+                                                              _ => assert_unreachable
+                                                                                       )
+genDFT' (Trans i op z) y = (\ev, x => (genDFT' z y) ev $ indTrFT x i op )
+genDFT' (Com df ngr) y = (\ev, x => (fi : FunInst x) -> (genDFT' ngr y) ev $ df x fi)
+
+
+genDFT : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> ((EVect (ENil {fl=rfl})) -> FunT fl -> Type)
+genDFT gr = genDFT' gr ENil {n=Z}
+
+
+genDF : (gr : Gr fl rfl) -> {auto prf : grUsesIn gr = True} -> ((fnT : FunT fl) -> genDFT gr EVNill fnT)
+genDF gr fnT = genDF' gr EVNill fnT where
+  genDF' : (gr : Gr fl rfl) -> (ev : EVect el) -> ((fnT : FunT fl) -> genDFT' gr el ev fnT)
+  genDF' GrId EVNill fnT = fnT
+  genDF' GrId (EV ei egr prL y) fnT = (genDF' egr y) (replFT prL ei fnT)
+  genDF' (Emb ni nfgr ngr {efl} ) ev fnT with (truncFT fnT ni)
+    | Just tx = (genDF' nfgr (EV ni ngr fnT ev {nfgr=nfgr})) tx
+    | Nothing with (ifNotTruncFT fnT ni efl) 
+      | Just ntx = (genDF' ngr ev) ntx
+      | Nothing = assert_unreachable
+  genDF' (Trans i op x) ev fnT = genDF' x ev $ indTrFT fnT i op
+  genDF' (Com df ngr) ev fnT = (\fi => genDF' ngr ev $ df fnT fi)
 
 
 
