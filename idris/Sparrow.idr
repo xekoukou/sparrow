@@ -54,33 +54,58 @@ applyH : {vt : Vect n Type} -> HVect vt -> genT vt -> Type
 applyH [] y = y
 applyH (x :: z) y = applyH z $ y x
 
+
+||| Linear Logic Cconnectives : Used to describe the input
+||| and output of an agent.
+|||
 data LinLogic: Type where
+  ||| Contains a function that computes a dependent type
   Atom : {dt : Vect n Type} -> genT dt -> LinLogic 
+  ||| Both sub-connectives need to be sent or received.
   And  : LinLogic -> LinLogic -> LinLogic
+  ||| Only one sub-connective can be sent or received
+  ||| and the protocol specification has no control over which
+  ||| choice will be made.
   Uor  : LinLogic -> LinLogic -> LinLogic
+  ||| Only one sub-connective can be sent or received 
+  ||| and the protocol determines the choice based on the previous
+  ||| input of the agent.
   Xor  : LinLogic -> LinLogic -> LinLogic  -- d decides on that
 
 
-
+||| Transformations to the Linear logic so as to construct
+||| the correct sub-connective that is the input of a
+||| linear function.
 data LLTr : LinLogic -> LinLogic -> Type where
   Id      : LLTr ll ll
+  ||| Commutative transformation for Xor
   XorC    : LLTr (Xor b a) rll   -> LLTr (Xor a b) rll
+  ||| Commutative transformation for And
   AndC    : LLTr (And b a) rll   -> LLTr (And a b) rll
+  ||| Commutative transformation for Uor
   UorC    : LLTr (Uor b a) rll   -> LLTr (Uor a b) rll
+  ||| Distributive transformation for Xor
   AndXorD : LLTr (Xor (And a1 c) (And a2 c)) rll -> LLTr (And (Xor a1 a2) c) rll
+  ||| Distributive transformation for Uor
   AndUorD : LLTr (Uor (And a1 c) (And a2 c)) rll -> LLTr (And (Uor a1 a2) c) rll
 
 
-
+||| This type is computed by the protocol specification and all in/out-puts'
+||| types depend on it.
 data LinDepT : LinLogic -> Type where
-    TAtom : {dt : Vect n Type} -> {df : genT dt} -> (hv : HVect dt) -> LinDepT $ Atom df {dt=dt}
-    TAnd  : LinDepT a -> LinDepT b         -> LinDepT $ And a b
-    TUor  : LinDepT a -> LinDepT b         -> LinDepT $ Uor a b
-    TXor  : Either (LinDepT a) (LinDepT b) -> LinDepT $ Xor a b
+  ||| 
+  ||| @ hv is used to compute the type of this specific input/output.
+  TAtom : {dt : Vect n Type} -> {df : genT dt} -> (hv : HVect dt) -> LinDepT $ Atom df {dt=dt}
+  TAnd  : LinDepT a -> LinDepT b         -> LinDepT $ And a b
+  TUor  : LinDepT a -> LinDepT b         -> LinDepT $ Uor a b
+  ||| Xor takes a specific value. Only one of the two possible.
+  TXor  : Either (LinDepT a) (LinDepT b) -> LinDepT $ Xor a b
 
 
 
-
+||| Given a linear transformation and a LinDepT, 
+||| this function computes the LinDepT of the transformed
+||| linear logic.
 trLDT : LinDepT ll -> LLTr ll rll -> LinDepT rll
 trLDT x Id = x
 trLDT (TXor (Left l)) (XorC y)  = trLDT (TXor $ Right l) y
@@ -92,16 +117,22 @@ trLDT (TAnd (TXor (Right r)) x) (AndXorD y)  = trLDT (TXor $ Right $ TAnd r x) y
 trLDT (TAnd (TUor x w) z) (AndUorD y)             = trLDT (TUor (TAnd x z) (TAnd w z)) y
 
 
-
+||| The input and output of a linear function.
+|||
 data LinT : LinDepT a -> Type where
   IAtom      : {dt : Vect n Type} -> {df : genT dt} -> {hv : HVect dt} -> applyH hv df -> LinT $ TAtom hv {dt=dt} {df=df}
   IAnd       : LinT a -> LinT b         -> LinT $ TAnd a b
+  ||| Here the agent decides between the two values of Uor.
   IUor       : Either (LinT a) (LinT b) -> LinT $ TUor a b
+  ||| If the protocol specification computes to send the left value
+  ||| the agent sends the left value.
   IXorLeft   : LinT a                      -> LinT $ TXor $ Left a
+  ||| If the protocol specification computes to send the right value
+  ||| the agent sends the right value.
   IXorRight  : LinT b                      -> LinT $ TXor $ Right b
 
 
-
+||| Indexes over a specific node a linear logic tree/sequence.
 data IndexLL : LinLogic -> LinLogic -> Type where
   LHere     : IndexLL ll ll
   LLeftAnd  : IndexLL x rll -> IndexLL (And x y) rll
@@ -112,6 +143,11 @@ data IndexLL : LinLogic -> LinLogic -> Type where
   LRightXor : IndexLL y rll -> IndexLL (Xor x y) rll
 
 
+||| Trancuates the LinDepT, leaving only the node that is
+||| pointed by the index.
+|||
+||| If the index points to path that the LinDept does not contain, 
+||| it returns Nothing.
 truncLDT : LinDepT ll -> (i : IndexLL ll pll) -> Maybe $ LinDepT pll
 truncLDT x LHere = Just x
 truncLDT (TAnd x y) (LLeftAnd w)  = truncLDT x w
@@ -124,7 +160,7 @@ truncLDT (TXor (Left l)) (LRightXor w)  = Nothing
 truncLDT (TXor (Right r)) (LRightXor w) = truncLDT r w
 
 
-
+||| Replaces a node of a linear logic tree with another one.
 replLL : (ll : LinLogic) -> IndexLL ll _ -> LinLogic -> LinLogic
 replLL ll LHere y = y
 replLL (And x z) (LLeftAnd w) y  = And (replLL x w y) z
@@ -135,6 +171,7 @@ replLL (Xor x z) (LLeftXor w) y  = Xor (replLL x w y) z
 replLL (Xor x z) (LRightXor w) y = Xor x (replLL z w y)
 
 
+||| Replaces a node of a LinDepT with another one.
 replLDT : LinDepT ll -> (i: IndexLL ll _) -> LinDepT $ nfl -> LinDepT $ replLL ll i nfl
 replLDT x LHere nfT  = nfT
 replLDT (TAnd x y) (LLeftAnd w) nfT   = TAnd (replLDT x w nfT) y
@@ -147,7 +184,9 @@ replLDT (TXor (Left l)) (LRightXor w) nfT  = TXor (Left l)
 replLDT (TXor (Right r)) (LRightXor w) nfT =  TXor (Right $ replLDT r w nfT)
 
 
-
+||| If the index points to a path that is not part of LinDepT, then the same LinDepT can 
+||| be the computation of a different linear logic tree in which we replace the logic node
+||| that it does not contain.
 ifNotTruncLDT : (lDT : LinDepT ll) -> (i: IndexLL ll pll) -> (rll : LinLogic) -> Maybe $ LinDepT $ replLL ll i rll
 ifNotTruncLDT x LHere  rll = Nothing
 ifNotTruncLDT (TAnd x y) (LLeftAnd w) rll        = pure $ TAnd !(ifNotTruncLDT x w rll) y 
@@ -160,7 +199,7 @@ ifNotTruncLDT (TXor (Left l)) (LRightXor w) rll  = pure $ TXor (Left l)
 ifNotTruncLDT (TXor (Right r)) (LRightXor w) rll = pure $ TXor (Right !(ifNotTruncLDT r w rll)) 
 
 
-
+||| A non-empty set of points in a Linear Logic tree.
 data SetLL : LinLogic -> Type where
   SElem      : SetLL ll
   SLeftAnd   : SetLL x -> SetLL (And x y) 
@@ -173,11 +212,13 @@ data SetLL : LinLogic -> Type where
   SRightXor  : SetLL y -> SetLL (Xor x y) 
   SBothXor   : SetLL x -> SetLL y -> SetLL (Xor x y) 
 
-
+||| A possible empty set of points in a Linear Logic tree.
 data MSetLL : LinLogic -> Type where
   SEmpty : MSetLL ll
   SSome : SetLL ll -> MSetLL ll
 
+||| Adds a point to an empty set.
+||| @ i indexes to the node that is to be inserted.
 setLLAddEmpty : (i: IndexLL ll _) -> (rll : LinLogic) -> SetLL $ replLL ll i rll
 setLLAddEmpty LHere rll = SElem
 setLLAddEmpty (LLeftAnd z)  rll = SLeftAnd $ setLLAddEmpty z rll
@@ -187,6 +228,8 @@ setLLAddEmpty (LRightUor z) rll = SRightUor $ setLLAddEmpty z rll
 setLLAddEmpty (LLeftXor z)  rll = SLeftXor $ setLLAddEmpty z rll
 setLLAddEmpty (LRightXor z) rll =  SRightXor $ setLLAddEmpty z rll
 
+||| If two adjecent nodes exist in the set, the higher node is
+||| in the set. We contruct the set.
 contructSetLL : SetLL ll -> SetLL ll
 contructSetLL (SBothAnd SElem SElem)  = SElem
 contructSetLL (SBothUor SElem SElem)  = SElem
@@ -212,6 +255,7 @@ contructSetLL (SBothXor z w) = let  cr = (SBothXor (contructSetLL z) (contructSe
                                         _                      => cr
 
 
+||| Adds a point in a SetLL
 setLLAdd : SetLL ll -> (i : IndexLL ll _) -> (rll : LinLogic) -> SetLL $ replLL ll i rll
 setLLAdd SElem y rll = SElem
 setLLAdd x LHere rll = SElem
@@ -236,7 +280,8 @@ setLLAdd (SBothXor x y) (LRightXor w) rll = SBothXor x (setLLAdd y w rll)
 
 
 
-
+||| If we transform a linear logic tree, we need to transform the SetLL 
+||| as well.
 trSetLL : SetLL ll -> (ltr : LLTr ll rll) -> SetLL $ replLL ll LHere rll
 trSetLL SElem ltr = SElem
 trSetLL x Id = x
@@ -269,6 +314,7 @@ trSetLL (SBothAnd (SRightUor x) z) (AndUorD y) =  trSetLL (SRightUor $ SBothAnd 
 trSetLL (SBothAnd (SBothUor x w) z) (AndUorD y) = trSetLL (SBothUor (SBothAnd x z) (SBothAnd w z)) y
 
 
+||| Transform a SetLL from a specific node only determined by the index.
 indTrSetLL : SetLL ll -> (i : IndexLL ll pll) -> (ltr : LLTr pll rll) -> SetLL $ replLL ll i rll
 indTrSetLL SElem i ltr = SElem
 indTrSetLL x LHere ltr = trSetLL x ltr
@@ -292,7 +338,7 @@ indTrSetLL (SRightXor x) (LRightXor w) ltr  = SRightXor $ indTrSetLL x w ltr
 indTrSetLL (SBothXor x y) (LRightXor w) ltr = SBothXor x (indTrSetLL y w ltr)
 
 
-
+||| Transform a LinDepT after a specific node pointed by the index i.
 indTrLDT : LinDepT ll -> (i: IndexLL ll pll) -> (ltr : LLTr pll rll) -> LinDepT $ replLL ll i rll
 indTrLDT x LHere ltr = trLDT x ltr
 indTrLDT (TAnd x y) (LLeftAnd w) ltr = TAnd (indTrLDT x w ltr) y
@@ -307,14 +353,22 @@ indTrLDT (TXor (Right r)) (LRightXor w) ltr =  TXor (Right $ indTrLDT r w ltr)
 
 
 mutual
-
+  ||| Linear Function : It is used to express the use of resources/Inputs and their transformation to other resources/outputs.
+  ||| All inputs are used exactly one time.
+  ||| @ll The input linear logic sequence.
+  ||| @rll The output linear logic sequence.
   data LFun : (ll : LinLogic) -> (rll : LinLogic) -> Type where
+    ||| The identity function.
     LFunId : LFun ll ll
-    Emb : (i : IndexLL ll pll) -> (lFun : LFun pll ell) -> {auto prf : lFunUsesInput lFun = True} -> LFun (replLL ll i ell) rll -> LFun ll rll
+    ||| Another linear function is called and the transformation then continues from the results of that function.
+    ||| @i determines the sub-tree which the linear function will take as input and transform.
+    Emb : (i : IndexLL ll pll) -> (lFun : LFun pll ell) -> {auto prf : lFunUsesInput lFun = True} -> LFun (replLL ll i ell) rll -> LFun ll rll  --{auto prprf: comStepProductive lFun = True} ->
+    ||| Transformations of the tree to forms that can be used as inputs to known linear functions.
     Trans : (i : IndexLL ll pll) -> (ltr : LLTr pll orll) -> LFun (replLL ll i orll) rll -> LFun ll rll
-    Com : {rll : LinLogic} -> (df : ((lDT : LinDepT ll) -> LinT lDT -> LinDepT rll)) -> LFun rll nrfl -> LFun ll nrfl
+    ||| Transformation of input to output through consuption of the resource or through communication.
+    Com : {rll : LinLogic} -> (df : ((lDT : LinDepT ll) -> LinT lDT -> LinDepT rll)) -> LFun rll nrll -> LFun ll nrll
   
-
+  ||| Guarantees that all Inputs are used.
   lFunUsesInput : LFun ll rll -> Bool
   lFunUsesInput x = lFunUsesInput' x SEmpty where
     lFunUsesInput' : LFun ll rll -> MSetLL ll -> Bool
@@ -327,6 +381,8 @@ mutual
     lFunUsesInput' (Trans i ltr y) (SSome s) = lFunUsesInput' y $ SSome $ indTrSetLL s i ltr
     lFunUsesInput' (Com df x) s   = True
 
+--  comStepProductive : LFun ll rll -> Bool
+
 
 
 
@@ -336,52 +392,58 @@ data EList : IndexLL ofl pll -> LFun pll _ -> LFun all _ -> Nat -> Type where
   -> {flFun : LFun _ rll} -> EList i flFun lFun k -> EList ni nflFun nlFun (S k)
 
 data EVect : EList ni nflFun nlFun n -> Type where
-  EVNill : EVect ENil
+  EVNil : EVect ENil
   EV : (ni : IndexLL ll pll) -> {nflFun : LFun pll ell} -> (nlFun : LFun (replLL ll ni ell) rll) -> {flFun : LFun _ rll} 
   -> {prEL : EList i flFun lFun k} -> (prL : LinDepT ll) ->  EVect prEL -> EVect $ EL ni nflFun nlFun prEL
 
 
 
 
+data Conti : LFun ll rll -> Type where
+  CEnd    : Conti (LFunId {ll=ll})
+  CInter   : (lFun : LFun ll rll) -> {flFun : LFun pll rll} -> (el : EList ei flFun elFun n) -> EVect el 
+            -> LinDepT ll -> Conti lFun
+  CNext   : (lFun : LFun ll rll) -> {flFun : LFun pll rll} -> (el : EList ei flFun elFun n) -> EVect el -> (prLDT : LinDepT ll') ->
+            (LinT prLDT -> LinDepT ll) -> Conti lFun
 
-genDFT' : (lFun : LFun ll rll) -> {flFun : LFun pll rll} -> (el : EList ei flFun elFun n) -> (EVect el -> LinDepT ll -> Type)
-genDFT' LFunId ENil {ll} = (\vhv, x => LinDepT ll)
-genDFT' LFunId (EL ei nflFun elFun pEL) = (\ev, x =>  let EV _ _ prL prEV = ev in
-                                                    (genDFT' elFun pEL) prEV (replLDT prL ei x))
-genDFT' (Emb ni nflFun nlFun {ell}) y = (\ ev, x => let tr = truncLDT x ni in
-                                                case (tr) of
-                                                 Just tx => genDFT' nflFun (EL ni nflFun nlFun y) (EV ni nlFun x ev) tx
-                                                 Nothing => let ntr = ifNotTruncLDT x ni ell in
-                                                            case (ntr) of
-                                                              Just ntx => (genDFT' nlFun y) ev ntx
-                                                              _ => assert_unreachable
-                                                                                       )
-genDFT' (Trans i ltr z) y = (\ev, x => (genDFT' z y) ev $ indTrLDT x i ltr )
-genDFT' (Com df nlFun) y = (\ev, x => (fi : LinT x) -> (genDFT' nlFun y) ev $ df x fi)
+isCInter : Conti lFun -> Bool
+isCInter CEnd             = False
+isCInter (CInter _ _ _ _) = True
+isCInter (CNext _ _ _ _ _) = False
+
+falseNotTrue : False = True -> Void
+falseNotTrue Refl impossible
+
+||| Since communications can be infinite, this function is used to find the next Comm that contains the function to compute the
+||| next LinDepT given a specific input by the user that abides to the specification, ie the previous LinDepT.
+||| It also contains information so that when executed again with that info, it will give the next Comm.
+comStep : (c : Conti lFun) -> {auto prf : isCInter c = True} -> (ull ** urll ** nc : LFun ull urll  ** Conti nc)
+comStep CEnd {prf} = void $ falseNotTrue prf
+comStep (CNext _ _ _ _ _) {prf} = void $ falseNotTrue prf
+comStep (CInter (LFunId {ll}) ENil ev lDT) = (ll ** ll ** LFunId ** CEnd )
+comStep (CInter LFunId (EL ei nflFun elFun pEL) ev lDT) = let EV _ _ prL prEV = ev in
+                                                            comStep (CInter elFun pEL prEV (replLDT prL ei lDT))
+comStep (CInter (Emb ni nflFun nlFun {ell}) el ev lDT) = let tr = truncLDT lDT ni in
+                                                  case (tr) of
+                                                      Just tlDT => comStep (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT)
+                                                      Nothing => let ntr = ifNotTruncLDT lDT ni ell in
+                                                                 case (ntr) of
+                                                                   Just ntlDT => comStep (CInter nlFun el ev ntlDT)
+                                                                   _ => assert_unreachable
+comStep (CInter (Trans i ltr nlFun) el ev lDT) = comStep (CInter nlFun el ev $ indTrLDT lDT i ltr)
+comStep (CInter (Com df nlFun {rll} {nrll}) el ev lDT) = (rll ** nrll ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
 
 
-genDFT : (lFun : LFun ll rll) -> {auto prf : lFunUsesInput lFun = True} -> ((EVect (ENil {ll=rll})) -> LinDepT ll -> Type)
-genDFT lFun = genDFT' lFun ENil {n=Z}
+data SFun : LFun ll rll -> Type where
+  SFunId : SFun $ LFunId
+  SEmb : SFun elFun -> {auto prf : lFunUsesInput elFun = True} -> SFun nlFun -> SFun $ Emb i elFun nlFun {prf = prf}
+  STrans : SFun nlFun -> SFun $ Trans i ltr nlFun
+  SCom : (LinT lDT' -> {lDT : LinDepT ll} -> LinT lDT) -> SFun nlFun -> SFun $ Com df nlFun {ll=ll}
 
 
-genDF : (lFun : LFun ll rll) -> {auto prf : lFunUsesInput lFun = True} -> ((lDT : LinDepT ll) -> genDFT lFun EVNill lDT)
-genDF lFun lDT = genDF' lFun EVNill lDT where
-  genDF' : (lFun : LFun ll rll) -> (ev : EVect el) -> ((lDT : LinDepT ll) -> genDFT' lFun el ev lDT)
-  genDF' LFunId EVNill lDT = lDT
-  genDF' LFunId (EV ei elFun prL y) lDT = (genDF' elFun y) (replLDT prL ei lDT)
-  genDF' (Emb ni nflFun nlFun {ell} ) ev lDT with (truncLDT lDT ni)
-    | Just tx = (genDF' nflFun (EV ni nlFun lDT ev {nflFun=nflFun})) tx
-    | Nothing with (ifNotTruncLDT lDT ni ell) 
-      | Just ntx = (genDF' nlFun ev) ntx
-      | Nothing = assert_unreachable
-  genDF' (Trans i ltr x) ev lDT = genDF' x ev $ indTrLDT lDT i ltr
-  genDF' (Com df nlFun) ev lDT = (\fi => genDF' nlFun ev $ df lDT fi)
+simul : (c : Conti lFun) -> {auto prf : isCInter c = True} -> SFun lFun -> (ull ** urll ** nc : LFun ull urll  ** (Conti nc, SFun nc))
+simul c x = ?simul_rhs
 
-
-
--- A lFun is Full if all the data it receives is processed at least once.
-
---TODO ADD Agents, dependencies to previous inputs, total funT of a LFun operator.
 
 
 
