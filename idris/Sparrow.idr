@@ -357,21 +357,22 @@ mutual
   ||| All inputs are used exactly one time.
   ||| @ll The input linear logic sequence.
   ||| @rll The output linear logic sequence.
-  data LFun : (ll : LinLogic) -> (rll : LinLogic) -> Type where
+  data LFun : (ll : LinLogic) -> (rll : LinLogic) -> Nat -> Type where
     ||| The identity function.
-    LFunId : LFun ll ll
+    LFunId : LFun ll ll (S Z)
     ||| Another linear function is called and the transformation then continues from the results of that function.
     ||| @i determines the sub-tree which the linear function will take as input and transform.
-    Emb : (i : IndexLL ll pll) -> (lFun : LFun pll ell) -> {auto prf : lFunUsesInput lFun = True} -> LFun (replLL ll i ell) rll -> LFun ll rll  --{auto prprf: comStepProductive lFun = True} ->
+    Emb : (i : IndexLL ll pll) -> (lFun : LFun pll ell en) -> {auto prf : lFunUsesInput lFun = True} -> LFun (replLL ll i ell) rll n -> LFun ll rll (S (en + n))  --{auto prprf: comStepProductive lFun = True} ->
+    --TODO Add an infinite version where it is at the last element of LFun acting like a continuation passing style.
     ||| Transformations of the tree to forms that can be used as inputs to known linear functions.
-    Trans : (i : IndexLL ll pll) -> (ltr : LLTr pll orll) -> LFun (replLL ll i orll) rll -> LFun ll rll
+    Trans : (i : IndexLL ll pll) -> (ltr : LLTr pll orll) -> LFun (replLL ll i orll) rll n -> LFun ll rll (S n)
     ||| Transformation of input to output through consuption of the resource or through communication.
-    Com : {rll : LinLogic} -> (df : ((lDT : LinDepT ll) -> LinT lDT -> LinDepT rll)) -> LFun rll nrll -> LFun ll nrll
+    Com : {rll : LinLogic} -> (df : ((lDT : LinDepT ll) -> LinT lDT -> LinDepT rll)) -> LFun rll nrll n -> LFun ll nrll (S n)
   
   ||| Guarantees that all Inputs are used.
-  lFunUsesInput : LFun ll rll -> Bool
+  lFunUsesInput : LFun ll rll _-> Bool
   lFunUsesInput x = lFunUsesInput' x SEmpty where
-    lFunUsesInput' : LFun ll rll -> MSetLL ll -> Bool
+    lFunUsesInput' : LFun ll rll _-> MSetLL ll -> Bool
     lFunUsesInput' LFunId s = False
     lFunUsesInput' (Emb i lFun x {ell}) SEmpty = lFunUsesInput' x $ SSome $ setLLAddEmpty i ell
     lFunUsesInput' (Emb i lFun x {ell}) (SSome s) = let ns = contructSetLL $ setLLAdd s i ell in case (ns) of
@@ -381,34 +382,39 @@ mutual
     lFunUsesInput' (Trans i ltr y) (SSome s) = lFunUsesInput' y $ SSome $ indTrSetLL s i ltr
     lFunUsesInput' (Com df x) s   = True
 
---  comStepProductive : LFun ll rll -> Bool
+--  comStepProductive : LFun ll rll -> Nat -> Bool
+--  comStepProductive x Z = False
+--  comStepProductive LFunId (S k) = False
+--  comStepProductive (Emb i lFun x) (S k) = 
+--  comStepProductive (Trans i ltr x) (S k) = ?comStepProductive_rhs_3
+--  comStepProductive (Com df x) (S k) = ?comStepProductive_rhs_4
+--
 
 
 
-
-data EList : IndexLL ofl pll -> LFun pll _ -> LFun all _ -> Nat -> Type where
-  ENil : EList (LHere {ll=ll}) (LFunId {ll=ll}) (LFunId {ll=ll}) Z
-  EL : (ni : IndexLL ll pll) -> (nflFun : LFun pll ell) -> (nlFun : LFun (replLL ll ni ell) rll) 
-  -> {flFun : LFun _ rll} -> EList i flFun lFun k -> EList ni nflFun nlFun (S k)
+data EList : IndexLL ofl pll -> LFun pll _ _ -> LFun all _ _-> Nat -> Type where
+  ENil : EList (LHere {ll=ll}) (LFunId {ll=ll}) (LFunId {ll=ll}) (S Z)
+  EL : (ni : IndexLL ll pll) -> (nflFun : LFun pll ell _) -> (nlFun : LFun (replLL ll ni ell) rll n) 
+  -> {flFun : LFun _ rll _} -> EList i flFun lFun k -> EList ni nflFun nlFun (n + k)
 
 data EVect : EList ni nflFun nlFun n -> Type where
   EVNil : EVect ENil
-  EV : (ni : IndexLL ll pll) -> {nflFun : LFun pll ell} -> (nlFun : LFun (replLL ll ni ell) rll) -> {flFun : LFun _ rll} 
+  EV : (ni : IndexLL ll pll) -> {nflFun : LFun pll ell _} -> (nlFun : LFun (replLL ll ni ell) rll _) -> {flFun : LFun _ rll _} 
   -> {prEL : EList i flFun lFun k} -> (prL : LinDepT ll) ->  EVect prEL -> EVect $ EL ni nflFun nlFun prEL
 
 
 
 
-data Conti : LFun ll rll -> Type where
-  CEnd    : Conti (LFunId {ll=ll})
-  CInter   : (lFun : LFun ll rll) -> {flFun : LFun pll rll} -> (el : EList ei flFun elFun n) -> EVect el 
-            -> LinDepT ll -> Conti lFun
-  CNext   : (lFun : LFun ll rll) -> {flFun : LFun pll rll} -> (el : EList ei flFun elFun n) -> EVect el -> (prLDT : LinDepT ll') ->
-            (LinT prLDT -> LinDepT ll) -> Conti lFun
+data Conti : LFun ll rll _ -> Nat -> Type where
+  CEnd    : Conti (LFunId {ll=ll}) (S Z)
+  CInter   : (lFun : LFun ll rll k) -> {flFun : LFun pll rll _} -> (el : EList ei flFun elFun n) -> EVect el 
+            -> LinDepT ll -> Conti lFun (k + n)
+  CNext   : (lFun : LFun ll rll k) -> {flFun : LFun pll rll _} -> (el : EList ei flFun elFun n) -> EVect el -> (prLDT : LinDepT ll') ->
+            (LinT prLDT -> LinDepT ll) -> Conti lFun (k + n)
 
-isCInter : Conti lFun -> Bool
-isCInter CEnd             = False
-isCInter (CInter _ _ _ _) = True
+isCInter : Conti lFun _ -> Bool
+isCInter CEnd              = False
+isCInter (CInter _ _ _ _)  = True
 isCInter (CNext _ _ _ _ _) = False
 
 falseNotTrue : False = True -> Void
@@ -417,32 +423,42 @@ falseNotTrue Refl impossible
 ||| Since communications can be infinite, this function is used to find the next Comm that contains the function to compute the
 ||| next LinDepT given a specific input by the user that abides to the specification, ie the previous LinDepT.
 ||| It also contains information so that when executed again with that info, it will give the next Comm.
-comStep : (c : Conti lFun) -> {auto prf : isCInter c = True} -> (ull ** urll ** nc : LFun ull urll  ** Conti nc)
+comStep : (c : Conti lFun k) -> {auto prf : isCInter c = True} -> (ull ** urll ** un ** nk ** sm : LTE (S nk) k ** nc : LFun ull urll un  ** Conti nc nk) 
 comStep CEnd {prf} = void $ falseNotTrue prf
 comStep (CNext _ _ _ _ _) {prf} = void $ falseNotTrue prf
-comStep (CInter (LFunId {ll}) ENil ev lDT) = (ll ** ll ** LFunId ** CEnd )
-comStep (CInter LFunId (EL ei nflFun elFun pEL) ev lDT) = let EV _ _ prL prEV = ev in
-                                                            comStep (CInter elFun pEL prEV (replLDT prL ei lDT))
-comStep (CInter (Emb ni nflFun nlFun {ell}) el ev lDT) = let tr = truncLDT lDT ni in
+comStep (CInter (LFunId {ll}) ENil ev lDT) = (ll ** ll ** (S Z) ** (S Z) ** (LTESucc $ LTESucc LTEZero) ** LFunId ** CEnd )
+comStep (CInter LFunId (EL ei nflFun elFun pEL {n} {k}) ev lDT) = let EV _ _ prL prEV = ev in
+                                                                  let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter elFun pEL prEV (replLDT prL ei lDT)) in
+                                                                  (x ** y ** z ** w ** (lteSuccRight s) ** d ** r)
+comStep (CInter (Emb ni nflFun nlFun {ell} {en} {n=ne}) el ev lDT {n=k} ) = let tr = truncLDT lDT ni in
                                                   case (tr) of
-                                                      Just tlDT => comStep (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT)
+                                                      Just tlDT => let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT) in
+                                                      rewrite (sym $ plusAssociative en ne k) in 
+                                                      (x ** y ** z ** w ** (lteSuccRight s) ** d ** r)
                                                       Nothing => let ntr = ifNotTruncLDT lDT ni ell in
                                                                  case (ntr) of
-                                                                   Just ntlDT => comStep (CInter nlFun el ev ntlDT)
+                                                                   Just ntlDT => let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter nlFun el ev ntlDT) in
+                                                                                     (x ** y ** z ** w ** (lteSuccRight $ lteTransitive s 
+                                                                                     (
+                                                                                       rewrite (sym $ plusAssociative en ne k) in 
+                                                                                       rewrite (plusCommutative en (ne+k))     in 
+                                                                                               lteAddRight (ne+k) {m=en})
+                                                                                                                                                          ) ** d ** r)
                                                                    _ => assert_unreachable
-comStep (CInter (Trans i ltr nlFun) el ev lDT) = comStep (CInter nlFun el ev $ indTrLDT lDT i ltr)
-comStep (CInter (Com df nlFun {rll} {nrll}) el ev lDT) = (rll ** nrll ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
+comStep (CInter (Trans i ltr nlFun) el ev lDT) = let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter nlFun el ev $ indTrLDT lDT i ltr) in
+                                                     (x ** y ** z ** w ** (lteSuccRight s) ** d ** r)
+comStep (CInter (Com df nlFun {rll} {nrll}) el ev lDT {k=S q} {n=n}) = (rll ** nrll ** q ** (q+n) ** lteRefl ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
 
 
-data SFun : LFun ll rll -> Type where
+data SFun : LFun ll rll _ -> Type where
   SFunId : SFun $ LFunId
   SEmb : SFun elFun -> {auto prf : lFunUsesInput elFun = True} -> SFun nlFun -> SFun $ Emb i elFun nlFun {prf = prf}
   STrans : SFun nlFun -> SFun $ Trans i ltr nlFun
   SCom : (LinT lDT' -> {lDT : LinDepT ll} -> LinT lDT) -> SFun nlFun -> SFun $ Com df nlFun {ll=ll}
 
 
-simul : (c : Conti lFun) -> {auto prf : isCInter c = True} -> SFun lFun -> (ull ** urll ** nc : LFun ull urll  ** (Conti nc, SFun nc))
-simul c x = ?simul_rhs
+--simul : (c : Conti lFun _ ) -> {auto prf : isCInter c = True} -> SFun lFun -> (ull ** urll ** un ** nc : LFun ull urll un ** (Conti nc, SFun nc))
+--simul c x = ?simul_rhs
 
 
 
