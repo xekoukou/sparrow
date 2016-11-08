@@ -4,6 +4,7 @@ module Sparrow
 import Syntax.PreorderReasoning
 import Data.Vect
 import Data.HVect
+import Prelude.Uninhabited
 
 %access public export
 
@@ -362,8 +363,9 @@ mutual
     LFunId : LFun ll ll (S Z)
     ||| Another linear function is called and the transformation then continues from the results of that function.
     ||| @i determines the sub-tree which the linear function will take as input and transform.
-    Emb : (i : IndexLL ll pll) -> (lFun : LFun pll ell en) -> {auto prf : lFunUsesInput lFun = True} -> LFun (replLL ll i ell) rll n -> LFun ll rll (S (en + n))  --{auto prprf: comStepProductive lFun = True} ->
+    Emb : (i : IndexLL ll pll) -> (lFun : LFun pll ell en) -> {auto prf : lFunUsesInput lFun = True} -> LFun (replLL ll i ell) rll n -> LFun ll rll (S (en + n))
     --TODO Add an infinite version where it is at the last element of LFun acting like a continuation passing style.
+    CInf : (i : IndexLL ll pll) -> (lFun : LFun pll ell en) -> {auto prf : lFunUsesInput lFun = True} -> LFun ll ll (S Z)
     ||| Transformations of the tree to forms that can be used as inputs to known linear functions.
     Trans : (i : IndexLL ll pll) -> (ltr : LLTr pll orll) -> LFun (replLL ll i orll) rll n -> LFun ll rll (S n)
     ||| Transformation of input to output through consuption of the resource or through communication.
@@ -420,48 +422,79 @@ isCInter (CNext _ _ _ _ _) = False
 falseNotTrue : False = True -> Void
 falseNotTrue Refl impossible
 
+
+contiNEqSK : Conti _ n -> (k : Nat ** (n = S k))
+contiNEqSK CEnd = (Z ** Refl)
+contiNEqSK (CInter LFunId _ _ _ {n}) = (n ** Refl)
+contiNEqSK (CInter (Emb _ _ _ {en} {n=n'}) _ _ _{n}) = (plus (plus en n') n ** Refl)
+contiNEqSK (CInter (Trans _ _ _{n=n'}) _ _ _{n}) = (plus n' n ** Refl)
+contiNEqSK (CInter (Com _ _{n=n'}) _ _ _ {n}) = (plus n' n ** Refl)
+contiNEqSK (CNext LFunId _ _ _ _ {n}) = (n ** Refl)
+contiNEqSK (CNext (Emb _ _ _ {en} {n=n'}) _ _ _ _ {n}) = (plus (plus en n') n ** Refl)
+contiNEqSK (CNext (Trans _ _ _{n=n'}) _ _ _ _ {n}) = (plus n' n ** Refl)
+contiNEqSK (CNext (Com _ _{n=n'}) _ _ _ _ {n}) = (plus n' n ** Refl)
+
+
+--data LTCont : (k1 ** ll1 ** rll1 ** n1 ** c1 : LFun ll1 rll1 n1 ** Conti c1 k1) -> (k2 ** ll2 ** rll2 ** n2 ** c2 : LFun ll2 rll2 n2 ** Conti c2 k2) -> Type where
+--  LTC : (x1 : (k1 ** ll1 ** rll1 ** n1 ** c1 : LFun ll1 rll1 n1 ** Conti c1 k1)) -> (x2 : (k2 ** ll2 ** rll2 ** n2 ** c2 : LFun ll2 rll2 n2 ** Conti c2 k2)) -> LT (fst x1) (fst x2) -> LTCont x1 x2
+--
+--
+--Uninhabited (LTCont ((S k1) ** ll1 ** rll1 ** n1 ** c1 ** g1) ((S Z) ** ll2 ** rll2 ** n2 ** c2 ** g2)) where
+--  uninhabited (LTC ((S k1) ** ll1 ** rll1 ** n1 ** c1 ** g1) ((S Z) ** ll2 ** rll2 ** n2 ** c2 ** g2) x) = let LTESucc y = x in
+--                                                                                                               absurd y
+--
+--ltcAccessible : (x : (k ** ll ** rll ** n ** c : LFun ll rll n  ** Conti c k)) -> Accessible LTCont x
+--ltcAccessible x = Access (\v, prf => ltcAccessible' {x'=v} x prf)
+--  where
+--    ltcAccessible' : (m : (k ** ll ** rll ** n ** c : LFun ll rll n  ** Conti c k)) -> LTCont x' m -> Accessible LTCont x'
+--    ltcAccessible' (Z ** ll ** rll ** n ** c ** g) y = let (_ ** prf) = contiNEqSK g in
+--                                                           absurd prf
+--    ltcAccessible' ((S Z) ** ll ** rll ** n ** c ** g) (LTC (k' ** ll' ** rll' ** n' ** c' ** g') _ y) = let (_ ** prf) = contiNEqSK g' in
+--                                                                                                         let LTESucc z = y in
+--                                                                                                         let z' = replace {P=(\x => LTE x Z)} prf z in
+--                                                                                                         absurd z'
+--    ltcAccessible' ((S (S k)) ** ll ** rll ** n ** c ** g) (LTC (k' ** ll' ** rll' ** n' ** c' ** g') _ (LTESucc y)) = ?ltcAccessible'_rhs_2
+--
+
+
+
+--    ltcAccessible' ((S Z) ** ll ** rll ** n ** c ** g) y = absurd y
+--    ltcAccessible' (S k) (LTESucc x) 
+--        = Access (\val, p => ltcAccessible' k (lteTransitive p x))
+--
+
+
+lteRemoveLeft : (n,k,l : Nat) -> LTE (n + k) l -> LTE k l
+lteRemoveLeft Z k l x = x
+lteRemoveLeft (S j) k l x = lteRemoveLeft j k l $ lteSuccLeft x
+
+comStep'_emb_prf1 : (en,ne,k,bnd' : Nat) -> (isBnd' : LTE (plus (plus en ne) k) bnd') -> LTE (ne + k) bnd'
+comStep'_emb_prf1 en ne k bnd' isBnd' = lteRemoveLeft en (ne + k) bnd' $ rewrite (plusAssociative en ne k) in isBnd'
+  
+
+
+comStep' : (c : Conti lFun k) -> {auto prf : isCInter c = True} -> (bnd : Nat) -> (isBnd : LTE k bnd) -> (ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti nc nk) 
+comStep' CEnd {prf} _ _ = void $ falseNotTrue prf
+comStep' (CNext _ _ _ _ _) {prf} _ _ = void $ falseNotTrue prf
+comStep' (CInter (LFunId {ll}) ENil ev lDT) _ _ = (ll ** ll ** (S Z) ** (S Z) ** LFunId ** CEnd )
+comStep' (CInter LFunId (EL ei nflFun elFun pEL {n} {k}) ev lDT) (S bnd') (LTESucc isBnd') = 
+    let EV _ _ prL prEV = ev in
+    comStep' (CInter elFun pEL prEV (replLDT prL ei lDT)) bnd' isBnd'
+comStep' (CInter (Emb ni nflFun nlFun {ell} {en} {n=ne}) el ev lDT {n=k} ) (S bnd') (LTESucc isBnd')  = let tr = truncLDT lDT ni in
+    case (tr) of
+        Just tlDT => comStep' (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT) bnd' 
+                     (rewrite (plusAssociative en ne k) in isBnd')
+        Nothing => let ntr = ifNotTruncLDT lDT ni ell in
+                   case (ntr) of
+                     Just ntlDT => comStep' (CInter nlFun el ev ntlDT) bnd' $ comStep'_emb_prf1 en ne k bnd' isBnd'
+                     _ => assert_unreachable
+comStep' (CInter (Trans i ltr nlFun) el ev lDT) (S bnd') (LTESucc isBnd') = 
+    comStep' (CInter nlFun el ev $ indTrLDT lDT i ltr) bnd' isBnd'
+comStep' (CInter (Com df nlFun {rll} {nrll}) el ev lDT {k=S q} {n=n}) bnd' isBnd' = (rll ** nrll ** q ** (q+n) ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
+
+
 ||| Since communications can be infinite, this function is used to find the next Comm that contains the function to compute the
 ||| next LinDepT given a specific input by the user that abides to the specification, ie the previous LinDepT.
 ||| It also contains information so that when executed again with that info, it will give the next Comm.
-comStep : (c : Conti lFun k) -> {auto prf : isCInter c = True} -> (ull ** urll ** un ** nk ** sm : LTE (S nk) k ** nc : LFun ull urll un  ** Conti nc nk) 
-comStep CEnd {prf} = void $ falseNotTrue prf
-comStep (CNext _ _ _ _ _) {prf} = void $ falseNotTrue prf
-comStep (CInter (LFunId {ll}) ENil ev lDT) = (ll ** ll ** (S Z) ** (S Z) ** (LTESucc $ LTESucc LTEZero) ** LFunId ** CEnd )
-comStep (CInter LFunId (EL ei nflFun elFun pEL {n} {k}) ev lDT) = let EV _ _ prL prEV = ev in
-                                                                  let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter elFun pEL prEV (replLDT prL ei lDT)) in
-                                                                  (x ** y ** z ** w ** (lteSuccRight s) ** d ** r)
-comStep (CInter (Emb ni nflFun nlFun {ell} {en} {n=ne}) el ev lDT {n=k} ) = let tr = truncLDT lDT ni in
-                                                  case (tr) of
-                                                      Just tlDT => let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT) in
-                                                      rewrite (sym $ plusAssociative en ne k) in 
-                                                      (x ** y ** z ** w ** (lteSuccRight s) ** d ** r)
-                                                      Nothing => let ntr = ifNotTruncLDT lDT ni ell in
-                                                                 case (ntr) of
-                                                                   Just ntlDT => let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter nlFun el ev ntlDT) in
-                                                                                     (x ** y ** z ** w ** (lteSuccRight $ lteTransitive s 
-                                                                                     (
-                                                                                       rewrite (sym $ plusAssociative en ne k) in 
-                                                                                       rewrite (plusCommutative en (ne+k))     in 
-                                                                                               lteAddRight (ne+k) {m=en})
-                                                                                                                                                          ) ** d ** r)
-                                                                   _ => assert_unreachable
-comStep (CInter (Trans i ltr nlFun) el ev lDT) = let (x ** y ** z ** w ** s ** d ** r) = comStep (CInter nlFun el ev $ indTrLDT lDT i ltr) in
-                                                     (x ** y ** z ** w ** (lteSuccRight s) ** d ** r)
-comStep (CInter (Com df nlFun {rll} {nrll}) el ev lDT {k=S q} {n=n}) = (rll ** nrll ** q ** (q+n) ** lteRefl ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
-
-
-data SFun : LFun ll rll _ -> Type where
-  SFunId : SFun $ LFunId
-  SEmb : SFun elFun -> {auto prf : lFunUsesInput elFun = True} -> SFun nlFun -> SFun $ Emb i elFun nlFun {prf = prf}
-  STrans : SFun nlFun -> SFun $ Trans i ltr nlFun
-  SCom : (LinT lDT' -> {lDT : LinDepT ll} -> LinT lDT) -> SFun nlFun -> SFun $ Com df nlFun {ll=ll}
-
-
---simul : (c : Conti lFun _ ) -> {auto prf : isCInter c = True} -> SFun lFun -> (ull ** urll ** un ** nc : LFun ull urll un ** (Conti nc, SFun nc))
---simul c x = ?simul_rhs
-
-
-
-
-
-
+comStep : (c : Conti lFun k) -> {auto prf : isCInter c = True} -> (ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti nc nk)
+comStep c {k} {prf} = comStep' c {prf=prf} k lteRefl
