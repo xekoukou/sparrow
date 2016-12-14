@@ -67,15 +67,17 @@ data LinLogic: Type where
 --  ||| Represents a lambda (LFun) type.
 --  LambdaT : LinLogic -> LinLogic -> LinLogic 
   ||| Both sub-connectives need to be sent or received.
-  And  : Inf LinLogic -> Inf LinLogic -> LinLogic
+  And  : LinLogic -> LinLogic -> LinLogic
   ||| Only one sub-connective can be sent or received
   ||| and the protocol specification has no control over which
   ||| choice will be made.
-  Uor  : Inf LinLogic -> Inf LinLogic -> LinLogic
+  Uor  : LinLogic -> LinLogic -> LinLogic
   ||| Only one sub-connective can be sent or received 
   ||| and the protocol determines the choice based on the previous
   ||| input of the agent.
-  Dor  : Inf LinLogic -> Inf LinLogic -> LinLogic  -- d decides on that
+  Dor  : LinLogic -> LinLogic -> LinLogic  -- d decides on that
+
+
 
 
 ||| Transformations to the Linear logic so as to construct

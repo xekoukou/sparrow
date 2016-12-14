@@ -15,10 +15,10 @@ data LinDepT : LinLogic -> Type where
   |||
   ||| @ hv is used to compute the type of this specific input/output.
   TAtom : {dt : Vect n Type} -> {df : genT dt} -> (hv : HVect dt) -> LinDepT $ Atom df {dt=dt}
-  TAnd  : LinDepT a -> LinDepT b         -> LinDepT $ And a b
-  TUor  : LinDepT a -> LinDepT b         -> LinDepT $ Uor a b
+  TAnd  : Inf $ LinDepT a -> Inf $ LinDepT b         -> LinDepT $ And a b
+  TUor  : Inf $ LinDepT a -> Inf $ LinDepT b         -> LinDepT $ Uor a b
   ||| Dor takes a specific value. Only one of the two possible.
-  TDor  : Either (LinDepT a) (LinDepT b) -> LinDepT $ Dor a b
+  TDor  : Either (Inf $ LinDepT a) (Inf $ LinDepT b) -> LinDepT $ Dor a b
 
 
 
@@ -33,7 +33,8 @@ trLDT (TAnd x z) (AndC y)       = trLDT (TAnd z x) y
 trLDT (TUor x z) (UorC y)       = trLDT (TUor z x) y
 trLDT (TAnd (TDor (Left l)) x) (AndDorD y)   = trLDT (TDor $ Left $ TAnd l x) y
 trLDT (TAnd (TDor (Right r)) x) (AndDorD y)  = trLDT (TDor $ Right $ TAnd r x) y
-trLDT (TAnd (TUor x w) z) (AndUorD y)             = trLDT (TUor (TAnd x z) (TAnd w z)) y
+trLDT (TAnd (TUor x w) z) (AndUorD y)        = trLDT (TUor (TAnd x z) (TAnd w z)) y
+
 
 
 ||| Trancuates the LinDepT, leaving only the node that is

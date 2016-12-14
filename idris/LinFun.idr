@@ -8,7 +8,7 @@ import public LinT
 %default total
 
 
-
+-- IMPORTANT TODO We could only allow parallel execution of Embedding that have disjoint input. This way, we can reuse LFun and feed it into the epoller.
 
 
 mutual
@@ -60,21 +60,21 @@ data EVect : EList ni nflFun nlFun n -> Type where
 
 
 
-data Conti : LFun ll rll _ -> Nat -> Type where
-  CEnd    : Conti (LFunId {ll=ll}) (S Z)
+data Conti : LinDepT prll -> LFun ll rll _ -> Nat -> Type where
+  CEnd    : Conti prLDT (LFunId {ll=ll}) (S Z)
   CInter   : (lFun : LFun ll rll k) -> {flFun : LFun pll rll _} -> (el : EList ei flFun elFun n) -> EVect el 
-            -> LinDepT ll -> Conti lFun (k + n)
-  CNext   : (lFun : LFun ll rll k) -> {flFun : LFun pll rll _} -> (el : EList ei flFun elFun n) -> EVect el -> (prLDT : LinDepT ll') ->
-            (LinT prLDT -> LinDepT ll) -> Conti lFun (k + n)
+            -> LinDepT ll -> Conti prLDT lFun (k + n)
+  CNext   : (lFun : LFun ll rll k) -> {flFun : LFun pll rll _} -> (el : EList ei flFun elFun n) -> EVect el -> (prLDT : LinDepT prll) ->
+            (LinT prLDT -> LinDepT ll) -> Conti prLDT lFun (k + n)
 
-isCInter : Conti lFun _ -> Bool
+isCInter : Conti _ lFun _ -> Bool
 isCInter CEnd              = False
 isCInter (CInter _ _ _ _)  = True
 isCInter (CNext _ _ _ _ _) = False
 
 
 
-contiNEqSK : Conti _ n -> (k : Nat ** (n = S k))
+contiNEqSK : Conti _ _ n -> (k : Nat ** (n = S k))
 contiNEqSK CEnd = (Z ** Refl)
 contiNEqSK (CInter LFunId _ _ _ {n}) = (n ** Refl)
 contiNEqSK (CInter (Emb _ _ _ {en} {n=n'}) _ _ _{n}) = (plus (plus en n') n ** Refl)
@@ -99,29 +99,29 @@ comStep'_emb_prf1 en ne k bnd' isBnd' = lteRemoveLeft en (ne + k) bnd' $ rewrite
   
 
 
-comStep' : (c : Conti lFun k) -> {auto prf : isCInter c = True} -> (bnd : Nat) -> (isBnd : LTE k bnd) -> (ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti nc nk) 
+comStep' : (c : Conti _ lFun k) -> {auto prf : isCInter c = True} -> (bnd : Nat) -> (isBnd : LTE k bnd) -> (prll ** prLDT : LinDepT prll ** ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti prLDT nc nk) 
 comStep' CEnd {prf} _ _ = void $ falseNotTrue prf
 comStep' (CNext _ _ _ _ _) {prf} _ _ = void $ falseNotTrue prf
-comStep' (CInter (LFunId {ll}) ENil ev lDT) _ _ = (ll ** ll ** (S Z) ** (S Z) ** LFunId ** CEnd )
-comStep' (CInter LFunId (EL ei nflFun elFun pEL {n} {k}) ev lDT) (S bnd') (LTESucc isBnd') = 
+comStep' (CInter (LFunId {ll}) ENil ev lDT) _ _ = (ll ** lDT ** ll ** ll ** (S Z) ** (S Z) ** LFunId ** CEnd )
+comStep' (CInter LFunId (EL ei nflFun elFun pEL {n} {k}) ev lDT ) (S bnd') (LTESucc isBnd') = 
     let EV _ _ prL prEV = ev in
-    comStep' (CInter elFun pEL prEV (replLDT prL ei lDT)) bnd' isBnd'
-comStep' (CInter (Emb ni nflFun nlFun {ell} {en} {n=ne}) el ev lDT {n=k} ) (S bnd') (LTESucc isBnd')  = let tr = truncLDT lDT ni in
+    comStep' (CInter elFun pEL prEV (replLDT prL ei lDT) {prLDT=lDT}) bnd' isBnd'
+comStep' (CInter (Emb ni nflFun nlFun {pll} {ell} {en} {n=ne}) el ev lDT {n=k} ) (S bnd') (LTESucc isBnd')  = let tr = truncLDT lDT ni in
     case (tr) of
-        Just tlDT => comStep' (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT) bnd' 
+        Just tlDT => comStep' (CInter nflFun (EL ni nflFun nlFun el) (EV ni nlFun lDT ev) tlDT {prLDT=lDT} ) bnd' 
                      (rewrite (plusAssociative en ne k) in isBnd')
         Nothing => let ntr = ifNotTruncLDT lDT ni ell in
                    case (ntr) of
-                     Just ntlDT => comStep' (CInter nlFun el ev ntlDT) bnd' $ comStep'_emb_prf1 en ne k bnd' isBnd'
+                     Just ntlDT => comStep' (CInter nlFun el ev ntlDT {prLDT=lDT}) bnd' $ comStep'_emb_prf1 en ne k bnd' isBnd'
                      _ => assert_unreachable
 comStep' (CInter (Call _ _) _ _ _) _ _ = ?ddsfdf
-comStep' (CInter (Trans ltr nlFun) el ev lDT) (S bnd') (LTESucc isBnd') = 
-    comStep' (CInter nlFun el ev $ trLDT lDT ltr) bnd' isBnd'
-comStep' (CInter (Com df nlFun {rll} {nrll}) el ev lDT {k=S q} {n=n}) bnd' isBnd' = (rll ** nrll ** q ** (q+n) ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
+comStep' (CInter (Trans ltr nlFun ) el ev lDT ) (S bnd') (LTESucc isBnd') = 
+    comStep' (CInter nlFun el ev (trLDT lDT ltr) {prLDT=lDT}) bnd' isBnd'
+comStep' (CInter (Com df nlFun {rll} {nrll}) el ev lDT {ll} {k=S q} {n=n}) bnd' isBnd' = (ll ** lDT ** rll ** nrll ** q ** (q+n) ** nlFun ** (CNext nlFun el ev lDT $ df lDT))
 
 
 ||| Since communications can be infinite, this function is used to find the next Comm that contains the function to compute the
 ||| next LinDepT given a specific input by the user that abides to the specification, ie the previous LinDepT.
 ||| It also contains information so that when executed again with that info, it will give the next Comm.
-comStep : (c : Conti lFun k) -> {auto prf : isCInter c = True} -> (ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti nc nk)
+comStep : (c : Conti _ lFun k) -> {auto prf : isCInter c = True} -> (prll ** prLDT : LinDepT prll ** ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti prLDT nc nk)
 comStep c {k} {prf} = comStep' c {prf=prf} k lteRefl
