@@ -1,9 +1,12 @@
+{-# OPTIONS --exact-split #-}
+
 module LinLogic where
 
 open import Data.Vec
 import Level
 open import Size
 open import Data.Nat
+
 
 infixr 5 _∷_
 
@@ -227,15 +230,22 @@ module SetLLMp where
 
 open import Data.Bool
 
+module _ where
 
--- TODO Is this easiliy reducible? What happens to ∅?
-onlyNilOrNoNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
-onlyNilOrNoNilFinite ∅ = true
-onlyNilOrNoNilFinite x = noNilFinite x where
-  noNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
-  noNilFinite ∅ = false
-  noNilFinite (τ x₁) = true
-  noNilFinite (y LinLogic.∧ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
-  noNilFinite (y LinLogic.∨ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
-  noNilFinite (y ∂ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
-  noNilFinite (call x₁) = false
+  private
+    noNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+    noNilFinite ∅ = false
+    noNilFinite (τ x₁) = true
+    noNilFinite (y LinLogic.∧ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+    noNilFinite (y LinLogic.∨ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+    noNilFinite (y ∂ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+    noNilFinite (call x₁) = false
+
+  -- TODO Do we have to do that?
+  onlyNilOrNoNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+  onlyNilOrNoNilFinite ∅ = true
+  onlyNilOrNoNilFinite (τ x) = noNilFinite (τ x)
+  onlyNilOrNoNilFinite (x LinLogic.∧ x₁) = noNilFinite (x LinLogic.∧ x₁)
+  onlyNilOrNoNilFinite (x LinLogic.∨ x₁) = noNilFinite (x LinLogic.∨ x₁)
+  onlyNilOrNoNilFinite (x ∂ x₁) = noNilFinite (x ∂ x₁)
+  onlyNilOrNoNilFinite (call x) = noNilFinite (call x)

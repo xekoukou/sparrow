@@ -1,3 +1,5 @@
+{-# OPTIONS --exact-split #-}
+
 module LinDepT where
 
 open import LinLogic public

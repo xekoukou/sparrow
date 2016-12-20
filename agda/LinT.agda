@@ -1,3 +1,5 @@
+{-# OPTIONS --exact-split #-}
+
 module LinT where
 
 open import LinDepT public

@@ -1,3 +1,5 @@
+{-# OPTIONS --exact-split #-}
+
 module LinFun where
 
 open import LinT public
