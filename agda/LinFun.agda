@@ -39,8 +39,50 @@ module _ where
       usesInput` : ∀{i u rll ll} → LFun {i} {u} {rll} {ll} → MSetLL ll → Bool
       usesInput` I s = false
       usesInput` (_⊂_ {ell = ell} {ind = ind} elf lf) ∅ = usesInput` lf (¬∅ (∅-add ind ell))
-      usesInput` (_⊂_ {ell = ell} {ind = ind} elf lf) (¬∅ s) with (contruct $ add s ind ell)
-      ... | ns = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ↓} elf lf) (¬∅ s) with (contruct $ add s ↓ ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {↓} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∧ = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ∧→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∧→ ns₁ = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_ LinLogic.∨ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∨ = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_ LinLogic.∨ _)} {_} {↓} elf lf) (¬∅ s) | ∨→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_ LinLogic.∨ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∨→ ns₁ = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_∂_ _ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∂ = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_∂_ _ _)} {_} {↓} elf lf) (¬∅ s) | ∂→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {.(_∂_ _ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∂→ ns₁ = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ind ←∧} elf lf) (¬∅ s) with (contruct $ add s (ind ←∧) ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ns ←∧ = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ∧→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ns ←∧→ ns₁ = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ∧→ ind} elf lf) (¬∅ s) with (contruct $ add s (∧→ ind) ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ns ←∧ = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ∧→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ns ←∧→ ns₁ = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ind ←∨} elf lf) (¬∅ s) with (contruct $ add s (ind ←∨) ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ns ←∨ = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ∨→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ns ←∨→ ns₁ = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ∨→ ind} elf lf) (¬∅ s) with (contruct $ add s (∨→ ind) ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ns ←∨ = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ∨→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ns ←∨→ ns₁ = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ind ←∂} elf lf) (¬∅ s) with (contruct $ add s (ind ←∂) ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ns ←∂ = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ∂→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ns ←∂→ ns₁ = {!!}
+      usesInput` (_⊂_ {ell = ell} {ind = ∂→ ind} elf lf) (¬∅ s) with (contruct $ add s (∂→ ind) ell)
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ↓ = true
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ns ←∂ = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ∂→ ns = {!!}
+      usesInput` (_⊂_ {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ns ←∂→ ns₁ = {!!}
+
+--with (contruct $ add s ind ell)
+--      ... | ns = {!!}
       usesInput` (tr lf₁) s = {!!}
       usesInput` (com df lf₁) s = {!!}
       usesInput` (call x) s = {!!}
