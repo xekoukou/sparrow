@@ -17,16 +17,18 @@ mutual
   -- Do not send anything.
     ∅    :                                  LinDepT ∅
     τ    : ∀{n} → {dt : Vec (Set u) n} → {df : genT dt} → (hv : HVec dt) → LinDepT (τ {dt = dt} df)
-    _∧_  : ∀{l r} → LinDepT {i} l → LinDepT {i} r → LinDepT (l ∧ r)
-    _∨_  : ∀{l r} → LinDepT {i} l → LinDepT {i} r → LinDepT (l ∨ r)
+    _∧_  : ∀{l r} → LinDepT l → LinDepT r → LinDepT (l ∧ r)
+    _∨_  : ∀{l r} → LinDepT l → LinDepT r → LinDepT (l ∨ r)
     -- ∂ takes a specific value. Only one of the two possible.
-    ∂    : ∀{l r} → LinDepT {i} l ⊎ LinDepT {i} r → LinDepT (l ∂ r)
-    call : ∀{∞ll} → ∞LinDepT {i} ∞ll → LinDepT (call ∞ll)
+    ∂    : ∀{l r} → LinDepT l ⊎ LinDepT r → LinDepT (l ∂ r)
+    call : ∀{∞ll} → ∞LinDepT ∞ll → LinDepT (call ∞ll)
 
   record ∞LinDepT {i : Size} {u} (∞ll : ∞LinLogic i {u}) : Set (suc u) where
     coinductive
     field
       step : {j : Size< i} → LinDepT {j} (step ∞ll)
+
+open ∞LinDepT public
 
 -- Given a linear transformation and a LinDepT,
 -- this function computes the LinDepT of the transformed Linear Logic.

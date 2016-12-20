@@ -225,3 +225,17 @@ module SetLLMp where
   itran (∂→ s) (∂→ ind) tr     = ∂→ itran s ind tr
   itran (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itran s₁ ind tr
 
+open import Data.Bool
+
+
+-- TODO Is this easiliy reducible? What happens to ∅?
+onlyNilOrNoNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+onlyNilOrNoNilFinite ∅ = true
+onlyNilOrNoNilFinite x = noNilFinite x where
+  noNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+  noNilFinite ∅ = false
+  noNilFinite (τ x₁) = true
+  noNilFinite (y LinLogic.∧ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+  noNilFinite (y LinLogic.∨ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+  noNilFinite (y ∂ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+  noNilFinite (call x₁) = false
