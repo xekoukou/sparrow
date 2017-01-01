@@ -124,4 +124,4 @@ comStep' (CInter (Com df nlFun {rll} {nrll}) el ev lDT {ll} {k=S q} {n=n}) bnd' 
 ||| next LinDepT given a specific input by the user that abides to the specification, ie the previous LinDepT.
 ||| It also contains information so that when executed again with that info, it will give the next Comm.
 comStep : (c : Conti _ lFun k) -> {auto prf : isCInter c = True} -> (prll ** prLDT : LinDepT prll ** ull ** urll ** un ** nk ** nc : LFun ull urll un  ** Conti prLDT nc nk)
-comStep c {k} {prf} = comStep' c {prf=prf} k lteRefl
+comStep c {k} {prf} = ?esf --comStep' c {prf=prf} k lteRefl

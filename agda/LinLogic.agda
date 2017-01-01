@@ -228,10 +228,22 @@ module SetLLMp where
   itran (∂→ s) (∂→ ind) tr     = ∂→ itran s ind tr
   itran (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itran s₁ ind tr
 
-open import Data.Bool
+-- TODO FilledSetLL describes a SetLL as it would be when used to indicate that all
+-- linear functions have being executed/cut.
+  data FilledSetLL {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → Set where
+    ↓     :                              FilledSetLL (↓ {ll = ∅})
+    _←∧→_   : ∀{rs ls s s₁} → FilledSetLL s → FilledSetLL s₁ → FilledSetLL (_←∧→_ {rs = rs} {ls = ls} s s₁)   
+    _←∨   : ∀{rs ls s} → FilledSetLL s → FilledSetLL (_←∨ {rs = rs} {ls = ls} s) 
+    ∨→_   : ∀{rs ls s} → FilledSetLL s → FilledSetLL (∨→_ {rs = rs} {ls = ls} s) 
+    _←∂   : ∀{rs ls s} → FilledSetLL s → FilledSetLL (_←∂ {rs = rs} {ls = ls} s) 
+    ∂→_   : ∀{rs ls s} → FilledSetLL s → FilledSetLL (∂→_ {rs = rs} {ls = ls} s) 
+  
+
 
 module _ where
 
+  open import Data.Bool
+  
   private
     noNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
     noNilFinite ∅ = false
@@ -242,10 +254,23 @@ module _ where
     noNilFinite (call x₁) = false
 
   -- TODO Do we have to do that?
-  onlyNilOrNoNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
-  onlyNilOrNoNilFinite ∅ = true
-  onlyNilOrNoNilFinite (τ x) = noNilFinite (τ x)
-  onlyNilOrNoNilFinite (x LinLogic.∧ x₁) = noNilFinite (x LinLogic.∧ x₁)
-  onlyNilOrNoNilFinite (x LinLogic.∨ x₁) = noNilFinite (x LinLogic.∨ x₁)
-  onlyNilOrNoNilFinite (x ∂ x₁) = noNilFinite (x ∂ x₁)
-  onlyNilOrNoNilFinite (call x) = noNilFinite (call x)
+  onlyOneNilOrNoNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+  onlyOneNilOrNoNilFinite ∅ = true
+  onlyOneNilOrNoNilFinite (τ x) = noNilFinite (τ x)
+  onlyOneNilOrNoNilFinite (x LinLogic.∧ x₁) = noNilFinite (x LinLogic.∧ x₁)
+  onlyOneNilOrNoNilFinite (x LinLogic.∨ x₁) = noNilFinite (x LinLogic.∨ x₁)
+  onlyOneNilOrNoNilFinite (x ∂ x₁) = noNilFinite (x ∂ x₁)
+  onlyOneNilOrNoNilFinite (call x) = noNilFinite (call x)
+
+mutual
+  data All∅ {i u} : LinLogic i {u} → Set where
+    ∅ :                               All∅ ∅
+    _∧_  : ∀{l r} → All∅ l → All∅ r → All∅ (l ∧ r)
+    _∨_  : ∀{l r} → All∅ l → All∅ r → All∅ (l ∨ r)
+    _∂_  : ∀{l r} → All∅ l → All∅ r → All∅ (l ∂ r)
+    call : ∀{∞ll} → ∞All∅ ∞ll       → All∅ (call ∞ll)
+  
+  record ∞All∅ {i u} (∞ll : ∞LinLogic i {u}) : Set where
+    coinductive
+    field
+      step : {j : Size< i} → All∅ {i = j} {u = u} (step ∞ll)

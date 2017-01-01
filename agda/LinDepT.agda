@@ -105,4 +105,30 @@ module _ {u : Level} where
   ifNotTruncLDT (∂ (inj₁ l)) (∂→ ind) rll = just (∂ (inj₁ l))
   ifNotTruncLDT (∂ (inj₂ r)) (∂→ ind) rll =  (ifNotTruncLDT r ind rll) >>= λ r → just (∂ (inj₂ r))
 
-  
+
+module _ where
+
+  open SetLLMp
+
+  data LinState {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → Set (suc u) where
+    ↓     : ∀{ll}         → LinDepT ll               → LinState (↓ {ll = ll})
+    _←∧   : ∀{rs ls s}    → LinState s               → LinState (_←∧ {rs = rs} {ls = ls} s)   
+    ∧→_   : ∀{rs ls s}    → LinState s               → LinState (∧→_ {rs = rs} {ls = ls} s)   
+    _←∧→_ : ∀{rs ls s s₁} → LinState s → LinState s₁ → LinState (_←∧→_ {rs = rs} {ls = ls} s s₁)   
+    _←∨   : ∀{rs ls s}    → LinState s               → LinState (_←∨ {rs = rs} {ls = ls} s) 
+    ∨→_   : ∀{rs ls s}    → LinState s               → LinState (∨→_ {rs = rs} {ls = ls} s) 
+    _←∂   : ∀{rs ls s}    → LinState s               → LinState (_←∂ {rs = rs} {ls = ls} s) 
+    ∂→_   : ∀{rs ls s}    → LinState s               → LinState (∂→_ {rs = rs} {ls = ls} s) 
+
+
+-- We create a LinDepT in order to fill the gap for the cases that we do not have data.
+--leftAll : All∅ ll → LinDepT
+
+--all∅ : ∀{ll s} → FilledSetLL {ll = ll} s → LinDepT ll
+--all∅ ↓ = ∅
+--all∅ {ll = ls} (x ←∧) = {!_←∧ !}
+--all∅ (∧→ x) = {!!}
+--all∅ (x ←∨) = {!!}
+--all∅ (∨→ x) = {!!}
+--all∅ (x ←∂) = {!!}
+--all∅ (∂→ x) = {!!}
