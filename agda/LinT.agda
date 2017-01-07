@@ -12,13 +12,15 @@ open import Level
 
 mutual
   data LinT {i : Size} {u} : ∀{ll} → LinDepT {i} {u} ll → Set (suc u) where
-    ∅   : LinT ∅
-    τ   :  ∀{n} → {dt : Vec (Set u) n} → {df : genT dt} → {hv : HVec dt}
-           → applyH hv df → LinT $ τ {i} {u} {n} {dt} {df} hv
-    _∧_ : ∀{lll l rll r} → LinT {ll = lll} l → LinT {ll = rll} r → LinT (l ∧ r)
-    ∨   : ∀{lll l rll r} → LinT {ll = lll} l ⊎ LinT {ll = rll} r → LinT (l ∨ r)
-    _←∂ : ∀{lll l rll} → LinT {ll = lll} l → LinT (∂ {l = lll} {r = rll} $ inj₁ l)
-    ∂→_ : ∀{lll rll r} → LinT {ll = rll} r → LinT (∂ {l = lll} {r = rll} $ inj₂ r)
+    ∅    : LinT ∅
+    τ    :  ∀{n} → {dt : Vec (Set u) n} → {df : genT dt} → {hv : HVec dt}
+            → applyH hv df → LinT $ τ {i} {u} {n} {dt} {df} hv
+    _∧_  : ∀{lll l rll r} → LinT {ll = lll} l → LinT {ll = rll} r → LinT (l ∧ r)
+    ∨    : ∀{lll l rll r} → LinT {ll = lll} l ⊎ LinT {ll = rll} r → LinT (l ∨ r)
+    _←∨  : ∀{lll l rll} → LinT {ll = lll} l → LinT {ll = _∨_ lll rll} (l ←∨)
+    ∨→_  : ∀{lll rll r} → LinT {ll = rll} r → LinT {ll = _∨_ lll rll} (∨→ r)
+    _←∂  : ∀{lll l rll} → LinT {ll = lll} l → LinT (∂ {l = lll} {r = rll} $ inj₁ l)
+    ∂→_  : ∀{lll rll r} → LinT {ll = rll} r → LinT (∂ {l = lll} {r = rll} $ inj₂ r)
     call : ∀{∞ll} → {∞ldt : ∞LinDepT ∞ll} → ∞LinT ∞ldt → LinT (call ∞ldt)
 
   record ∞LinT {i : Size} {u} {ll} (∞ldt : ∞LinDepT {i} {u} ll) : Set (suc u) where
