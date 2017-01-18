@@ -2,56 +2,65 @@
 
 module LinLogic where
 
-open import Data.Vec
 import Level
 open import Size
 open import Data.Nat
+open import Data.Product
+open import Data.Unit
+open import Data.Empty
+open import Data.List
+open import Relation.Nullary
 
 
-infixr 5 _∷_
+module _ where
 
-data HVec {u} : ∀{n} -> Vec (Set u) n -> Set u where
-  []  : HVec []
-  _∷_ : ∀{n} {A : Set u} {vt : Vec (Set u) n} (x : A) (xs : HVec vt) -> HVec (A ∷ vt)
+  open import Data.Vec
+  
+  infixr 5 _∷_
+  
+  data HVec {u} : ∀{n} -> Vec (Set u) n -> Set u where
+    []  : HVec []
+    _∷_ : ∀{n} {A : Set u} {vt : Vec (Set u) n} (x : A) (xs : HVec vt) -> HVec (A ∷ vt)
+  
+  
+  genT : ∀{u} {n : ℕ} -> Vec (Set u) n -> Set (Level.suc u)
+  genT {u} [] = Set u
+  genT (x ∷ xs) =  x -> genT xs
+  
+  applyH : ∀{u n} -> {vt : Vec (Set u) n} -> HVec vt -> genT vt -> Set u
+  applyH [] y = y
+  applyH (x ∷ xs) y = applyH xs (y x)
+  
+  
+  mutual
+    -- Linear Logic Connectives : Used to describe the input
+    -- and output of an agent.
+    data LinLogic (i : Size) {u} : Set (Level.suc u) where
+      -- When nothing is sent or received
+      ∅    :                                       LinLogic i
+      -- Contains a function that computes a dependent type.
+      τ    : ∀{n} {dt : Vec (Set u) n} → genT dt → LinLogic i
+      -- Both sub-trees need to be sent or received.
+      _∧_  : LinLogic i {u} → LinLogic i {u}     → LinLogic i
+      -- Only one sub-tree can be sent or received
+      -- and the protocol specification has no control
+      -- over which choice will be made.
+      _∨_  : LinLogic i {u} → LinLogic i {u}     → LinLogic i
+      -- Only one sub-tree can be sent or received
+      -- and the protocol specification determines the choice
+      -- based on the previous input of the agent.
+      _∂_  : LinLogic i {u} → LinLogic i {u}     → LinLogic i
+      -- The input or output of a linear function.
+      -- The function can be recursive or corecursive.
+      call : ∞LinLogic i {u}                     → LinLogic i
+  
+    record ∞LinLogic (i : Size) {u} : Set (Level.suc u) where
+      coinductive
+      field
+        step : {j : Size< i} → LinLogic j {u = u}
+  
+  open ∞LinLogic public
 
-
-genT : ∀{u} {n : ℕ} -> Vec (Set u) n -> Set (Level.suc u)
-genT {u} [] = Set u
-genT (x ∷ xs) =  x -> genT xs
-
-applyH : ∀{u n} -> {vt : Vec (Set u) n} -> HVec vt -> genT vt -> Set u
-applyH [] y = y
-applyH (x ∷ xs) y = applyH xs (y x)
-
-
-mutual
-  -- Linear Logic Connectives : Used to describe the input
-  -- and output of an agent.
-  data LinLogic (i : Size) {u} : Set (Level.suc u) where
-    -- When nothing is sent or received
-    ∅    :                                       LinLogic i
-    -- Contains a function that computes a dependent type.
-    τ    : ∀{n} {dt : Vec (Set u) n} → genT dt → LinLogic i
-    -- Both sub-trees need to be sent or received.
-    _∧_  : LinLogic i {u} → LinLogic i {u}     → LinLogic i
-    -- Only one sub-tree can be sent or received
-    -- and the protocol specification has no control
-    -- over which choice will be made.
-    _∨_  : LinLogic i {u} → LinLogic i {u}     → LinLogic i
-    -- Only one sub-tree can be sent or received
-    -- and the protocol specification determines the choice
-    -- based on the previous input of the agent.
-    _∂_  : LinLogic i {u} → LinLogic i {u}     → LinLogic i
-    -- The input or output of a linear function.
-    -- The function can be recursive or corecursive.
-    call : ∞LinLogic i {u}                     → LinLogic i
-
-  record ∞LinLogic (i : Size) {u} : Set (Level.suc u) where
-    coinductive
-    field
-      step : {j : Size< i} → LinLogic j {u = u}
-
-open ∞LinLogic public
 
 -- Transformations of the Linear Logic so as to construct
 -- the correct sub-tree that is to be the input of a linear function.
@@ -74,10 +83,11 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u wh
   _←∨ : ∀{li ri} → IndexLL rll li → IndexLL rll (li ∨ ri) 
   ∨→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∨ ri) 
   _←∂ : ∀{li ri} → IndexLL rll li → IndexLL rll (li ∂ ri) 
-  ∂→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∂ ri) 
+  ∂→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∂ ri)
+
 
 -- Replaces a node of a linear logic tree with another one.
-replLL : ∀{i u q} → (ll : LinLogic i {u}) → IndexLL {i} {u} q ll → LinLogic i {u} → LinLogic i {u}
+replLL : ∀{i u q} → {j : Size< ↑ i} → (ll : LinLogic i {u}) → IndexLL {i} {u} q ll → LinLogic j {u} → LinLogic j {u}
 replLL ll ↓ c            = c
 replLL (l ∧ r) (li ←∧) c = (replLL l li c) ∧ r
 replLL (l ∧ r) (∧→ ri) c = l ∧ (replLL r ri c)
@@ -85,6 +95,8 @@ replLL (l ∨ r) (li ←∨) c = (replLL l li c) ∨ r
 replLL (l ∨ r) (∨→ ri) c = l ∨ (replLL r ri c)
 replLL (l ∂ r) (li ←∂) c = (replLL l li c) ∂ r
 replLL (l ∂ r) (∂→ ri) c = l ∂ (replLL r ri c)
+
+
 
 -- A non-empty set of nodes in a Linear Logic tree.
 data SetLL {i : Size} {u} : LinLogic i {u} → Set where
@@ -107,8 +119,8 @@ data MSetLL {i : Size} {u} : LinLogic i {u} → Set where
 
 module SetLLMp where
 -- Add a node to an empty set (and potentially replace the linear logic sub-tree).
-  ∅-add : ∀{i u ll q} → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic i {u})
-          → SetLL (replLL ll ind rll)
+  ∅-add : ∀{i u ll q} → {j : Size< ↑ i} → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j {u})
+          → SetLL (replLL {j = j} ll ind rll)
   ∅-add ↓ rll = ↓
   ∅-add (ind ←∧) rll = (∅-add ind rll) ←∧
   ∅-add (∧→ ind) rll = ∧→ (∅-add ind rll)
@@ -131,41 +143,232 @@ module SetLLMp where
   contruct (∂→ x)     = ∂→ (contruct x)
   contruct (x ←∂→ x₁) = ↓
 
+
+-- TODO Why do we need dsize? we shouldn't need it.
+  dsize : ∀{i u ll} → {j : Size< ↑ i} → SetLL {i} {u} ll → SetLL {j} {u} ll
+  dsize ↓          = ↓
+  dsize (x ←∧)     = (dsize x) ←∧
+  dsize (∧→ x)     = ∧→ (dsize x)
+  dsize (x ←∧→ x₁) = (dsize x ←∧→ dsize x₁)
+  dsize (x ←∨)     = (dsize x) ←∨
+  dsize (∨→ x)     = ∨→ (dsize x)
+  dsize (x ←∨→ x₁) = (dsize x ←∨→ dsize x₁)
+  dsize (x ←∂)     = (dsize x) ←∂
+  dsize (∂→ x)     = ∂→ (dsize x)
+  dsize (x ←∂→ x₁) = (dsize x ←∂→ dsize x₁)
+
+
 -- Add a node to a set (and potentially replace the linear logic sub-tree).
-  add : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic i {u})
-        → SetLL (replLL ll ind rll)
+  add : ∀{i u ll q} → {j : Size< ↑ i} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j {u})
+        → SetLL (replLL {j = j} ll ind rll)
   add ↓ ind rll               = ↓
   add (s ←∧) ↓ rll            = ↓
   add (s ←∧) (ind ←∧) rll     = (add s ind rll) ←∧
-  add (s ←∧) (∧→ ind) rll     = s ←∧→ (∅-add ind rll)
+  add (s ←∧) (∧→ ind) rll     = dsize s ←∧→ (∅-add ind rll)
   add (∧→ s) ↓ rll            = ↓
-  add (∧→ s) (ind ←∧) rll     = (∅-add ind rll) ←∧→ s
+  add (∧→ s) (ind ←∧) rll     = (∅-add ind rll) ←∧→ dsize s
   add (∧→ s) (∧→ ind) rll     = ∧→ add s ind rll
   add (s ←∧→ s₁) ↓ rll        = ↓
-  add (s ←∧→ s₁) (ind ←∧) rll = (add s ind rll) ←∧→ s₁
-  add (s ←∧→ s₁) (∧→ ind) rll = s ←∧→ (add s₁ ind rll)
+  add (s ←∧→ s₁) (ind ←∧) rll = (add s ind rll) ←∧→ dsize s₁
+  add (s ←∧→ s₁) (∧→ ind) rll = dsize s ←∧→ (add s₁ ind rll)
   add (s ←∨) ↓ rll            = ↓
   add (s ←∨) (ind ←∨) rll     = (add s ind rll) ←∨
-  add (s ←∨) (∨→ ind) rll     = s ←∨→ (∅-add ind rll)
+  add (s ←∨) (∨→ ind) rll     = dsize s ←∨→ (∅-add ind rll)
   add (∨→ s) ↓ rll            = ↓
-  add (∨→ s) (ind ←∨) rll     = (∅-add ind rll) ←∨→ s
+  add (∨→ s) (ind ←∨) rll     = (∅-add ind rll) ←∨→ dsize s
   add (∨→ s) (∨→ ind) rll     = ∨→ add s ind rll
   add (s ←∨→ s₁) ↓ rll        = ↓
-  add (s ←∨→ s₁) (ind ←∨) rll = (add s ind rll) ←∨→ s₁
-  add (s ←∨→ s₁) (∨→ ind) rll = s ←∨→ (add s₁ ind rll)
+  add (s ←∨→ s₁) (ind ←∨) rll = (add s ind rll) ←∨→ dsize s₁
+  add (s ←∨→ s₁) (∨→ ind) rll = dsize s ←∨→ (add s₁ ind rll)
   add (s ←∂) ↓ rll            = ↓
   add (s ←∂) (ind ←∂) rll     = (add s ind rll) ←∂
-  add (s ←∂) (∂→ ind) rll     = s ←∂→ (∅-add ind rll)
+  add (s ←∂) (∂→ ind) rll     = dsize s ←∂→ (∅-add ind rll)
   add (∂→ s) ↓ rll            = ↓
-  add (∂→ s) (ind ←∂) rll     = (∅-add ind rll) ←∂→ s
+  add (∂→ s) (ind ←∂) rll     = (∅-add ind rll) ←∂→ dsize s
   add (∂→ s) (∂→ ind) rll     = ∂→ add s ind rll
   add (s ←∂→ s₁) ↓ rll        = ↓
-  add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ s₁
-  add (s ←∂→ s₁) (∂→ ind) rll = s ←∂→ (add s₁ ind rll)
+  add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
+  add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
+
+  data exactHit {i u} : ∀{ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → Set where
+    exactHitC↓↓ : ∀{ll} → exactHit {ll = ll} {rll = ll} ↓ ↓
+    exactHitC←∧←∧ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
+    exactHitC∧→∧→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind)
+    exactHitC←∨←∨ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
+    exactHitC∨→∨→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind)
+    exactHitC←∂←∂ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
+    exactHitC∂→∂→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind)
+
+
+
+  isExactHit : ∀{i u ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → Dec (exactHit{ll = ll} {rll = rll} s ind)
+  isExactHit ↓ ↓ = yes exactHitC↓↓
+  isExactHit ↓ (ind ←∧) = no (λ ())
+  isExactHit ↓ (∧→ ind) = no (λ ())
+  isExactHit ↓ (ind ←∨) = no (λ ())
+  isExactHit ↓ (∨→ ind) = no (λ ())
+  isExactHit ↓ (ind ←∂) = no (λ ())
+  isExactHit ↓ (∂→ ind) = no (λ ())
+  isExactHit (s ←∧) ↓ = no (λ ())
+  isExactHit (s ←∧) (ind ←∧) with (isExactHit s ind)
+  isExactHit (s ←∧) (ind ←∧) | yes p = yes (exactHitC←∧←∧ p)
+  isExactHit (s ←∧) (ind ←∧) | no ¬p = no (λ {(exactHitC←∧←∧ x) → ¬p x})
+  isExactHit (s ←∧) (∧→ ind) = no (λ ())
+  isExactHit (∧→ s) ↓ = no (λ ())
+  isExactHit (∧→ s) (ind ←∧) = no (λ ())
+  isExactHit (∧→ s) (∧→ ind) with (isExactHit s ind)
+  isExactHit (∧→ s) (∧→ ind) | yes p = yes (exactHitC∧→∧→ p)
+  isExactHit (∧→ s) (∧→ ind) | no ¬p = no (λ { (exactHitC∧→∧→ x) → ¬p x})
+  isExactHit (s ←∧→ s₁) ind = no (λ ())
+  isExactHit (s ←∨) ↓ = no (λ ())
+  isExactHit (s ←∨) (ind ←∨) with (isExactHit s ind)
+  isExactHit (s ←∨) (ind ←∨) | yes p = yes (exactHitC←∨←∨ p)
+  isExactHit (s ←∨) (ind ←∨) | no ¬p = no ( λ { (exactHitC←∨←∨ x) → ¬p x})
+  isExactHit (s ←∨) (∨→ ind) = no (λ ())
+  isExactHit (∨→ s) ↓ = no (λ ())
+  isExactHit (∨→ s) (ind ←∨) = no (λ ())
+  isExactHit (∨→ s) (∨→ ind) with (isExactHit s ind)
+  isExactHit (∨→ s) (∨→ ind) | yes p = yes (exactHitC∨→∨→ p)
+  isExactHit (∨→ s) (∨→ ind) | no ¬p = no ( λ { (exactHitC∨→∨→ x) → ¬p x})
+  isExactHit (s ←∨→ s₁) ind = no (λ ())
+  isExactHit (s ←∂) ↓ = no (λ ())
+  isExactHit (s ←∂) (ind ←∂) with (isExactHit s ind)
+  isExactHit (s ←∂) (ind ←∂) | yes p = yes (exactHitC←∂←∂ p)
+  isExactHit (s ←∂) (ind ←∂) | no ¬p = no ( λ { (exactHitC←∂←∂ x) → ¬p x})
+  isExactHit (s ←∂) (∂→ ind) = no (λ ())
+  isExactHit (∂→ s) ↓ = no (λ ())
+  isExactHit (∂→ s) (ind ←∂) = no (λ ())
+  isExactHit (∂→ s) (∂→ ind) with (isExactHit s ind)
+  isExactHit (∂→ s) (∂→ ind) | yes p = yes (exactHitC∂→∂→ p)
+  isExactHit (∂→ s) (∂→ ind) | no ¬p = no (λ { (exactHitC∂→∂→ x) → ¬p x})
+  isExactHit (s ←∂→ s₁) ind = no (λ ())
+
+
+-- It does not belong at all.
+
+
+  data belongs {i u} : ∀{ll rll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} rll ll) → Set where
+    belongs↓ : ∀{ll rll ind} → belongs {ll = ll} {rll = rll} ↓ ind
+    belongs←∧↓ : ∀{lll llr s} → belongs {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧) ↓
+    belongs←∧←∧ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
+    belongs∧→↓ : ∀{lll llr s} → belongs {ll = lll ∧ llr} {rll = lll ∧ llr} (∧→ s) ↓
+    belongs∧→∧→ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind) 
+    belongs←∧→↓ : ∀{lll llr s s₁} → belongs {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧→ s₁) ↓
+    belongs←∧→←∧ : ∀{ll rll s q s₁ ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∧ q} {rll = rll} (s ←∧→ s₁) (ind ←∧)
+    belongs←∧→∧→ : ∀{ll rll q s s₁ ind} → belongs {ll = ll} {rll = rll} s₁ ind → belongs {ll = q ∧ ll} {rll = rll} (s ←∧→ s₁) (∧→ ind) 
+    belongs←∨↓ : ∀{lll llr s} → belongs {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨) ↓
+    belongs←∨←∨ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
+    belongs∨→↓ : ∀{lll llr s} → belongs {ll = lll ∨ llr} {rll = lll ∨ llr} (∨→ s) ↓
+    belongs∨→∨→ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind) 
+    belongs←∨→↓ : ∀{lll llr s s₁} → belongs {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨→ s₁) ↓
+    belongs←∨→←∨ : ∀{ll rll s q s₁ ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∨ q} {rll = rll} (s ←∨→ s₁) (ind ←∨)
+    belongs←∨→∨→ : ∀{ll rll q s s₁ ind} → belongs {ll = ll} {rll = rll} s₁ ind → belongs {ll = q ∨ ll} {rll = rll} (s ←∨→ s₁) (∨→ ind) 
+    belongs←∂↓ : ∀{lll llr s} → belongs {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂) ↓
+    belongs←∂←∂ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
+    belongs∂→↓ : ∀{lll llr s} → belongs {ll = lll ∂ llr} {rll = lll ∂ llr} (∂→ s) ↓
+    belongs∂→∂→ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind) 
+    belongs←∂→↓ : ∀{lll llr s s₁} → belongs {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂→ s₁) ↓
+    belongs←∂→←∂ : ∀{ll rll s q s₁ ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∂ q} {rll = rll} (s ←∂→ s₁) (ind ←∂)
+    belongs←∂→∂→ : ∀{ll rll q s s₁ ind} → belongs {ll = ll} {rll = rll} s₁ ind → belongs {ll = q ∂ ll} {rll = rll} (s ←∂→ s₁) (∂→ ind) 
+
+  doesItBelong : ∀{i u ll q} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll) → Dec (belongs s ind)
+  doesItBelong ↓ ind = yes belongs↓
+  doesItBelong (s ←∧) ↓ = yes belongs←∧↓
+  doesItBelong (s ←∧) (ind ←∧) with (doesItBelong s ind)
+  doesItBelong (s ←∧) (ind ←∧) | yes p = yes (belongs←∧←∧ p)
+  doesItBelong (s ←∧) (ind ←∧) | no ¬p = no (λ {(belongs←∧←∧ x) → ¬p x})
+  doesItBelong (s ←∧) (∧→ ind) = no (λ ())
+  doesItBelong (∧→ s) ↓ = yes belongs∧→↓
+  doesItBelong (∧→ s) (ind ←∧) = no (λ ())
+  doesItBelong (∧→ s) (∧→ ind) with (doesItBelong s ind)
+  doesItBelong (∧→ s) (∧→ ind) | yes p = yes (belongs∧→∧→ p)
+  doesItBelong (∧→ s) (∧→ ind) | no ¬p = no (λ {(belongs∧→∧→ x) → ¬p x})
+  doesItBelong (s ←∧→ s₁) ↓ = yes belongs←∧→↓
+  doesItBelong (s ←∧→ s₁) (ind ←∧) with (doesItBelong s ind)
+  doesItBelong (s ←∧→ s₁) (ind ←∧) | yes p = yes (belongs←∧→←∧ p)
+  doesItBelong (s ←∧→ s₁) (ind ←∧) | no ¬p = no (λ {(belongs←∧→←∧ x) → ¬p x})
+  doesItBelong (s ←∧→ s₁) (∧→ ind) with (doesItBelong s₁ ind)
+  doesItBelong (s ←∧→ s₁) (∧→ ind) | yes p = yes (belongs←∧→∧→ p) 
+  doesItBelong (s ←∧→ s₁) (∧→ ind) | no ¬p = no (λ {(belongs←∧→∧→ x) → ¬p x})
+  doesItBelong (s ←∨) ↓ = yes belongs←∨↓
+  doesItBelong (s ←∨) (ind ←∨) with (doesItBelong s ind)
+  doesItBelong (s ←∨) (ind ←∨) | yes p = yes (belongs←∨←∨ p) 
+  doesItBelong (s ←∨) (ind ←∨) | no ¬p = no (λ {(belongs←∨←∨ x) → ¬p x})
+  doesItBelong (s ←∨) (∨→ ind) = no (λ ())
+  doesItBelong (∨→ s) ↓ = yes belongs∨→↓
+  doesItBelong (∨→ s) (ind ←∨) = no (λ ())
+  doesItBelong (∨→ s) (∨→ ind) with (doesItBelong s ind)
+  doesItBelong (∨→ s) (∨→ ind) | yes p = yes (belongs∨→∨→ p) 
+  doesItBelong (∨→ s) (∨→ ind) | no ¬p = no (λ {(belongs∨→∨→ x) → ¬p x})
+  doesItBelong (s ←∨→ s₁) ↓ = yes belongs←∨→↓
+  doesItBelong (s ←∨→ s₁) (ind ←∨) with (doesItBelong s ind)
+  doesItBelong (s ←∨→ s₁) (ind ←∨) | yes p = yes (belongs←∨→←∨ p) 
+  doesItBelong (s ←∨→ s₁) (ind ←∨) | no ¬p = no (λ {(belongs←∨→←∨ x) → ¬p x})
+  doesItBelong (s ←∨→ s₁) (∨→ ind) with (doesItBelong s₁ ind)
+  doesItBelong (s ←∨→ s₁) (∨→ ind) | yes p = yes (belongs←∨→∨→ p)
+  doesItBelong (s ←∨→ s₁) (∨→ ind) | no ¬p = no (λ {(belongs←∨→∨→ x) → ¬p x})
+  doesItBelong (s ←∂) ↓ = yes belongs←∂↓
+  doesItBelong (s ←∂) (ind ←∂) with (doesItBelong s ind)
+  doesItBelong (s ←∂) (ind ←∂) | yes p = yes (belongs←∂←∂ p) 
+  doesItBelong (s ←∂) (ind ←∂) | no ¬p = no (λ {(belongs←∂←∂ x) → ¬p x})
+  doesItBelong (s ←∂) (∂→ ind) = no (λ ())
+  doesItBelong (∂→ s) ↓ = yes belongs∂→↓
+  doesItBelong (∂→ s) (ind ←∂) = no (λ ())
+  doesItBelong (∂→ s) (∂→ ind) with (doesItBelong s ind)
+  doesItBelong (∂→ s) (∂→ ind) | yes p = yes (belongs∂→∂→ p) 
+  doesItBelong (∂→ s) (∂→ ind) | no ¬p = no (λ {(belongs∂→∂→ x) → ¬p x})
+  doesItBelong (s ←∂→ s₁) ↓ = yes belongs←∂→↓
+  doesItBelong (s ←∂→ s₁) (ind ←∂) with (doesItBelong s ind)
+  doesItBelong (s ←∂→ s₁) (ind ←∂) | yes p = yes (belongs←∂→←∂ p)
+  doesItBelong (s ←∂→ s₁) (ind ←∂) | no ¬p = no (λ {(belongs←∂→←∂ x) → ¬p x})
+  doesItBelong (s ←∂→ s₁) (∂→ ind) with (doesItBelong s₁ ind)
+  doesItBelong (s ←∂→ s₁) (∂→ ind) | yes p = yes (belongs←∂→∂→ p)
+  doesItBelong (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(belongs←∂→∂→ x) → ¬p x})
+
+
+-- Replace the linear logic sub-tree.
+  replSetLL : ∀{i u ll q} → {j : Size< ↑ i} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll)
+              → ⦃ prf : ¬ (belongs s ind) ⦄ → (rll : LinLogic j {u})
+              → (SetLL (replLL {j = j} ll ind rll))
+  replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL ↓ (∧→ ind) {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL ↓ (ind ←∨) {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL ↓ (∨→ ind) {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL ↓ (ind ←∂) {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf belongs↓)
+  replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf belongs←∧↓)
+  replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∧←∧ x)}} rll) ←∧
+  replSetLL (s ←∧) (∧→ ind) {{prf}} rll = dsize s ←∧
+  replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf belongs∧→↓)
+  replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ dsize s
+  replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (belongs∧→∧→ x)}} rll)
+  replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf belongs←∧→↓)
+  replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∧→←∧ x)}} rll) ←∧
+  replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (belongs←∧→∧→ x)}} rll)
+  replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf belongs←∨↓)
+  replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∨←∨ x)}} rll) ←∨
+  replSetLL (s ←∨) (∨→ ind) {{prf}} rll = dsize s ←∨
+  replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf belongs∨→↓)
+  replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ dsize s
+  replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (belongs∨→∨→ x)}} rll)
+  replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf belongs←∨→↓)
+  replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∨→←∨ x)}} rll) ←∨
+  replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (belongs←∨→∨→ x)}} rll)
+  replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf belongs←∂↓)
+  replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∂←∂ x)}} rll) ←∂
+  replSetLL (s ←∂) (∂→ ind) {{prf}} rll = dsize s ←∂
+  replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf belongs∂→↓)
+  replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ dsize s
+  replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (belongs∂→∂→ x)}} rll)
+  replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf belongs←∂→↓)
+  replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∂→←∂ x)}} rll) ←∂
+  replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (belongs←∂→∂→ x)}} rll)
+
 
 -- If we transform the linear logic tree, we need to transform the SetLL as well.
   tran : ∀ {i u ll rll} → SetLL {i} {u} ll → (tr : LLTr {i} {u} rll ll)
-         → SetLL {i} {u} (replLL ll ↓ rll)
+         → SetLL {i} {u} rll
   tran s I                = s
   tran ↓ (∂c tr)          = ↓
   tran (s ←∂) (∂c tr)     = tran (∂→ s) tr
@@ -227,6 +430,47 @@ module SetLLMp where
   itran (s ←∂) (∂→ ind) tr     = s ←∂
   itran (∂→ s) (∂→ ind) tr     = ∂→ itran s ind tr
   itran (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itran s₁ ind tr
+
+
+-- In this transformation, we duplicate the set when we use distributive transformations, thus we
+-- have two sets that contains the same number of inputs as before. One of them can be executed
+-- when they join together into one root and a com exists in the Linear Function.
+  sptran : ∀ {i u ll rll} → SetLL {i} {u} ll → (tr : LLTr {i} {u} rll ll)
+         → List (SetLL {i} {u} rll)
+  sptran s I                = [ s ]
+  sptran ↓ (∂c tr)          = [ ↓ ]
+  sptran (s ←∂) (∂c tr)     = sptran (∂→ s) tr
+  sptran (∂→ s) (∂c tr)     = sptran (s ←∂) tr
+  sptran (s ←∂→ s₁) (∂c tr) = sptran (s₁ ←∂→ s) tr
+  sptran ↓ (∨c tr)          = [ ↓ ]
+  sptran (s ←∨) (∨c tr)     = sptran (∨→ s) tr
+  sptran (∨→ s) (∨c tr)     = sptran (s ←∨) tr
+  sptran (s ←∨→ s₁) (∨c tr) = sptran (s₁ ←∨→ s) tr
+  sptran ↓ (∧c tr)          = [ ↓ ]
+  sptran (s ←∧) (∧c tr)     = sptran (∧→ s) tr
+  sptran (∧→ s) (∧c tr)     = sptran (s ←∧) tr
+  sptran (s ←∧→ s₁) (∧c tr) = sptran (s₁ ←∧→ s) tr
+  sptran ↓ (∧∂d tr)           = [ ↓ ]
+  sptran (↓ ←∧) (∧∂d tr)      = sptran ((↓ ←∧) ←∂→ (↓ ←∧)) tr
+  sptran ((s ←∂) ←∧) (∧∂d tr) = sptran ((s ←∧) ←∂) tr
+  sptran ((∂→ s) ←∧) (∧∂d tr) = sptran (∂→ (s ←∧)) tr
+  sptran ((s ←∂→ s₁) ←∧) (∧∂d tr) = sptran ((s ←∧) ←∂→ (s₁ ←∧)) tr
+  sptran (∧→ s) (∧∂d tr)          = (sptran ((∧→ s) ←∂) tr) ++ (sptran (∂→ (∧→ s)) tr)
+  sptran (↓ ←∧→ s₁) (∧∂d tr)      = (sptran ((↓ ←∧→ s₁) ←∂) tr) ++ (sptran (∂→ (↓ ←∧→ s₁)) tr)
+  sptran ((s ←∂) ←∧→ s₁) (∧∂d tr) = sptran ((s ←∧→ s₁) ←∂) tr
+  sptran ((∂→ s) ←∧→ s₁) (∧∂d tr) = sptran (∂→ (s ←∧→ s₁)) tr
+  sptran ((s ←∂→ s₁) ←∧→ s₂) (∧∂d tr) = (sptran ((s ←∧→ s₂) ←∂) tr) ++ (sptran (∂→ (s₁ ←∧→ s₂)) tr)
+  sptran ↓ (∧∨d tr)                   = [ ↓ ]
+  sptran (↓ ←∧) (∧∨d tr)              = sptran ((↓ ←∧) ←∨→ (↓ ←∧)) tr
+  sptran ((s ←∨) ←∧) (∧∨d tr)         = sptran ((s ←∧) ←∨) tr
+  sptran ((∨→ s) ←∧) (∧∨d tr)         = sptran (∨→ (s ←∧)) tr
+  sptran ((s ←∨→ s₁) ←∧) (∧∨d tr)     = sptran ((s ←∧) ←∨→ (s₁ ←∧)) tr
+  sptran (∧→ s) (∧∨d tr)              = (sptran ((∧→ s) ←∨) tr) ++ (sptran (∨→ (∧→ s)) tr)
+  sptran (↓ ←∧→ s₁) (∧∨d tr)          = (sptran ((↓ ←∧→ s₁) ←∨) tr) ++ (sptran (∨→ (↓ ←∧→ s₁)) tr)
+  sptran ((s ←∨) ←∧→ s₁) (∧∨d tr)     = sptran ((s ←∧→ s₁) ←∨) tr
+  sptran ((∨→ s) ←∧→ s₁) (∧∨d tr)     = sptran (∨→ (s ←∧→ s₁)) tr
+  sptran ((s ←∨→ s₁) ←∧→ s₂) (∧∨d tr) = (sptran ((s ←∧→ s₂) ←∨) tr) ++ (sptran (∨→ (s₁ ←∧→ s₂)) tr)
+
 
 -- TODO FilledSetLL describes a SetLL as it would be when used to indicate that all
 -- linear functions have being executed/cut.

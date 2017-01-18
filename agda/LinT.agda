@@ -21,10 +21,4 @@ mutual
     ∨→_  : ∀{lll rll r} → LinT {ll = rll} r → LinT {ll = _∨_ lll rll} (∨→ r)
     _←∂  : ∀{lll l rll} → LinT {ll = lll} l → LinT (∂ {l = lll} {r = rll} $ inj₁ l)
     ∂→_  : ∀{lll rll r} → LinT {ll = rll} r → LinT (∂ {l = lll} {r = rll} $ inj₂ r)
-    call : ∀{∞ll} → {∞ldt : ∞LinDepT ∞ll} → ∞LinT ∞ldt → LinT (call ∞ldt)
-
-  record ∞LinT {i : Size} {u} {ll} (∞ldt : ∞LinDepT {i} {u} ll) : Set (suc u) where
-    coinductive
-    field
-      step : {j : Size< i} → LinT {j} (step ∞ldt)
 
