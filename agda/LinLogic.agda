@@ -247,123 +247,180 @@ module SetLLMp where
 -- It does not belong at all.
 
 
-  data belongs {i u} : ∀{ll rll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} rll ll) → Set where
-    belongs↓ : ∀{ll rll ind} → belongs {ll = ll} {rll = rll} ↓ ind
-    belongs←∧↓ : ∀{lll llr s} → belongs {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧) ↓
-    belongs←∧←∧ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
-    belongs∧→↓ : ∀{lll llr s} → belongs {ll = lll ∧ llr} {rll = lll ∧ llr} (∧→ s) ↓
-    belongs∧→∧→ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind) 
-    belongs←∧→↓ : ∀{lll llr s s₁} → belongs {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧→ s₁) ↓
-    belongs←∧→←∧ : ∀{ll rll s q s₁ ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∧ q} {rll = rll} (s ←∧→ s₁) (ind ←∧)
-    belongs←∧→∧→ : ∀{ll rll q s s₁ ind} → belongs {ll = ll} {rll = rll} s₁ ind → belongs {ll = q ∧ ll} {rll = rll} (s ←∧→ s₁) (∧→ ind) 
-    belongs←∨↓ : ∀{lll llr s} → belongs {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨) ↓
-    belongs←∨←∨ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
-    belongs∨→↓ : ∀{lll llr s} → belongs {ll = lll ∨ llr} {rll = lll ∨ llr} (∨→ s) ↓
-    belongs∨→∨→ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind) 
-    belongs←∨→↓ : ∀{lll llr s s₁} → belongs {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨→ s₁) ↓
-    belongs←∨→←∨ : ∀{ll rll s q s₁ ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∨ q} {rll = rll} (s ←∨→ s₁) (ind ←∨)
-    belongs←∨→∨→ : ∀{ll rll q s s₁ ind} → belongs {ll = ll} {rll = rll} s₁ ind → belongs {ll = q ∨ ll} {rll = rll} (s ←∨→ s₁) (∨→ ind) 
-    belongs←∂↓ : ∀{lll llr s} → belongs {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂) ↓
-    belongs←∂←∂ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
-    belongs∂→↓ : ∀{lll llr s} → belongs {ll = lll ∂ llr} {rll = lll ∂ llr} (∂→ s) ↓
-    belongs∂→∂→ : ∀{ll rll s q ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind) 
-    belongs←∂→↓ : ∀{lll llr s s₁} → belongs {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂→ s₁) ↓
-    belongs←∂→←∂ : ∀{ll rll s q s₁ ind} → belongs {ll = ll} {rll = rll} s ind → belongs {ll = ll ∂ q} {rll = rll} (s ←∂→ s₁) (ind ←∂)
-    belongs←∂→∂→ : ∀{ll rll q s s₁ ind} → belongs {ll = ll} {rll = rll} s₁ ind → belongs {ll = q ∂ ll} {rll = rll} (s ←∂→ s₁) (∂→ ind) 
+  data hitsOnce {i u} : ∀{ll rll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} rll ll) → Set where
+    hitsOnce↓ : ∀{ll rll ind} → hitsOnce {ll = ll} {rll = rll} ↓ ind
+    hitsOnce←∧↓ : ∀{lll llr s} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧) ↓
+    hitsOnce←∧←∧ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
+    hitsOnce∧→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (∧→ s) ↓
+    hitsOnce∧→∧→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind) 
+    hitsOnce←∧→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧→ s₁) ↓
+    hitsOnce←∧→←∧ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∧ q} {rll = rll} (s ←∧→ s₁) (ind ←∧)
+    hitsOnce←∧→∧→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∧ ll} {rll = rll} (s ←∧→ s₁) (∧→ ind) 
+    hitsOnce←∨↓ : ∀{lll llr s} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨) ↓
+    hitsOnce←∨←∨ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
+    hitsOnce∨→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (∨→ s) ↓
+    hitsOnce∨→∨→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind) 
+    hitsOnce←∨→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨→ s₁) ↓
+    hitsOnce←∨→←∨ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∨ q} {rll = rll} (s ←∨→ s₁) (ind ←∨)
+    hitsOnce←∨→∨→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∨ ll} {rll = rll} (s ←∨→ s₁) (∨→ ind) 
+    hitsOnce←∂↓ : ∀{lll llr s} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂) ↓
+    hitsOnce←∂←∂ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
+    hitsOnce∂→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (∂→ s) ↓
+    hitsOnce∂→∂→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind) 
+    hitsOnce←∂→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂→ s₁) ↓
+    hitsOnce←∂→←∂ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∂ q} {rll = rll} (s ←∂→ s₁) (ind ←∂)
+    hitsOnce←∂→∂→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∂ ll} {rll = rll} (s ←∂→ s₁) (∂→ ind) 
 
-  doesItBelong : ∀{i u ll q} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll) → Dec (belongs s ind)
-  doesItBelong ↓ ind = yes belongs↓
-  doesItBelong (s ←∧) ↓ = yes belongs←∧↓
-  doesItBelong (s ←∧) (ind ←∧) with (doesItBelong s ind)
-  doesItBelong (s ←∧) (ind ←∧) | yes p = yes (belongs←∧←∧ p)
-  doesItBelong (s ←∧) (ind ←∧) | no ¬p = no (λ {(belongs←∧←∧ x) → ¬p x})
-  doesItBelong (s ←∧) (∧→ ind) = no (λ ())
-  doesItBelong (∧→ s) ↓ = yes belongs∧→↓
-  doesItBelong (∧→ s) (ind ←∧) = no (λ ())
-  doesItBelong (∧→ s) (∧→ ind) with (doesItBelong s ind)
-  doesItBelong (∧→ s) (∧→ ind) | yes p = yes (belongs∧→∧→ p)
-  doesItBelong (∧→ s) (∧→ ind) | no ¬p = no (λ {(belongs∧→∧→ x) → ¬p x})
-  doesItBelong (s ←∧→ s₁) ↓ = yes belongs←∧→↓
-  doesItBelong (s ←∧→ s₁) (ind ←∧) with (doesItBelong s ind)
-  doesItBelong (s ←∧→ s₁) (ind ←∧) | yes p = yes (belongs←∧→←∧ p)
-  doesItBelong (s ←∧→ s₁) (ind ←∧) | no ¬p = no (λ {(belongs←∧→←∧ x) → ¬p x})
-  doesItBelong (s ←∧→ s₁) (∧→ ind) with (doesItBelong s₁ ind)
-  doesItBelong (s ←∧→ s₁) (∧→ ind) | yes p = yes (belongs←∧→∧→ p) 
-  doesItBelong (s ←∧→ s₁) (∧→ ind) | no ¬p = no (λ {(belongs←∧→∧→ x) → ¬p x})
-  doesItBelong (s ←∨) ↓ = yes belongs←∨↓
-  doesItBelong (s ←∨) (ind ←∨) with (doesItBelong s ind)
-  doesItBelong (s ←∨) (ind ←∨) | yes p = yes (belongs←∨←∨ p) 
-  doesItBelong (s ←∨) (ind ←∨) | no ¬p = no (λ {(belongs←∨←∨ x) → ¬p x})
-  doesItBelong (s ←∨) (∨→ ind) = no (λ ())
-  doesItBelong (∨→ s) ↓ = yes belongs∨→↓
-  doesItBelong (∨→ s) (ind ←∨) = no (λ ())
-  doesItBelong (∨→ s) (∨→ ind) with (doesItBelong s ind)
-  doesItBelong (∨→ s) (∨→ ind) | yes p = yes (belongs∨→∨→ p) 
-  doesItBelong (∨→ s) (∨→ ind) | no ¬p = no (λ {(belongs∨→∨→ x) → ¬p x})
-  doesItBelong (s ←∨→ s₁) ↓ = yes belongs←∨→↓
-  doesItBelong (s ←∨→ s₁) (ind ←∨) with (doesItBelong s ind)
-  doesItBelong (s ←∨→ s₁) (ind ←∨) | yes p = yes (belongs←∨→←∨ p) 
-  doesItBelong (s ←∨→ s₁) (ind ←∨) | no ¬p = no (λ {(belongs←∨→←∨ x) → ¬p x})
-  doesItBelong (s ←∨→ s₁) (∨→ ind) with (doesItBelong s₁ ind)
-  doesItBelong (s ←∨→ s₁) (∨→ ind) | yes p = yes (belongs←∨→∨→ p)
-  doesItBelong (s ←∨→ s₁) (∨→ ind) | no ¬p = no (λ {(belongs←∨→∨→ x) → ¬p x})
-  doesItBelong (s ←∂) ↓ = yes belongs←∂↓
-  doesItBelong (s ←∂) (ind ←∂) with (doesItBelong s ind)
-  doesItBelong (s ←∂) (ind ←∂) | yes p = yes (belongs←∂←∂ p) 
-  doesItBelong (s ←∂) (ind ←∂) | no ¬p = no (λ {(belongs←∂←∂ x) → ¬p x})
-  doesItBelong (s ←∂) (∂→ ind) = no (λ ())
-  doesItBelong (∂→ s) ↓ = yes belongs∂→↓
-  doesItBelong (∂→ s) (ind ←∂) = no (λ ())
-  doesItBelong (∂→ s) (∂→ ind) with (doesItBelong s ind)
-  doesItBelong (∂→ s) (∂→ ind) | yes p = yes (belongs∂→∂→ p) 
-  doesItBelong (∂→ s) (∂→ ind) | no ¬p = no (λ {(belongs∂→∂→ x) → ¬p x})
-  doesItBelong (s ←∂→ s₁) ↓ = yes belongs←∂→↓
-  doesItBelong (s ←∂→ s₁) (ind ←∂) with (doesItBelong s ind)
-  doesItBelong (s ←∂→ s₁) (ind ←∂) | yes p = yes (belongs←∂→←∂ p)
-  doesItBelong (s ←∂→ s₁) (ind ←∂) | no ¬p = no (λ {(belongs←∂→←∂ x) → ¬p x})
-  doesItBelong (s ←∂→ s₁) (∂→ ind) with (doesItBelong s₁ ind)
-  doesItBelong (s ←∂→ s₁) (∂→ ind) | yes p = yes (belongs←∂→∂→ p)
-  doesItBelong (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(belongs←∂→∂→ x) → ¬p x})
+  doesItHitOnce : ∀{i u ll q} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll) → Dec (hitsOnce s ind)
+  doesItHitOnce ↓ ind = yes hitsOnce↓
+  doesItHitOnce (s ←∧) ↓ = yes hitsOnce←∧↓
+  doesItHitOnce (s ←∧) (ind ←∧) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∧) (ind ←∧) | yes p = yes (hitsOnce←∧←∧ p)
+  doesItHitOnce (s ←∧) (ind ←∧) | no ¬p = no (λ {(hitsOnce←∧←∧ x) → ¬p x})
+  doesItHitOnce (s ←∧) (∧→ ind) = no (λ ())
+  doesItHitOnce (∧→ s) ↓ = yes hitsOnce∧→↓
+  doesItHitOnce (∧→ s) (ind ←∧) = no (λ ())
+  doesItHitOnce (∧→ s) (∧→ ind) with (doesItHitOnce s ind)
+  doesItHitOnce (∧→ s) (∧→ ind) | yes p = yes (hitsOnce∧→∧→ p)
+  doesItHitOnce (∧→ s) (∧→ ind) | no ¬p = no (λ {(hitsOnce∧→∧→ x) → ¬p x})
+  doesItHitOnce (s ←∧→ s₁) ↓ = yes hitsOnce←∧→↓
+  doesItHitOnce (s ←∧→ s₁) (ind ←∧) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∧→ s₁) (ind ←∧) | yes p = yes (hitsOnce←∧→←∧ p)
+  doesItHitOnce (s ←∧→ s₁) (ind ←∧) | no ¬p = no (λ {(hitsOnce←∧→←∧ x) → ¬p x})
+  doesItHitOnce (s ←∧→ s₁) (∧→ ind) with (doesItHitOnce s₁ ind)
+  doesItHitOnce (s ←∧→ s₁) (∧→ ind) | yes p = yes (hitsOnce←∧→∧→ p) 
+  doesItHitOnce (s ←∧→ s₁) (∧→ ind) | no ¬p = no (λ {(hitsOnce←∧→∧→ x) → ¬p x})
+  doesItHitOnce (s ←∨) ↓ = yes hitsOnce←∨↓
+  doesItHitOnce (s ←∨) (ind ←∨) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∨) (ind ←∨) | yes p = yes (hitsOnce←∨←∨ p) 
+  doesItHitOnce (s ←∨) (ind ←∨) | no ¬p = no (λ {(hitsOnce←∨←∨ x) → ¬p x})
+  doesItHitOnce (s ←∨) (∨→ ind) = no (λ ())
+  doesItHitOnce (∨→ s) ↓ = yes hitsOnce∨→↓
+  doesItHitOnce (∨→ s) (ind ←∨) = no (λ ())
+  doesItHitOnce (∨→ s) (∨→ ind) with (doesItHitOnce s ind)
+  doesItHitOnce (∨→ s) (∨→ ind) | yes p = yes (hitsOnce∨→∨→ p) 
+  doesItHitOnce (∨→ s) (∨→ ind) | no ¬p = no (λ {(hitsOnce∨→∨→ x) → ¬p x})
+  doesItHitOnce (s ←∨→ s₁) ↓ = yes hitsOnce←∨→↓
+  doesItHitOnce (s ←∨→ s₁) (ind ←∨) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∨→ s₁) (ind ←∨) | yes p = yes (hitsOnce←∨→←∨ p) 
+  doesItHitOnce (s ←∨→ s₁) (ind ←∨) | no ¬p = no (λ {(hitsOnce←∨→←∨ x) → ¬p x})
+  doesItHitOnce (s ←∨→ s₁) (∨→ ind) with (doesItHitOnce s₁ ind)
+  doesItHitOnce (s ←∨→ s₁) (∨→ ind) | yes p = yes (hitsOnce←∨→∨→ p)
+  doesItHitOnce (s ←∨→ s₁) (∨→ ind) | no ¬p = no (λ {(hitsOnce←∨→∨→ x) → ¬p x})
+  doesItHitOnce (s ←∂) ↓ = yes hitsOnce←∂↓
+  doesItHitOnce (s ←∂) (ind ←∂) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∂) (ind ←∂) | yes p = yes (hitsOnce←∂←∂ p) 
+  doesItHitOnce (s ←∂) (ind ←∂) | no ¬p = no (λ {(hitsOnce←∂←∂ x) → ¬p x})
+  doesItHitOnce (s ←∂) (∂→ ind) = no (λ ())
+  doesItHitOnce (∂→ s) ↓ = yes hitsOnce∂→↓
+  doesItHitOnce (∂→ s) (ind ←∂) = no (λ ())
+  doesItHitOnce (∂→ s) (∂→ ind) with (doesItHitOnce s ind)
+  doesItHitOnce (∂→ s) (∂→ ind) | yes p = yes (hitsOnce∂→∂→ p) 
+  doesItHitOnce (∂→ s) (∂→ ind) | no ¬p = no (λ {(hitsOnce∂→∂→ x) → ¬p x})
+  doesItHitOnce (s ←∂→ s₁) ↓ = yes hitsOnce←∂→↓
+  doesItHitOnce (s ←∂→ s₁) (ind ←∂) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∂→ s₁) (ind ←∂) | yes p = yes (hitsOnce←∂→←∂ p)
+  doesItHitOnce (s ←∂→ s₁) (ind ←∂) | no ¬p = no (λ {(hitsOnce←∂→←∂ x) → ¬p x})
+  doesItHitOnce (s ←∂→ s₁) (∂→ ind) with (doesItHitOnce s₁ ind)
+  doesItHitOnce (s ←∂→ s₁) (∂→ ind) | yes p = yes (hitsOnce←∂→∂→ p)
+  doesItHitOnce (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(hitsOnce←∂→∂→ x) → ¬p x})
 
 
 -- Replace the linear logic sub-tree.
   replSetLL : ∀{i u ll q} → {j : Size< ↑ i} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll)
-              → ⦃ prf : ¬ (belongs s ind) ⦄ → (rll : LinLogic j {u})
+              → ⦃ prf : ¬ (hitsOnce s ind) ⦄ → (rll : LinLogic j {u})
               → (SetLL (replLL {j = j} ll ind rll))
-  replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL ↓ (∧→ ind) {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL ↓ (ind ←∨) {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL ↓ (∨→ ind) {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL ↓ (ind ←∂) {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf belongs↓)
-  replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf belongs←∧↓)
-  replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∧←∧ x)}} rll) ←∧
+  replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (∧→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (ind ←∨) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (∨→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (ind ←∂) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∧↓)
+  replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∧←∧ x)}} rll) ←∧
   replSetLL (s ←∧) (∧→ ind) {{prf}} rll = dsize s ←∧
-  replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf belongs∧→↓)
+  replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∧→↓)
   replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ dsize s
-  replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (belongs∧→∧→ x)}} rll)
-  replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf belongs←∧→↓)
-  replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∧→←∧ x)}} rll) ←∧
-  replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (belongs←∧→∧→ x)}} rll)
-  replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf belongs←∨↓)
-  replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∨←∨ x)}} rll) ←∨
+  replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∧→∧→ x)}} rll)
+  replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∧→↓)
+  replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∧→←∧ x)}} rll) ←∧
+  replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∧→∧→ x)}} rll)
+  replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∨↓)
+  replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∨←∨ x)}} rll) ←∨
   replSetLL (s ←∨) (∨→ ind) {{prf}} rll = dsize s ←∨
-  replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf belongs∨→↓)
+  replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∨→↓)
   replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ dsize s
-  replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (belongs∨→∨→ x)}} rll)
-  replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf belongs←∨→↓)
-  replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∨→←∨ x)}} rll) ←∨
-  replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (belongs←∨→∨→ x)}} rll)
-  replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf belongs←∂↓)
-  replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∂←∂ x)}} rll) ←∂
+  replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∨→∨→ x)}} rll)
+  replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∨→↓)
+  replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∨→←∨ x)}} rll) ←∨
+  replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∨→∨→ x)}} rll)
+  replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∂↓)
+  replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∂←∂ x)}} rll) ←∂
   replSetLL (s ←∂) (∂→ ind) {{prf}} rll = dsize s ←∂
-  replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf belongs∂→↓)
+  replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∂→↓)
   replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ dsize s
-  replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (belongs∂→∂→ x)}} rll)
-  replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf belongs←∂→↓)
-  replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (belongs←∂→←∂ x)}} rll) ←∂
-  replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (belongs←∂→∂→ x)}} rll)
+  replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∂→∂→ x)}} rll)
+  replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∂→↓)
+  replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∂→←∂ x)}} rll) ←∂
+  replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∂→∂→ x)}} rll)
+
+  truncSetLL : ∀ {i u ll pll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} pll ll)
+               → MSetLL {i} {u} pll
+  truncSetLL s ↓ = ¬∅ s
+  truncSetLL ↓ (ind ←∧) = ¬∅ ↓
+  truncSetLL (s ←∧) (ind ←∧) = truncSetLL s ind
+  truncSetLL (∧→ s) (ind ←∧) = ∅
+  truncSetLL (s ←∧→ s₁) (ind ←∧) = truncSetLL s ind
+  truncSetLL ↓ (∧→ ind) = ¬∅ ↓
+  truncSetLL (s ←∧) (∧→ ind) = ∅
+  truncSetLL (∧→ s) (∧→ ind) = truncSetLL s ind
+  truncSetLL (s ←∧→ s₁) (∧→ ind) = truncSetLL s₁ ind
+  truncSetLL ↓ (ind ←∨) = ¬∅ ↓
+  truncSetLL (s ←∨) (ind ←∨) = truncSetLL s ind
+  truncSetLL (∨→ s) (ind ←∨) = ∅
+  truncSetLL (s ←∨→ s₁) (ind ←∨) = truncSetLL s ind
+  truncSetLL ↓ (∨→ ind) = ¬∅ ↓
+  truncSetLL (s ←∨) (∨→ ind) = ∅
+  truncSetLL (∨→ s) (∨→ ind) = truncSetLL s ind
+  truncSetLL (s ←∨→ s₁) (∨→ ind) = truncSetLL s₁ ind
+  truncSetLL ↓ (ind ←∂) = ¬∅ ↓
+  truncSetLL (s ←∂) (ind ←∂) = truncSetLL s ind
+  truncSetLL (∂→ s) (ind ←∂) = ∅
+  truncSetLL (s ←∂→ s₁) (ind ←∂) = truncSetLL s ind
+  truncSetLL ↓ (∂→ ind) = ¬∅ ↓
+  truncSetLL (s ←∂) (∂→ ind) = ∅
+  truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
+  truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
+
+  truncExSetLL : ∀ {i u ll pll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} pll ll)
+               → ⦃ prf : exactHit (contruct s) ind ⦄ → SetLL {i} {u} pll
+  truncExSetLL s ↓ {{prf}} = s
+  truncExSetLL ↓ (ind ←∧) {{()}}
+  truncExSetLL (s ←∧) (ind ←∧) {{exactHitC←∧←∧ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (∧→ s) (ind ←∧) {{()}}
+  truncExSetLL (s ←∧→ s₁) (ind ←∧) {{()}}
+  truncExSetLL ↓ (∧→ ind) {{()}}
+  truncExSetLL (s ←∧) (∧→ ind) {{()}}
+  truncExSetLL (∧→ s) (∧→ ind) {{exactHitC∧→∧→ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (s ←∧→ s₁) (∧→ ind) {{()}}
+  truncExSetLL ↓ (ind ←∨) {{()}}
+  truncExSetLL (s ←∨) (ind ←∨) {{exactHitC←∨←∨ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (∨→ s) (ind ←∨) {{()}}
+  truncExSetLL (s ←∨→ s₁) (ind ←∨) {{()}}
+  truncExSetLL ↓ (∨→ ind) {{()}}
+  truncExSetLL (s ←∨) (∨→ ind) {{()}}
+  truncExSetLL (∨→ s) (∨→ ind) {{exactHitC∨→∨→ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (s ←∨→ s₁) (∨→ ind) {{()}}
+  truncExSetLL ↓ (ind ←∂) {{()}}
+  truncExSetLL (s ←∂) (ind ←∂) {{exactHitC←∂←∂ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (∂→ s) (ind ←∂) {{()}}
+  truncExSetLL (s ←∂→ s₁) (ind ←∂) {{()}}
+  truncExSetLL ↓ (∂→ ind) {{()}}
+  truncExSetLL (s ←∂) (∂→ ind) {{()}}
+  truncExSetLL (∂→ s) (∂→ ind) {{exactHitC∂→∂→ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (s ←∂→ s₁) (∂→ ind) {{()}}
+
 
 
 -- If we transform the linear logic tree, we need to transform the SetLL as well.

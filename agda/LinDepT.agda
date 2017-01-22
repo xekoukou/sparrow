@@ -22,7 +22,6 @@ mutual
     ∅     :                                  LinDepT ∅
     τ     : ∀{n} → {dt : Vec (Set u) n} → {df : genT dt} → (hv : HVec dt) → LinDepT (τ {dt = dt} df)
     _∧_   : ∀{l r} → LinDepT l → LinDepT r → LinDepT (l ∧ r)
-    -- Only one can be undef.
     _∨_   : ∀{l r} → (ld : LinDepT l) → (rd : LinDepT r) → LinDepT (l ∨ r)
     _←∨   : ∀{l r} → (ld : LinDepT l)                    → LinDepT (l ∨ r)
     ∨→_   : ∀{l r} → (rd : LinDepT r)                    → LinDepT (l ∨ r)
