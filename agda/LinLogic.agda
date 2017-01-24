@@ -4,13 +4,18 @@ module LinLogic where
 
 import Level
 open import Size
+open import Function
 open import Data.Nat
 open import Data.Product
 open import Data.Unit
-open import Data.Empty
+open import Data.Empty hiding (⊥-elim)
 open import Data.List
 open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality using (_≡_ ; refl)
 
+module _ where
+  ⊥-elim : ∀ {w} {Whatever : Set w} → .⊥ → Whatever
+  ⊥-elim ()
 
 module _ where
 
@@ -190,237 +195,111 @@ module SetLLMp where
   add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
   add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
 
-  data exactHit {i u} : ∀{ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → Set where
-    exactHitC↓↓ : ∀{ll} → exactHit {ll = ll} {rll = ll} ↓ ↓
-    exactHitC←∧←∧ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
-    exactHitC∧→∧→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind)
-    exactHitC←∨←∨ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
-    exactHitC∨→∨→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind)
-    exactHitC←∂←∂ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
-    exactHitC∂→∂→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind)
 
-
-
-  isExactHit : ∀{i u ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → Dec (exactHit{ll = ll} {rll = rll} s ind)
-  isExactHit ↓ ↓ = yes exactHitC↓↓
-  isExactHit ↓ (ind ←∧) = no (λ ())
-  isExactHit ↓ (∧→ ind) = no (λ ())
-  isExactHit ↓ (ind ←∨) = no (λ ())
-  isExactHit ↓ (∨→ ind) = no (λ ())
-  isExactHit ↓ (ind ←∂) = no (λ ())
-  isExactHit ↓ (∂→ ind) = no (λ ())
-  isExactHit (s ←∧) ↓ = no (λ ())
-  isExactHit (s ←∧) (ind ←∧) with (isExactHit s ind)
-  isExactHit (s ←∧) (ind ←∧) | yes p = yes (exactHitC←∧←∧ p)
-  isExactHit (s ←∧) (ind ←∧) | no ¬p = no (λ {(exactHitC←∧←∧ x) → ¬p x})
-  isExactHit (s ←∧) (∧→ ind) = no (λ ())
-  isExactHit (∧→ s) ↓ = no (λ ())
-  isExactHit (∧→ s) (ind ←∧) = no (λ ())
-  isExactHit (∧→ s) (∧→ ind) with (isExactHit s ind)
-  isExactHit (∧→ s) (∧→ ind) | yes p = yes (exactHitC∧→∧→ p)
-  isExactHit (∧→ s) (∧→ ind) | no ¬p = no (λ { (exactHitC∧→∧→ x) → ¬p x})
-  isExactHit (s ←∧→ s₁) ind = no (λ ())
-  isExactHit (s ←∨) ↓ = no (λ ())
-  isExactHit (s ←∨) (ind ←∨) with (isExactHit s ind)
-  isExactHit (s ←∨) (ind ←∨) | yes p = yes (exactHitC←∨←∨ p)
-  isExactHit (s ←∨) (ind ←∨) | no ¬p = no ( λ { (exactHitC←∨←∨ x) → ¬p x})
-  isExactHit (s ←∨) (∨→ ind) = no (λ ())
-  isExactHit (∨→ s) ↓ = no (λ ())
-  isExactHit (∨→ s) (ind ←∨) = no (λ ())
-  isExactHit (∨→ s) (∨→ ind) with (isExactHit s ind)
-  isExactHit (∨→ s) (∨→ ind) | yes p = yes (exactHitC∨→∨→ p)
-  isExactHit (∨→ s) (∨→ ind) | no ¬p = no ( λ { (exactHitC∨→∨→ x) → ¬p x})
-  isExactHit (s ←∨→ s₁) ind = no (λ ())
-  isExactHit (s ←∂) ↓ = no (λ ())
-  isExactHit (s ←∂) (ind ←∂) with (isExactHit s ind)
-  isExactHit (s ←∂) (ind ←∂) | yes p = yes (exactHitC←∂←∂ p)
-  isExactHit (s ←∂) (ind ←∂) | no ¬p = no ( λ { (exactHitC←∂←∂ x) → ¬p x})
-  isExactHit (s ←∂) (∂→ ind) = no (λ ())
-  isExactHit (∂→ s) ↓ = no (λ ())
-  isExactHit (∂→ s) (ind ←∂) = no (λ ())
-  isExactHit (∂→ s) (∂→ ind) with (isExactHit s ind)
-  isExactHit (∂→ s) (∂→ ind) | yes p = yes (exactHitC∂→∂→ p)
-  isExactHit (∂→ s) (∂→ ind) | no ¬p = no (λ { (exactHitC∂→∂→ x) → ¬p x})
-  isExactHit (s ←∂→ s₁) ind = no (λ ())
-
-
--- It does not belong at all.
-
-
-  data hitsOnce {i u} : ∀{ll rll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} rll ll) → Set where
-    hitsOnce↓ : ∀{ll rll ind} → hitsOnce {ll = ll} {rll = rll} ↓ ind
-    hitsOnce←∧↓ : ∀{lll llr s} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧) ↓
-    hitsOnce←∧←∧ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
-    hitsOnce∧→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (∧→ s) ↓
-    hitsOnce∧→∧→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind) 
-    hitsOnce←∧→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧→ s₁) ↓
-    hitsOnce←∧→←∧ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∧ q} {rll = rll} (s ←∧→ s₁) (ind ←∧)
-    hitsOnce←∧→∧→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∧ ll} {rll = rll} (s ←∧→ s₁) (∧→ ind) 
-    hitsOnce←∨↓ : ∀{lll llr s} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨) ↓
-    hitsOnce←∨←∨ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
-    hitsOnce∨→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (∨→ s) ↓
-    hitsOnce∨→∨→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind) 
-    hitsOnce←∨→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨→ s₁) ↓
-    hitsOnce←∨→←∨ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∨ q} {rll = rll} (s ←∨→ s₁) (ind ←∨)
-    hitsOnce←∨→∨→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∨ ll} {rll = rll} (s ←∨→ s₁) (∨→ ind) 
-    hitsOnce←∂↓ : ∀{lll llr s} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂) ↓
-    hitsOnce←∂←∂ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
-    hitsOnce∂→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (∂→ s) ↓
-    hitsOnce∂→∂→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind) 
-    hitsOnce←∂→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂→ s₁) ↓
-    hitsOnce←∂→←∂ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∂ q} {rll = rll} (s ←∂→ s₁) (ind ←∂)
-    hitsOnce←∂→∂→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∂ ll} {rll = rll} (s ←∂→ s₁) (∂→ ind) 
-
-  doesItHitOnce : ∀{i u ll q} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll) → Dec (hitsOnce s ind)
-  doesItHitOnce ↓ ind = yes hitsOnce↓
-  doesItHitOnce (s ←∧) ↓ = yes hitsOnce←∧↓
-  doesItHitOnce (s ←∧) (ind ←∧) with (doesItHitOnce s ind)
-  doesItHitOnce (s ←∧) (ind ←∧) | yes p = yes (hitsOnce←∧←∧ p)
-  doesItHitOnce (s ←∧) (ind ←∧) | no ¬p = no (λ {(hitsOnce←∧←∧ x) → ¬p x})
-  doesItHitOnce (s ←∧) (∧→ ind) = no (λ ())
-  doesItHitOnce (∧→ s) ↓ = yes hitsOnce∧→↓
-  doesItHitOnce (∧→ s) (ind ←∧) = no (λ ())
-  doesItHitOnce (∧→ s) (∧→ ind) with (doesItHitOnce s ind)
-  doesItHitOnce (∧→ s) (∧→ ind) | yes p = yes (hitsOnce∧→∧→ p)
-  doesItHitOnce (∧→ s) (∧→ ind) | no ¬p = no (λ {(hitsOnce∧→∧→ x) → ¬p x})
-  doesItHitOnce (s ←∧→ s₁) ↓ = yes hitsOnce←∧→↓
-  doesItHitOnce (s ←∧→ s₁) (ind ←∧) with (doesItHitOnce s ind)
-  doesItHitOnce (s ←∧→ s₁) (ind ←∧) | yes p = yes (hitsOnce←∧→←∧ p)
-  doesItHitOnce (s ←∧→ s₁) (ind ←∧) | no ¬p = no (λ {(hitsOnce←∧→←∧ x) → ¬p x})
-  doesItHitOnce (s ←∧→ s₁) (∧→ ind) with (doesItHitOnce s₁ ind)
-  doesItHitOnce (s ←∧→ s₁) (∧→ ind) | yes p = yes (hitsOnce←∧→∧→ p) 
-  doesItHitOnce (s ←∧→ s₁) (∧→ ind) | no ¬p = no (λ {(hitsOnce←∧→∧→ x) → ¬p x})
-  doesItHitOnce (s ←∨) ↓ = yes hitsOnce←∨↓
-  doesItHitOnce (s ←∨) (ind ←∨) with (doesItHitOnce s ind)
-  doesItHitOnce (s ←∨) (ind ←∨) | yes p = yes (hitsOnce←∨←∨ p) 
-  doesItHitOnce (s ←∨) (ind ←∨) | no ¬p = no (λ {(hitsOnce←∨←∨ x) → ¬p x})
-  doesItHitOnce (s ←∨) (∨→ ind) = no (λ ())
-  doesItHitOnce (∨→ s) ↓ = yes hitsOnce∨→↓
-  doesItHitOnce (∨→ s) (ind ←∨) = no (λ ())
-  doesItHitOnce (∨→ s) (∨→ ind) with (doesItHitOnce s ind)
-  doesItHitOnce (∨→ s) (∨→ ind) | yes p = yes (hitsOnce∨→∨→ p) 
-  doesItHitOnce (∨→ s) (∨→ ind) | no ¬p = no (λ {(hitsOnce∨→∨→ x) → ¬p x})
-  doesItHitOnce (s ←∨→ s₁) ↓ = yes hitsOnce←∨→↓
-  doesItHitOnce (s ←∨→ s₁) (ind ←∨) with (doesItHitOnce s ind)
-  doesItHitOnce (s ←∨→ s₁) (ind ←∨) | yes p = yes (hitsOnce←∨→←∨ p) 
-  doesItHitOnce (s ←∨→ s₁) (ind ←∨) | no ¬p = no (λ {(hitsOnce←∨→←∨ x) → ¬p x})
-  doesItHitOnce (s ←∨→ s₁) (∨→ ind) with (doesItHitOnce s₁ ind)
-  doesItHitOnce (s ←∨→ s₁) (∨→ ind) | yes p = yes (hitsOnce←∨→∨→ p)
-  doesItHitOnce (s ←∨→ s₁) (∨→ ind) | no ¬p = no (λ {(hitsOnce←∨→∨→ x) → ¬p x})
-  doesItHitOnce (s ←∂) ↓ = yes hitsOnce←∂↓
-  doesItHitOnce (s ←∂) (ind ←∂) with (doesItHitOnce s ind)
-  doesItHitOnce (s ←∂) (ind ←∂) | yes p = yes (hitsOnce←∂←∂ p) 
-  doesItHitOnce (s ←∂) (ind ←∂) | no ¬p = no (λ {(hitsOnce←∂←∂ x) → ¬p x})
-  doesItHitOnce (s ←∂) (∂→ ind) = no (λ ())
-  doesItHitOnce (∂→ s) ↓ = yes hitsOnce∂→↓
-  doesItHitOnce (∂→ s) (ind ←∂) = no (λ ())
-  doesItHitOnce (∂→ s) (∂→ ind) with (doesItHitOnce s ind)
-  doesItHitOnce (∂→ s) (∂→ ind) | yes p = yes (hitsOnce∂→∂→ p) 
-  doesItHitOnce (∂→ s) (∂→ ind) | no ¬p = no (λ {(hitsOnce∂→∂→ x) → ¬p x})
-  doesItHitOnce (s ←∂→ s₁) ↓ = yes hitsOnce←∂→↓
-  doesItHitOnce (s ←∂→ s₁) (ind ←∂) with (doesItHitOnce s ind)
-  doesItHitOnce (s ←∂→ s₁) (ind ←∂) | yes p = yes (hitsOnce←∂→←∂ p)
-  doesItHitOnce (s ←∂→ s₁) (ind ←∂) | no ¬p = no (λ {(hitsOnce←∂→←∂ x) → ¬p x})
-  doesItHitOnce (s ←∂→ s₁) (∂→ ind) with (doesItHitOnce s₁ ind)
-  doesItHitOnce (s ←∂→ s₁) (∂→ ind) | yes p = yes (hitsOnce←∂→∂→ p)
-  doesItHitOnce (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(hitsOnce←∂→∂→ x) → ¬p x})
-
-
--- Replace the linear logic sub-tree.
-  replSetLL : ∀{i u ll q} → {j : Size< ↑ i} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll)
-              → ⦃ prf : ¬ (hitsOnce s ind) ⦄ → (rll : LinLogic j {u})
-              → (SetLL (replLL {j = j} ll ind rll))
-  replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL ↓ (∧→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL ↓ (ind ←∨) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL ↓ (∨→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL ↓ (ind ←∂) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
-  replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∧↓)
-  replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∧←∧ x)}} rll) ←∧
-  replSetLL (s ←∧) (∧→ ind) {{prf}} rll = dsize s ←∧
-  replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∧→↓)
-  replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ dsize s
-  replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∧→∧→ x)}} rll)
-  replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∧→↓)
-  replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∧→←∧ x)}} rll) ←∧
-  replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∧→∧→ x)}} rll)
-  replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∨↓)
-  replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∨←∨ x)}} rll) ←∨
-  replSetLL (s ←∨) (∨→ ind) {{prf}} rll = dsize s ←∨
-  replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∨→↓)
-  replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ dsize s
-  replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∨→∨→ x)}} rll)
-  replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∨→↓)
-  replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∨→←∨ x)}} rll) ←∨
-  replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∨→∨→ x)}} rll)
-  replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∂↓)
-  replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∂←∂ x)}} rll) ←∂
-  replSetLL (s ←∂) (∂→ ind) {{prf}} rll = dsize s ←∂
-  replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∂→↓)
-  replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ dsize s
-  replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∂→∂→ x)}} rll)
-  replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∂→↓)
-  replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∂→←∂ x)}} rll) ←∂
-  replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∂→∂→ x)}} rll)
-
-  truncSetLL : ∀ {i u ll pll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} pll ll)
-               → MSetLL {i} {u} pll
-  truncSetLL s ↓ = ¬∅ s
-  truncSetLL ↓ (ind ←∧) = ¬∅ ↓
-  truncSetLL (s ←∧) (ind ←∧) = truncSetLL s ind
-  truncSetLL (∧→ s) (ind ←∧) = ∅
-  truncSetLL (s ←∧→ s₁) (ind ←∧) = truncSetLL s ind
-  truncSetLL ↓ (∧→ ind) = ¬∅ ↓
-  truncSetLL (s ←∧) (∧→ ind) = ∅
-  truncSetLL (∧→ s) (∧→ ind) = truncSetLL s ind
-  truncSetLL (s ←∧→ s₁) (∧→ ind) = truncSetLL s₁ ind
-  truncSetLL ↓ (ind ←∨) = ¬∅ ↓
-  truncSetLL (s ←∨) (ind ←∨) = truncSetLL s ind
-  truncSetLL (∨→ s) (ind ←∨) = ∅
-  truncSetLL (s ←∨→ s₁) (ind ←∨) = truncSetLL s ind
-  truncSetLL ↓ (∨→ ind) = ¬∅ ↓
-  truncSetLL (s ←∨) (∨→ ind) = ∅
-  truncSetLL (∨→ s) (∨→ ind) = truncSetLL s ind
-  truncSetLL (s ←∨→ s₁) (∨→ ind) = truncSetLL s₁ ind
-  truncSetLL ↓ (ind ←∂) = ¬∅ ↓
-  truncSetLL (s ←∂) (ind ←∂) = truncSetLL s ind
-  truncSetLL (∂→ s) (ind ←∂) = ∅
-  truncSetLL (s ←∂→ s₁) (ind ←∂) = truncSetLL s ind
-  truncSetLL ↓ (∂→ ind) = ¬∅ ↓
-  truncSetLL (s ←∂) (∂→ ind) = ∅
-  truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
-  truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
-
-  truncExSetLL : ∀ {i u ll pll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} pll ll)
-               → ⦃ prf : exactHit (contruct s) ind ⦄ → SetLL {i} {u} pll
-  truncExSetLL s ↓ {{prf}} = s
-  truncExSetLL ↓ (ind ←∧) {{()}}
-  truncExSetLL (s ←∧) (ind ←∧) {{exactHitC←∧←∧ prf}} = truncExSetLL s ind {{prf}}
-  truncExSetLL (∧→ s) (ind ←∧) {{()}}
-  truncExSetLL (s ←∧→ s₁) (ind ←∧) {{()}}
-  truncExSetLL ↓ (∧→ ind) {{()}}
-  truncExSetLL (s ←∧) (∧→ ind) {{()}}
-  truncExSetLL (∧→ s) (∧→ ind) {{exactHitC∧→∧→ prf}} = truncExSetLL s ind {{prf}}
-  truncExSetLL (s ←∧→ s₁) (∧→ ind) {{()}}
-  truncExSetLL ↓ (ind ←∨) {{()}}
-  truncExSetLL (s ←∨) (ind ←∨) {{exactHitC←∨←∨ prf}} = truncExSetLL s ind {{prf}}
-  truncExSetLL (∨→ s) (ind ←∨) {{()}}
-  truncExSetLL (s ←∨→ s₁) (ind ←∨) {{()}}
-  truncExSetLL ↓ (∨→ ind) {{()}}
-  truncExSetLL (s ←∨) (∨→ ind) {{()}}
-  truncExSetLL (∨→ s) (∨→ ind) {{exactHitC∨→∨→ prf}} = truncExSetLL s ind {{prf}}
-  truncExSetLL (s ←∨→ s₁) (∨→ ind) {{()}}
-  truncExSetLL ↓ (ind ←∂) {{()}}
-  truncExSetLL (s ←∂) (ind ←∂) {{exactHitC←∂←∂ prf}} = truncExSetLL s ind {{prf}}
-  truncExSetLL (∂→ s) (ind ←∂) {{()}}
-  truncExSetLL (s ←∂→ s₁) (ind ←∂) {{()}}
-  truncExSetLL ↓ (∂→ ind) {{()}}
-  truncExSetLL (s ←∂) (∂→ ind) {{()}}
-  truncExSetLL (∂→ s) (∂→ ind) {{exactHitC∂→∂→ prf}} = truncExSetLL s ind {{prf}}
-  truncExSetLL (s ←∂→ s₁) (∂→ ind) {{()}}
-
+  isEq : {i : Size} → ∀{u} → {ll : LinLogic i {u}} → (a : SetLL ll) → (b : SetLL ll) → Dec (a ≡ b)
+  isEq ↓ ↓ = yes refl 
+  isEq ↓ (b ←∧) = no (λ ())
+  isEq ↓ (∧→ b) = no (λ ())
+  isEq ↓ (b ←∧→ b₁) = no (λ ()) 
+  isEq ↓ (b ←∨) = no (λ ()) 
+  isEq ↓ (∨→ b) = no (λ ()) 
+  isEq ↓ (b ←∨→ b₁) = no (λ ())
+  isEq ↓ (b ←∂) = no (λ ())
+  isEq ↓ (∂→ b) = no (λ ())
+  isEq ↓ (b ←∂→ b₁) = no (λ ())
+  isEq (a ←∧) ↓ = no (λ ())
+  isEq {ll = lll ∧ llr} (a ←∧) (b ←∧) with (isEq a b)
+  isEq {ll = lll ∧ llr} (a ←∧) (b ←∧)  | yes p with p
+  isEq {ll = lll ∧ llr} (a ←∧) (.a ←∧) | yes p | refl = yes refl
+  isEq {ll = lll ∧ llr} (a ←∧) (b ←∧)  | no ¬p = no (hf) where
+    hf : (((SetLL (lll ∧ llr)) ∋ (a ←∧)) ≡ (b ←∧)) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∧) (∧→ b) = no (λ ())
+  isEq (a ←∧) (b ←∧→ b₁) = no (λ ())
+  isEq (∧→ a) ↓ = no (λ ())
+  isEq (∧→ a) (b ←∧) = no (λ ())
+  isEq {ll = lll ∧ llr} (∧→ a) (∧→ b) with (isEq a b)
+  isEq {ll = lll ∧ llr} (∧→ a) (∧→ b)  | yes p with p
+  isEq {ll = lll ∧ llr} (∧→ a) (∧→ .a) | yes p | refl = yes refl
+  isEq {ll = lll ∧ llr} (∧→ a) (∧→ b)  | no ¬p = no (hf) where
+    hf : (((SetLL (lll ∧ llr)) ∋ (∧→ a)) ≡ (∧→ b)) → ⊥
+    hf refl = ¬p refl
+  isEq (∧→ a) (b ←∧→ b₁) = no (λ ())
+  isEq (a ←∧→ a₁) ↓ = no (λ ())
+  isEq (a ←∧→ a₁) (b ←∧) = no (λ ())
+  isEq (a ←∧→ a₁) (∧→ b) = no (λ ())
+  isEq (a ←∧→ a₁) (b ←∧→ b₁) with (isEq a b)
+  isEq (a ←∧→ a₁) (b ←∧→ b₁) | yes p with (isEq a₁ b₁)
+  isEq (a ←∧→ a₁) (b ←∧→ b₁) | yes p₁ | (yes p) with p₁ | p
+  isEq (a ←∧→ a₁) (.a ←∧→ .a₁) | yes p₁ | (yes p) | refl | refl = yes refl
+  isEq (a ←∧→ a₁) (b ←∧→ b₁) | yes p | (no ¬p) = no (hf) where 
+    hf : (a ←∧→ a₁) ≡ (b ←∧→ b₁) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∧→ a₁) (b ←∧→ b₁) | no ¬p = no (hf) where
+    hf : (a ←∧→ a₁) ≡ (b ←∧→ b₁) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∨) ↓ = no (λ ())
+  isEq {ll = lll ∨ llr} (a ←∨) (b ←∨) with (isEq a b)
+  isEq {ll = lll ∨ llr} (a ←∨) (b ←∨)  | yes p with p
+  isEq {ll = lll ∨ llr} (a ←∨) (.a ←∨) | yes p | refl = yes refl
+  isEq {ll = lll ∨ llr} (a ←∨) (b ←∨)  | no ¬p = no (hf) where
+    hf : (((SetLL (lll ∨ llr)) ∋ (a ←∨)) ≡ (b ←∨)) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∨) (∨→ b) = no (λ ())
+  isEq (a ←∨) (b ←∨→ b₁) = no (λ ())
+  isEq (∨→ a) ↓ = no (λ ())
+  isEq (∨→ a) (b ←∨) = no (λ ())
+  isEq {ll = lll ∨ llr} (∨→ a) (∨→ b) with (isEq a b)
+  isEq {ll = lll ∨ llr} (∨→ a) (∨→ b)  | yes p with p
+  isEq {ll = lll ∨ llr} (∨→ a) (∨→ .a) | yes p | refl = yes refl
+  isEq {ll = lll ∨ llr} (∨→ a) (∨→ b)  | no ¬p = no (hf) where
+    hf : (((SetLL (lll ∨ llr)) ∋ (∨→ a)) ≡ (∨→ b)) → ⊥
+    hf refl = ¬p refl
+  isEq (∨→ a) (b ←∨→ b₁) = no (λ ())
+  isEq (a ←∨→ a₁) ↓ = no (λ ())
+  isEq (a ←∨→ a₁) (b ←∨) = no (λ ())
+  isEq (a ←∨→ a₁) (∨→ b) = no (λ ())
+  isEq (a ←∨→ a₁) (b ←∨→ b₁) with (isEq a b)
+  isEq (a ←∨→ a₁) (b ←∨→ b₁) | yes p with (isEq a₁ b₁)
+  isEq (a ←∨→ a₁) (b ←∨→ b₁) | yes p₁ | (yes p) with p₁ | p
+  isEq (a ←∨→ a₁) (.a ←∨→ .a₁) | yes p₁ | (yes p) | refl | refl = yes refl
+  isEq (a ←∨→ a₁) (b ←∨→ b₁) | yes p | (no ¬p) = no (hf) where 
+    hf : (a ←∨→ a₁) ≡ (b ←∨→ b₁) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∨→ a₁) (b ←∨→ b₁) | no ¬p = no (hf) where
+    hf : (a ←∨→ a₁) ≡ (b ←∨→ b₁) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∂) ↓ = no (λ ())
+  isEq {ll = lll ∂ llr} (a ←∂) (b ←∂) with (isEq a b)
+  isEq {ll = lll ∂ llr} (a ←∂) (b ←∂)  | yes p with p
+  isEq {ll = lll ∂ llr} (a ←∂) (.a ←∂) | yes p | refl = yes refl
+  isEq {ll = lll ∂ llr} (a ←∂) (b ←∂)  | no ¬p = no (hf) where
+    hf : (((SetLL (lll ∂ llr)) ∋ (a ←∂)) ≡ (b ←∂)) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∂) (∂→ b) = no (λ ())
+  isEq (a ←∂) (b ←∂→ b₁) = no (λ ())
+  isEq (∂→ a) ↓ = no (λ ())
+  isEq (∂→ a) (b ←∂) = no (λ ())
+  isEq {ll = lll ∂ llr} (∂→ a) (∂→ b) with (isEq a b)
+  isEq {ll = lll ∂ llr} (∂→ a) (∂→ b)  | yes p with p
+  isEq {ll = lll ∂ llr} (∂→ a) (∂→ .a) | yes p | refl = yes refl
+  isEq {ll = lll ∂ llr} (∂→ a) (∂→ b)  | no ¬p = no (hf) where
+    hf : (((SetLL (lll ∂ llr)) ∋ (∂→ a)) ≡ (∂→ b)) → ⊥
+    hf refl = ¬p refl
+  isEq (∂→ a) (b ←∂→ b₁) = no (λ ())
+  isEq (a ←∂→ a₁) ↓ = no (λ ())
+  isEq (a ←∂→ a₁) (b ←∂) = no (λ ())
+  isEq (a ←∂→ a₁) (∂→ b) = no (λ ())
+  isEq (a ←∂→ a₁) (b ←∂→ b₁) with (isEq a b)
+  isEq (a ←∂→ a₁) (b ←∂→ b₁) | yes p with (isEq a₁ b₁)
+  isEq (a ←∂→ a₁) (b ←∂→ b₁) | yes p₁ | (yes p) with p₁ | p
+  isEq (a ←∂→ a₁) (.a ←∂→ .a₁) | yes p₁ | (yes p) | refl | refl = yes refl
+  isEq (a ←∂→ a₁) (b ←∂→ b₁) | yes p | (no ¬p) = no (hf) where 
+    hf : (a ←∂→ a₁) ≡ (b ←∂→ b₁) → ⊥
+    hf refl = ¬p refl
+  isEq (a ←∂→ a₁) (b ←∂→ b₁) | no ¬p = no (hf) where
+    hf : (a ←∂→ a₁) ≡ (b ←∂→ b₁) → ⊥
+    hf refl = ¬p refl
 
 
 -- If we transform the linear logic tree, we need to transform the SetLL as well.
@@ -527,6 +406,373 @@ module SetLLMp where
   sptran ((s ←∨) ←∧→ s₁) (∧∨d tr)     = sptran ((s ←∧→ s₁) ←∨) tr
   sptran ((∨→ s) ←∧→ s₁) (∧∨d tr)     = sptran (∨→ (s ←∧→ s₁)) tr
   sptran ((s ←∨→ s₁) ←∧→ s₂) (∧∨d tr) = (sptran ((s ←∧→ s₂) ←∨) tr) ++ (sptran (∨→ (s₁ ←∧→ s₂)) tr)
+
+
+
+module _ where
+
+  open SetLLMp
+
+  data exactHit {i u} : ∀{ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → Set where
+    exactHitC↓↓ : ∀{ll} → exactHit {ll = ll} {rll = ll} ↓ ↓
+    exactHitC←∧←∧ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
+    exactHitC∧→∧→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind)
+    exactHitC←∨←∨ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
+    exactHitC∨→∨→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind)
+    exactHitC←∂←∂ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
+    exactHitC∂→∂→ : ∀{ll q rll s ind} → exactHit {ll = ll} {rll = rll} s ind → exactHit {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind)
+
+  exactHitUnique : ∀{i u ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) 
+                   → (a : exactHit {i} {u} {ll} {rll} s ind) → (b : exactHit {i} {u} {ll} {rll} s ind)
+                   → a ≡ b
+  exactHitUnique ↓ ↓ exactHitC↓↓ exactHitC↓↓ = refl
+  exactHitUnique ↓ (ind ←∧) () b
+  exactHitUnique ↓ (∧→ ind) () b
+  exactHitUnique ↓ (ind ←∨) () b
+  exactHitUnique ↓ (∨→ ind) () b
+  exactHitUnique ↓ (ind ←∂) () b
+  exactHitUnique ↓ (∂→ ind) () b
+  exactHitUnique (s ←∧) ↓ () b
+  exactHitUnique (s ←∧) (ind ←∧) (exactHitC←∧←∧ a) (exactHitC←∧←∧ b) with (exactHitUnique s ind a b)
+  exactHitUnique (s ←∧) (ind ←∧) (exactHitC←∧←∧ a) (exactHitC←∧←∧ .a) | refl = refl
+  exactHitUnique (s ←∧) (∧→ ind) () b
+  exactHitUnique (∧→ s) ↓ () b
+  exactHitUnique (∧→ s) (ind ←∧) () b
+  exactHitUnique (∧→ s) (∧→ ind) (exactHitC∧→∧→ a) (exactHitC∧→∧→ b) with (exactHitUnique s ind a b)
+  exactHitUnique (∧→ s) (∧→ ind) (exactHitC∧→∧→ a) (exactHitC∧→∧→ .a) | refl = refl
+  exactHitUnique (s ←∧→ s₁) ind () b
+  exactHitUnique (s ←∨) ↓ () b
+  exactHitUnique (s ←∨) (ind ←∨) (exactHitC←∨←∨ a) (exactHitC←∨←∨ b) with (exactHitUnique s ind a b)
+  exactHitUnique (s ←∨) (ind ←∨) (exactHitC←∨←∨ a) (exactHitC←∨←∨ .a) | refl = refl
+  exactHitUnique (s ←∨) (∨→ ind) () b
+  exactHitUnique (∨→ s) ↓ () b
+  exactHitUnique (∨→ s) (ind ←∨) () b
+  exactHitUnique (∨→ s) (∨→ ind) (exactHitC∨→∨→ a) (exactHitC∨→∨→ b) with (exactHitUnique s ind a b)
+  exactHitUnique (∨→ s) (∨→ ind) (exactHitC∨→∨→ a) (exactHitC∨→∨→ .a) | refl = refl
+  exactHitUnique (s ←∨→ s₁) ind () b
+  exactHitUnique (s ←∂) ↓ () b
+  exactHitUnique (s ←∂) (ind ←∂) (exactHitC←∂←∂ a) (exactHitC←∂←∂ b) with (exactHitUnique s ind a b)
+  exactHitUnique (s ←∂) (ind ←∂) (exactHitC←∂←∂ a) (exactHitC←∂←∂ .a) | refl = refl
+  exactHitUnique (s ←∂) (∂→ ind) () b
+  exactHitUnique (∂→ s) ↓ () b
+  exactHitUnique (∂→ s) (ind ←∂) () b
+  exactHitUnique (∂→ s) (∂→ ind) (exactHitC∂→∂→ a) (exactHitC∂→∂→ b) with (exactHitUnique s ind a b)
+  exactHitUnique (∂→ s) (∂→ ind) (exactHitC∂→∂→ a) (exactHitC∂→∂→ .a) | refl = refl
+  exactHitUnique (s ←∂→ s₁) ind () b
+
+
+  isExactHit : ∀{i u ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → Dec (exactHit{ll = ll} {rll = rll} s ind)
+  isExactHit ↓ ↓ = yes exactHitC↓↓
+  isExactHit ↓ (ind ←∧) = no (λ ())
+  isExactHit ↓ (∧→ ind) = no (λ ())
+  isExactHit ↓ (ind ←∨) = no (λ ())
+  isExactHit ↓ (∨→ ind) = no (λ ())
+  isExactHit ↓ (ind ←∂) = no (λ ())
+  isExactHit ↓ (∂→ ind) = no (λ ())
+  isExactHit (s ←∧) ↓ = no (λ ())
+  isExactHit (s ←∧) (ind ←∧) with (isExactHit s ind)
+  isExactHit (s ←∧) (ind ←∧) | yes p = yes (exactHitC←∧←∧ p)
+  isExactHit (s ←∧) (ind ←∧) | no ¬p = no (λ {(exactHitC←∧←∧ x) → ¬p x})
+  isExactHit (s ←∧) (∧→ ind) = no (λ ())
+  isExactHit (∧→ s) ↓ = no (λ ())
+  isExactHit (∧→ s) (ind ←∧) = no (λ ())
+  isExactHit (∧→ s) (∧→ ind) with (isExactHit s ind)
+  isExactHit (∧→ s) (∧→ ind) | yes p = yes (exactHitC∧→∧→ p)
+  isExactHit (∧→ s) (∧→ ind) | no ¬p = no (λ { (exactHitC∧→∧→ x) → ¬p x})
+  isExactHit (s ←∧→ s₁) ind = no (λ ())
+  isExactHit (s ←∨) ↓ = no (λ ())
+  isExactHit (s ←∨) (ind ←∨) with (isExactHit s ind)
+  isExactHit (s ←∨) (ind ←∨) | yes p = yes (exactHitC←∨←∨ p)
+  isExactHit (s ←∨) (ind ←∨) | no ¬p = no ( λ { (exactHitC←∨←∨ x) → ¬p x})
+  isExactHit (s ←∨) (∨→ ind) = no (λ ())
+  isExactHit (∨→ s) ↓ = no (λ ())
+  isExactHit (∨→ s) (ind ←∨) = no (λ ())
+  isExactHit (∨→ s) (∨→ ind) with (isExactHit s ind)
+  isExactHit (∨→ s) (∨→ ind) | yes p = yes (exactHitC∨→∨→ p)
+  isExactHit (∨→ s) (∨→ ind) | no ¬p = no ( λ { (exactHitC∨→∨→ x) → ¬p x})
+  isExactHit (s ←∨→ s₁) ind = no (λ ())
+  isExactHit (s ←∂) ↓ = no (λ ())
+  isExactHit (s ←∂) (ind ←∂) with (isExactHit s ind)
+  isExactHit (s ←∂) (ind ←∂) | yes p = yes (exactHitC←∂←∂ p)
+  isExactHit (s ←∂) (ind ←∂) | no ¬p = no ( λ { (exactHitC←∂←∂ x) → ¬p x})
+  isExactHit (s ←∂) (∂→ ind) = no (λ ())
+  isExactHit (∂→ s) ↓ = no (λ ())
+  isExactHit (∂→ s) (ind ←∂) = no (λ ())
+  isExactHit (∂→ s) (∂→ ind) with (isExactHit s ind)
+  isExactHit (∂→ s) (∂→ ind) | yes p = yes (exactHitC∂→∂→ p)
+  isExactHit (∂→ s) (∂→ ind) | no ¬p = no (λ { (exactHitC∂→∂→ x) → ¬p x})
+  isExactHit (s ←∂→ s₁) ind = no (λ ())
+
+
+-- It hits at least once.
+
+  data hitsOnce {i u} : ∀{ll rll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} rll ll) → Set where
+    hitsOnce↓ : ∀{ll rll ind} → hitsOnce {ll = ll} {rll = rll} ↓ ind
+    hitsOnce←∧↓ : ∀{lll llr s} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧) ↓
+    hitsOnce←∧←∧ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∧ q} {rll = rll} (s ←∧) (ind ←∧)
+    hitsOnce∧→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (∧→ s) ↓
+    hitsOnce∧→∧→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∧ ll} {rll = rll} (∧→ s) (∧→ ind) 
+    hitsOnce←∧→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∧ llr} {rll = lll ∧ llr} (s ←∧→ s₁) ↓
+    hitsOnce←∧→←∧ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∧ q} {rll = rll} (s ←∧→ s₁) (ind ←∧)
+    hitsOnce←∧→∧→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∧ ll} {rll = rll} (s ←∧→ s₁) (∧→ ind) 
+    hitsOnce←∨↓ : ∀{lll llr s} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨) ↓
+    hitsOnce←∨←∨ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∨ q} {rll = rll} (s ←∨) (ind ←∨)
+    hitsOnce∨→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (∨→ s) ↓
+    hitsOnce∨→∨→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∨ ll} {rll = rll} (∨→ s) (∨→ ind) 
+    hitsOnce←∨→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∨ llr} {rll = lll ∨ llr} (s ←∨→ s₁) ↓
+    hitsOnce←∨→←∨ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∨ q} {rll = rll} (s ←∨→ s₁) (ind ←∨)
+    hitsOnce←∨→∨→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∨ ll} {rll = rll} (s ←∨→ s₁) (∨→ ind) 
+    hitsOnce←∂↓ : ∀{lll llr s} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂) ↓
+    hitsOnce←∂←∂ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∂ q} {rll = rll} (s ←∂) (ind ←∂)
+    hitsOnce∂→↓ : ∀{lll llr s} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (∂→ s) ↓
+    hitsOnce∂→∂→ : ∀{ll rll s q ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = q ∂ ll} {rll = rll} (∂→ s) (∂→ ind) 
+    hitsOnce←∂→↓ : ∀{lll llr s s₁} → hitsOnce {ll = lll ∂ llr} {rll = lll ∂ llr} (s ←∂→ s₁) ↓
+    hitsOnce←∂→←∂ : ∀{ll rll s q s₁ ind} → hitsOnce {ll = ll} {rll = rll} s ind → hitsOnce {ll = ll ∂ q} {rll = rll} (s ←∂→ s₁) (ind ←∂)
+    hitsOnce←∂→∂→ : ∀{ll rll q s s₁ ind} → hitsOnce {ll = ll} {rll = rll} s₁ ind → hitsOnce {ll = q ∂ ll} {rll = rll} (s ←∂→ s₁) (∂→ ind) 
+
+  hitsOnceUnique : ∀{i u ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → (a : hitsOnce s ind) → (b : hitsOnce s ind) → a ≡ b
+  hitsOnceUnique ↓ ind hitsOnce↓ hitsOnce↓ = refl
+  hitsOnceUnique (s ←∧) ↓ hitsOnce←∧↓ hitsOnce←∧↓ = refl
+  hitsOnceUnique (s ←∧) (ind ←∧) (hitsOnce←∧←∧ a) (hitsOnce←∧←∧ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (s ←∧) (ind ←∧) (hitsOnce←∧←∧ a) (hitsOnce←∧←∧ .a) | refl = refl
+  hitsOnceUnique (s ←∧) (∧→ ind) () b
+  hitsOnceUnique (∧→ s) ↓ hitsOnce∧→↓ hitsOnce∧→↓ = refl
+  hitsOnceUnique (∧→ s) (ind ←∧) () b
+  hitsOnceUnique (∧→ s) (∧→ ind) (hitsOnce∧→∧→ a) (hitsOnce∧→∧→ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (∧→ s) (∧→ ind) (hitsOnce∧→∧→ a) (hitsOnce∧→∧→ .a) | refl = refl
+  hitsOnceUnique (s ←∧→ s₁) ↓ hitsOnce←∧→↓ hitsOnce←∧→↓ = refl
+  hitsOnceUnique (s ←∧→ s₁) (ind ←∧) (hitsOnce←∧→←∧ a) (hitsOnce←∧→←∧ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (s ←∧→ s₁) (ind ←∧) (hitsOnce←∧→←∧ a) (hitsOnce←∧→←∧ .a) | refl = refl
+  hitsOnceUnique (s ←∧→ s₁) (∧→ ind) (hitsOnce←∧→∧→ a) (hitsOnce←∧→∧→ b) with (hitsOnceUnique s₁ ind a b)
+  hitsOnceUnique (s ←∧→ s₁) (∧→ ind) (hitsOnce←∧→∧→ a) (hitsOnce←∧→∧→ .a) | refl = refl
+  hitsOnceUnique (s ←∨) ↓ hitsOnce←∨↓ hitsOnce←∨↓ = refl
+  hitsOnceUnique (s ←∨) (ind ←∨) (hitsOnce←∨←∨ a) (hitsOnce←∨←∨ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (s ←∨) (ind ←∨) (hitsOnce←∨←∨ a) (hitsOnce←∨←∨ .a) | refl = refl
+  hitsOnceUnique (s ←∨) (∨→ ind) () b
+  hitsOnceUnique (∨→ s) ↓ hitsOnce∨→↓ hitsOnce∨→↓ = refl
+  hitsOnceUnique (∨→ s) (ind ←∨) () b
+  hitsOnceUnique (∨→ s) (∨→ ind) (hitsOnce∨→∨→ a) (hitsOnce∨→∨→ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (∨→ s) (∨→ ind) (hitsOnce∨→∨→ a) (hitsOnce∨→∨→ .a) | refl = refl
+  hitsOnceUnique (s ←∨→ s₁) ↓ hitsOnce←∨→↓ hitsOnce←∨→↓ = refl
+  hitsOnceUnique (s ←∨→ s₁) (ind ←∨) (hitsOnce←∨→←∨ a) (hitsOnce←∨→←∨ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (s ←∨→ s₁) (ind ←∨) (hitsOnce←∨→←∨ a) (hitsOnce←∨→←∨ .a) | refl = refl
+  hitsOnceUnique (s ←∨→ s₁) (∨→ ind) (hitsOnce←∨→∨→ a) (hitsOnce←∨→∨→ b) with (hitsOnceUnique s₁ ind a b)
+  hitsOnceUnique (s ←∨→ s₁) (∨→ ind) (hitsOnce←∨→∨→ a) (hitsOnce←∨→∨→ .a) | refl = refl
+  hitsOnceUnique (s ←∂) ↓ hitsOnce←∂↓ hitsOnce←∂↓ = refl
+  hitsOnceUnique (s ←∂) (ind ←∂) (hitsOnce←∂←∂ a) (hitsOnce←∂←∂ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (s ←∂) (ind ←∂) (hitsOnce←∂←∂ a) (hitsOnce←∂←∂ .a) | refl = refl
+  hitsOnceUnique (s ←∂) (∂→ ind) () b
+  hitsOnceUnique (∂→ s) ↓ hitsOnce∂→↓ hitsOnce∂→↓ = refl
+  hitsOnceUnique (∂→ s) (ind ←∂) () b
+  hitsOnceUnique (∂→ s) (∂→ ind) (hitsOnce∂→∂→ a) (hitsOnce∂→∂→ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (∂→ s) (∂→ ind) (hitsOnce∂→∂→ a) (hitsOnce∂→∂→ .a) | refl = refl
+  hitsOnceUnique (s ←∂→ s₁) ↓ hitsOnce←∂→↓ hitsOnce←∂→↓ = refl
+  hitsOnceUnique (s ←∂→ s₁) (ind ←∂) (hitsOnce←∂→←∂ a) (hitsOnce←∂→←∂ b) with (hitsOnceUnique s ind a b)
+  hitsOnceUnique (s ←∂→ s₁) (ind ←∂) (hitsOnce←∂→←∂ a) (hitsOnce←∂→←∂ .a) | refl = refl
+  hitsOnceUnique (s ←∂→ s₁) (∂→ ind) (hitsOnce←∂→∂→ a) (hitsOnce←∂→∂→ b) with (hitsOnceUnique s₁ ind a b)
+  hitsOnceUnique (s ←∂→ s₁) (∂→ ind) (hitsOnce←∂→∂→ a) (hitsOnce←∂→∂→ .a) | refl = refl
+
+
+  exactHit¬hitsOnce→⊥ : ∀{i u ll rll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} rll ll) → exactHit (contruct s) ind → ¬ (hitsOnce s ind) → ⊥
+  exactHit¬hitsOnce→⊥ ↓ ↓ ex ¬ho = ¬ho hitsOnce↓
+  exactHit¬hitsOnce→⊥ ↓ (ind ←∧) () ¬ho
+  exactHit¬hitsOnce→⊥ ↓ (∧→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ ↓ (ind ←∨) () ¬ho
+  exactHit¬hitsOnce→⊥ ↓ (∨→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ ↓ (ind ←∂) () ¬ho
+  exactHit¬hitsOnce→⊥ ↓ (∂→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∧) ↓ () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∧) (ind ←∧) (exactHitC←∧←∧ ex) ¬ho with (exactHit¬hitsOnce→⊥ s ind ex (λ x → ¬ho (hitsOnce←∧←∧ x)))
+  exactHit¬hitsOnce→⊥ (s ←∧) (ind ←∧) (exactHitC←∧←∧ ex) ¬ho | ()
+  exactHit¬hitsOnce→⊥ (s ←∧) (∧→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ (∧→ s) ↓ () ¬ho
+  exactHit¬hitsOnce→⊥ (∧→ s) (ind ←∧) () ¬ho
+  exactHit¬hitsOnce→⊥ (∧→ s) (∧→ ind) (exactHitC∧→∧→ ex) ¬ho with (exactHit¬hitsOnce→⊥ s ind ex (λ x → ¬ho (hitsOnce∧→∧→ x)))
+  exactHit¬hitsOnce→⊥ (∧→ s) (∧→ ind) (exactHitC∧→∧→ ex) ¬ho | ()
+  exactHit¬hitsOnce→⊥ (s ←∧→ s₁) ↓ ex ¬ho = ¬ho hitsOnce←∧→↓
+  exactHit¬hitsOnce→⊥ (s ←∧→ s₁) (ind ←∧) () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∧→ s₁) (∧→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∨) ↓ () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∨) (ind ←∨) (exactHitC←∨←∨ ex) ¬ho with (exactHit¬hitsOnce→⊥ s ind ex (λ x → ¬ho (hitsOnce←∨←∨ x)))
+  exactHit¬hitsOnce→⊥ (s ←∨) (ind ←∨) (exactHitC←∨←∨ ex) ¬ho | ()
+  exactHit¬hitsOnce→⊥ (s ←∨) (∨→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ (∨→ s) ↓ () ¬ho
+  exactHit¬hitsOnce→⊥ (∨→ s) (ind ←∨) () ¬ho
+  exactHit¬hitsOnce→⊥ (∨→ s) (∨→ ind) (exactHitC∨→∨→ ex) ¬ho with (exactHit¬hitsOnce→⊥ s ind ex (λ x → ¬ho (hitsOnce∨→∨→ x)))
+  exactHit¬hitsOnce→⊥ (∨→ s) (∨→ ind) (exactHitC∨→∨→ ex) ¬ho | ()
+  exactHit¬hitsOnce→⊥ (s ←∨→ s₁) ↓ ex ¬ho = ¬ho hitsOnce←∨→↓
+  exactHit¬hitsOnce→⊥ (s ←∨→ s₁) (ind ←∨) () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∨→ s₁) (∨→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∂) ↓ () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∂) (ind ←∂) (exactHitC←∂←∂ ex) ¬ho with (exactHit¬hitsOnce→⊥ s ind ex (λ x → ¬ho (hitsOnce←∂←∂ x)))
+  exactHit¬hitsOnce→⊥ (s ←∂) (ind ←∂) (exactHitC←∂←∂ ex) ¬ho | ()
+  exactHit¬hitsOnce→⊥ (s ←∂) (∂→ ind) () ¬ho
+  exactHit¬hitsOnce→⊥ (∂→ s) ↓ () ¬ho
+  exactHit¬hitsOnce→⊥ (∂→ s) (ind ←∂) () ¬ho
+  exactHit¬hitsOnce→⊥ (∂→ s) (∂→ ind) (exactHitC∂→∂→ ex) ¬ho with (exactHit¬hitsOnce→⊥ s ind ex (λ x → ¬ho (hitsOnce∂→∂→ x)))
+  exactHit¬hitsOnce→⊥ (∂→ s) (∂→ ind) (exactHitC∂→∂→ ex) ¬ho | ()
+  exactHit¬hitsOnce→⊥ (s ←∂→ s₁) ↓ ex ¬ho = ¬ho hitsOnce←∂→↓
+  exactHit¬hitsOnce→⊥ (s ←∂→ s₁) (ind ←∂) () ¬ho
+  exactHit¬hitsOnce→⊥ (s ←∂→ s₁) (∂→ ind) () ¬ho
+
+
+
+
+  doesItHitOnce : ∀{i u ll q} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll) → Dec (hitsOnce s ind)
+  doesItHitOnce ↓ ind = yes hitsOnce↓
+  doesItHitOnce (s ←∧) ↓ = yes hitsOnce←∧↓
+  doesItHitOnce (s ←∧) (ind ←∧) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∧) (ind ←∧) | yes p = yes (hitsOnce←∧←∧ p)
+  doesItHitOnce (s ←∧) (ind ←∧) | no ¬p = no (λ {(hitsOnce←∧←∧ x) → ¬p x})
+  doesItHitOnce (s ←∧) (∧→ ind) = no (λ ())
+  doesItHitOnce (∧→ s) ↓ = yes hitsOnce∧→↓
+  doesItHitOnce (∧→ s) (ind ←∧) = no (λ ())
+  doesItHitOnce (∧→ s) (∧→ ind) with (doesItHitOnce s ind)
+  doesItHitOnce (∧→ s) (∧→ ind) | yes p = yes (hitsOnce∧→∧→ p)
+  doesItHitOnce (∧→ s) (∧→ ind) | no ¬p = no (λ {(hitsOnce∧→∧→ x) → ¬p x})
+  doesItHitOnce (s ←∧→ s₁) ↓ = yes hitsOnce←∧→↓
+  doesItHitOnce (s ←∧→ s₁) (ind ←∧) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∧→ s₁) (ind ←∧) | yes p = yes (hitsOnce←∧→←∧ p)
+  doesItHitOnce (s ←∧→ s₁) (ind ←∧) | no ¬p = no (λ {(hitsOnce←∧→←∧ x) → ¬p x})
+  doesItHitOnce (s ←∧→ s₁) (∧→ ind) with (doesItHitOnce s₁ ind)
+  doesItHitOnce (s ←∧→ s₁) (∧→ ind) | yes p = yes (hitsOnce←∧→∧→ p) 
+  doesItHitOnce (s ←∧→ s₁) (∧→ ind) | no ¬p = no (λ {(hitsOnce←∧→∧→ x) → ¬p x})
+  doesItHitOnce (s ←∨) ↓ = yes hitsOnce←∨↓
+  doesItHitOnce (s ←∨) (ind ←∨) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∨) (ind ←∨) | yes p = yes (hitsOnce←∨←∨ p) 
+  doesItHitOnce (s ←∨) (ind ←∨) | no ¬p = no (λ {(hitsOnce←∨←∨ x) → ¬p x})
+  doesItHitOnce (s ←∨) (∨→ ind) = no (λ ())
+  doesItHitOnce (∨→ s) ↓ = yes hitsOnce∨→↓
+  doesItHitOnce (∨→ s) (ind ←∨) = no (λ ())
+  doesItHitOnce (∨→ s) (∨→ ind) with (doesItHitOnce s ind)
+  doesItHitOnce (∨→ s) (∨→ ind) | yes p = yes (hitsOnce∨→∨→ p) 
+  doesItHitOnce (∨→ s) (∨→ ind) | no ¬p = no (λ {(hitsOnce∨→∨→ x) → ¬p x})
+  doesItHitOnce (s ←∨→ s₁) ↓ = yes hitsOnce←∨→↓
+  doesItHitOnce (s ←∨→ s₁) (ind ←∨) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∨→ s₁) (ind ←∨) | yes p = yes (hitsOnce←∨→←∨ p) 
+  doesItHitOnce (s ←∨→ s₁) (ind ←∨) | no ¬p = no (λ {(hitsOnce←∨→←∨ x) → ¬p x})
+  doesItHitOnce (s ←∨→ s₁) (∨→ ind) with (doesItHitOnce s₁ ind)
+  doesItHitOnce (s ←∨→ s₁) (∨→ ind) | yes p = yes (hitsOnce←∨→∨→ p)
+  doesItHitOnce (s ←∨→ s₁) (∨→ ind) | no ¬p = no (λ {(hitsOnce←∨→∨→ x) → ¬p x})
+  doesItHitOnce (s ←∂) ↓ = yes hitsOnce←∂↓
+  doesItHitOnce (s ←∂) (ind ←∂) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∂) (ind ←∂) | yes p = yes (hitsOnce←∂←∂ p) 
+  doesItHitOnce (s ←∂) (ind ←∂) | no ¬p = no (λ {(hitsOnce←∂←∂ x) → ¬p x})
+  doesItHitOnce (s ←∂) (∂→ ind) = no (λ ())
+  doesItHitOnce (∂→ s) ↓ = yes hitsOnce∂→↓
+  doesItHitOnce (∂→ s) (ind ←∂) = no (λ ())
+  doesItHitOnce (∂→ s) (∂→ ind) with (doesItHitOnce s ind)
+  doesItHitOnce (∂→ s) (∂→ ind) | yes p = yes (hitsOnce∂→∂→ p) 
+  doesItHitOnce (∂→ s) (∂→ ind) | no ¬p = no (λ {(hitsOnce∂→∂→ x) → ¬p x})
+  doesItHitOnce (s ←∂→ s₁) ↓ = yes hitsOnce←∂→↓
+  doesItHitOnce (s ←∂→ s₁) (ind ←∂) with (doesItHitOnce s ind)
+  doesItHitOnce (s ←∂→ s₁) (ind ←∂) | yes p = yes (hitsOnce←∂→←∂ p)
+  doesItHitOnce (s ←∂→ s₁) (ind ←∂) | no ¬p = no (λ {(hitsOnce←∂→←∂ x) → ¬p x})
+  doesItHitOnce (s ←∂→ s₁) (∂→ ind) with (doesItHitOnce s₁ ind)
+  doesItHitOnce (s ←∂→ s₁) (∂→ ind) | yes p = yes (hitsOnce←∂→∂→ p)
+  doesItHitOnce (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(hitsOnce←∂→∂→ x) → ¬p x})
+
+
+module _ where
+
+  open SetLLMp
+
+-- Replace the linear logic sub-tree.
+  replSetLL : ∀{i u ll q} → {j : Size< ↑ i} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} q ll)
+              → .{{ prf : ¬ (hitsOnce s ind) }} → (rll : LinLogic j {u})
+              → (SetLL (replLL {j = j} ll ind rll))
+  replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (∧→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (ind ←∨) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (∨→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (ind ←∂) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf hitsOnce↓)
+  replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∧↓)
+  replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∧←∧ x)}} rll) ←∧
+  replSetLL (s ←∧) (∧→ ind) {{prf}} rll = dsize s ←∧
+  replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∧→↓)
+  replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ dsize s
+  replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∧→∧→ x)}} rll)
+  replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∧→↓)
+  replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∧→←∧ x)}} rll) ←∧
+  replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∧→∧→ x)}} rll)
+  replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∨↓)
+  replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∨←∨ x)}} rll) ←∨
+  replSetLL (s ←∨) (∨→ ind) {{prf}} rll = dsize s ←∨
+  replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∨→↓)
+  replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ dsize s
+  replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∨→∨→ x)}} rll)
+  replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∨→↓)
+  replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∨→←∨ x)}} rll) ←∨
+  replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∨→∨→ x)}} rll)
+  replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∂↓)
+  replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∂←∂ x)}} rll) ←∂
+  replSetLL (s ←∂) (∂→ ind) {{prf}} rll = dsize s ←∂
+  replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce∂→↓)
+  replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ dsize s
+  replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (hitsOnce∂→∂→ x)}} rll)
+  replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsOnce←∂→↓)
+  replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsOnce←∂→←∂ x)}} rll) ←∂
+  replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (hitsOnce←∂→∂→ x)}} rll)
+
+  truncSetLL : ∀ {i u ll pll} → SetLL {i} {u} ll → (ind : IndexLL {i} {u} pll ll)
+               → MSetLL {i} {u} pll
+  truncSetLL s ↓ = ¬∅ s
+  truncSetLL ↓ (ind ←∧) = ¬∅ ↓
+  truncSetLL (s ←∧) (ind ←∧) = truncSetLL s ind
+  truncSetLL (∧→ s) (ind ←∧) = ∅
+  truncSetLL (s ←∧→ s₁) (ind ←∧) = truncSetLL s ind
+  truncSetLL ↓ (∧→ ind) = ¬∅ ↓
+  truncSetLL (s ←∧) (∧→ ind) = ∅
+  truncSetLL (∧→ s) (∧→ ind) = truncSetLL s ind
+  truncSetLL (s ←∧→ s₁) (∧→ ind) = truncSetLL s₁ ind
+  truncSetLL ↓ (ind ←∨) = ¬∅ ↓
+  truncSetLL (s ←∨) (ind ←∨) = truncSetLL s ind
+  truncSetLL (∨→ s) (ind ←∨) = ∅
+  truncSetLL (s ←∨→ s₁) (ind ←∨) = truncSetLL s ind
+  truncSetLL ↓ (∨→ ind) = ¬∅ ↓
+  truncSetLL (s ←∨) (∨→ ind) = ∅
+  truncSetLL (∨→ s) (∨→ ind) = truncSetLL s ind
+  truncSetLL (s ←∨→ s₁) (∨→ ind) = truncSetLL s₁ ind
+  truncSetLL ↓ (ind ←∂) = ¬∅ ↓
+  truncSetLL (s ←∂) (ind ←∂) = truncSetLL s ind
+  truncSetLL (∂→ s) (ind ←∂) = ∅
+  truncSetLL (s ←∂→ s₁) (ind ←∂) = truncSetLL s ind
+  truncSetLL ↓ (∂→ ind) = ¬∅ ↓
+  truncSetLL (s ←∂) (∂→ ind) = ∅
+  truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
+  truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
+
+  truncExSetLL : ∀ {i u ll pll} → (s : SetLL {i} {u} ll) → (ind : IndexLL {i} {u} pll ll)
+               → ⦃ prf : exactHit (contruct s) ind ⦄ → SetLL {i} {u} pll
+  truncExSetLL s ↓ {{prf}} = s
+  truncExSetLL ↓ (ind ←∧) {{()}}
+  truncExSetLL (s ←∧) (ind ←∧) {{exactHitC←∧←∧ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (∧→ s) (ind ←∧) {{()}}
+  truncExSetLL (s ←∧→ s₁) (ind ←∧) {{()}}
+  truncExSetLL ↓ (∧→ ind) {{()}}
+  truncExSetLL (s ←∧) (∧→ ind) {{()}}
+  truncExSetLL (∧→ s) (∧→ ind) {{exactHitC∧→∧→ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (s ←∧→ s₁) (∧→ ind) {{()}}
+  truncExSetLL ↓ (ind ←∨) {{()}}
+  truncExSetLL (s ←∨) (ind ←∨) {{exactHitC←∨←∨ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (∨→ s) (ind ←∨) {{()}}
+  truncExSetLL (s ←∨→ s₁) (ind ←∨) {{()}}
+  truncExSetLL ↓ (∨→ ind) {{()}}
+  truncExSetLL (s ←∨) (∨→ ind) {{()}}
+  truncExSetLL (∨→ s) (∨→ ind) {{exactHitC∨→∨→ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (s ←∨→ s₁) (∨→ ind) {{()}}
+  truncExSetLL ↓ (ind ←∂) {{()}}
+  truncExSetLL (s ←∂) (ind ←∂) {{exactHitC←∂←∂ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (∂→ s) (ind ←∂) {{()}}
+  truncExSetLL (s ←∂→ s₁) (ind ←∂) {{()}}
+  truncExSetLL ↓ (∂→ ind) {{()}}
+  truncExSetLL (s ←∂) (∂→ ind) {{()}}
+  truncExSetLL (∂→ s) (∂→ ind) {{exactHitC∂→∂→ prf}} = truncExSetLL s ind {{prf}}
+  truncExSetLL (s ←∂→ s₁) (∂→ ind) {{()}}
+
+
 
 
 -- TODO FilledSetLL describes a SetLL as it would be when used to indicate that all
