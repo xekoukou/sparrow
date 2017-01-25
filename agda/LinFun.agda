@@ -4,6 +4,8 @@
 module LinFun where
 
 open import LinT public
+open import SetLL
+
 open import Size
 open import Function
 open import Data.Bool
@@ -125,7 +127,7 @@ module _ where
                      → ⦃ prf : contruct s ≡ ↓ ⦄
                      → cuttable {u = u} {i = i} {j = j} s (com {rll = rll} {ll = ll} {frll = frll}  ⦃ prfi = prfi ⦄ ⦃ prfo = prfo ⦄ df lf)
     cuttable-s⊂-ex : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll ell pll s ind lf prf lf₁}
-                     → ⦃ ex : exactHit {ll = ll} {rll = pll} (contruct s) ind ⦄
+                     → ⦃ ex : exactHit {ll = ll} {rll = pll} s ind ⦄
                      → cuttable {rll = ell} {ll = pll} (truncExSetLL {pll = pll} s ind {{prf = ex}}) lf
                      → cuttable {i = i} {j = k} {rll = rll} {ll = ll} s (_⊂_ {i = i} {j = j} {k = k} {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf ⦃ prf = prf ⦄ lf₁)
     cuttable-s⊂-ho : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll pll ell s ind lf prf lf₁}
@@ -142,15 +144,15 @@ module _ where
 
   canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (cuttable {i = i} {j = j} {rll = rll} {ll = ll} s lf)
   canItBeCut s I = no (λ ())
-  canItBeCut {.i} {.k} {u} {_} {_} s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) with (isExactHit {ll = ll} {rll = pll} (contruct s) ind)
+  canItBeCut {.i} {.k} {u} {_} {_} s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) with (isExactHit {ll = ll} {rll = pll} s ind)
   canItBeCut {.i} {.k} {u} {_} {_} s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) | yes ex with (canItBeCut {rll = ell} {ll = pll} (truncExSetLL {pll = pll} s ind {{prf = ex}}) lf)
   canItBeCut {.i} {.k} {u} {_} {_} s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) | yes ex | (yes p) = yes (cuttable-s⊂-ex {i = i} {j = j} {k = k} ⦃ ex = ex ⦄ p)
   canItBeCut {.i} {.k} {u} {_} {_} s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) | yes ex | (no ¬p) = no (λ x → helpFunEx x ex ¬p) where
     helpFunEx : cuttable {u = u} s (_⊂_ {i = i} {j = j} {k = k} {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf lf₁)
-                → (ex : exactHit {i} {u} {ll} {pll} (contruct s) ind)
+                → (ex : exactHit {i} {u} {ll} {pll} s ind)
                 → ¬ (cuttable {u} {i} {j} {ell} {pll} (truncExSetLL {pll = pll} s ind {{prf = ex}})) lf
                 → ⊥
-    helpFunEx (cuttable-s⊂-ex {{ex = ex}} ct) ex₁ ¬p with (exactHitUnique (contruct s) ind ex ex₁)
+    helpFunEx (cuttable-s⊂-ex {{ex = ex}} ct) ex₁ ¬p with (exactHitUnique s ind ex ex₁)
     helpFunEx (cuttable-s⊂-ex {{ex = .ex₁}} ct) ex₁ ¬p | refl = ¬p ct
     helpFunEx (cuttable-s⊂-ho {s = s} {ind = ind} {{¬ho = ¬ho}} ct) ex ¬p = exactHit¬hitsOnce→⊥ s ind ex ¬ho
   canItBeCut {_} {.k} s (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁)    | no ¬ex with (doesItHitOnce s ind)
@@ -191,156 +193,6 @@ module _ where
   canItBeCut s (call x lf) = no (λ ())
 
 
-
---  canBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → SetLL ll → LFun {u} {i} {j} {rll} {ll} → Bool × LinLogic j {u}
---  canBeCut ↓ I = (false , ∅)
---  canBeCut ↓ (lf ⊂ lf₁) = (false , ∅)
---  canBeCut ↓ (tr {{ltr = ltr}} lf) = foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran ↓ ltr)
---  canBeCut ↓ (obs lf) = (false , ∅)
---  canBeCut ↓ (com {ll = ll} df lf) = (true , ll)
---  canBeCut ↓ (call x lf) = (false , ∅)
---  canBeCut (_ ←∧) I = (false , ∅)
---  canBeCut {j = .k} s@(_ ←∧) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(_ ←∧) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(_ ←∧) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (_ ←∧) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(_ ←∧) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(_ ←∧) (tr {{ltr = ltr}} lf) = foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut (_ ←∧) (com {ll = ll} df lf) = (false , ∅)
---  canBeCut (_ ←∧) (call x₁ lf) = (false , ∅)
---  canBeCut (∧→ x) I = (false , ∅)
---  canBeCut {j = .k} s@(∧→ _) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(∧→ _) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(∧→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (∧→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(∧→ _) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(∧→ x) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut (∧→ x) (com {ll = ll} df lf) = (false , ∅)
---  canBeCut (∧→ x) (call x₁ lf) = (false , ∅)
---  canBeCut (x ←∧→ x₁) I = (false , ∅)
---  canBeCut {j = .k} s@(_ ←∧→ _) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(_ ←∧→ _) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(_ ←∧→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (_ ←∧→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(_ ←∧→ _) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(x ←∧→ x₁) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut s@(x ←∧→ x₁) (com {ll = ll} df lf) with (contruct s)
---  canBeCut (x ←∧→ x₁) (com {ll = ll} df lf) | ↓ = (true , ll)
---  canBeCut (x ←∧→ x₁) (com {ll = ll} df lf) | r ←∧ = (false , ∅)
---  canBeCut (x ←∧→ x₁) (com {ll = ll} df lf) | ∧→ r = (false , ∅)
---  canBeCut (x ←∧→ x₁) (com {ll = ll} df lf) | r ←∧→ r₁ = (false , ∅)
---  canBeCut (x ←∧→ x₁) (call x₂ lf) = (false , ∅)
---  canBeCut (_ ←∨) I = (false , ∅)
---  canBeCut {j = .k} s@(_ ←∨) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(_ ←∨) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(_ ←∨) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (_ ←∨) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(_ ←∨) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(_ ←∨) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut (_ ←∨) (com {ll = ll} df lf) = (false , ∅)
---  canBeCut (_ ←∨) (call x₁ lf) = (false , ∅)
---  canBeCut (∨→ x) I = (false , ∅)
---  canBeCut {j = .k} s@(∨→ _) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(∨→ _) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(∨→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (∨→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(∨→ _) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(∨→ x) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut (∨→ x) (com {ll = ll} df lf) = (false , ∅)
---  canBeCut (∨→ x) (call x₁ lf) = (false , ∅)
---  canBeCut (x ←∨→ x₁) I = (false , ∅)
---  canBeCut {j = .k} s@(_ ←∨→ _) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(_ ←∨→ _) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(_ ←∨→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (_ ←∨→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(_ ←∨→ _) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(x ←∨→ x₁) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut s@(x ←∨→ x₁) (com {ll = ll} df lf) with (contruct s)
---  canBeCut (x ←∨→ x₁) (com {ll = ll} df lf) | ↓ = (true , ll)
---  canBeCut (x ←∨→ x₁) (com {ll = ll} df lf) | r ←∨ = (false , ∅)
---  canBeCut (x ←∨→ x₁) (com {ll = ll} df lf) | ∨→ r = (false , ∅)
---  canBeCut (x ←∨→ x₁) (com {ll = ll} df lf) | r ←∨→ r₁ = (false , ∅)
---  canBeCut (x ←∨→ x₁) (call x₂ lf) = (false , ∅)
---  canBeCut (_ ←∂) I = (false , ∅)
---  canBeCut {j = .k} s@(_ ←∂) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(_ ←∂) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(_ ←∂) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (_ ←∂) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(_ ←∂) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(_ ←∂) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut (_ ←∂) (com {ll = ll} df lf) = (false , ∅)
---  canBeCut (_ ←∂) (call x₁ lf) = (false , ∅)
---  canBeCut (∂→ x) I = (false , ∅)
---  canBeCut {j = .k} s@(∂→ _) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(∂→ _) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(∂→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (∂→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(∂→ _) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(∂→ x) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut (∂→ x) (com {ll = ll} df lf) = (false , ∅)
---  canBeCut (∂→ x) (call x₁ lf) = (false , ∅)
---  canBeCut (x ←∂→ x₁) I = (false , ∅)
---  canBeCut {j = .k} s@(_ ←∂→ _) (_⊂_ {k = k} {ind = ind} lf lf₁) with (isExactHit (contruct s) ind)
---  canBeCut {_} {.k} s@(_ ←∂→ _) (_⊂_ {_} {_} {k} {pll} {_} {_} {_} {ind} lf lf₁) | yes ex = canBeCut (truncExSetLL s ind {{prf = ex}}) lf
---  canBeCut {_} {.k} s@(_ ←∂→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex with (doesItHitOnce s ind)
---  canBeCut {_} {.k} (_ ←∂→ _) (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁) | no ¬ex | (yes ho) = (false , ∅)
---  canBeCut {_} {.k} s@(_ ←∂→ _) (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁) | no ¬ex | (no ¬ho) = canBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁
---  canBeCut s@(x ←∂→ x₁) (tr {{ltr = ltr}} lf) =  foldl (λ {(false , r) x → canBeCut x lf
---                                              ; (true , r) x → (true , r)     }) (false , ∅) (sptran s ltr)
---  canBeCut s@(x ←∂→ x₁) (com {ll = ll} df lf) with (contruct s)
---  canBeCut (x ←∂→ x₁) (com {ll = ll} df lf) | ↓ = (true , ll)
---  canBeCut (x ←∂→ x₁) (com {ll = ll} df lf) | r ←∂ = (false , ∅)
---  canBeCut (x ←∂→ x₁) (com {ll = ll} df lf) | ∂→ r = (false , ∅)
---  canBeCut (x ←∂→ x₁) (com {ll = ll} df lf) | r ←∂→ r₁ = (false , ∅)
---  canBeCut (x ←∂→ x₁) (call x₂ lf) = (false , ∅)
---
---  posCom : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → LFun {u} {i} {j} {rll} {ll} → MSetLL ll
---  posCom I = ∅
---  posCom (x ⊂ x₁) = let e = posCom x
---                    in {!!}
---  posCom (tr x) = {!!}
---  posCom (obs x) = {!!}
---  posCom (com df x) = {!!}
---  posCom (call x x₁) = {!!}
---
--- Remove all of the above.
---  data NextLFun : Set where
---    I    : NextLFun
---    com  : NextLFun
---    call : NextLFun
---  
---  nextLFun : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → LFun {u} {i} {j} {rll} {ll} → NextLFun
---  nextLFun I = I
---  nextLFun (lf ⊂ lf₁) = nextLFun lf
---  nextLFun (tr lf) = nextLFun lf
---  nextLFun (obs x) = {!!}
---  nextLFun (com df lf) = com 
---  nextLFun (call x x₁) = call
---
---  notCall : NextLFun → Set
---  notCall I = ⊤
---  notCall com = ⊤
---  notCall call = ⊥
---
--- Is there a com with this specific Linear Logic?
-
---cutT : ∀{i u rll ll} → {j : Size< i} → LFun {i} {u} {rll} {ll} → LinLogic j {u} × LinLogic j {u}
---cutT {i} {u} {rll} {.rll} {.i} I = (rll , rll)
---cutT {i} {u} {rll} {ll} (_⊂_ {ind = ind} x x₁) = let (crll , cll) = cutT x
---                                   in (crll , replLL ll ind cll)
---cutT {i} {u} {rll} {ll} (tr {orll = orll} x) = (rll , orll)
---cutT {i} {u} {rll} {ll} (com {frll = frll} df x) = (rll , frll)
---cutT {i} {u} {(call ∞rll)} {(call ∞ll)} (call x) = ({!step ∞rll!} , {!!} )
---
 
 module _ where
 

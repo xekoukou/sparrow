@@ -2,6 +2,7 @@
 
 module LinDepT where
 
+open import Common
 open import LinLogic public
 open import Size
 open import Data.Vec using (Vec)
@@ -17,7 +18,7 @@ open import Level
 mutual
 -- This type is computed by the protocol specification and all input/output
 -- types depend on it.
-  data LinDepT {i : Size} {u} : LinLogic i {u} → Set (suc u) where
+  data LinDepT {i : Size} {u} : LinLogic i {u} → Set (lsuc u) where
   -- Do not send anything.
     ∅     :                                  LinDepT ∅
     τ     : ∀{n} → {dt : Vec (Set u) n} → {df : genT dt} → (hv : HVec dt) → LinDepT (τ {dt = dt} df)
@@ -30,7 +31,7 @@ mutual
     call  : ∀{∞ll} → ∞LinDepT ∞ll          → LinDepT (call ∞ll)
 
 
-  record ∞LinDepT {i : Size} {u} (∞ll : ∞LinLogic i {u}) : Set (suc u) where
+  record ∞LinDepT {i : Size} {u} (∞ll : ∞LinLogic i {u}) : Set (lsuc u) where
     coinductive
     field
       step : {j : Size< i} → LinDepT {j} (step ∞ll)
@@ -107,7 +108,7 @@ itran (∂ (inj₂ r)) (∂→ ind) tr     = ∂ (inj₂ (itran r ind tr))
 
 module _ {u : Level} where
 
-  open RawMonad(monad {f = suc u})
+  open RawMonad(monad {f = lsuc u})
 
 -- TODO Should this be removed?
 -- If the index points to a path that is not part of LinDepT, then the same LinDepT can be the computation of

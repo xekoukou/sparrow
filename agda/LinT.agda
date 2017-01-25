@@ -2,6 +2,7 @@
 
 module LinT where
 
+open import Common
 open import LinDepT public
 open import Size
 open import Function
@@ -11,7 +12,7 @@ open import Level
 
 
 mutual
-  data LinT {i : Size} {u} : ∀{ll} → LinDepT {i} {u} ll → Set (suc u) where
+  data LinT {i : Size} {u} : ∀{ll} → LinDepT {i} {u} ll → Set (lsuc u) where
     ∅    : LinT ∅
     τ    :  ∀{n} → {dt : Vec (Set u) n} → {df : genT dt} → {hv : HVec dt}
             → applyH hv df → LinT $ τ {i} {u} {n} {dt} {df} hv
