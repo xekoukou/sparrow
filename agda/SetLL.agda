@@ -1,5 +1,6 @@
 {-# OPTIONS --exact-split #-}
 
+
 module SetLL where
 
 open import Common
@@ -30,7 +31,7 @@ data MSetLL {i : Size} {u} : LinLogic i {u} → Set where
 
 -- Add a node to an empty set (and potentially replace the linear logic sub-tree).
 ∅-add : ∀{i u ll rll} → {j : Size< ↑ i} → (ind : IndexLL {i} {u} rll ll) → (nrll : LinLogic j )
-        → SetLL (replLL {j = j} ll ind nrll)
+        → SetLL (replLL ll ind nrll)
 ∅-add ↓ nrll = ↓
 ∅-add (ind ←∧) nrll = (∅-add ind nrll) ←∧
 ∅-add (∧→ ind) nrll = ∧→ (∅-add ind nrll)
@@ -55,8 +56,8 @@ dsize (x ←∂→ x₁) = (dsize x ←∂→ dsize x₁)
 
 
 -- Add a node to a set (and potentially replace the linear logic sub-tree).
-add : ∀{i u ll q} → {j : Size< ↑ i} → SetLL {i} ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
-      → SetLL (replLL {j = j} ll ind rll)
+add : ∀{i u ll q} → {j : Size< ↑ i} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
+      → SetLL (replLL ll ind rll)
 add ↓ ind rll               = ↓
 add (s ←∧) ↓ rll            = ↓
 add (s ←∧) (ind ←∧) rll     = (add s ind rll) ←∧
@@ -196,7 +197,7 @@ isEq (a ←∂→ a₁) (b ←∂→ b₁) | no ¬p = no (hf) where
 
 -- If two adjacent nodes exist in the set, the higher node is in the set.
 -- We contruct the set.
-contruct : ∀{i u ll} → SetLL {i} {u} ll → SetLL {i} ll
+contruct : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll
 contruct ↓          = ↓
 contruct (x ←∧)     = (contruct x) ←∧
 contruct (∧→ x)     = ∧→ (contruct x)
@@ -211,8 +212,8 @@ contruct (x ←∂→ x₁) = ↓
 
 
 -- If we transform the linear logic tree, we need to transform the SetLL as well.
-tran : ∀ {i u ll rll} → SetLL {i} ll → (tr : LLTr {i} {u} rll ll)
-       → SetLL {i} rll
+tran : ∀ {i u ll rll} → SetLL ll → (tr : LLTr {i} {u} rll ll)
+       → SetLL rll
 tran s I                = s
 tran ↓ (∂c tr)          = ↓
 tran (s ←∂) (∂c tr)     = tran (∂→ s) tr
@@ -248,8 +249,8 @@ tran ((∨→ s) ←∧→ s₁) (∧∨d tr)     = tran (∨→ (s ←∧→ s�
 tran ((s ←∨→ s₁) ←∧→ s₂) (∧∨d tr) = tran ((s ←∧→ s₂) ←∨→ (s₁ ←∧→ s₂)) tr
 
 -- Transformations that start from a specific index.
-itran : ∀ {i u ll rll pll} → SetLL {i} ll → (ind : IndexLL {i} {u} pll ll) → (tr : LLTr {i} rll pll)
-        → SetLL {i} (replLL ll ind rll)
+itran : ∀ {i u ll rll pll} → SetLL ll → (ind : IndexLL {i} {u} pll ll) → (tr : LLTr rll pll)
+        → SetLL (replLL ll ind rll)
 itran s ↓ tr                 = tran s tr
 itran ↓ (ind ←∧) tr          = ↓
 itran (s ←∧) (ind ←∧) tr     = itran s ind tr ←∧
@@ -284,8 +285,8 @@ module _ where
   -- In this transformation, we duplicate the set when we use distributive transformations, thus we
   -- have two sets that contains the same number of inputs as before. One of them can be executed
   -- when they join together into one root and a com exists in the Linear Function.
-  sptran : ∀{i u ll rll} → SetLL {i} ll → (tr : LLTr {i} {u} rll ll)
-         → List (SetLL {i} rll)
+  sptran : ∀{i u ll rll} → SetLL ll → (tr : LLTr {i} {u} rll ll)
+         → List (SetLL rll)
   sptran s I                = [ s ]
   sptran ↓ (∂c tr)          = [ ↓ ]
   sptran (s ←∂) (∂c tr)     = sptran (∂→ s) tr

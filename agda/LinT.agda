@@ -3,7 +3,8 @@
 module LinT where
 
 open import Common
-open import LinDepT public
+open import LinLogic
+open import LinDepT
 open import Size
 open import Function
 open import Data.Vec

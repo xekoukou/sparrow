@@ -3,7 +3,7 @@
 module LinDepT where
 
 open import Common
-open import LinLogic public
+open import LinLogic
 open import Size
 open import Data.Vec using (Vec)
 open import Data.Sum
@@ -42,7 +42,7 @@ open ∞LinDepT public
 
 -- Given a linear transformation and a LinDepT,
 -- this function computes the LinDepT of the transformed Linear Logic.
-tran : ∀{u ll rll} → LinDepT {u = u} ll → LLTr {u = u} rll ll → LinDepT {u = u} rll
+tran : ∀{i u ll rll} → LinDepT ll → LLTr {i} {u} rll ll → LinDepT rll
 tran ldt I                                      = ldt
 tran (∂ (inj₁ l)) (∂c tr)                       = tran (∂ (inj₂ l)) tr
 tran (∂ (inj₂ r)) (∂c tr)                       = tran (∂ (inj₁ r)) tr
@@ -58,7 +58,7 @@ tran ((∨→ ldt₁) ∧ ldt₂) (∧∨d tr)     = tran (∨→ (ldt₁ ∧ ld
 
 
 -- Transform a LinDepT after a specific node pointed by the index ind.
-itran : ∀{u ll pll rll} → LinDepT {u = u} ll → (ind : IndexLL pll ll) → LLTr {u = u} rll pll → LinDepT {u = u} $ replLL ll ind rll
+itran : ∀{i u ll pll rll} → LinDepT ll → (ind : IndexLL {i} {u} pll ll) → LLTr rll pll → LinDepT $ replLL ll ind rll
 itran ldt ↓ tr                     = tran ldt tr
 itran (ldt ∧ ldt₁) (ind ←∧) tr     = itran ldt ind tr ∧ ldt₁
 itran (ldt ∧ ldt₁) (∧→ ind) tr     = ldt ∧ itran ldt₁ ind tr

@@ -4,6 +4,8 @@
 module LinFun where
 
 open import Common
+open import LinLogic
+open import LinDepT
 open import LinT 
 open import SetLL
 open import SetLLProp
@@ -26,7 +28,7 @@ module _ where
 
   mutual
     data LFun {u} : {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → Set (lsuc u) where
-     I   : {i : Size} → ∀{rll} → LFun {u} {i} {i} {rll} {rll}
+     I   : {i : Size} → ∀{rll} → LFun {u} {i} {_} {rll} {rll}
      _⊂_ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{pll ll ell rll} → {ind : IndexLL {i} pll ll} → (elf : LFun {_} {i} {j} {ell} {pll})
            → {{prf : usesInput elf}} → LFun {_} {j} {k} {rll} {(replLL ll ind ell)}
            → LFun {_} {i} {k} {rll} {ll}
