@@ -39,6 +39,8 @@ module _ where
   open ∞LinLogic public
 
 
+
+
 -- Transformations of the Linear Logic so as to construct
 -- the correct sub-tree that is to be the input of a linear function.
 data LLTr {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsuc u) where
@@ -64,7 +66,7 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u wh
 
 
 -- Replaces a node of a linear logic tree with another one.
-replLL : ∀{i u q} → {j : Size< ↑ i} → (ll : LinLogic i {u}) → IndexLL {i} {u} q ll → LinLogic j {u} → LinLogic j {u}
+replLL : ∀{i u q} → {j : Size< ↑ i} → (ll : LinLogic i {u}) → IndexLL {i} q ll → LinLogic j {u} → LinLogic j {u}
 replLL ll ↓ c            = c
 replLL (l ∧ r) (li ←∧) c = (replLL l li c) ∧ r
 replLL (l ∧ r) (∧→ ri) c = l ∧ (replLL r ri c)
@@ -74,5 +76,25 @@ replLL (l ∂ r) (li ←∂) c = (replLL l li c) ∂ r
 replLL (l ∂ r) (∂→ ri) c = l ∂ (replLL r ri c)
 
 
+module _ where
+
+  open import Data.Bool
+  
+  private
+    noNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+    noNilFinite ∅ = false
+    noNilFinite (τ x₁) = true
+    noNilFinite (y LinLogic.∧ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+    noNilFinite (y LinLogic.∨ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+    noNilFinite (y ∂ y₁) = noNilFinite y Data.Bool.∧ noNilFinite y₁
+    noNilFinite (call x₁) = false
+
+  onlyOneNilOrNoNilFinite : ∀{i u} → (ll : LinLogic i {u}) → Bool
+  onlyOneNilOrNoNilFinite ∅ = true
+  onlyOneNilOrNoNilFinite (τ x) = noNilFinite (τ x)
+  onlyOneNilOrNoNilFinite (x LinLogic.∧ x₁) = noNilFinite (x LinLogic.∧ x₁)
+  onlyOneNilOrNoNilFinite (x LinLogic.∨ x₁) = noNilFinite (x LinLogic.∨ x₁)
+  onlyOneNilOrNoNilFinite (x ∂ x₁) = noNilFinite (x ∂ x₁)
+  onlyOneNilOrNoNilFinite (call x) = noNilFinite (call x)
 
 
