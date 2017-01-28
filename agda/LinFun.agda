@@ -45,51 +45,51 @@ mutual
   usesInput x = usesInput` x ∅ where
     usesInput` : {i : Size} → {j : Size< ↑ i} → ∀{u} → {rll : LinLogic j} → {ll : LinLogic i} → LFun {u} {_} {_} {rll} {ll} → MSetLL ll → Set
     usesInput` I s = ⊥
-    usesInput` (_⊂_ {j = j} {k = k} {ell = ell} {ind = ind} elf lf) ∅ = usesInput` lf (¬∅ (∅-add ind ell))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ↓} elf lf) (¬∅ s) with (contruct $ add {i = i} {j = j} s ↓ ell)
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ↓} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∧ =  usesInput` lf (¬∅ (ns ←∧))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ∧→ ns =  usesInput` lf (¬∅ (∧→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∧→ ns₁ =  usesInput` lf (¬∅ (ns ←∧→ ns₁))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_ LinLogic.∨ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∨ =  usesInput` lf (¬∅ (ns ←∨))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_ LinLogic.∨ _)} {_} {↓} elf lf) (¬∅ s) | ∨→ ns =  usesInput` lf (¬∅ (∨→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_ LinLogic.∨ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∨→ ns₁ =  usesInput` lf (¬∅ (ns ←∨→ ns₁))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_∂_ _ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∂ =  usesInput` lf (¬∅ (ns ←∂))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_∂_ _ _)} {_} {↓} elf lf) (¬∅ s) | ∂→ ns =  usesInput` lf (¬∅ (∂→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {.(_∂_ _ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∂→ ns₁ =  usesInput` lf (¬∅ (ns ←∂→ ns₁))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ind ←∧} elf lf) (¬∅ s) with (contruct $ add s (ind ←∧) ell)
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ns ←∧ = usesInput` lf (¬∅ (ns ←∧))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ∧→ ns = usesInput` lf (¬∅ (∧→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∧} elf lf) (¬∅ s) | ns ←∧→ ns₁ = usesInput` lf (¬∅ (ns ←∧→ ns₁))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ∧→ ind} elf lf) (¬∅ s) with (contruct $ add s (∧→ ind) ell)
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ns ←∧ = usesInput` lf (¬∅ (ns ←∧))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ∧→ ns = usesInput` lf (¬∅ (∧→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∧→ ind} elf lf) (¬∅ s) | ns ←∧→ ns₁ = usesInput` lf (¬∅ (ns ←∧→ ns₁))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ind ←∨} elf lf) (¬∅ s) with (contruct $ add s (ind ←∨) ell)
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ns ←∨ = usesInput` lf (¬∅ (ns ←∨))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ∨→ ns = usesInput` lf (¬∅ (∨→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∨} elf lf) (¬∅ s) | ns ←∨→ ns₁ = usesInput` lf (¬∅ (ns ←∨→ ns₁))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ∨→ ind} elf lf) (¬∅ s) with (contruct $ add s (∨→ ind) ell)
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ns ←∨ = usesInput` lf (¬∅ (ns ←∨))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ∨→ ns = usesInput` lf (¬∅ (∨→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∨→ ind} elf lf) (¬∅ s) | ns ←∨→ ns₁ = usesInput` lf (¬∅ (ns ←∨→ ns₁))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ind ←∂} elf lf) (¬∅ s) with (contruct $ add s (ind ←∂) ell)
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ns ←∂ = usesInput` lf (¬∅ (ns ←∂))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ∂→ ns = usesInput` lf (¬∅ (∂→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {ind ←∂} elf lf) (¬∅ s) | ns ←∂→ ns₁ = usesInput` lf (¬∅ (ns ←∂→ ns₁))
-    usesInput` (_⊂_ {i = i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ∂→ ind} elf lf) (¬∅ s) with (contruct $ add s (∂→ ind) ell)
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ↓ = ⊤
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ns ←∂ = usesInput` lf (¬∅ (ns ←∂))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ∂→ ns = usesInput` lf (¬∅ (∂→ ns))
-    usesInput` (_⊂_ {i} {j} {k} {_} {_} {ell} {_} {∂→ ind} elf lf) (¬∅ s) | ns ←∂→ ns₁ = usesInput` lf (¬∅ (ns ←∂→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ind} elf lf) ∅ = usesInput` lf (¬∅ (∅-add ind ell))
+    usesInput` (_⊂_ {ell = ell} {ind = ↓} elf lf) (¬∅ s) with (contruct $ add s ↓ ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∧ =  usesInput` lf (¬∅ (ns ←∧))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∧→ ns =  usesInput` lf (¬∅ (∧→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∧→ ns₁ =  usesInput` lf (¬∅ (ns ←∧→ ns₁))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∨ =  usesInput` lf (¬∅ (ns ←∨))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∨→ ns =  usesInput` lf (¬∅ (∨→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∨→ ns₁ =  usesInput` lf (¬∅ (ns ←∨→ ns₁))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∂ =  usesInput` lf (¬∅ (ns ←∂))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∂→ ns =  usesInput` lf (¬∅ (∂→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∂→ ns₁ =  usesInput` lf (¬∅ (ns ←∂→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ind ←∧} elf lf) (¬∅ s) with (contruct $ add s (ind ←∧) ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∧ = usesInput` lf (¬∅ (ns ←∧))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∧→ ns = usesInput` lf (¬∅ (∧→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∧→ ns₁ = usesInput` lf (¬∅ (ns ←∧→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ∧→ ind} elf lf) (¬∅ s) with (contruct $ add s (∧→ ind) ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∧ = usesInput` lf (¬∅ (ns ←∧))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∧→ ns = usesInput` lf (¬∅ (∧→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∧→ ns₁ = usesInput` lf (¬∅ (ns ←∧→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ind ←∨} elf lf) (¬∅ s) with (contruct $ add s (ind ←∨) ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∨ = usesInput` lf (¬∅ (ns ←∨))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∨→ ns = usesInput` lf (¬∅ (∨→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∨→ ns₁ = usesInput` lf (¬∅ (ns ←∨→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ∨→ ind} elf lf) (¬∅ s) with (contruct $ add s (∨→ ind) ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∨ = usesInput` lf (¬∅ (ns ←∨))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∨→ ns = usesInput` lf (¬∅ (∨→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∨→ ns₁ = usesInput` lf (¬∅ (ns ←∨→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ind ←∂} elf lf) (¬∅ s) with (contruct $ add s (ind ←∂) ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∂ = usesInput` lf (¬∅ (ns ←∂))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∂→ ns = usesInput` lf (¬∅ (∂→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∂→ ns₁ = usesInput` lf (¬∅ (ns ←∂→ ns₁))
+    usesInput` (_⊂_ {ell = ell} {ind = ∂→ ind} elf lf) (¬∅ s) with (contruct $ add s (∂→ ind) ell)
+    usesInput` (elf ⊂ lf) (¬∅ s) | ↓ = ⊤
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∂ = usesInput` lf (¬∅ (ns ←∂))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ∂→ ns = usesInput` lf (¬∅ (∂→ ns))
+    usesInput` (elf ⊂ lf) (¬∅ s) | ns ←∂→ ns₁ = usesInput` lf (¬∅ (ns ←∂→ ns₁))
     usesInput` (tr lf) ∅ = usesInput` lf ∅
     usesInput` (tr {{ltr = ltr}} lf) (¬∅ s) = usesInput` lf $ ¬∅ (SetLL.tran s ltr)
-    usesInput` (obs {j = lj} {k = lk} {∞ll = ∞ll} x) s = usesInput` {i = lj} {j = lk} x (∅ {ll = (step ∞ll)})
+    usesInput` (obs x) s = usesInput` x ∅
     usesInput` (com df lf) s = ⊤
     usesInput` (call ∞x x) s = ⊥
 
@@ -155,12 +155,12 @@ module _ where
                         → cuttable s (tr {u} {i} {j} {ll} {orll} {rll} ⦃ ltr ⦄ lf)
 
 
-  canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (cuttable {_} {_} {_} {rll} {ll} s lf)
+  canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (cuttable s lf)
   canItBeCut s I = no (λ ())
-  canItBeCut s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) with (isOnlyInside s ind)
-  canItBeCut s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) | yes ex with (canItBeCut (truncOISetLL s ind {{prf = ex}}) lf)
-  canItBeCut s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) | yes ex | (yes p) = yes (cuttable-s⊂-ex p)
-  canItBeCut s (_⊂_ {i} {j} {k} {pll} {ll} {ell} {_} {ind} lf lf₁) | yes ex | (no ¬p) = no (λ x → helpFunEx x ex ¬p) where
+  canItBeCut s (_⊂_ {ind = ind} lf lf₁) with (isOnlyInside s ind)
+  canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes ex with (canItBeCut (truncOISetLL s ind {{prf = ex}}) lf)
+  canItBeCut s (lf ⊂ lf₁) | yes ex | (yes p) = yes (cuttable-s⊂-ex p)
+  canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes ex | (no ¬p) = no (λ x → helpFunEx x ex ¬p) where
     helpFunEx : cuttable s (_⊂_ {ind = ind} lf lf₁)
                 → (ex : onlyInside s ind)
                 → ¬ (cuttable (truncOISetLL s ind {{prf = ex}})) lf
@@ -168,32 +168,32 @@ module _ where
     helpFunEx (cuttable-s⊂-ex {{ex = ex}} ct) ex₁ ¬p with (onlyInsideUnique s ind ex ex₁)
     helpFunEx (cuttable-s⊂-ex {{ex = .ex₁}} ct) ex₁ ¬p | refl = ¬p ct
     helpFunEx (cuttable-s⊂-ho {s = s} {ind = ind} {{¬ho = ¬ho}} ct) ex ¬p = onlyInside¬hitsAtLeastOnce→⊥ s ind ex ¬ho
-  canItBeCut s (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁)    | no ¬ex with (doesItHitAtLeastOnce s ind)
-  canItBeCut s (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁)    | no ¬ex | (yes ho) = no (λ { (cuttable-s⊂-ex {{ex = ex}}   ct) → ¬ex ex
+  canItBeCut s (_⊂_ {ind = ind} lf lf₁)    | no ¬ex with (doesItHitAtLeastOnce s ind)
+  canItBeCut s (lf ⊂ lf₁)    | no ¬ex | (yes ho) = no (λ { (cuttable-s⊂-ex {{ex = ex}}   ct) → ¬ex ex
                                                                                                       ; (cuttable-s⊂-ho {{¬ho = ¬ho}} ct) → ¬ho ho     })
-  canItBeCut s (_⊂_ {_} {_} {k} {_} {_} {ell} {_} {ind} lf lf₁)  | no ¬ex | (no ¬ho) with (canItBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁)
-  canItBeCut s (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁)    | no ¬ex | (no ¬ho) | (yes p) = yes (cuttable-s⊂-ho ⦃ ¬ho = ¬ho ⦄ p)
-  canItBeCut s (_⊂_ {_} {_} {k} {_} {_} {_} {_} {ind} lf lf₁)    | no ¬ex | (no ¬ho) | (no ¬p) = no (λ x → helpFunho x) where
-    helpFunho : cuttable s (_⊂_ lf lf₁)
+  canItBeCut s (_⊂_ {ell = ell} {ind = ind} lf lf₁)  | no ¬ex | (no ¬ho) with (canItBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁)
+  canItBeCut s (lf ⊂ lf₁)    | no ¬ex | (no ¬ho) | (yes p) = yes (cuttable-s⊂-ho ⦃ ¬ho = ¬ho ⦄ p)
+  canItBeCut s (lf ⊂ lf₁)    | no ¬ex | (no ¬ho) | (no ¬p) = no (λ x → helpFunho x) where
+    helpFunho : cuttable s (lf ⊂ lf₁)
                 → ⊥
     helpFunho (cuttable-s⊂-ex {{ex = ex}} x) = ¬ex ex
     helpFunho (cuttable-s⊂-ho {{¬ho = ¬ho₁}} x) = ¬p x
   canItBeCut s (tr {{ltr = ltr}} lf) with (( suc zero) ≤? length (sptran s ltr))
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p with (canItBeCut (fstSp s ltr ⦃ prf = p ⦄) lf)
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p | (yes p₁) = yes (cuttable-s-tr-fst {prftr = p} p₁)
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p | (no ¬p) with (( suc $ suc zero) ≤? length (sptran s ltr))
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p₁ | (no ¬p) | (yes p) with (canItBeCut (sndSp s ltr ⦃ prf = p ⦄) lf)
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p₂ | (no ¬p) | (yes p) | (yes p₁) = yes (cuttable-s-tr-snd p₁)
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p₁ | (no ¬p₁) | (yes p) | (no ¬p) = no hf where
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p with (canItBeCut (fstSp s ltr ⦃ prf = p ⦄) lf)
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (yes p₁) = yes (cuttable-s-tr-fst {prftr = p} p₁)
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p) with (( suc $ suc zero) ≤? length (sptran s ltr))
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p) | (yes p) with (canItBeCut (sndSp s ltr ⦃ prf = p ⦄) lf)
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p₂ | (no ¬p) | (yes p) | (yes p₁) = yes (cuttable-s-tr-snd p₁)
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p₁) | (yes p) | (no ¬p) = no hf where
     hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
     hf (cuttable-s-tr-fst x) = ¬p₁ x
     hf (cuttable-s-tr-snd {prftr = prftr} x) with (prftr ≤un p)
-    hf (cuttable-s-tr-snd {_} {_} {_} {_} {_} {_} {_} {_} {_} x) | refl = ¬p x
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | yes p | (no ¬p₁) | (no ¬p) = no hf where
+    hf (cuttable-s-tr-snd x) | refl = ¬p x
+  canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p₁) | (no ¬p) = no hf where
     hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
     hf (cuttable-s-tr-fst x) = ¬p₁ x
     hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p prftr
-  canItBeCut s (tr {_} {_} {_} {_} {_} {{ltr}} lf) | no ¬p = no hf where
+  canItBeCut s (tr {{ltr = ltr}} lf) | no ¬p = no hf where
     hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
     hf (cuttable-s-tr-fst {prftr = prftr} x) = ¬p prftr
     hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p ( ≤-pred $ ≤rsuc prftr)
