@@ -52,7 +52,7 @@ module _ where
     usesInput x = usesInput` x ∅ where
       usesInput` : {i : Size} → {j : Size< ↑ i} → ∀{u} → {rll : LinLogic j} → {ll : LinLogic i} → LFun {u} {_} {_} {rll} {ll} → MSetLL ll → Set
       usesInput` I s = ⊥
-      usesInput` (_⊂_ {j = j} {k = k} {ell = ell} {ind = ind} elf lf) ∅ = usesInput` {i = j} {j = k} lf (¬∅ (∅-add ind ell))
+      usesInput` (_⊂_ {j = j} {k = k} {ell = ell} {ind = ind} elf lf) ∅ = usesInput` lf (¬∅ (∅-add ind ell))
       usesInput` {i = i} {j = .k} (_⊂_ {i = .i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ↓} elf lf) (¬∅ s) with (contruct $ add {i = i} {j = j} s ↓ ell)
       usesInput` {i = i} {j = .k} (_⊂_ {i = .i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ↓} elf lf) (¬∅ s) | ↓ = ⊤
       usesInput` {i} {.k} (_⊂_ {.i} {j} {k} {_} {_} {.(_ LinLogic.∧ _)} {_} {↓} elf lf) (¬∅ s) | ns ←∧ =  usesInput` lf (¬∅ (ns ←∧))
