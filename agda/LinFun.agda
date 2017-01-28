@@ -39,7 +39,7 @@ module _ where
            → ⦃ prfi : onlyOneNilOrNoNilFinite ll ≡ true ⦄ → ⦃ prfo : onlyOneNilOrNoNilFinite frll ≡ true ⦄
            → (df : (ldt : LinDepT ll) → LinT ldt → LinDepT frll) → LFun {rll = rll} {ll = frll}
            → LFun {_} {i} {j} {rll = rll} {ll = ll}
-     call : {i : Size} → {j : Size< i} → ∀{ll ∞rll rll} → ∞LFun {i} {_} {∞rll} {ll} → LFun {_} {i} {j} {rll} {call ∞rll} → LFun {u} {i} {j} {rll} {ll}
+     call : {i : Size} → {j : Size< i} → ∀{ll ∞rll rll} → ∞LFun {i} {_} {∞rll} {ll} → LFun {_} {i} {j} {rll} {call ∞rll} → LFun {_} {i} {j} {rll} {ll}
   
   
     record ∞LFun {i : Size} {u} {∞rll : ∞LinLogic i {u}} {ll : LinLogic i {u}} : Set (lsuc u) where
@@ -50,7 +50,7 @@ module _ where
 
     usesInput : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → LFun {u} {i} {j} {rll} {ll} → Set
     usesInput x = usesInput` x ∅ where
-      usesInput` : {i : Size} → {j : Size< ↑ i} → ∀{u} → {rll : LinLogic j {u} } → {ll : LinLogic i {u} } → LFun {rll = rll} {ll = ll} → MSetLL ll → Set
+      usesInput` : {i : Size} → {j : Size< ↑ i} → ∀{u} → {rll : LinLogic j} → {ll : LinLogic i} → LFun {u} {_} {_} {rll} {ll} → MSetLL ll → Set
       usesInput` I s = ⊥
       usesInput` (_⊂_ {j = j} {k = k} {ell = ell} {ind = ind} elf lf) ∅ = usesInput` {i = j} {j = k} lf (¬∅ (∅-add ind ell))
       usesInput` {i = i} {j = .k} (_⊂_ {i = .i} {j = j} {k = k} {ell = ell} {rll = rll} {ind = ↓} elf lf) (¬∅ s) with (contruct $ add {i = i} {j = j} s ↓ ell)
