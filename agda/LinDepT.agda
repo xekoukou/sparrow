@@ -4,14 +4,10 @@ module LinDepT where
 
 open import Common
 open import LinLogic
-open import Size
 open import Data.Vec using (Vec)
 open import Data.Sum
-open import Function
 open import Data.Maybe
 open import Category.Monad
-open import Data.Unit
-open import Data.Empty
 
 open import Level
 

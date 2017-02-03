@@ -1,4 +1,3 @@
-{-# OPTIONS --exact-split #-}
 
 module SetLLProp where
 

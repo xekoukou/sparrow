@@ -1,9 +1,8 @@
-{-# OPTIONS --exact-split #-}
 
 
 module SetLL where
 
-open import Common
+open import Common hiding (_≤_)
 open import LinLogic
 import Data.List
 
@@ -87,6 +86,32 @@ add (s ←∂→ s₁) ↓ rll        = ↓
 add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
 add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
 
+
+module _ where
+-- UsesInput tries to find that all inputs have been used. By definition, calls are not to be used unless observed.
+-- Thus we need to add them in the set.
+  open Data.List
+  open import Data.Product
+
+
+  findCalls : ∀{i u} → (ll : LinLogic i {u}) → List (Σ (LinLogic i {u}) (λ pll → IndexLL pll ll))
+  findCalls ∅ = []
+  findCalls (τ x) = []
+  findCalls (li ∧ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∧)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∧→ (proj₂ x) )) (findCalls ri))
+  findCalls (li ∨ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∨)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∨→ (proj₂ x) )) (findCalls ri))
+  findCalls (li ∂ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∂)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∂→ (proj₂ x) )) (findCalls ri))
+  findCalls ll@(call x) = [(ll , ↓) ]
+
+  fillWithCalls : ∀{i u} → (ll : LinLogic i {u}) → MSetLL ll
+  fillWithCalls ll with (findCalls ll)
+  fillWithCalls ll | [] = ∅
+  fillWithCalls ll | x ∷ xs with (∅-add (proj₂ x) (proj₁ x))
+  ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl) 
+  fillWithCalls {i} {u} ll | x ∷ xs | r | .ll | refl = ¬∅ $ foldl hf r xs where
+    hf : SetLL ll → Σ (LinLogic i {u}) (λ pll → IndexLL pll ll) → SetLL ll
+    hf s ind with (add s (proj₂ x) (proj₁ x))
+    ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl)
+    hf s ind | r₁ | _ | refl = r₁
 
 -- Decidable Equality
 isEq : {i : Size} → ∀{u} → {ll : LinLogic i {u}} → (a : SetLL ll) → (b : SetLL ll) → Dec (a ≡ b)
@@ -195,21 +220,60 @@ isEq (a ←∂→ a₁) (b ←∂→ b₁) | no ¬p = no (hf) where
   hf refl = ¬p refl
 
 
+
+
 -- If two adjacent nodes exist in the set, the higher node is in the set.
 -- We contruct the set.
 contruct : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll
 contruct ↓          = ↓
 contruct (x ←∧)     = (contruct x) ←∧
 contruct (∧→ x)     = ∧→ (contruct x)
-contruct (x ←∧→ x₁) = ↓
+contruct (x ←∧→ x₁) with contruct x | contruct x₁
+... | ↓ | ↓ = ↓
+... | g | r = (g ←∧→ r)
 contruct (x ←∨)     = (contruct x) ←∨
 contruct (∨→ x)     = ∨→ (contruct x)
-contruct (x ←∨→ x₁) = ↓
+contruct (x ←∨→ x₁) with contruct x | contruct x₁
+... | ↓ | ↓ = ↓
+... | g | r = (g ←∨→ r)
 contruct (x ←∂)     = (contruct x) ←∂
 contruct (∂→ x)     = ∂→ (contruct x)
-contruct (x ←∂→ x₁) = ↓
+contruct (x ←∂→ x₁) with contruct x | contruct x₁
+... | ↓ | ↓ = ↓
+... | g | r = (g ←∂→ r)
 
 
+
+
+
+-- Resource-aware contruction used in cuttable. A node will only receive one resource from ∂ or ∨, by their semantic definition,
+-- thus here we contruct based on the whether the specific subtree has all the possible resources that it could
+-- get from the network.
+res-contruct : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll
+res-contruct ↓          = ↓
+res-contruct (x ←∧)     = (res-contruct x) ←∧
+res-contruct (∧→ x)     = ∧→ (res-contruct x)
+res-contruct (x ←∧→ x₁) with res-contruct x | res-contruct x₁
+... | ↓ | ↓ = ↓
+... | g | r = (g ←∧→ r)
+res-contruct (x ←∨) with res-contruct x
+... | ↓ = ↓
+... | g = (g ←∨)
+res-contruct (∨→ x) with res-contruct x 
+... | ↓ = ↓
+... | g = (∨→ g)
+res-contruct (x ←∨→ x₁) with res-contruct x | res-contruct x₁
+... | ↓ | ↓ = ↓
+... | g | r = (g ←∨→ r)
+res-contruct (x ←∂) with res-contruct x
+... | ↓ = ↓
+... | g = (g ←∂)
+res-contruct (∂→ x) with res-contruct x
+... | ↓ = ↓
+... | g = (∂→ g)
+res-contruct (x ←∂→ x₁) with res-contruct x | res-contruct x₁
+... | ↓ | ↓ = ↓
+... | g | r = (g ←∂→ r)
 
 -- If we transform the linear logic tree, we need to transform the SetLL as well.
 tran : ∀ {i u ll rll} → SetLL ll → (tr : LLTr {i} {u} rll ll)
@@ -322,3 +386,20 @@ module _ where
   sptran ((s ←∨→ s₁) ←∧→ s₂) (∧∨d tr) = (sptran ((s ←∧→ s₂) ←∨) tr) ++ (sptran (∨→ (s₁ ←∧→ s₂)) tr)
 
 
+data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
+  _≤id_   : ∀{ll s} → _≤s_ {ll = ll} s s
+  _≤←∧_  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧)
+  _≤∧→_  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (∧→ sy)
+  _≤←∨_  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨)
+  _≤∨→_  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (∨→ sy)
+  _≤←∂_  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂)
+  _≤∂→_  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (∂→ sy)
+  _≤←∧→_ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∧ llr} (slx ←∧→ srx) (sly ←∧→ sry)
+  _≤←∨→_ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∨ llr} (slx ←∨→ srx) (sly ←∨→ sry)
+  _≤←∂→_ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∂ llr} (slx ←∂→ srx) (sly ←∂→ sry)
+  _≤d←∧_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧→ s)
+  _≤d∧→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (s ←∧→ sy)
+  _≤d←∨_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨→ s)
+  _≤d∨→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (s ←∨→ sy)
+  _≤d←∂_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂→ s)
+  _≤d∂→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (s ←∂→ sy)

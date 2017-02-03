@@ -1,9 +1,8 @@
-{-# OPTIONS --exact-split #-}
 
 module LinLogic where
 
 open import Common
-
+open import Data.Unit
 
 module _ where
 
@@ -39,7 +38,7 @@ module _ where
   open ∞LinLogic public
 
 
-
+-- TODO. Do we need more linear transformations?
 
 -- Transformations of the Linear Logic so as to construct
 -- the correct sub-tree that is to be the input of a linear function.
@@ -75,6 +74,20 @@ replLL (l ∨ r) (∨→ ri) c = l ∨ (replLL r ri c)
 replLL (l ∂ r) (li ←∂) c = (replLL l li c) ∂ r
 replLL (l ∂ r) (∂→ ri) c = l ∂ (replLL r ri c)
 
+replLL-id : ∀{i u q} → (ll : LinLogic i {u}) → (ind : IndexLL q ll) → (s : LinLogic i {u}) → q ≡ s → replLL ll ind s ≡ ll
+replLL-id ll ↓ .ll refl = refl
+replLL-id (li ∧ _) (ind ←∧) s prf with (replLL li ind s) | (replLL-id li ind s prf)
+replLL-id (li ∧ _) (ind ←∧) s prf | .li | refl = refl
+replLL-id (_ ∧ ri) (∧→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
+replLL-id (_ ∧ ri) (∧→ ind) s prf | .ri | refl = refl
+replLL-id (li ∨ _) (ind ←∨) s prf with (replLL li ind s) | (replLL-id li ind s prf)
+replLL-id (li ∨ _) (ind ←∨) s prf | .li | refl = refl
+replLL-id (_ ∨ ri) (∨→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
+replLL-id (_ ∨ ri) (∨→ ind) s prf | .ri | refl = refl
+replLL-id (li ∂ _) (ind ←∂) s prf with (replLL li ind s) | (replLL-id li ind s prf)
+replLL-id (li ∂ _) (ind ←∂) s prf | .li | refl = refl
+replLL-id (_ ∂ ri) (∂→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
+replLL-id (_ ∂ ri) (∂→ ind) s prf | .ri | refl = refl
 
 module _ where
 
@@ -98,3 +111,19 @@ module _ where
   onlyOneNilOrNoNilFinite (call x) = noNilFinite (call x)
 
 
+-- We unfold all calls once. Used in LinFun.
+unfold : ∀{i u} → {j : Size< i} → LinLogic i {u} → LinLogic j {u}
+unfold ∅ = ∅
+unfold (τ x) = τ x 
+unfold (ll ∧ ll₁) = (unfold ll) ∧ (unfold ll₁)
+unfold (ll ∨ ll₁) = (unfold ll) ∨ (unfold ll₁)
+unfold (ll ∂ ll₁) = (unfold ll) ∂ (unfold ll₁)
+unfold (call x) = step x
+
+notCall : ∀{i u} → LinLogic i {u} → Set
+notCall ∅ = ⊤
+notCall (τ x) = ⊤
+notCall (ll ∧ ll₁) = ⊤
+notCall (ll ∨ ll₁) = ⊤
+notCall (ll ∂ ll₁) = ⊤
+notCall (call x) = ⊥
