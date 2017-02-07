@@ -49,9 +49,28 @@ data LLTr {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsuc u
   ∂c    : ∀{r l} → LLTr rll (r ∂ l) → LLTr rll (l ∂ r)
   ∧c    : ∀{r l} → LLTr rll (r ∧ l) → LLTr rll (l ∧ r)
   ∨c    : ∀{r l} → LLTr rll (r ∨ l) → LLTr rll (l ∨ r)
-  -- Distributive transformations for ∧∂ and ∧∨.
+  -- Distributive transformations.
   ∧∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ r) ∂ (l₂ ∧ r)) → LLTr rll ((l₁ ∂ l₂) ∧ r)
+  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
+--  ¬∧∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ l₂) ∧ r) → LLTr rll ((l₁ ∧ r) ∂ (l₂ ∧ r))
   ∧∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ r) ∨ (l₂ ∧ r)) → LLTr rll ((l₁ ∨ l₂) ∧ r)
+  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
+--  ¬∧∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ l₂) ∧ r) → LLTr rll ((l₁ ∧ r) ∨ (l₂ ∧ r))
+-- Not possible to duplicate resources.  
+--  ∧∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ r) ∧ (l₂ ∧ r)) → LLTr rll ((l₁ ∧ l₂) ∧ r)
+  ∨∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ r) ∂ (l₂ ∨ r)) → LLTr rll ((l₁ ∂ l₂) ∨ r)
+  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
+--  ¬∨∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ l₂) ∨ r) → LLTr rll ((l₁ ∨ r) ∂ (l₂ ∨ r))
+-- Not possible to duplicate resources.  
+--  ∨∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ r) ∧ (l₂ ∨ r)) → LLTr rll ((l₁ ∧ l₂) ∨ r)
+  ∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r)) → LLTr rll ((l₁ ∨ l₂) ∂ r)
+  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
+--  ¬∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ l₂) ∂ r) → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r))
+-- Associative transformations
+  ∨∨d   : ∀{l₁ l₂ r} → LLTr rll (l₁ ∨ (l₂ ∨ r)) → LLTr rll ((l₁ ∨ l₂) ∨ r)
+  ¬∨∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ l₂) ∨ r) → LLTr rll (l₁ ∨ (l₂ ∨ r))
+  ∂∂d   : ∀{l₁ l₂ r} → LLTr rll (l₁ ∂ (l₂ ∂ r)) → LLTr rll ((l₁ ∂ l₂) ∂ r)
+  ¬∂∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ l₂) ∂ r) → LLTr rll (l₁ ∂ (l₂ ∂ r))
 
 -- Indexes over a specific node of a linear logic tree. 
 data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u where

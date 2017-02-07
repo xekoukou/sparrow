@@ -1,4 +1,3 @@
-
 module SetLLProp where
 
 open import Common

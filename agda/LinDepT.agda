@@ -1,4 +1,3 @@
-{-# OPTIONS --exact-split #-}
 
 module LinDepT where
 
@@ -39,19 +38,47 @@ open ∞LinDepT public
 -- Given a linear transformation and a LinDepT,
 -- this function computes the LinDepT of the transformed Linear Logic.
 tran : ∀{i u ll rll} → LinDepT ll → LLTr {i} {u} rll ll → LinDepT rll
-tran ldt I                                      = ldt
-tran (∂ (inj₁ l)) (∂c tr)                       = tran (∂ (inj₂ l)) tr
-tran (∂ (inj₂ r)) (∂c tr)                       = tran (∂ (inj₁ r)) tr
-tran (ldt ∧ ldt₁) (∧c tr)                       = tran (ldt₁ ∧ ldt) tr
-tran (ldt ∨ ldt₁) (∨c tr)                       = tran (ldt₁ ∨ ldt) tr
-tran (ldt ←∨) (∨c tr)                       = tran (∨→ ldt) tr
-tran (∨→ ldt) (∨c tr)                       = tran (ldt ←∨) tr
-tran (∂ (inj₁ l) ∧ ldt₁) (∧∂d tr)               = tran (∂ (inj₁ (l ∧ ldt₁))) tr
-tran (∂ (inj₂ r) ∧ ldt₁) (∧∂d tr)               = tran (∂ (inj₂ (r ∧ ldt₁))) tr
-tran ((ldt ∨ ldt₁) ∧ ldt₂) (∧∨d tr) = tran ((ldt ∧ ldt₂) ∨ (ldt₁ ∧ ldt₂) ) tr
+tran ldt I                            = ldt
+tran (∂ (inj₁ l)) (∂c tr)             = tran (∂ (inj₂ l)) tr
+tran (∂ (inj₂ r)) (∂c tr)             = tran (∂ (inj₁ r)) tr
+tran (ldt ∧ ldt₁) (∧c tr)             = tran (ldt₁ ∧ ldt) tr
+tran (ldt ∨ ldt₁) (∨c tr)             = tran (ldt₁ ∨ ldt) tr
+tran (ldt ←∨) (∨c tr)                 = tran (∨→ ldt) tr
+tran (∨→ ldt) (∨c tr)                 = tran (ldt ←∨) tr
+tran (∂ (inj₁ l) ∧ ldt₁) (∧∂d tr)     = tran (∂ (inj₁ (l ∧ ldt₁))) tr
+tran (∂ (inj₂ r) ∧ ldt₁) (∧∂d tr)     = tran (∂ (inj₂ (r ∧ ldt₁))) tr
+tran ((ldt ∨ ldt₁) ∧ ldt₂) (∧∨d tr)   = tran ((ldt ∧ ldt₂) ∨ (ldt₁ ∧ ldt₂) ) tr
 tran ((ldt ←∨ ) ∧ ldt₂) (∧∨d tr)      = tran ((ldt ∧ ldt₂) ←∨ ) tr
-tran ((∨→ ldt₁) ∧ ldt₂) (∧∨d tr)     = tran (∨→ (ldt₁ ∧ ldt₂) ) tr
-
+tran ((∨→ ldt₁) ∧ ldt₂) (∧∨d tr)      = tran (∨→ (ldt₁ ∧ ldt₂) ) tr
+tran (∂ (inj₁ ldtl) ∨ ldt₁) (∨∂d tr)  = tran (∂ (inj₁ (ldtl ∨ ldt₁))) tr
+tran (∂ (inj₂ ldtr) ∨ ldt₁) (∨∂d tr)  = tran (∂ (inj₂ (ldtr ∨ ldt₁))) tr
+tran (∂ (inj₁ ldtl) ←∨) (∨∂d tr)      = tran (∂ (inj₁ (ldtl ←∨))) tr
+tran (∂ (inj₂ ldtr) ←∨) (∨∂d tr)      = tran (∂ (inj₂ (ldtr ←∨))) tr
+tran (∨→ ldt) (∨∂d tr)                = tran (∂ (inj₂ (∨→_ ldt))) tr
+tran (∂ (inj₁ (l ∨ l₁))) (∂∨d tr)     = tran (∂ (inj₁ l) ∨ ∂ (inj₁ l₁)) tr
+tran (∂ (inj₁ (l ←∨))) (∂∨d tr)       = tran (∂ (inj₁ l) ←∨) tr
+tran (∂ (inj₁ (∨→ l))) (∂∨d tr)       = tran (∨→ (∂ (inj₁ l))) tr
+tran (∂ (inj₂ r)) (∂∨d tr)            = tran ((∂ (inj₂ r)) ∨ (∂ (inj₂ r))) tr
+tran ((ldt ∨ ldt₁) ∨ ldt₂) (∨∨d tr)   = tran (ldt ∨ (ldt₁ ∨ ldt₂)) tr
+tran ((ldt ←∨) ∨ ldt₁) (∨∨d tr)       = tran (ldt ∨ (∨→ ldt₁)) tr
+tran ((∨→ ldt) ∨ ldt₁) (∨∨d tr)       = tran (∨→ (ldt ∨ ldt₁)) tr
+tran ((ldt ∨ ldt₁) ←∨) (∨∨d tr)       = tran (ldt ∨ (ldt₁ ←∨)) tr
+tran ((ldt ←∨) ←∨) (∨∨d tr)           = tran (ldt ←∨) tr
+tran ((∨→ ldt) ←∨) (∨∨d tr)           = tran (∨→ (ldt ←∨)) tr
+tran (∨→ ldt) (∨∨d tr)                = tran (∨→ (∨→ ldt)) tr
+tran (ldt ∨ (ldt₁ ∨ ldt₂)) (¬∨∨d tr)  = tran ((ldt ∨ ldt₁) ∨ ldt₂) tr
+tran (ldt ∨ (ldt₁ ←∨)) (¬∨∨d tr) = tran ((ldt ∨ ldt₁) ←∨) tr
+tran (ldt ∨ (∨→ ldt₁)) (¬∨∨d tr) = tran ((ldt ←∨) ∨ ldt₁) tr
+tran (ldt ←∨) (¬∨∨d tr) = tran ((ldt ←∨) ←∨) tr
+tran (∨→ (ldt ∨ ldt₁)) (¬∨∨d tr) = tran ((∨→ ldt) ∨ ldt₁) tr
+tran (∨→ (ldt ←∨)) (¬∨∨d tr) = tran ((∨→ ldt) ←∨) tr
+tran (∨→ (∨→ ldt)) (¬∨∨d tr) = tran (∨→ ldt) tr
+tran (∂ (inj₁ (∂ (inj₁ l)))) (∂∂d tr) = tran (∂ (inj₁ l)) tr
+tran (∂ (inj₁ (∂ (inj₂ r)))) (∂∂d tr) = tran (∂ (inj₂ (∂ (inj₁ r)))) tr
+tran (∂ (inj₂ r)) (∂∂d tr)            = tran (∂ (inj₂ (∂ (inj₂ r)))) tr
+tran (∂ (inj₁ l)) (¬∂∂d tr) = tran (∂ (inj₁ (∂ (inj₁ l)))) tr
+tran (∂ (inj₂ (∂ (inj₁ l)))) (¬∂∂d tr) = tran (∂ (inj₁ (∂ (inj₂ l)))) tr
+tran (∂ (inj₂ (∂ (inj₂ r)))) (¬∂∂d tr) = tran (∂ (inj₂ r)) tr
 
 -- Transform a LinDepT after a specific node pointed by the index ind.
 itran : ∀{i u ll pll rll} → LinDepT ll → (ind : IndexLL {i} {u} pll ll) → LLTr rll pll → LinDepT $ replLL ll ind rll
