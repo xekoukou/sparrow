@@ -86,10 +86,160 @@ add (s ←∂→ s₁) ↓ rll        = ↓
 add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
 add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
 
+-- TODO Not used anywhere. Maybe it needs to be renoved. 
+_+ₛ_ : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll → SetLL ll
+↓ +ₛ b = ↓
+(a ←∧) +ₛ ↓ = ↓
+(a ←∧) +ₛ (b ←∧) = (a +ₛ b) ←∧
+(a ←∧) +ₛ (∧→ b) = a ←∧→ b
+(a ←∧) +ₛ (b ←∧→ b₁) = (a +ₛ b) ←∧→ b₁
+(∧→ a) +ₛ ↓ = ↓
+(∧→ a) +ₛ (b ←∧) = b ←∧→ a
+(∧→ a) +ₛ (∧→ b) = ∧→ (a +ₛ b)
+(∧→ a) +ₛ (b ←∧→ b₁) = b ←∧→ (a +ₛ b₁)
+(a ←∧→ a₁) +ₛ ↓ = ↓
+(a ←∧→ a₁) +ₛ (b ←∧) = (a +ₛ b) ←∧→ a₁
+(a ←∧→ a₁) +ₛ (∧→ b) = a ←∧→ (a₁ +ₛ b)
+(a ←∧→ a₁) +ₛ (b ←∧→ b₁) = (a +ₛ b) ←∧→ (a₁ +ₛ b₁)
+(a ←∨) +ₛ ↓ = ↓
+(a ←∨) +ₛ (b ←∨) = (a +ₛ b) ←∨
+(a ←∨) +ₛ (∨→ b) = a ←∨→ b
+(a ←∨) +ₛ (b ←∨→ b₁) = (a +ₛ b) ←∨→ b₁
+(∨→ a) +ₛ ↓ = ↓
+(∨→ a) +ₛ (b ←∨) = b ←∨→ a
+(∨→ a) +ₛ (∨→ b) = ∨→ (a +ₛ b)
+(∨→ a) +ₛ (b ←∨→ b₁) = b ←∨→ (a +ₛ b₁)
+(a ←∨→ a₁) +ₛ ↓ = ↓
+(a ←∨→ a₁) +ₛ (b ←∨) = (a +ₛ b) ←∨→ a₁
+(a ←∨→ a₁) +ₛ (∨→ b) = a ←∨→ (a₁ +ₛ b)
+(a ←∨→ a₁) +ₛ (b ←∨→ b₁) = (a +ₛ b) ←∨→ (a₁ +ₛ b₁)
+(a ←∂) +ₛ ↓ = ↓
+(a ←∂) +ₛ (b ←∂) = (a +ₛ b) ←∂
+(a ←∂) +ₛ (∂→ b) = a ←∂→ b
+(a ←∂) +ₛ (b ←∂→ b₁) = (a +ₛ b) ←∂→ b₁
+(∂→ a) +ₛ ↓ = ↓
+(∂→ a) +ₛ (b ←∂) = b ←∂→ a
+(∂→ a) +ₛ (∂→ b) = ∂→ (a +ₛ b)
+(∂→ a) +ₛ (b ←∂→ b₁) = b ←∂→ (a +ₛ b₁)
+(a ←∂→ a₁) +ₛ ↓ = ↓
+(a ←∂→ a₁) +ₛ (b ←∂) = (a +ₛ b) ←∂→ a₁
+(a ←∂→ a₁) +ₛ (∂→ b) = a ←∂→ (a₁ +ₛ b)
+(a ←∂→ a₁) +ₛ (b ←∂→ b₁) = (a +ₛ b) ←∂→ (a₁ +ₛ b₁)
+
+
+-- Deletes an index if it is present, otherwise does nothing.
+del : ∀{i u ll q} → {j : Size< ↑ i} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
+      → MSetLL (replLL ll ind rll)
+del s ↓ rll = ∅
+del ↓ (ind ←∧) rll with (del ↓ ind rll)
+del ↓ (ind ←∧) rll | ∅ = ¬∅ (∧→ ↓)
+del ↓ (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ ↓)
+del (s ←∧) (ind ←∧) rll with (del s ind rll)
+del (s ←∧) (ind ←∧) rll | ∅ = ∅
+del (s ←∧) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧)
+del (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (dsize s))
+del (s ←∧→ s₁) (ind ←∧) rll with (del s ind rll)
+del (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (dsize s₁))
+del (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (dsize s₁))
+del ↓ (∧→ ind) rll with (del ↓ ind rll)
+del ↓ (∧→ ind) rll | ∅ = ¬∅ (↓ ←∧)
+del ↓ (∧→ ind) rll | ¬∅ x = ¬∅ (↓ ←∧→ x)
+del (s ←∧) (∧→ ind) rll = ¬∅ ((dsize s) ←∧)
+del (∧→ s) (∧→ ind) rll with (del s ind rll)
+del (∧→ s) (∧→ ind) rll | ∅ = ∅
+del (∧→ s) (∧→ ind) rll | ¬∅ x = ¬∅ (∧→ x)
+del (s ←∧→ s₁) (∧→ ind) rll with (del s₁ ind rll)
+del (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((dsize s) ←∧)
+del (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∧→ x)
+del ↓ (ind ←∨) rll with (del ↓ ind rll)
+del ↓ (ind ←∨) rll | ∅ = ¬∅ (∨→ ↓)
+del ↓ (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ ↓)
+del (s ←∨) (ind ←∨) rll with (del s ind rll)
+del (s ←∨) (ind ←∨) rll | ∅ = ∅
+del (s ←∨) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨)
+del (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (dsize s))
+del (s ←∨→ s₁) (ind ←∨) rll with (del s ind rll)
+del (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (dsize s₁))
+del (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (dsize s₁))
+del ↓ (∨→ ind) rll with (del ↓ ind rll)
+del ↓ (∨→ ind) rll | ∅ = ¬∅ (↓ ←∨)
+del ↓ (∨→ ind) rll | ¬∅ x = ¬∅ (↓ ←∨→ x)
+del (s ←∨) (∨→ ind) rll = ¬∅ ((dsize s) ←∨)
+del (∨→ s) (∨→ ind) rll with (del s ind rll)
+del (∨→ s) (∨→ ind) rll | ∅ = ∅
+del (∨→ s) (∨→ ind) rll | ¬∅ x = ¬∅ (∨→ x)
+del (s ←∨→ s₁) (∨→ ind) rll with (del s₁ ind rll)
+del (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((dsize s) ←∨)
+del (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∨→ x)
+del ↓ (ind ←∂) rll with (del ↓ ind rll)
+del ↓ (ind ←∂) rll | ∅ = ¬∅ (∂→ ↓)
+del ↓ (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ ↓)
+del (s ←∂) (ind ←∂) rll with (del s ind rll)
+del (s ←∂) (ind ←∂) rll | ∅ = ∅
+del (s ←∂) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂)
+del (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (dsize s))
+del (s ←∂→ s₁) (ind ←∂) rll with (del s ind rll)
+del (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (dsize s₁))
+del (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (dsize s₁))
+del ↓ (∂→ ind) rll with (del ↓ ind rll)
+del ↓ (∂→ ind) rll | ∅ = ¬∅ (↓ ←∂)
+del ↓ (∂→ ind) rll | ¬∅ x = ¬∅ (↓ ←∂→ x)
+del (s ←∂) (∂→ ind) rll = ¬∅ ((dsize s) ←∂)
+del (∂→ s) (∂→ ind) rll with (del s ind rll)
+del (∂→ s) (∂→ ind) rll | ∅ = ∅
+del (∂→ s) (∂→ ind) rll | ¬∅ x = ¬∅ (∂→ x)
+del (s ←∂→ s₁) (∂→ ind) rll with (del s₁ ind rll)
+del (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((dsize s) ←∂)
+del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∂→ x)
 
 module _ where
+
+  private
+    hf : ∀{i u ll q} → {j : Size< ↑ i} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {j} rll → SetLL (replLL ll ind rll)
+    hf ↓ b = b
+    hf (ind ←∧) b = (hf ind b) ←∧
+    hf (∧→ ind) b = ∧→ (hf ind b)
+    hf (ind ←∨) b = (hf ind b) ←∨
+    hf (∨→ ind) b = ∨→ (hf ind b)
+    hf (ind ←∂) b = (hf ind b) ←∂
+    hf (∂→ ind) b = ∂→ (hf ind b)
+  
+-- TODO Not used anywhere. Maybe it needs to be renoved. 
+  replacePartOf_to_at_ : ∀{i u ll q} → {j : Size< ↑ i} → ∀{rll} → SetLL ll → SetLL {j} rll → (ind : IndexLL {i} {u} q ll)
+            → SetLL (replLL ll ind rll)
+  replacePartOf a to b at ↓               = b
+  replacePartOf ↓ to b at (ind ←∧)        = (replacePartOf ↓ to b at ind) ←∧→ ↓
+  replacePartOf a ←∧ to b at (ind ←∧)     = (replacePartOf a to b at ind) ←∧
+  replacePartOf_to_at_ {q                 = q} {rll = rll} (∧→ a) b (ind ←∧) = (hf ind b) ←∧→ (dsize a)
+  replacePartOf a ←∧→ a₁ to b at (ind ←∧) = (replacePartOf a to b at ind) ←∧→ (dsize a₁)
+  replacePartOf ↓ to b at (∧→ ind)        =  ↓ ←∧→ (replacePartOf ↓ to b at ind)
+  replacePartOf a ←∧ to b at (∧→ ind)     = (dsize a) ←∧→ (hf ind b)  
+  replacePartOf ∧→ a to b at (∧→ ind)     = ∧→ (replacePartOf a to b at ind)
+  replacePartOf a ←∧→ a₁ to b at (∧→ ind) = (dsize a) ←∧→ (replacePartOf a₁ to b at ind)
+  replacePartOf ↓ to b at (ind ←∨)        = (replacePartOf ↓ to b at ind) ←∨→ ↓
+  replacePartOf a ←∨ to b at (ind ←∨)     = (replacePartOf a to b at ind) ←∨
+  replacePartOf_to_at_ {q                 = q} {rll = rll} (∨→ a) b (ind ←∨) = (hf ind b) ←∨→ (dsize a)
+  replacePartOf a ←∨→ a₁ to b at (ind ←∨) = (replacePartOf a to b at ind) ←∨→ (dsize a₁)
+  replacePartOf ↓ to b at (∨→ ind)        =  ↓ ←∨→ (replacePartOf ↓ to b at ind)
+  replacePartOf a ←∨ to b at (∨→ ind)     = (dsize a) ←∨→ (hf ind b)  
+  replacePartOf ∨→ a to b at (∨→ ind)     = ∨→ (replacePartOf a to b at ind)
+  replacePartOf a ←∨→ a₁ to b at (∨→ ind) = (dsize a) ←∨→ (replacePartOf a₁ to b at ind)
+  replacePartOf ↓ to b at (ind ←∂)        = (replacePartOf ↓ to b at ind) ←∂→ ↓
+  replacePartOf a ←∂ to b at (ind ←∂)     = (replacePartOf a to b at ind) ←∂
+  replacePartOf_to_at_ {q                 = q} {rll = rll} (∂→ a) b (ind ←∂) = (hf ind b) ←∂→ (dsize a)
+  replacePartOf a ←∂→ a₁ to b at (ind ←∂) = (replacePartOf a to b at ind) ←∂→ (dsize a₁)
+  replacePartOf ↓ to b at (∂→ ind)        =  ↓ ←∂→ (replacePartOf ↓ to b at ind)
+  replacePartOf a ←∂ to b at (∂→ ind)     = (dsize a) ←∂→ (hf ind b)  
+  replacePartOf ∂→ a to b at (∂→ ind)     = ∂→ (replacePartOf a to b at ind)
+  replacePartOf a ←∂→ a₁ to b at (∂→ ind) = (dsize a) ←∂→ (replacePartOf a₁ to b at ind)
+
+
+module _ where
+
 -- UsesInput tries to find that all inputs have been used. By definition, calls are not to be used unless observed.
 -- Thus we need to add them in the set.
+-- Since LinLogic calls can only be consumed by LinFun calls, we can add them when we reach the appropriate LinFun call.
+
   open Data.List
   open import Data.Product
 
@@ -220,7 +370,13 @@ isEq (a ←∂→ a₁) (b ←∂→ b₁) | no ¬p = no (hf) where
   hf refl = ¬p refl
 
 
-
+isEqM : {i : Size} → ∀{u} → {ll : LinLogic i {u}} → (a : MSetLL ll) → (b : MSetLL ll) → Dec (a ≡ b)
+isEqM ∅ ∅ = yes refl
+isEqM ∅ (¬∅ x) = no (λ ())
+isEqM (¬∅ x) ∅ = no (λ ())
+isEqM (¬∅ x) (¬∅ x₁) with (isEq x x₁)
+isEqM (¬∅ x) (¬∅ .x) | yes refl = yes refl
+isEqM (¬∅ x) (¬∅ x₁) | no ¬p = no (λ {refl → ¬p refl})
 
 -- If two adjacent nodes exist in the set, the higher node is in the set.
 -- We contruct the set.

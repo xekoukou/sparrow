@@ -146,3 +146,5 @@ notCall (ll ∧ ll₁) = ⊤
 notCall (ll ∨ ll₁) = ⊤
 notCall (ll ∂ ll₁) = ⊤
 notCall (call x) = ⊥
+
+
