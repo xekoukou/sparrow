@@ -86,46 +86,57 @@ add (s ←∂→ s₁) ↓ rll        = ↓
 add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
 add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
 
--- TODO Not used anywhere. Maybe it needs to be renoved. 
-_+ₛ_ : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll → SetLL ll
-↓ +ₛ b = ↓
-(a ←∧) +ₛ ↓ = ↓
-(a ←∧) +ₛ (b ←∧) = (a +ₛ b) ←∧
-(a ←∧) +ₛ (∧→ b) = a ←∧→ b
-(a ←∧) +ₛ (b ←∧→ b₁) = (a +ₛ b) ←∧→ b₁
-(∧→ a) +ₛ ↓ = ↓
-(∧→ a) +ₛ (b ←∧) = b ←∧→ a
-(∧→ a) +ₛ (∧→ b) = ∧→ (a +ₛ b)
-(∧→ a) +ₛ (b ←∧→ b₁) = b ←∧→ (a +ₛ b₁)
-(a ←∧→ a₁) +ₛ ↓ = ↓
-(a ←∧→ a₁) +ₛ (b ←∧) = (a +ₛ b) ←∧→ a₁
-(a ←∧→ a₁) +ₛ (∧→ b) = a ←∧→ (a₁ +ₛ b)
-(a ←∧→ a₁) +ₛ (b ←∧→ b₁) = (a +ₛ b) ←∧→ (a₁ +ₛ b₁)
-(a ←∨) +ₛ ↓ = ↓
-(a ←∨) +ₛ (b ←∨) = (a +ₛ b) ←∨
-(a ←∨) +ₛ (∨→ b) = a ←∨→ b
-(a ←∨) +ₛ (b ←∨→ b₁) = (a +ₛ b) ←∨→ b₁
-(∨→ a) +ₛ ↓ = ↓
-(∨→ a) +ₛ (b ←∨) = b ←∨→ a
-(∨→ a) +ₛ (∨→ b) = ∨→ (a +ₛ b)
-(∨→ a) +ₛ (b ←∨→ b₁) = b ←∨→ (a +ₛ b₁)
-(a ←∨→ a₁) +ₛ ↓ = ↓
-(a ←∨→ a₁) +ₛ (b ←∨) = (a +ₛ b) ←∨→ a₁
-(a ←∨→ a₁) +ₛ (∨→ b) = a ←∨→ (a₁ +ₛ b)
-(a ←∨→ a₁) +ₛ (b ←∨→ b₁) = (a +ₛ b) ←∨→ (a₁ +ₛ b₁)
-(a ←∂) +ₛ ↓ = ↓
-(a ←∂) +ₛ (b ←∂) = (a +ₛ b) ←∂
-(a ←∂) +ₛ (∂→ b) = a ←∂→ b
-(a ←∂) +ₛ (b ←∂→ b₁) = (a +ₛ b) ←∂→ b₁
-(∂→ a) +ₛ ↓ = ↓
-(∂→ a) +ₛ (b ←∂) = b ←∂→ a
-(∂→ a) +ₛ (∂→ b) = ∂→ (a +ₛ b)
-(∂→ a) +ₛ (b ←∂→ b₁) = b ←∂→ (a +ₛ b₁)
-(a ←∂→ a₁) +ₛ ↓ = ↓
-(a ←∂→ a₁) +ₛ (b ←∂) = (a +ₛ b) ←∂→ a₁
-(a ←∂→ a₁) +ₛ (∂→ b) = a ←∂→ (a₁ +ₛ b)
-(a ←∂→ a₁) +ₛ (b ←∂→ b₁) = (a +ₛ b) ←∂→ (a₁ +ₛ b₁)
+madd : ∀{i u ll q} → {j : Size< ↑ i} → MSetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
+      → MSetLL (replLL ll ind rll)
+madd ∅ ind rll = ¬∅ (∅-add ind rll)
+madd (¬∅ x) ind rll = ¬∅ (add x ind rll)
 
+
+-- TODO Not used anywhere. Maybe it needs to be renoved. 
+_∪ₛ_ : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll → SetLL ll
+↓ ∪ₛ b = ↓
+(a ←∧) ∪ₛ ↓ = ↓
+(a ←∧) ∪ₛ (b ←∧) = (a ∪ₛ b) ←∧
+(a ←∧) ∪ₛ (∧→ b) = a ←∧→ b
+(a ←∧) ∪ₛ (b ←∧→ b₁) = (a ∪ₛ b) ←∧→ b₁
+(∧→ a) ∪ₛ ↓ = ↓
+(∧→ a) ∪ₛ (b ←∧) = b ←∧→ a
+(∧→ a) ∪ₛ (∧→ b) = ∧→ (a ∪ₛ b)
+(∧→ a) ∪ₛ (b ←∧→ b₁) = b ←∧→ (a ∪ₛ b₁)
+(a ←∧→ a₁) ∪ₛ ↓ = ↓
+(a ←∧→ a₁) ∪ₛ (b ←∧) = (a ∪ₛ b) ←∧→ a₁
+(a ←∧→ a₁) ∪ₛ (∧→ b) = a ←∧→ (a₁ ∪ₛ b)
+(a ←∧→ a₁) ∪ₛ (b ←∧→ b₁) = (a ∪ₛ b) ←∧→ (a₁ ∪ₛ b₁)
+(a ←∨) ∪ₛ ↓ = ↓
+(a ←∨) ∪ₛ (b ←∨) = (a ∪ₛ b) ←∨
+(a ←∨) ∪ₛ (∨→ b) = a ←∨→ b
+(a ←∨) ∪ₛ (b ←∨→ b₁) = (a ∪ₛ b) ←∨→ b₁
+(∨→ a) ∪ₛ ↓ = ↓
+(∨→ a) ∪ₛ (b ←∨) = b ←∨→ a
+(∨→ a) ∪ₛ (∨→ b) = ∨→ (a ∪ₛ b)
+(∨→ a) ∪ₛ (b ←∨→ b₁) = b ←∨→ (a ∪ₛ b₁)
+(a ←∨→ a₁) ∪ₛ ↓ = ↓
+(a ←∨→ a₁) ∪ₛ (b ←∨) = (a ∪ₛ b) ←∨→ a₁
+(a ←∨→ a₁) ∪ₛ (∨→ b) = a ←∨→ (a₁ ∪ₛ b)
+(a ←∨→ a₁) ∪ₛ (b ←∨→ b₁) = (a ∪ₛ b) ←∨→ (a₁ ∪ₛ b₁)
+(a ←∂) ∪ₛ ↓ = ↓
+(a ←∂) ∪ₛ (b ←∂) = (a ∪ₛ b) ←∂
+(a ←∂) ∪ₛ (∂→ b) = a ←∂→ b
+(a ←∂) ∪ₛ (b ←∂→ b₁) = (a ∪ₛ b) ←∂→ b₁
+(∂→ a) ∪ₛ ↓ = ↓
+(∂→ a) ∪ₛ (b ←∂) = b ←∂→ a
+(∂→ a) ∪ₛ (∂→ b) = ∂→ (a ∪ₛ b)
+(∂→ a) ∪ₛ (b ←∂→ b₁) = b ←∂→ (a ∪ₛ b₁)
+(a ←∂→ a₁) ∪ₛ ↓ = ↓
+(a ←∂→ a₁) ∪ₛ (b ←∂) = (a ∪ₛ b) ←∂→ a₁
+(a ←∂→ a₁) ∪ₛ (∂→ b) = a ←∂→ (a₁ ∪ₛ b)
+(a ←∂→ a₁) ∪ₛ (b ←∂→ b₁) = (a ∪ₛ b) ←∂→ (a₁ ∪ₛ b₁)
+
+_∪ₘₛ_ : ∀{i u} → {ll : LinLogic i {u}} → MSetLL ll → MSetLL ll → MSetLL ll
+_∪ₘₛ_ ∅ ∅            = ∅
+_∪ₘₛ_ ∅ (¬∅ s)       = ¬∅ s
+_∪ₘₛ_ (¬∅ fs) ∅      = ¬∅ fs
+_∪ₘₛ_ (¬∅ fs) (¬∅ s) = ¬∅ (fs ∪ₛ s)
 
 -- Deletes an index if it is present, otherwise does nothing.
 del : ∀{i u ll q} → {j : Size< ↑ i} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)

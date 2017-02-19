@@ -13,6 +13,12 @@ open import Data.Nat public
 open import Data.Vec
 
 
+-- postulates
+
+module _ where
+
+postulate IMPOSSIBLE : ∀{u} → {A : Set (u)} → A
+
 -- A proof irrelevant eliminator
 
 module _ where
