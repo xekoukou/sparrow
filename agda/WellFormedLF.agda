@@ -2,7 +2,7 @@ module WellFormedLF where
 
 open import Common
 open import LinLogic
-import SetLL
+open import SetLL
 
 --data IndexLF : ∀{u} → {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {u} {i} {j} {rll} {ll} → Set where
 --  ↓    : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → IndexLF lf
@@ -33,164 +33,50 @@ import SetLL
 -- THe first is used to identify inputs from the same com. When a tranformation splits these coms, we also split the set into two sets. Next we track all the inputs that are part of the tranformation, be it sets of inputs of a specific com or individual inputs. From all these sets, at least one item from each set needs to be the input of the next com.
 -- The set of coms that are used to allow for commutation of inputs.
 
+module _ where
+
+  open import Data.Vec
+  
+  data Ancestor : Set where
+    orig  : Ancestor
+    anc   : ℕ → Ancestor → Ancestor
+    manc  : ℕ → ∀{n} → Vec Ancestor n → Ancestor → Ancestor
 
 
--- A non-empty set of nodes in a Linear Logic tree that also can also tag intermediary nodes.
-data SetLLInter {i : Size} {u} : LinLogic i {u} → Set where
-  ↓     : ∀{ll}                                    → SetLLInter ll
-  ↓+    : ∀{ll}    → SetLLInter ll                 → SetLLInter ll
-  _←∧   : ∀{rs ls} → SetLLInter ls                 → SetLLInter (ls ∧ rs)
-  ∧→_   : ∀{rs ls} → SetLLInter rs                 → SetLLInter (ls ∧ rs)
-  _←∧→_ : ∀{rs ls} → SetLLInter ls → SetLLInter rs → SetLLInter (ls ∧ rs)
-  _←∨   : ∀{rs ls} → SetLLInter ls                 → SetLLInter (ls ∨ rs)
-  ∨→_   : ∀{rs ls} → SetLLInter rs                 → SetLLInter (ls ∨ rs)
-  _←∨→_ : ∀{rs ls} → SetLLInter ls → SetLLInter rs → SetLLInter (ls ∨ rs)
-  _←∂   : ∀{rs ls} → SetLLInter ls                 → SetLLInter (ls ∂ rs)
-  ∂→_   : ∀{rs ls} → SetLLInter rs                 → SetLLInter (ls ∂ rs)
-  _←∂→_ : ∀{rs ls} → SetLLInter ls → SetLLInter rs → SetLLInter (ls ∂ rs)
-
-
-data MSetLLInter {i : Size} {u} : LinLogic i {u} → Set where
-  ∅   : ∀{ll}                 → MSetLLInter ll
-  ¬∅  : ∀{ll} → SetLLInter ll → MSetLLInter ll
-
-
-∅-add : ∀{i u ll rll} → {j : Size< ↑ i} → (ind : IndexLL {i} {u} rll ll) → (nrll : LinLogic j )
-        → SetLLInter (replLL ll ind nrll)
-∅-add ↓ nrll = ↓
-∅-add (ind ←∧) nrll = (∅-add ind nrll) ←∧
-∅-add (∧→ ind) nrll = ∧→ (∅-add ind nrll)
-∅-add (ind ←∨) nrll = (∅-add ind nrll) ←∨
-∅-add (∨→ ind) nrll = ∨→ (∅-add ind nrll)
-∅-add (ind ←∂) nrll = (∅-add ind nrll) ←∂
-∅-add (∂→ ind) nrll = ∂→ (∅-add ind nrll)
-
--- TODO We shouldn't need this. When issue agda #2409 is resolved, remove this.
-dsize : ∀{i u ll} → {j : Size< ↑ i} → SetLLInter {i} {u} ll → SetLLInter {j} ll
-dsize ↓          = ↓
-dsize (↓+ s)     = (↓+ $ dsize s)
-dsize (x ←∧)     = (dsize x) ←∧
-dsize (∧→ x)     = ∧→ (dsize x)
-dsize (x ←∧→ x₁) = (dsize x ←∧→ dsize x₁)
-dsize (x ←∨)     = (dsize x) ←∨
-dsize (∨→ x)     = ∨→ (dsize x)
-dsize (x ←∨→ x₁) = (dsize x ←∨→ dsize x₁)
-dsize (x ←∂)     = (dsize x) ←∂
-dsize (∂→ x)     = ∂→ (dsize x)
-dsize (x ←∂→ x₁) = (dsize x ←∂→ dsize x₁)
-
--- Lower level intermediary are removed when adding a new index.
-add : ∀{i u ll q} → {j : Size< ↑ i} → SetLLInter ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
-      → SetLLInter (replLL ll ind rll)
-add ↓ ↓ rll                 = ↓
-add ↓ ind rll               = ↓+ (∅-add ind rll)
-add (↓+ s) ind rll          = ↓+ (add s ind rll)
-add (s ←∧) ↓ rll            = ↓
-add (s ←∧) (ind ←∧) rll     = (add s ind rll) ←∧
-add (s ←∧) (∧→ ind) rll     = dsize s ←∧→ (∅-add ind rll)
-add (∧→ s) ↓ rll            = ↓
-add (∧→ s) (ind ←∧) rll     = (∅-add ind rll) ←∧→ dsize s
-add (∧→ s) (∧→ ind) rll     = ∧→ add s ind rll
-add (s ←∧→ s₁) ↓ rll        = ↓
-add (s ←∧→ s₁) (ind ←∧) rll = (add s ind rll) ←∧→ dsize s₁
-add (s ←∧→ s₁) (∧→ ind) rll = dsize s ←∧→ (add s₁ ind rll)
-add (s ←∨) ↓ rll            = ↓
-add (s ←∨) (ind ←∨) rll     = (add s ind rll) ←∨
-add (s ←∨) (∨→ ind) rll     = dsize s ←∨→ (∅-add ind rll)
-add (∨→ s) ↓ rll            = ↓
-add (∨→ s) (ind ←∨) rll     = (∅-add ind rll) ←∨→ dsize s
-add (∨→ s) (∨→ ind) rll     = ∨→ add s ind rll
-add (s ←∨→ s₁) ↓ rll        = ↓
-add (s ←∨→ s₁) (ind ←∨) rll = (add s ind rll) ←∨→ dsize s₁
-add (s ←∨→ s₁) (∨→ ind) rll = dsize s ←∨→ (add s₁ ind rll)
-add (s ←∂) ↓ rll            = ↓
-add (s ←∂) (ind ←∂) rll     = (add s ind rll) ←∂
-add (s ←∂) (∂→ ind) rll     = dsize s ←∂→ (∅-add ind rll)
-add (∂→ s) ↓ rll            = ↓
-add (∂→ s) (ind ←∂) rll     = (∅-add ind rll) ←∂→ dsize s
-add (∂→ s) (∂→ ind) rll     = ∂→ add s ind rll
-add (s ←∂→ s₁) ↓ rll        = ↓
-add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
-add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
-
-
-madd : ∀{i u ll q} → {j : Size< ↑ i} → MSetLLInter ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
-      → MSetLLInter (replLL ll ind rll)
-madd ∅ ind rll = ¬∅ (∅-add ind rll)
-madd (¬∅ x) ind rll = ¬∅ (add x ind rll)
-
-del : ∀{i u ll q} → {j : Size< ↑ i} → SetLLInter ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
-      → MSetLLInter (replLL ll ind rll)
-del ↓ ↓ rll = ∅
-del (↓+ s) ↓ rll = {!¬∅ s!}
-del (s ←∧) ↓ rll = {!!}
-del (∧→ s) ↓ rll = {!!}
-del (s ←∧→ s₁) ↓ rll = {!!}
-del (s ←∨) ↓ rll = {!!}
-del (∨→ s) ↓ rll = {!!}
-del (s ←∨→ s₁) ↓ rll = {!!}
-del (s ←∂) ↓ rll = {!!}
-del (∂→ s) ↓ rll = {!!}
-del (s ←∂→ s₁) ↓ rll = {!!}
-del ↓ (ind ←∧) rll with (del ↓ ind rll)
-del ↓ (ind ←∧) rll | ∅ = ¬∅ (∧→ ↓)
-del ↓ (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ ↓)
-del (s ←∧) (ind ←∧) rll with (del s ind rll)
-del (s ←∧) (ind ←∧) rll | ∅ = ∅
-del (s ←∧) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧)
-del (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (dsize s))
-del (s ←∧→ s₁) (ind ←∧) rll with (del s ind rll)
-del (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (dsize s₁))
-del (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (dsize s₁))
-del ↓ (∧→ ind) rll with (del ↓ ind rll)
-del ↓ (∧→ ind) rll | ∅ = ¬∅ (↓ ←∧)
-del ↓ (∧→ ind) rll | ¬∅ x = ¬∅ (↓ ←∧→ x)
-del (s ←∧) (∧→ ind) rll = ¬∅ ((dsize s) ←∧)
-del (∧→ s) (∧→ ind) rll with (del s ind rll)
-del (∧→ s) (∧→ ind) rll | ∅ = ∅
-del (∧→ s) (∧→ ind) rll | ¬∅ x = ¬∅ (∧→ x)
-del (s ←∧→ s₁) (∧→ ind) rll with (del s₁ ind rll)
-del (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((dsize s) ←∧)
-del (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∧→ x)
-del ↓ (ind ←∨) rll with (del ↓ ind rll)
-del ↓ (ind ←∨) rll | ∅ = ¬∅ (∨→ ↓)
-del ↓ (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ ↓)
-del (s ←∨) (ind ←∨) rll with (del s ind rll)
-del (s ←∨) (ind ←∨) rll | ∅ = ∅
-del (s ←∨) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨)
-del (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (dsize s))
-del (s ←∨→ s₁) (ind ←∨) rll with (del s ind rll)
-del (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (dsize s₁))
-del (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (dsize s₁))
-del ↓ (∨→ ind) rll with (del ↓ ind rll)
-del ↓ (∨→ ind) rll | ∅ = ¬∅ (↓ ←∨)
-del ↓ (∨→ ind) rll | ¬∅ x = ¬∅ (↓ ←∨→ x)
-del (s ←∨) (∨→ ind) rll = ¬∅ ((dsize s) ←∨)
-del (∨→ s) (∨→ ind) rll with (del s ind rll)
-del (∨→ s) (∨→ ind) rll | ∅ = ∅
-del (∨→ s) (∨→ ind) rll | ¬∅ x = ¬∅ (∨→ x)
-del (s ←∨→ s₁) (∨→ ind) rll with (del s₁ ind rll)
-del (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((dsize s) ←∨)
-del (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∨→ x)
-del ↓ (ind ←∂) rll with (del ↓ ind rll)
-del ↓ (ind ←∂) rll | ∅ = ¬∅ (∂→ ↓)
-del ↓ (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ ↓)
-del (s ←∂) (ind ←∂) rll with (del s ind rll)
-del (s ←∂) (ind ←∂) rll | ∅ = ∅
-del (s ←∂) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂)
-del (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (dsize s))
-del (s ←∂→ s₁) (ind ←∂) rll with (del s ind rll)
-del (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (dsize s₁))
-del (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (dsize s₁))
-del ↓ (∂→ ind) rll with (del ↓ ind rll)
-del ↓ (∂→ ind) rll | ∅ = ¬∅ (↓ ←∂)
-del ↓ (∂→ ind) rll | ¬∅ x = ¬∅ (↓ ←∂→ x)
-del (s ←∂) (∂→ ind) rll = ¬∅ ((dsize s) ←∂)
-del (∂→ s) (∂→ ind) rll with (del s ind rll)
-del (∂→ s) (∂→ ind) rll | ∅ = ∅
-del (∂→ s) (∂→ ind) rll | ¬∅ x = ¬∅ (∂→ x)
-del (s ←∂→ s₁) (∂→ ind) rll with (del s₁ ind rll)
-del (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((dsize s) ←∂)
-del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∂→ x)
-
-
+  
+  data SetLLD {i : Size} {u} : LinLogic i {u} → Set (lsuc u) where
+    ↓     : ∀{ll} →  Ancestor               → SetLLD ll
+    _←∧   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∧ rs)
+    ∧→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∧ rs)
+    _←∧→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∧ rs)
+    _←∨   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∨ rs)
+    ∨→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∨ rs)
+    _←∨→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∨ rs)
+    _←∂   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∂ rs)
+    ∂→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∂ rs)
+    _←∂→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∂ rs)
+    
+  
+  
+  data MSetLLD {i : Size} {u} : LinLogic i {u} → Set (lsuc u) where
+    ∅   : ∀{ll}             → MSetLLD ll
+    ¬∅  : ∀{ll} → SetLLD ll → MSetLLD ll
+  
+  -- TODO We shouldn't need this. When issue agda #2409 is resolved, remove this.
+  drsize : ∀{i u ll} → {j : Size< ↑ i} → SetLLD {i} {u} ll → SetLLD {j} ll
+  drsize (↓ mm)          = (↓ mm)
+  drsize (x ←∧)     = (drsize x) ←∧
+  drsize (∧→ x)     = ∧→ (drsize x)
+  drsize (x ←∧→ x₁) = (drsize x ←∧→ drsize x₁)
+  drsize (x ←∨)     = (drsize x) ←∨
+  drsize (∨→ x)     = ∨→ (drsize x)
+  drsize (x ←∨→ x₁) = (drsize x ←∨→ drsize x₁)
+  drsize (x ←∂)     = (drsize x) ←∂
+  drsize (∂→ x)     = ∂→ (drsize x)
+  drsize (x ←∂→ x₁) = (drsize x ←∂→ drsize x₁)
+  
+  fillAllLowerD : ∀{i u} → ∀ ll → SetLLD {i} {u} ll
+  fillAllLowerD ll = {!!}
+  
+  
+  
