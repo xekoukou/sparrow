@@ -3,6 +3,9 @@ module WellFormedLF where
 open import Common
 open import LinLogic
 open import SetLL
+open import SetLLRem hiding (drsize)
+open import LinFun
+open import Data.Product
 
 --data IndexLF : ∀{u} → {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {u} {i} {j} {rll} {ll} → Set where
 --  ↓    : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → IndexLF lf
@@ -36,25 +39,25 @@ open import SetLL
 module _ where
 
   open import Data.Vec
-  
-  data Ancestor : Set where
-    orig  : Ancestor
-    anc   : ℕ → Ancestor → Ancestor
-    manc  : ℕ → ∀{n} → Vec Ancestor n → Ancestor → Ancestor
 
-
+  mutual 
+    data Descendant {u} : Set (lsuc u) where
+      orig  : Descendant
+      dec  : ℕ → ∀{i ll} → SetLLD {i} {u} ll → Descendant
   
-  data SetLLD {i : Size} {u} : LinLogic i {u} → Set (lsuc u) where
-    ↓     : ∀{ll} →  Ancestor               → SetLLD ll
-    _←∧   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∧ rs)
-    ∧→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∧ rs)
-    _←∧→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∧ rs)
-    _←∨   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∨ rs)
-    ∨→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∨ rs)
-    _←∨→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∨ rs)
-    _←∂   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∂ rs)
-    ∂→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∂ rs)
-    _←∂→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∂ rs)
+  
+    
+    data SetLLD {i : Size} {u} : LinLogic i {u} → Set (lsuc u) where
+      ↓     : ∀{ll} →  Descendant {u}              → SetLLD ll
+      _←∧   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∧ rs)
+      ∧→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∧ rs)
+      _←∧→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∧ rs)
+      _←∨   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∨ rs)
+      ∨→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∨ rs)
+      _←∨→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∨ rs)
+      _←∂   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∂ rs)
+      ∂→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∂ rs)
+      _←∂→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∂ rs)
     
   
   
@@ -75,8 +78,39 @@ module _ where
   drsize (∂→ x)     = ∂→ (drsize x)
   drsize (x ←∂→ x₁) = (drsize x ←∂→ drsize x₁)
   
+
   fillAllLowerD : ∀{i u} → ∀ ll → SetLLD {i} {u} ll
-  fillAllLowerD ll = {!!}
-  
-  
-  
+  fillAllLowerD ∅ = ↓ orig
+  fillAllLowerD (τ x) = ↓ orig
+  fillAllLowerD (ll ∧ ll₁) = (fillAllLowerD ll) ←∧→ fillAllLowerD ll₁
+  fillAllLowerD (ll ∨ ll₁) = (fillAllLowerD ll) ←∨→ fillAllLowerD ll₁
+  fillAllLowerD (ll ∂ ll₁) = (fillAllLowerD ll) ←∂→ fillAllLowerD ll₁
+  fillAllLowerD (call x) = ↓ orig
+
+
+  compose : ∀{u i} → {j : Size< ↑ i} → ∀ {oll ll} → SetLLD {i} {u} oll → SetLLRem {_} {j} oll ll → SetLLD ll → SetLLD oll
+  compose sdo sr (↓ x) = {!!}
+  compose sdo sr (sd ←∧) = {!!}
+  compose sdo sr (∧→ sd) = {!!}
+  compose sdo sr (sd ←∧→ sd₁) = {!!}
+  compose sdo sr (sd ←∨) = {!!}
+  compose sdo sr (∨→ sd) = {!!}
+  compose sdo sr (sd ←∨→ sd₁) = {!!}
+  compose sdo sr (sd ←∂) = {!!}
+  compose sdo sr (∂→ sd) = {!!}
+  compose sdo sr (sd ←∂→ sd₁) = {!!} 
+
+  findNextCom : ∀{u i} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {rll = rll} {ll = ll} → SetLLD ll
+  findNextCom {u} {i = pi} {ll = oll} lf = {!!} where
+    findNextCom` : ∀{pi} → {oll : LinLogic pi {u}} → {i : Size< ↑ pi} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {rll = rll} {ll = ll} → SetLLRem oll ll → SetLLRem oll rll × SetLLD oll 
+    findNextCom` {oll = oll} I sr = (sr , fillAllLowerD oll)
+    findNextCom` (_⊂_ {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf₁ lf₂) sr with (findNextCom` lf₁ (fillAllLowerRem pll))
+    ... | (r₁ , r₂) with (findNextCom` lf₂ (fillAllLowerRem (replLL ll ind ell)))
+    ... | (g₁ , g₂) = {!!}
+    findNextCom` (tr lf₁) sr = {!!}
+    findNextCom` (obs lf₁) sr = {!!}
+    findNextCom` (com df lf₁) sr = {!!}
+    findNextCom` (call x lf₁) sr = {!!}
+
+
+
