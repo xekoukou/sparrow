@@ -5,12 +5,16 @@ open import Common hiding (_≤_)
 open import SetLL
 open import LinLogic
 import Data.List
+open import Data.Vec
 
 
 
 -- A SetLL that remembers the position of its elements under transformations.
 data SetLLRem {pi : Size} {i : Size< ↑ pi} {u} (pll : LinLogic pi {u}) : LinLogic i {u} → Set (lsuc u) where
-  ↓     : ∀{ll rll} → IndexLL {pi} rll pll      → SetLLRem pll ll
+  ↓∅    : ∀{rll} → IndexLL {pi} rll pll         → SetLLRem pll ∅
+  ↓τ    : ∀{rll} → ∀{n} {dt : Vec (Set u) n} → {gT : genT dt } →
+           IndexLL {pi} rll pll                 → SetLLRem pll (τ gT)
+  ↓c    : ∀{∞ll rll} → IndexLL {pi} rll pll     → SetLLRem pll (call ∞ll)
   _←∧   : ∀{rs ls} → SetLLRem pll ls            → SetLLRem pll (ls ∧ rs)
   ∧→_   : ∀{rs ls} → SetLLRem pll rs            → SetLLRem pll (ls ∧ rs)
   _←∧→_ : ∀{rs ls} → SetLLRem pll ls → SetLLRem pll rs → SetLLRem pll (ls ∧ rs)
@@ -31,9 +35,15 @@ data MSetLLRem {pi : Size} {i : Size< ↑ pi} {u} (pll : LinLogic pi {u}) : LinL
 reConSet : {pi : Size} → {i : Size< ↑ pi} → ∀{u} → {pll : LinLogic pi {u}} → {ll : LinLogic i {u}} → SetLLRem {pi} {i} pll ll → MSetLL pll
 reConSet {pi} {i} {u} {pll} sr = reConSet` sr ∅ where
   reConSet` : {ll : LinLogic i {u}} → SetLLRem {pi} {i} pll ll → MSetLL pll → MSetLL pll
-  reConSet` (↓ {rll = rll} x) s with (madd {q = rll} s x rll)
+  reConSet` (↓∅ {rll = rll} x) s with (madd {q = rll} s x rll)
   ... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
-  reConSet` (↓ {_} {rll} x) s | r | m | refl = r
+  reConSet` (↓∅ {rll} x) s | r | m | refl = r
+  reConSet` (↓τ {rll = rll} x) s with (madd {q = rll} s x rll)
+  ... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
+  reConSet` (↓τ {rll} x) s | r | m | refl = r
+  reConSet` (↓c {rll = rll} x) s with (madd {q = rll} s x rll)
+  ... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
+  reConSet` (↓c {rll} x) s | r | m | refl = r
   reConSet` (sr ←∧) s = reConSet` sr s
   reConSet` (∧→ sr) s = reConSet` sr s
   reConSet` (sr ←∧→ sr₁) s = (reConSet` sr s) ∪ₘₛ (reConSet` sr₁ s)
@@ -46,7 +56,9 @@ reConSet {pi} {i} {u} {pll} sr = reConSet` sr ∅ where
 
 -- TODO We shouldn't need this. When issue agda #2409 is resolved, remove this.
 drsize : ∀{pi u pll} → {i : Size< ↑ pi} → ∀{ll} {j : Size< ↑ i} → SetLLRem {pi} {i} {u} pll ll → SetLLRem {pi} {j} pll ll
-drsize (↓ mm)          = (↓ mm)
+drsize (↓∅ mm)          = (↓∅ mm)
+drsize (↓τ mm)          = (↓τ mm)
+drsize (↓c mm)          = (↓c mm)
 drsize (x ←∧)     = (drsize x) ←∧
 drsize (∧→ x)     = ∧→ (drsize x)
 drsize (x ←∧→ x₁) = (drsize x ←∧→ drsize x₁)
@@ -60,15 +72,15 @@ drsize (x ←∂→ x₁) = (drsize x ←∂→ drsize x₁)
 -- It is required to fill all the lower levels with the indexes that we are to truck.
 -- This is used to fill the initial memory of SetLLRem
 
-fillAllLowerRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u} → ∀ ll → SetLLRem {pi} {i} {u} ll ll
+fillAllLowerRem : ∀{i u} → ∀ ll → SetLLRem {i} {_} {u} ll ll
 fillAllLowerRem ll = fillAllLowerRem` ll (λ x → x) where
   fillAllLowerRem` : ∀{pi} → {i : Size< ↑ pi} → ∀{u pll} → ∀ ll → (∀{rll} → IndexLL rll ll → IndexLL rll pll) → SetLLRem {pi} {i} {u} pll ll
-  fillAllLowerRem` ∅ f = ↓ (f ↓)
-  fillAllLowerRem` (τ x) f = ↓ (f ↓)
+  fillAllLowerRem` ∅ f = ↓∅ (f ↓)
+  fillAllLowerRem` (τ x) f = ↓τ (f ↓)
   fillAllLowerRem` (ll₁ ∧ ll₂) f = (fillAllLowerRem` ll₁ (λ x → f (x ←∧)) ) ←∧→ (fillAllLowerRem` ll₂ (λ x → f (∧→ x)) )
   fillAllLowerRem` (ll₁ ∨ ll₂) f = (fillAllLowerRem` ll₁ (λ x → f (x ←∨))) ←∨→ (fillAllLowerRem` ll₂ (λ x → f (∨→ x)))
   fillAllLowerRem` (ll₁ ∂ ll₂) f = (fillAllLowerRem` ll₁ (λ x → f (x ←∂))) ←∂→ (fillAllLowerRem` ll₂ (λ x → f (∂→ x)))
-  fillAllLowerRem` (call x) f =  ↓ (f ↓)
+  fillAllLowerRem` (call x) f =  ↓c (f ↓)
 
 
 
@@ -78,7 +90,6 @@ fillAllLowerRem ll = fillAllLowerRem` ll (λ x → x) where
 delRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u ll pll q} → {j : Size< ↑ i} → SetLLRem {pi} {i} pll ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
       → MSetLLRem {pi} {j} pll (replLL ll ind rll)
 delRem s ↓ rll = ∅
-delRem (↓ mm) (ind ←∧) rll = ∅
 delRem (s ←∧) (ind ←∧) rll with (delRem s ind rll)
 delRem (s ←∧) (ind ←∧) rll | ∅ = ∅
 delRem (s ←∧) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧)
@@ -86,7 +97,6 @@ delRem (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (drsize s))
 delRem (s ←∧→ s₁) (ind ←∧) rll with (delRem s ind rll)
 delRem (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (drsize s₁))
 delRem (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (drsize s₁))
-delRem (↓ mm) (∧→ ind) rll = ∅
 delRem (s ←∧) (∧→ ind) rll = ¬∅ ((drsize s) ←∧)
 delRem (∧→ s) (∧→ ind) rll with (delRem s ind rll)
 delRem (∧→ s) (∧→ ind) rll | ∅ = ∅
@@ -94,7 +104,6 @@ delRem (∧→ s) (∧→ ind) rll | ¬∅ x = ¬∅ (∧→ x)
 delRem (s ←∧→ s₁) (∧→ ind) rll with (delRem s₁ ind rll)
 delRem (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((drsize s) ←∧)
 delRem (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((drsize s) ←∧→ x)
-delRem (↓ mm) (ind ←∨) rll = ∅
 delRem (s ←∨) (ind ←∨) rll with (delRem s ind rll)
 delRem (s ←∨) (ind ←∨) rll | ∅ = ∅
 delRem (s ←∨) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨)
@@ -102,7 +111,6 @@ delRem (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (drsize s))
 delRem (s ←∨→ s₁) (ind ←∨) rll with (delRem s ind rll)
 delRem (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (drsize s₁))
 delRem (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (drsize s₁))
-delRem (↓ mm) (∨→ ind) rll = ∅
 delRem (s ←∨) (∨→ ind) rll = ¬∅ ((drsize s) ←∨)
 delRem (∨→ s) (∨→ ind) rll with (delRem s ind rll)
 delRem (∨→ s) (∨→ ind) rll | ∅ = ∅
@@ -110,7 +118,6 @@ delRem (∨→ s) (∨→ ind) rll | ¬∅ x = ¬∅ (∨→ x)
 delRem (s ←∨→ s₁) (∨→ ind) rll with (delRem s₁ ind rll)
 delRem (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((drsize s) ←∨)
 delRem (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((drsize s) ←∨→ x)
-delRem (↓ mm) (ind ←∂) rll = ∅
 delRem (s ←∂) (ind ←∂) rll with (delRem s ind rll)
 delRem (s ←∂) (ind ←∂) rll | ∅ = ∅
 delRem (s ←∂) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂)
@@ -118,7 +125,6 @@ delRem (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (drsize s))
 delRem (s ←∂→ s₁) (ind ←∂) rll with (delRem s ind rll)
 delRem (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (drsize s₁))
 delRem (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (drsize s₁))
-delRem (↓ mm) (∂→ ind) rll = ∅
 delRem (s ←∂) (∂→ ind) rll = ¬∅ ((drsize s) ←∂)
 delRem (∂→ s) (∂→ ind) rll with (delRem s ind rll)
 delRem (∂→ s) (∂→ ind) rll | ∅ = ∅
@@ -133,19 +139,16 @@ mdelRem ∅ ind rll = ∅
 mdelRem (¬∅ x) ind rll = delRem x ind rll
 
 
--- If we tranRemsform the linear logic tree, we need to tranRemsform the SetLL as well.
+-- If we tranform the linear logic tree, we need to tranform the SetLLRem as well.
 tranRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u pll ll rll} → SetLLRem {pi} pll ll → (tr : LLTr {i} {u} rll ll)
        → SetLLRem pll rll
 tranRem s I                           = s
-tranRem (↓ mm) (∂c tr)                     = (↓ mm)
 tranRem (s ←∂) (∂c tr)                = tranRem (∂→ s) tr
 tranRem (∂→ s) (∂c tr)                = tranRem (s ←∂) tr
 tranRem (s ←∂→ s₁) (∂c tr)            = tranRem (s₁ ←∂→ s) tr
-tranRem (↓ mm) (∨c tr)                     = (↓ mm)
 tranRem (s ←∨) (∨c tr)                = tranRem (∨→ s) tr
 tranRem (∨→ s) (∨c tr)                = tranRem (s ←∨) tr
 tranRem (s ←∨→ s₁) (∨c tr)            = tranRem (s₁ ←∨→ s) tr
-tranRem (↓ mm) (∧c tr)                     = (↓ mm)
 tranRem (s ←∧) (∧c tr)                = tranRem (∧→ s) tr
 tranRem (∧→ s) (∧c tr)                = tranRem (s ←∧) tr
 tranRem (s ←∧→ s₁) (∧c tr)            = tranRem (s₁ ←∧→ s) tr
@@ -189,63 +192,45 @@ tranRem (s ←∧→ s₁) (∧c tr)            = tranRem (s₁ ←∧→ s) tr
 -- tranRem ((s ←∨) ←∂→ s₁) (∂∨d tr)      = tranRem ((s ←∂→ s₁) ←∨) tr
 -- tranRem ((∨→ s) ←∂→ s₁) (∂∨d tr)      = tranRem (∨→ (s ←∂→ s₁)) tr
 -- tranRem ((s ←∨→ s₁) ←∂→ s₂) (∂∨d tr)  = tranRem ((s ←∂→ s₂) ←∨→ (s₁ ←∂→ s₂)) tr 
-tranRem (↓ mm) (∧∧d tr)                    = (↓ mm)
-tranRem ((↓ mm) ←∧) (∧∧d tr)               = tranRem ((↓ mm) ←∧→ ((↓ mm) ←∧)) tr
 tranRem ((s ←∧) ←∧) (∧∧d tr)          = tranRem (s ←∧) tr
 tranRem ((∧→ s) ←∧) (∧∧d tr)          = tranRem (∧→ (s ←∧)) tr
 tranRem ((s ←∧→ s₁) ←∧) (∧∧d tr)      = tranRem (s ←∧→ (s₁ ←∧)) tr
 tranRem (∧→ s) (∧∧d tr)               = tranRem (∧→ (∧→ s)) tr
-tranRem ((↓ mm) ←∧→ s₁) (∧∧d tr)           = tranRem ((↓ mm) ←∧→ ((↓ mm) ←∧→ s₁)) tr
 tranRem ((s ←∧) ←∧→ s₁) (∧∧d tr)      = tranRem (s ←∧→ (∧→ s₁)) tr
 tranRem ((∧→ s) ←∧→ s₁) (∧∧d tr)      = tranRem (∧→ (s ←∧→ s₁)) tr
 tranRem ((s ←∧→ s₁) ←∧→ s₂) (∧∧d tr)  = tranRem (s ←∧→ (s₁ ←∧→ s₂)) tr
-tranRem (↓ mm) (¬∧∧d tr)                   = (↓ mm)
 tranRem (s ←∧) (¬∧∧d tr)              = tranRem ((s ←∧) ←∧) tr
-tranRem (∧→ (↓ mm)) (¬∧∧d tr)              = tranRem ((∧→ (↓ mm)) ←∧→ (↓ mm)) tr
 tranRem (∧→ (s ←∧)) (¬∧∧d tr)         = tranRem ((∧→ s) ←∧) tr
 tranRem (∧→ (∧→ s)) (¬∧∧d tr)         = tranRem (∧→ s) tr
 tranRem (∧→ (s ←∧→ s₁)) (¬∧∧d tr)     = tranRem ((∧→ s) ←∧→ s₁) tr
-tranRem (s ←∧→ (↓ mm)) (¬∧∧d tr)           = tranRem ((s ←∧→ (↓ mm)) ←∧→ (↓ mm)) tr
 tranRem (s ←∧→ (s₁ ←∧)) (¬∧∧d tr)     = tranRem ((s ←∧→ s₁) ←∧) tr
 tranRem (s ←∧→ (∧→ s₁)) (¬∧∧d tr)     = tranRem ((s ←∧) ←∧→ s₁) tr
 tranRem (s ←∧→ (s₁ ←∧→ s₂)) (¬∧∧d tr) = tranRem ((s ←∧→ s₁) ←∧→ s₂) tr
-tranRem (↓ mm) (∨∨d tr)                    = (↓ mm)
-tranRem ((↓ mm) ←∨) (∨∨d tr)               = tranRem ((↓ mm) ←∨→ ((↓ mm) ←∨)) tr
 tranRem ((s ←∨) ←∨) (∨∨d tr)          = tranRem (s ←∨) tr
 tranRem ((∨→ s) ←∨) (∨∨d tr)          = tranRem (∨→ (s ←∨)) tr
 tranRem ((s ←∨→ s₁) ←∨) (∨∨d tr)      = tranRem (s ←∨→ (s₁ ←∨)) tr
 tranRem (∨→ s) (∨∨d tr)               = tranRem (∨→ (∨→ s)) tr
-tranRem ((↓ mm) ←∨→ s₁) (∨∨d tr)           = tranRem ((↓ mm) ←∨→ ((↓ mm) ←∨→ s₁)) tr
 tranRem ((s ←∨) ←∨→ s₁) (∨∨d tr)      = tranRem (s ←∨→ (∨→ s₁)) tr
 tranRem ((∨→ s) ←∨→ s₁) (∨∨d tr)      = tranRem (∨→ (s ←∨→ s₁)) tr
 tranRem ((s ←∨→ s₁) ←∨→ s₂) (∨∨d tr)  = tranRem (s ←∨→ (s₁ ←∨→ s₂)) tr
-tranRem (↓ mm) (¬∨∨d tr)                   = (↓ mm)
 tranRem (s ←∨) (¬∨∨d tr)              = tranRem ((s ←∨) ←∨) tr
-tranRem (∨→ (↓ mm)) (¬∨∨d tr)              = tranRem ((∨→ (↓ mm)) ←∨→ (↓ mm)) tr
 tranRem (∨→ (s ←∨)) (¬∨∨d tr)         = tranRem ((∨→ s) ←∨) tr
 tranRem (∨→ (∨→ s)) (¬∨∨d tr)         = tranRem (∨→ s) tr
 tranRem (∨→ (s ←∨→ s₁)) (¬∨∨d tr)     = tranRem ((∨→ s) ←∨→ s₁) tr
-tranRem (s ←∨→ (↓ mm)) (¬∨∨d tr)           = tranRem ((s ←∨→ (↓ mm)) ←∨→ (↓ mm)) tr
 tranRem (s ←∨→ (s₁ ←∨)) (¬∨∨d tr)     = tranRem ((s ←∨→ s₁) ←∨) tr
 tranRem (s ←∨→ (∨→ s₁)) (¬∨∨d tr)     = tranRem ((s ←∨) ←∨→ s₁) tr
 tranRem (s ←∨→ (s₁ ←∨→ s₂)) (¬∨∨d tr) = tranRem ((s ←∨→ s₁) ←∨→ s₂) tr
-tranRem (↓ mm) (∂∂d tr)                    = (↓ mm)
-tranRem ((↓ mm) ←∂) (∂∂d tr)               = tranRem ((↓ mm) ←∂→ ((↓ mm) ←∂)) tr
 tranRem ((s ←∂) ←∂) (∂∂d tr)          = tranRem (s ←∂) tr
 tranRem ((∂→ s) ←∂) (∂∂d tr)          = tranRem (∂→ (s ←∂)) tr
 tranRem ((s ←∂→ s₁) ←∂) (∂∂d tr)      = tranRem (s ←∂→ (s₁ ←∂)) tr
 tranRem (∂→ s) (∂∂d tr)               = tranRem (∂→ (∂→ s)) tr
-tranRem ((↓ mm) ←∂→ s₁) (∂∂d tr)           = tranRem ((↓ mm) ←∂→ ((↓ mm) ←∂→ s₁)) tr
 tranRem ((s ←∂) ←∂→ s₁) (∂∂d tr)      = tranRem (s ←∂→ (∂→ s₁)) tr
 tranRem ((∂→ s) ←∂→ s₁) (∂∂d tr)      = tranRem (∂→ (s ←∂→ s₁)) tr
 tranRem ((s ←∂→ s₁) ←∂→ s₂) (∂∂d tr)  = tranRem (s ←∂→ (s₁ ←∂→ s₂)) tr
-tranRem (↓ mm) (¬∂∂d tr)                   = (↓ mm)
 tranRem (s ←∂) (¬∂∂d tr)              = tranRem ((s ←∂) ←∂) tr
-tranRem (∂→ (↓ mm)) (¬∂∂d tr)              = tranRem ((∂→ (↓ mm)) ←∂→ (↓ mm)) tr
 tranRem (∂→ (s ←∂)) (¬∂∂d tr)         = tranRem ((∂→ s) ←∂) tr
 tranRem (∂→ (∂→ s)) (¬∂∂d tr)         = tranRem (∂→ s) tr
 tranRem (∂→ (s ←∂→ s₁)) (¬∂∂d tr)     = tranRem ((∂→ s) ←∂→ s₁) tr
-tranRem (s ←∂→ (↓ mm)) (¬∂∂d tr)           = tranRem ((s ←∂→ (↓ mm)) ←∂→ (↓ mm)) tr
 tranRem (s ←∂→ (s₁ ←∂)) (¬∂∂d tr)     = tranRem ((s ←∂→ s₁) ←∂) tr
 tranRem (s ←∂→ (∂→ s₁)) (¬∂∂d tr)     = tranRem ((s ←∂) ←∂→ s₁) tr
 tranRem (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d tr) = tranRem ((s ←∂→ s₁) ←∂→ s₂) tr
@@ -257,33 +242,29 @@ tranRem (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d tr) = tranRem ((s ←∂�
 itranRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u ll rll pll vll} → SetLLRem {pi} pll ll → (ind : IndexLL {i} {u} vll ll) → (tr : LLTr rll vll)
         → SetLLRem pll (replLL ll ind rll)
 itranRem s ↓ tr                 = tranRem s tr
-itranRem (↓ mm) (ind ←∧) tr     = (↓ mm)
 itranRem (s ←∧) (ind ←∧) tr     = itranRem s ind tr ←∧
 itranRem (∧→ s) (ind ←∧) tr     = ∧→ s
 itranRem (s ←∧→ s₁) (ind ←∧) tr = itranRem s ind tr ←∧→ s₁ 
-itranRem (↓ mm) (∧→ ind) tr     = (↓ mm)
 itranRem (s ←∧) (∧→ ind) tr     = s ←∧
 itranRem (∧→ s) (∧→ ind) tr     = ∧→ itranRem s ind tr
 itranRem (s ←∧→ s₁) (∧→ ind) tr = s ←∧→ itranRem s₁ ind tr
-itranRem (↓ mm) (ind ←∨) tr     = (↓ mm)
 itranRem (s ←∨) (ind ←∨) tr     = itranRem s ind tr ←∨
 itranRem (∨→ s) (ind ←∨) tr     = ∨→ s
 itranRem (s ←∨→ s₁) (ind ←∨) tr = itranRem s ind tr ←∨→ s₁ 
-itranRem (↓ mm) (∨→ ind) tr     = (↓ mm)
 itranRem (s ←∨) (∨→ ind) tr     = s ←∨
 itranRem (∨→ s) (∨→ ind) tr     = ∨→ itranRem s ind tr
 itranRem (s ←∨→ s₁) (∨→ ind) tr = s ←∨→ itranRem s₁ ind tr
-itranRem (↓ mm) (ind ←∂) tr     = (↓ mm)
 itranRem (s ←∂) (ind ←∂) tr     = itranRem s ind tr ←∂
 itranRem (∂→ s) (ind ←∂) tr     = ∂→ s
 itranRem (s ←∂→ s₁) (ind ←∂) tr = itranRem s ind tr ←∂→ s₁ 
-itranRem (↓ mm) (∂→ ind) tr     = (↓ mm)
 itranRem (s ←∂) (∂→ ind) tr     = s ←∂
 itranRem (∂→ s) (∂→ ind) tr     = ∂→ itranRem s ind tr
 itranRem (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itranRem s₁ ind tr
 
 projToSetLL : {pi : Size} → {i : Size< ↑ pi} → ∀{u} → {pll : LinLogic pi {u}} → {ll : LinLogic i {u}} → SetLLRem {pi} {i} {u} pll ll → SetLL ll 
-projToSetLL (↓ x) = ↓
+projToSetLL (↓∅ x) = ↓
+projToSetLL (↓τ x) = ↓
+projToSetLL (↓c x) = ↓
 projToSetLL (sr ←∧) = (projToSetLL sr) ←∧
 projToSetLL (∧→ sr) = ∧→( projToSetLL sr)
 projToSetLL (sr ←∧→ sr₁) = (projToSetLL sr) ←∧→ (projToSetLL sr₁)

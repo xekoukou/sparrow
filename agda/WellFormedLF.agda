@@ -1,3 +1,5 @@
+-- {-# OPTIONS --show-implicit #-}
+
 module WellFormedLF where
 
 open import Common
@@ -42,21 +44,18 @@ module _ where
 
   mutual 
     data Descendant {u} : Set (lsuc u) where
-      orig  : Descendant
+      end  : Descendant
       dec  : ℕ → ∀{i ll} → SetLLD {i} {u} ll → Descendant
   
   
-    
+-- This set is full.    
     data SetLLD {i : Size} {u} : LinLogic i {u} → Set (lsuc u) where
-      ↓     : ∀{ll} →  Descendant {u}              → SetLLD ll
-      _←∧   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∧ rs)
-      ∧→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∧ rs)
+      ↓∅    : Descendant {u}                   → SetLLD ∅
+      ↓τ    : ∀{n} {dt : Vec (Set u) n} → {gT : genT dt } →
+              Descendant {u}                   → SetLLD (τ gT)
+      ↓c    : ∀{∞ll} → Descendant {u}          → SetLLD (call ∞ll)
       _←∧→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∧ rs)
-      _←∨   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∨ rs)
-      ∨→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∨ rs)
       _←∨→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∨ rs)
-      _←∂   : ∀{rs ls} → SetLLD ls            → SetLLD (ls ∂ rs)
-      ∂→_   : ∀{rs ls} → SetLLD rs            → SetLLD (ls ∂ rs)
       _←∂→_ : ∀{rs ls} → SetLLD ls → SetLLD rs → SetLLD (ls ∂ rs)
     
   
@@ -67,50 +66,97 @@ module _ where
   
   -- TODO We shouldn't need this. When issue agda #2409 is resolved, remove this.
   drsize : ∀{i u ll} → {j : Size< ↑ i} → SetLLD {i} {u} ll → SetLLD {j} ll
-  drsize (↓ mm)          = (↓ mm)
-  drsize (x ←∧)     = (drsize x) ←∧
-  drsize (∧→ x)     = ∧→ (drsize x)
+  drsize (↓∅ mm)          = (↓∅ mm)
+  drsize (↓τ mm)          = (↓τ mm)
+  drsize (↓c mm)          = (↓c mm)
   drsize (x ←∧→ x₁) = (drsize x ←∧→ drsize x₁)
-  drsize (x ←∨)     = (drsize x) ←∨
-  drsize (∨→ x)     = ∨→ (drsize x)
   drsize (x ←∨→ x₁) = (drsize x ←∨→ drsize x₁)
-  drsize (x ←∂)     = (drsize x) ←∂
-  drsize (∂→ x)     = ∂→ (drsize x)
   drsize (x ←∂→ x₁) = (drsize x ←∂→ drsize x₁)
   
 
-  fillAllLowerD : ∀{i u} → ∀ ll → SetLLD {i} {u} ll
-  fillAllLowerD ∅ = ↓ orig
-  fillAllLowerD (τ x) = ↓ orig
-  fillAllLowerD (ll ∧ ll₁) = (fillAllLowerD ll) ←∧→ fillAllLowerD ll₁
-  fillAllLowerD (ll ∨ ll₁) = (fillAllLowerD ll) ←∨→ fillAllLowerD ll₁
-  fillAllLowerD (ll ∂ ll₁) = (fillAllLowerD ll) ←∂→ fillAllLowerD ll₁
-  fillAllLowerD (call x) = ↓ orig
+  fillAllLowerD : ∀{i u} → ∀ ll → Descendant {u} → SetLLD {i} {u} ll
+  fillAllLowerD ∅ d = ↓∅ end
+  fillAllLowerD (τ x) d = ↓τ end
+  fillAllLowerD (ll ∧ ll₁) d = (fillAllLowerD ll d) ←∧→ fillAllLowerD ll₁ d
+  fillAllLowerD (ll ∨ ll₁) d = (fillAllLowerD ll d) ←∨→ fillAllLowerD ll₁ d
+  fillAllLowerD (ll ∂ ll₁) d = (fillAllLowerD ll d) ←∂→ fillAllLowerD ll₁ d
+  fillAllLowerD (call x) d = ↓c end
 
 
-  compose : ∀{u i} → {j : Size< ↑ i} → ∀ {oll ll} → SetLLD {i} {u} oll → SetLLRem {_} {j} oll ll → SetLLD ll → SetLLD oll
-  compose sdo sr (↓ x) = {!!}
-  compose sdo sr (sd ←∧) = {!!}
-  compose sdo sr (∧→ sd) = {!!}
-  compose sdo sr (sd ←∧→ sd₁) = {!!}
-  compose sdo sr (sd ←∨) = {!!}
-  compose sdo sr (∨→ sd) = {!!}
-  compose sdo sr (sd ←∨→ sd₁) = {!!}
-  compose sdo sr (sd ←∂) = {!!}
-  compose sdo sr (∂→ sd) = {!!}
-  compose sdo sr (sd ←∂→ sd₁) = {!!} 
+  module _ where
+ -- TODO This is more like a replace than a compose since the initial descendant is an end.
+ -- Here IndexLL actually only points to the lower parts of LinLogic ∅ , τ or call, so some pattern matches are
+ -- unnecessary.
 
-  findNextCom : ∀{u i} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {rll = rll} {ll = ll} → SetLLD ll
-  findNextCom {u} {i = pi} {ll = oll} lf = {!!} where
-    findNextCom` : ∀{pi} → {oll : LinLogic pi {u}} → {i : Size< ↑ pi} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {rll = rll} {ll = ll} → SetLLRem oll ll → SetLLRem oll rll × SetLLD oll 
-    findNextCom` {oll = oll} I sr = (sr , fillAllLowerD oll)
-    findNextCom` (_⊂_ {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf₁ lf₂) sr with (findNextCom` lf₁ (fillAllLowerRem pll))
-    ... | (r₁ , r₂) with (findNextCom` lf₂ (fillAllLowerRem (replLL ll ind ell)))
-    ... | (g₁ , g₂) = {!!}
-    findNextCom` (tr lf₁) sr = {!!}
-    findNextCom` (obs lf₁) sr = {!!}
-    findNextCom` (com df lf₁) sr = {!!}
-    findNextCom` (call x lf₁) sr = {!!}
+    private
 
+      red : ∀{u i ll q} → {j : Size< ↑ i} → ∀{ell} → (ind : IndexLL {i} {u} q ll) → SetLLD {j} (replLL ll ind ell) → SetLLD {j} ell
+      red ↓ sd = sd
+      red (ind ←∧) (sd ←∧→ sd₁) = red ind sd
+      red (∧→ ind) (sd ←∧→ sd₁) = red ind sd₁
+      red (ind ←∨) (sd ←∨→ sd₁) = red ind sd
+      red (∨→ ind) (sd ←∨→ sd₁) = red ind sd₁
+      red (ind ←∂) (sd ←∂→ sd₁) = red ind sd
+      red (∂→ ind) (sd ←∂→ sd₁) = red ind sd₁
 
+      scompose : ∀{u i} → {j : Size< ↑ i} → ∀ {oll rll} → SetLLD {i} {u} oll → IndexLL rll oll → Descendant {u} → SetLLD oll
+      scompose (↓∅ x) ↓ d       = ↓∅ d
+      scompose (↓τ x) ↓ d       = ↓τ d
+      scompose (↓c x) ↓ d       = ↓c d
+      -- These pattern cases should never happen.
+      scompose (sd ←∧→ sd₁) ↓ d = IMPOSSIBLE
+      scompose (sd ←∨→ sd₁) ↓ d = IMPOSSIBLE
+      scompose (sd ←∂→ sd₁) ↓ d = IMPOSSIBLE
+      
+      scompose (sd ←∧→ sd₁) (i₁ ←∧) d = (scompose sd i₁ d) ←∧→ sd₁
+      scompose (sd ←∧→ sd₁) (∧→ i₁) d = sd ←∧→ (scompose sd₁ i₁ d)
+      scompose (sd ←∨→ sd₁) (i₁ ←∨) d = (scompose sd i₁ d) ←∨→ sd₁
+      scompose (sd ←∨→ sd₁) (∨→ i₁) d = sd ←∨→ (scompose sd₁ i₁ d)
+      scompose (sd ←∂→ sd₁) (i₁ ←∂) d = (scompose sd i₁ d) ←∂→ sd₁
+      scompose (sd ←∂→ sd₁) (∂→ i₁) d = sd ←∂→ (scompose sd₁ i₁ d)
+  
+    compose : ∀{u i} → {j : Size< ↑ i} → ∀ {oll ll} → SetLLD {i} {u} oll → SetLLRem {i} {j} oll ll → SetLLD ll → SetLLD oll
+    compose sdo (↓∅ m) (↓∅ d) = scompose sdo m d
+    compose sdo (↓τ m) (↓τ d) = scompose sdo m d
+    compose sdo (↓c m) (↓c d) = scompose sdo m d
+    -- We should know the position of all elements.
+    compose sdo (sr ←∧) (sd ←∧→ sd₁) = IMPOSSIBLE
+    compose sdo (∧→ sr) (sd ←∧→ sd₁) = IMPOSSIBLE
+    compose sdo (sr ←∧→ sr₁) (sd ←∧→ sd₁) = let r = compose sdo sr sd in
+                                              compose r sr₁ sd₁
+     -- We should know the position of all elements.
+    compose sdo (sr ←∨) (sd ←∨→ sd₁) = IMPOSSIBLE
+    compose sdo (∨→ sr) (sd ←∨→ sd₁) = IMPOSSIBLE
+    compose sdo (sr ←∨→ sr₁) (sd ←∨→ sd₁) = let r = compose sdo sr sd in
+                                              compose r sr₁ sd₁
+     -- We should know the position of all elements.
+    compose sdo (sr ←∂) (sd ←∂→ sd₁) = IMPOSSIBLE
+    compose sdo (∂→ sr) (sd ←∂→ sd₁) = IMPOSSIBLE
+    compose sdo (sr ←∂→ sr₁) (sd ←∂→ sd₁) = let r = compose sdo sr sd in
+                                              compose r sr₁ sd₁
 
+    ladd : ∀{i u pll ll} → {j : Size< ↑ i} → ∀{ell} → (ind : IndexLL {i} {u} pll ll) → SetLLD (replLL {j = j} ll ind ell) → SetLLD pll → SetLLD {j} ll
+    ladd ↓ psd lsd = drsize lsd
+    ladd (ind ←∧) (psd ←∧→ psd₁) lsd = ladd ind psd lsd ←∧→ psd₁
+    ladd (∧→ ind) (psd ←∧→ psd₁) lsd = psd ←∧→ ladd ind psd₁ lsd
+    ladd (ind ←∨) (psd ←∨→ psd₁) lsd = ladd ind psd lsd ←∨→ psd₁
+    ladd (∨→ ind) (psd ←∨→ psd₁) lsd = psd ←∨→ ladd ind psd₁ lsd
+    ladd (ind ←∂) (psd ←∂→ psd₁) lsd = ladd ind psd lsd ←∂→ psd₁
+    ladd (∂→ ind) (psd ←∂→ psd₁) lsd = psd ←∂→ ladd ind psd₁ lsd
+
+-- TODO IMPORTANT We need to check that there are no obs in LinFun, since obs are there after a call has been unfolded.
+
+    findNextCom : ∀{u i} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {rll = rll} {ll = ll} → SetLLD ll
+    findNextCom {u} {i = pi} {rll = rll} {ll = oll} lf = proj₂ $ findNextCom` zero lf (fillAllLowerD rll end) (fillAllLowerRem oll) where
+      findNextCom` : ∀{pi} → {oll : LinLogic pi {u}} → {i : Size< ↑ pi} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → ℕ → LFun {rll = rll} {ll = ll} → SetLLD rll → SetLLRem oll ll → ℕ × SetLLD oll 
+      findNextCom` {oll = oll} {i = i} n I sd sr = (n , compose {j = i} (fillAllLowerD oll end) sr sd)
+      findNextCom` {oll = oll} n (_⊂_ {j = j} {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf₁ lf₂) sd sr with (findNextCom` n lf₂ sd (fillAllLowerRem (replLL ll ind ell)))
+      ... | (n₁ , g) with (findNextCom` n₁ lf₁ (red ind g) (fillAllLowerRem pll))
+      ... | (n₂ , r) = (n₂ , compose (fillAllLowerD oll end) (SetLLRem.drsize {j = j} sr) (ladd ind g r))
+      findNextCom` n (tr {{ltr = ltr}} lf₁) sd sr = findNextCom` n lf₁ sd (tranRem sr ltr)
+      findNextCom` n (obs lf₁) sd sr = IMPOSSIBLE
+      findNextCom` {oll = oll} n (com {ll = ll} {frll = frll} df lf₁) sd sr with findNextCom` n lf₁ sd (fillAllLowerRem frll)
+      ... | (n₁ , r) = (suc n₁ , fillAllLowerD oll (dec n₁ r)) 
+      findNextCom` n (call x lf₁) sd sr = {!!}
+  
+  
