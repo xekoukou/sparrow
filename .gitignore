@@ -2,3 +2,5 @@
 *.gch
 *.ibc
 *.idr~
+*.agdai
+*.agda~

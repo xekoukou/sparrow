@@ -42,7 +42,7 @@ mutual
          → (df : (ldt : LinDepT ll) → LinT ldt → LinDepT frll) → LFun {rll = rll} {ll = frll}
          → LFun {_} {i} {j} {rll = rll} {ll = ll}
    -- prf guarantees that calls will always contain an input that is not a call. Thus when we remove calls based on previous input availability, only one per call will be removed.
-   call : {i : Size} → {j : Size< ↑ i} → ∀{ll ∞rll rll prf} → ∞LFun {i} {_} {∞rll} {ll} {{prf}} → LFun {_} {i} {_} {rll} {call ∞rll} → LFun {_} {i} {j} {rll} {ll}
+   call : {i : Size} → {j : Size< ↑ i} → ∀{ll ∞rll prf} → ∞LFun {i} {_} {∞rll} {ll} {{prf}} → LFun {_} {i} {j} {call ∞rll} {ll}
 
 -- We need to create an observe function, that will unfold all first calls. Then when call is unfolded, the remaining calls generate obs.↑
   record ∞LFun {i : Size} {u} {∞rll : ∞LinLogic i {u}} {ll : LinLogic i {u}} {{prf : notCall ll}} : Set (lsuc u) where
@@ -139,9 +139,9 @@ mutual
                      → usesInputT` {_} {_} (tr {u} {i} {j}  {ll} {orll} {rll} {{ltr}} lf) (¬∅ s)
     usesInputC`com : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll ms frll prfi prfo  df lf}
                      → usesInputT` (com {u} {i} {j} {rll} {ll} {frll}  ⦃ prfi = prfi ⦄ ⦃ prfo = prfo ⦄ df lf) ms
-    usesInputC`callc : {i : Size} → {j : Size< ↑ i} → ∀{u ∞rll rll ll ms prf ∞lf lf}
+    usesInputC`callc : {i : Size} → {j : Size< ↑ i} → ∀{u ∞rll ll ms prf ∞lf}
                        → {cTo↓ : ((fillWithCalls ll) c∪ₘₛ ms ) ≡ ¬∅ ↓} 
-                       → usesInputT` (call {u} {i} {j} {ll} {∞rll} {rll} {prf} ∞lf lf) ms 
+                       → usesInputT` (call {u} {i} {j} {ll} {∞rll} {prf} ∞lf) ms 
 
 
 open ∞LFun public
@@ -243,7 +243,7 @@ doesItUseAllInputs {ll = ll} lf with (doesItUseAllInputs` lf ∅) where
   doesItUseAllInputs` (obs lf) ms = no (λ ())
   doesItUseAllInputs` (com df lf) ms = yes usesInputC`com
 -- We add all the calls that are here and check if together with ms it contructs to ↓.
-  doesItUseAllInputs` {ll = ll} plf@(call x lf) ms with (isEqM ((fillWithCalls ll) c∪ₘₛ ms) (¬∅ ↓) )
+  doesItUseAllInputs` {ll = ll} plf@(call x) ms with (isEqM ((fillWithCalls ll) c∪ₘₛ ms) (¬∅ ↓) )
   ... | yes cTo↓ = yes (usesInputC`callc {cTo↓ = cTo↓})
   ... | no ¬cTo↓ = no hf where
     hf : usesInputT` plf ms → ⊥
@@ -331,13 +331,19 @@ module _ where
     findUnusedorPrUI` (obs lf) ms sr = IMPOSSIBLE
     findUnusedorPrUI` (com df lf) ms sr = inj₁ usesInputC`com
   -- We add all the calls that are here and check if together with ms it contructs to ↓.
-    findUnusedorPrUI` {ll = ll} plf@(call x lf) ms sr with (isEqM ((fillWithCalls ll) c∪ₘₛ ms) (¬∅ ↓) )
+    findUnusedorPrUI` {ll = ll} plf@(call x) ms sr with (isEqM ((fillWithCalls ll) c∪ₘₛ ms) (¬∅ ↓) )
     ... | yes cTo↓ = inj₁ (usesInputC`callc {cTo↓ = cTo↓})
     ... | no ¬cTo↓ = inj₂ (_ , _ , sr)
   ... | inj₁ p = inj₁ (usesInputC p)
   ... | inj₂ p = inj₂ p 
   
 
-
+notObs : ∀{i u ll} → {j : Size< ↑ i} → ∀{rll} → LFun {u} {i} {j} {rll} {ll} → Bool
+notObs I = true
+notObs (lf ⊂ lf₁) = (notObs lf) Data.Bool.∧ notObs lf₁
+notObs (tr lf) = notObs lf
+notObs (obs lf) = false
+notObs (com df lf) = notObs lf
+notObs (call x) = true
 
 

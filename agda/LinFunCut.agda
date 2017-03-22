@@ -116,7 +116,7 @@ canItBeCut s (com df lf) | yes p = yes (cuttable-s-com {s = s} {{ prf = p }})
 canItBeCut s (com df lf) | no ¬p = no hf where
   hf : cuttable s (com df lf) → ⊥
   hf (cuttable-s-com {{prf = prf}}) = ¬p prf
-canItBeCut s (call x lf) = no (λ ())
+canItBeCut s (call x) = no (λ ())
 
 
 data fS {u} (A : Set (lsuc u)) : Set (lsuc u) where
@@ -143,7 +143,7 @@ cut s lf c (usesInputC ui) = cut` s lf c ui where
   cut` s plf@(com df lf) cuttable-s-com ui with (doesItUseAllInputs lf)
   cut` s (com df lf) cuttable-s-com ui | yes p = fYes (_ , lf , p)
   cut` s (com df lf) cuttable-s-com ui | no ¬p = fNo
-  cut` s (call x lf) () ui
+  cut` s (call x) () ui
 
 
 module _ where
@@ -156,7 +156,7 @@ private
   hf ms (tr lf) ui = {!!}
   hf ms (obs lf) ui = {!!}
   hf ms (com df lf) ui = {!!}
-  hf ms (call x lf) ui = {!!}
+  hf ms (call x) ui = {!!}
 
   removeCalls : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
         → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
@@ -170,14 +170,14 @@ private
     removeCalls` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
     removeCalls` s (obs lf) () ui
     removeCalls` s plf@(com df lf) cuttable-s-com ui = {!!}
-    removeCalls` s (call x lf) () ui
+    removeCalls` s (call x) () ui
 
 
 
 -- Important : We need to introduce a null data point like Unit, that serves to express the dependency between events. 
 -- We prohibit LFun Calls that do not depend on a previous com.
 
--- We remove all the calls that do not have input dependencies and replace them with their respective LFun.
+-- We remove all the calls who have one of their inputs received and replace them with LFun.
 -- We add obs to all the other calls that did not trigger the unfolding and then an embedding of the LFun with ⊂. We use the "usesInput" that is created by step.
 
 -- By removing the calls , the usesInput of the main function is preserved.

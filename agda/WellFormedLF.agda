@@ -84,9 +84,8 @@ module _ where
 
 
   module _ where
- -- TODO This is more like a replace than a compose since the initial descendant is an end.
- -- Here IndexLL actually only points to the lower parts of LinLogic ∅ , τ or call, so some pattern matches are
- -- unnecessary.
+
+    open import Data.Bool
 
     private
 
@@ -98,6 +97,10 @@ module _ where
       red (∨→ ind) (sd ←∨→ sd₁) = red ind sd₁
       red (ind ←∂) (sd ←∂→ sd₁) = red ind sd
       red (∂→ ind) (sd ←∂→ sd₁) = red ind sd₁
+
+ -- TODO This is more like a replace than a compose since the initial descendant is an end.
+ -- Here IndexLL actually only points to the lower parts of LinLogic ∅ , τ or call, so some pattern matches are
+ -- unnecessary.
 
       scompose : ∀{u i} → {j : Size< ↑ i} → ∀ {oll rll} → SetLLD {i} {u} oll → IndexLL rll oll → Descendant {u} → SetLLD oll
       scompose (↓∅ x) ↓ d       = ↓∅ d
@@ -144,19 +147,20 @@ module _ where
     ladd (ind ←∂) (psd ←∂→ psd₁) lsd = ladd ind psd lsd ←∂→ psd₁
     ladd (∂→ ind) (psd ←∂→ psd₁) lsd = psd ←∂→ ladd ind psd₁ lsd
 
--- TODO IMPORTANT We need to check that there are no obs in LinFun, since obs are there after a call has been unfolded.
+-- IMPORTANT We need to check that there are no obs in LinFun, since obs are there after a call has been unfolded.
 
-    findNextCom : ∀{u i} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {rll = rll} {ll = ll} → SetLLD ll
-    findNextCom {u} {i = pi} {rll = rll} {ll = oll} lf = proj₂ $ findNextCom` zero lf (fillAllLowerD rll end) (fillAllLowerRem oll) where
-      findNextCom` : ∀{pi} → {oll : LinLogic pi {u}} → {i : Size< ↑ pi} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → ℕ → LFun {rll = rll} {ll = ll} → SetLLD rll → SetLLRem oll ll → ℕ × SetLLD oll 
-      findNextCom` {oll = oll} {i = i} n I sd sr = (n , compose {j = i} (fillAllLowerD oll end) sr sd)
-      findNextCom` {oll = oll} n (_⊂_ {j = j} {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf₁ lf₂) sd sr with (findNextCom` n lf₂ sd (fillAllLowerRem (replLL ll ind ell)))
-      ... | (n₁ , g) with (findNextCom` n₁ lf₁ (red ind g) (fillAllLowerRem pll))
+    extractSetLLD : ∀{u i} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → (lf : LFun {rll = rll} {ll = ll}) → .{{ prf : notObs lf ≡ false }} → SetLLD ll
+    extractSetLLD {u} {i = pi} {rll = rll} {ll = oll} lf = proj₂ $ extractSetLLD` zero lf (fillAllLowerD rll end) (fillAllLowerRem oll) where
+      extractSetLLD` : ∀{pi} → {oll : LinLogic pi {u}} → {i : Size< ↑ pi} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → ℕ → (lf : LFun {rll = rll} {ll = ll}) → SetLLD rll → SetLLRem oll ll → ℕ × SetLLD oll 
+      extractSetLLD` {oll = oll} {i = i} n I sd sr = (n , compose {j = i} (fillAllLowerD oll end) sr sd)
+      extractSetLLD` {oll = oll} n (_⊂_ {j = j} {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf₁ lf₂) sd sr with (extractSetLLD` n lf₂ sd (fillAllLowerRem (replLL ll ind ell)))
+      ... | (n₁ , g) with (extractSetLLD` n₁ lf₁ (red ind g) (fillAllLowerRem pll))
       ... | (n₂ , r) = (n₂ , compose (fillAllLowerD oll end) (SetLLRem.drsize {j = j} sr) (ladd ind g r))
-      findNextCom` n (tr {{ltr = ltr}} lf₁) sd sr = findNextCom` n lf₁ sd (tranRem sr ltr)
-      findNextCom` n (obs lf₁) sd sr = IMPOSSIBLE
-      findNextCom` {oll = oll} n (com {ll = ll} {frll = frll} df lf₁) sd sr with findNextCom` n lf₁ sd (fillAllLowerRem frll)
+      extractSetLLD` n (tr {{ltr = ltr}} lf₁) sd sr = extractSetLLD` n lf₁ sd (tranRem sr ltr)
+      extractSetLLD` n (obs lf₁) sd sr = IMPOSSIBLE
+      extractSetLLD` {oll = oll} n (com {ll = ll} {frll = frll} df lf₁) sd sr with extractSetLLD` n lf₁ sd (fillAllLowerRem frll)
       ... | (n₁ , r) = (suc n₁ , fillAllLowerD oll (dec n₁ r)) 
-      findNextCom` n (call x lf₁) sd sr = {!!}
+      extractSetLLD` {oll = oll} n (call x) (↓c d) sr = (n , fillAllLowerD oll d) -- Here, we simply give the descendants of the call ∞rll to all the inputs of call. Since the inputs are not part of a single
+      -- independent com , but of possibly many assynchronous independent coms, we should not create a new descendant like we did with the com.
   
   
