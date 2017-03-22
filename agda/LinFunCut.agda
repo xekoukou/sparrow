@@ -51,14 +51,14 @@ data cuttable {u} : ∀{i} → {j : Size< ↑ i} → ∀{rll ll} → SetLL ll �
   cuttable-s-com : {i : Size} → {j : Size< ↑ i} → ∀{rll ll s frll prfi prfo  df lf}
                    → ⦃ prf : res-contruct s ≡ ↓ ⦄
                    → cuttable s (com {u} {i} {j} {rll} {ll} {frll}  ⦃ prfi = prfi ⦄ ⦃ prfo = prfo ⦄ df lf)
-  cuttable-s⊂-oi : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll ell pll s ind elf prf lf}
+  cuttable-s⊂-oi : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll ell pll s ind elf lf}
                    → ⦃ oi : onlyInside s ind ⦄
                    → cuttable (truncOISetLL s ind) elf
-                   → cuttable s (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf {{prf}} lf)
-  cuttable-s⊂-¬ho : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll pll ell s ind elf prf lf}
+                   → cuttable s (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf lf)
+  cuttable-s⊂-¬ho : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll pll ell s ind elf lf}
                    → ⦃ ¬ho : ¬ (hitsAtLeastOnce s ind) ⦄
                    → cuttable (replSetLL s ind {{prf = ¬ho }} ell) lf
-                   → cuttable s (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf {{prf}} lf)
+                   → cuttable s (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf lf)
   cuttable-s-tr-fst : {i : Size} → {j : Size< ↑ i} → ∀{ll orll rll lf s ltr prftr}
                       → cuttable (fstSp s ltr ⦃ prf = prftr ⦄) lf
                       → cuttable s (tr {u} {i} {j} {ll} {orll} {rll} ⦃ ltr ⦄ lf)

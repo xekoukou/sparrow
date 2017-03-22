@@ -9,6 +9,11 @@ open import SetLLRem hiding (drsize)
 open import LinFun
 open import Data.Product
 
+-- WellFormed
+-- TODO Check that calls , _⊂_ and the main LFun use all inputs.
+
+
+
 --data IndexLF : ∀{u} → {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {u} {i} {j} {rll} {ll} → Set where
 --  ↓    : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → IndexLF lf
 --  _←⊂_ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell ll ind elf prf lf}
