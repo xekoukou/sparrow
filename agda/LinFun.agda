@@ -41,7 +41,7 @@ mutual
          → ⦃ prfi : onlyOneNilOrNoNilFinite ll ≡ true ⦄ → ⦃ prfo : onlyOneNilOrNoNilFinite frll ≡ true ⦄
          → (df : (ldt : LinDepT ll) → LinT ldt → LinDepT frll) → LFun {rll = rll} {ll = frll}
          → LFun {_} {i} {j} {rll = rll} {ll = ll}
-   -- prf guarantees that calls will always contain an input that is not a call. Thus when we remove calls based on previous input availability, only one per call will be removed.
+   -- prf guarantees that calls will always contain an input that is not a call. Thus when we remove calls based on previous input availability, only one will be removed for a specific input.
    call : {i : Size} → {j : Size< ↑ i} → ∀{ll ∞rll prf} → ∞LFun {i} {_} {∞rll} {ll} {{prf}} → LFun {_} {i} {j} {call ∞rll} {ll}
 
 -- We need to create an observe function, that will unfold all first calls. Then when call is unfolded, the remaining calls generate obs.↑
