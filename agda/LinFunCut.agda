@@ -68,56 +68,58 @@ data cuttable {u} : ∀{i} → {j : Size< ↑ i} → ∀{rll ll} → SetLL ll �
 
 
 -- TODO This requires that the SetLL is precise. We might need it to also be a superset of a solution.
-canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (cuttable s lf)
-canItBeCut s I = no (λ ())
+canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (Σ (SetLL ll) (λ ss → Σ (ss ≤s s) (λ _ → cuttable ss lf)))
+canItBeCut s I = {!!} -- no (λ ())
 canItBeCut s (_⊂_ {ind = ind} lf lf₁) with (isOnlyInside s ind)
 canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes oi with (canItBeCut (truncOISetLL s ind {{prf = oi}}) lf)
-canItBeCut s (lf ⊂ lf₁) | yes oi | (yes p) = yes (cuttable-s⊂-oi p)
-canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes oi | (no ¬p) = no (λ x → helpFunOi x oi ¬p) where
-  helpFunOi : cuttable s (_⊂_ {ind = ind} lf lf₁)
-              → (oi : onlyInside s ind)
-              → ¬ (cuttable (truncOISetLL s ind {{prf = oi}})) lf
-              → ⊥
-  helpFunOi (cuttable-s⊂-oi {{oi = oi}} ct) ex₁ ¬p with (onlyInsideUnique s ind oi ex₁)
-  helpFunOi (cuttable-s⊂-oi {{oi = .ex₁}} ct) ex₁ ¬p | refl = ¬p ct
-  helpFunOi (cuttable-s⊂-¬ho {s = s} {ind = ind} {{¬ho = ¬ho}} ct) oi ¬p = onlyInside¬hitsAtLeastOnce→⊥ s ind oi ¬ho
-canItBeCut s (_⊂_ {ind = ind} lf lf₁)    | no ¬oi with (doesItHitAtLeastOnce s ind)
-canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (yes ho) = no (λ { (cuttable-s⊂-oi {{oi = oi}}   ct) → ¬oi oi 
-                                                                                                    ; (cuttable-s⊂-¬ho {{¬ho = ¬ho}} ct) → ¬ho ho     })
-canItBeCut s (_⊂_ {ell = ell} {ind = ind} lf lf₁)  | no ¬oi | (no ¬ho) with (canItBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁)
-canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (yes p) = yes (cuttable-s⊂-¬ho ⦃ ¬ho = ¬ho ⦄ p)
-canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (no ¬p) = no (λ x → helpFunho x) where
-  helpFunho : cuttable s (lf ⊂ lf₁)
-              → ⊥
-  helpFunho (cuttable-s⊂-oi {{oi = oi}} x) = ¬oi oi
-  helpFunho (cuttable-s⊂-¬ho {{¬ho = ¬ho₁}} x) = ¬p x
-canItBeCut s (tr {{ltr = ltr}} lf) with (( suc zero) ≤? length (sptran s ltr))
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p with (canItBeCut (fstSp s ltr ⦃ prf = p ⦄) lf)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (yes p₁) = yes (cuttable-s-tr-fst {prftr = p} p₁)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p) with (( suc $ suc zero) ≤? length (sptran s ltr))
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p) | (yes p) with (canItBeCut (sndSp s ltr ⦃ prf = p ⦄) lf)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p₂ | (no ¬p) | (yes p) | (yes p₁) = yes (cuttable-s-tr-snd p₁)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p₁) | (yes p) | (no ¬p) = no hf where
-  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
-  hf (cuttable-s-tr-fst x) = ¬p₁ x
-  hf (cuttable-s-tr-snd {prftr = prftr} x) with (prftr ≤un p)
-  hf (cuttable-s-tr-snd x) | refl = ¬p x
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p₁) | (no ¬p) = no hf where
-  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
-  hf (cuttable-s-tr-fst x) = ¬p₁ x
-  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p prftr
-canItBeCut s (tr {{ltr = ltr}} lf) | no ¬p = no hf where
-  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
-  hf (cuttable-s-tr-fst {prftr = prftr} x) = ¬p prftr
-  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p ( ≤-pred $ ≤rsuc prftr)
-canItBeCut s (obs lf) = no (λ ())
-canItBeCut s (com df lf) with (isEq (res-contruct s) ↓)
-canItBeCut s (com df lf) | yes p = yes (cuttable-s-com {s = s} {{ prf = p }})
-canItBeCut s (com df lf) | no ¬p = no hf where
-  hf : cuttable s (com df lf) → ⊥
-  hf (cuttable-s-com {{prf = prf}}) = ¬p prf
-canItBeCut s (call x) = no (λ ())
+canItBeCut s (_⊂_ {pll = pll} {ll = ll} {ind = ind} lf lf₁) | yes oi | yes (ss , ss≤s , p) = yes (extend ind ss , ss≤s , cuttable-s⊂-oi p)
+canItBeCut s y = {!!}
 
+--canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes oi | (no ¬p) = no (λ (ss , ss≤s , x) → helpFunOi x oi ¬p) where
+--  helpFunOi : cuttable s (_⊂_ {ind = ind} lf lf₁)
+--              → (oi : onlyInside s ind)
+--              → ¬ (cuttable (truncOISetLL s ind {{prf = oi}})) lf
+--              → ⊥
+--  helpFunOi (cuttable-s⊂-oi {{oi = oi}} ct) ex₁ ¬p with (onlyInsideUnique s ind oi ex₁)
+--  helpFunOi (cuttable-s⊂-oi {{oi = .ex₁}} ct) ex₁ ¬p | refl = ¬p ct
+--  helpFunOi (cuttable-s⊂-¬ho {s = s} {ind = ind} {{¬ho = ¬ho}} ct) oi ¬p = onlyInside¬hitsAtLeastOnce→⊥ s ind oi ¬ho
+--canItBeCut s (_⊂_ {ind = ind} lf lf₁)    | no ¬oi with (doesItHitAtLeastOnce s ind)
+--canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (yes ho) = no (λ { (cuttable-s⊂-oi {{oi = oi}}   ct) → ¬oi oi 
+--                                                                                                    ; (cuttable-s⊂-¬ho {{¬ho = ¬ho}} ct) → ¬ho ho     })
+--canItBeCut s (_⊂_ {ell = ell} {ind = ind} lf lf₁)  | no ¬oi | (no ¬ho) with (canItBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁)
+--canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (yes p) = yes (cuttable-s⊂-¬ho ⦃ ¬ho = ¬ho ⦄ p)
+--canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (no ¬p) = no (λ x → helpFunho x) where
+--  helpFunho : cuttable s (lf ⊂ lf₁)
+--              → ⊥
+--  helpFunho (cuttable-s⊂-oi {{oi = oi}} x) = ¬oi oi
+--  helpFunho (cuttable-s⊂-¬ho {{¬ho = ¬ho₁}} x) = ¬p x
+--canItBeCut s (tr {{ltr = ltr}} lf) with (( suc zero) ≤? length (sptran s ltr))
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p with (canItBeCut (fstSp s ltr ⦃ prf = p ⦄) lf)
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (yes p₁) = yes (cuttable-s-tr-fst {prftr = p} p₁)
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p) with (( suc $ suc zero) ≤? length (sptran s ltr))
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p) | (yes p) with (canItBeCut (sndSp s ltr ⦃ prf = p ⦄) lf)
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p₂ | (no ¬p) | (yes p) | (yes p₁) = yes (cuttable-s-tr-snd p₁)
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p₁) | (yes p) | (no ¬p) = no hf where
+--  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
+--  hf (cuttable-s-tr-fst x) = ¬p₁ x
+--  hf (cuttable-s-tr-snd {prftr = prftr} x) with (prftr ≤un p)
+--  hf (cuttable-s-tr-snd x) | refl = ¬p x
+--canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p₁) | (no ¬p) = no hf where
+--  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
+--  hf (cuttable-s-tr-fst x) = ¬p₁ x
+--  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p prftr
+--canItBeCut s (tr {{ltr = ltr}} lf) | no ¬p = no hf where
+--  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
+--  hf (cuttable-s-tr-fst {prftr = prftr} x) = ¬p prftr
+--  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p ( ≤-pred $ ≤rsuc prftr)
+--canItBeCut s (obs lf) = no (λ ())
+--canItBeCut s (com df lf) with (isEq (res-contruct s) ↓)
+--canItBeCut s (com df lf) | yes p = yes (cuttable-s-com {s = s} {{ prf = p }})
+--canItBeCut s (com df lf) | no ¬p = no hf where
+--  hf : cuttable s (com df lf) → ⊥
+--  hf (cuttable-s-com {{prf = prf}}) = ¬p prf
+--canItBeCut s (call x) = no (λ ())
+--
 
 data fS {u} (A : Set (lsuc u)) : Set (lsuc u) where
   fYes : A → fS A

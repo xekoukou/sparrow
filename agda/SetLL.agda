@@ -215,7 +215,6 @@ module _ where
     hf (ind ←∂) b = (hf ind b) ←∂
     hf (∂→ ind) b = ∂→ (hf ind b)
   
--- TODO Not used anywhere. Maybe it needs to be renoved. 
   replacePartOf_to_at_ : ∀{i u ll q} → {j : Size< ↑ i} → ∀{rll} → SetLL ll → SetLL {j} rll → (ind : IndexLL {i} {u} q ll)
             → SetLL (replLL ll ind rll)
   replacePartOf a to b at ↓               = b
@@ -712,7 +711,10 @@ module _ where
   sptran (s ←∂→ (∂→ s₁)) (¬∂∂d tr)     = sptran ((s ←∂) ←∂→ s₁) tr
   sptran (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d tr) = sptran ((s ←∂→ s₁) ←∂→ s₂) tr
 
-  
+extend : ∀{i u ll pll} → IndexLL {i} {u} pll ll → SetLL pll → SetLL ll
+extend {ll = ll} {pll = pll} ind s with (replLL ll ind pll) | (∅-add ind pll) | (replLL-id ll ind pll refl)
+... | r | g | refl with (replLL ll ind pll) | (replacePartOf g to s at ind) | (replLL-id ll ind pll refl)
+... | r₂ | m | refl = m
 
 data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
   _≤id_   : ∀{ll s} → _≤s_ {ll = ll} s s
@@ -731,3 +733,13 @@ data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll →
   _≤d∨→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (s ←∨→ sy)
   _≤d←∂_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂→ s)
   _≤d∂→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (s ←∂→ sy)
+
+
+≤s-ext : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → ss ≤s s → extend ind ss ≤s extend ind s
+≤s-ext ↓ ss≤s = {!!}
+≤s-ext (ind ←∧) ss≤s = {!!}
+≤s-ext (∧→ ind) ss≤s = {!!}
+≤s-ext (ind ←∨) ss≤s = {!!}
+≤s-ext (∨→ ind) ss≤s = {!!}
+≤s-ext (ind ←∂) ss≤s = {!!}
+≤s-ext (∂→ ind) ss≤s = {!!}
