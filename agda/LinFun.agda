@@ -50,13 +50,13 @@ mutual
     field
       step : {j : Size< i} → Σ (LFun {_} {j} {j} {(step ∞rll)} {unfold ll}) (λ x → usesInputT x) -- ??
 
--- Calls need to use all inputs. TODO
+-- UsesInput checks that the inputs will be used by the current LFun and not by the LFun of a call. This means that the search for the appropriate com is total, it takes a finite amount of time.
 
--- Replace this with the below definition. (remove it)
   data usesInputT {i : Size} {j : Size< ↑ i } {u rll ll} (lf : LFun {u} {i} {j} {rll} {ll}) : Set where
     usesInputC : usesInputT` {i} {j} {u} {rll} {ll} lf ∅ → usesInputT {i} {j} {u} {rll} {ll} lf
 
   data usesInputT` : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → LFun {u} {i} {j} {rll} {ll} → MSetLL ll → Set where
+    usesInputC`I  : {i : Size} → ∀{u ll ms} → usesInputT` {i} {_} {u} {_} {ll} I ms 
     usesInputC`⊂↓ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll ell ll elf lf ms}
                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {ll} {ll} {ell} {rll} {↓} elf lf) ms
     usesInputC`⊂←∧∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
@@ -167,7 +167,7 @@ open ∞LFun public
 doesItUseAllInputs : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (usesInputT lf)
 doesItUseAllInputs {ll = ll} lf with (doesItUseAllInputs` lf ∅) where
   doesItUseAllInputs` : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → (ms : MSetLL ll) → Dec (usesInputT` lf ms)
-  doesItUseAllInputs` I ms = no (λ ())
+  doesItUseAllInputs` I ms = yes usesInputC`I
   doesItUseAllInputs` (_⊂_ {ell = ell} {ind = ↓} elf lf) ms = yes usesInputC`⊂↓
   doesItUseAllInputs` plf@(_⊂_ {pll = pll} {ll = ll} {ell = ell} {ind = ind ←∧} elf lf) ∅ with (doesItUseAllInputs` elf ∅)
   ... | no ¬y = no hf where

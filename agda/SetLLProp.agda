@@ -389,3 +389,86 @@ module _ where
   truncOISetLL (s ←∂) (∂→ ind) {{()}}
   truncOISetLL (∂→ s) (∂→ ind) {{onlyInsideC∂→∂→ prf}} = truncOISetLL s ind {{prf}}
   truncOISetLL (s ←∂→ s₁) (∂→ ind) {{()}}
+
+
+≤s-extr : ∀{i u ll pll}→ (ind : IndexLL {i} {u} pll ll) → (s : SetLL ll) → ⦃ prf : onlyInside s ind ⦄ → (extend ind (truncOISetLL s ind) ≤s s)
+≤s-extr ↓ s = ≤id
+≤s-extr (ind ←∧) ↓ {{()}}
+≤s-extr (ind ←∧) (s ←∧) {{onlyInsideC←∧←∧ prf}} = ≤←∧ (≤s-extr ind s {{prf}})
+≤s-extr (ind ←∧) (∧→ s) {{()}}
+≤s-extr (ind ←∧) (s ←∧→ s₁) {{()}}
+≤s-extr (∧→ ind) ↓ {{()}}
+≤s-extr (∧→ ind) (s ←∧) {{()}}
+≤s-extr (∧→ ind) (∧→ s) {{onlyInsideC∧→∧→ prf}} = ≤∧→ (≤s-extr ind s {{prf}})
+≤s-extr (∧→ ind) (s ←∧→ s₁) {{()}}
+≤s-extr (ind ←∨) ↓ {{()}}
+≤s-extr (ind ←∨) (s ←∨) {{onlyInsideC←∨←∨ prf}} = ≤←∨ (≤s-extr ind s {{prf}})
+≤s-extr (ind ←∨) (∨→ s) {{()}}
+≤s-extr (ind ←∨) (s ←∨→ s₁) {{()}}
+≤s-extr (∨→ ind) ↓ {{()}}
+≤s-extr (∨→ ind) (s ←∨) {{()}}
+≤s-extr (∨→ ind) (∨→ s) {{onlyInsideC∨→∨→ prf}} = ≤∨→ (≤s-extr ind s {{prf}})
+≤s-extr (∨→ ind) (s ←∨→ s₁) {{()}}
+≤s-extr (ind ←∂) ↓ {{()}}
+≤s-extr (ind ←∂) (s ←∂) {{onlyInsideC←∂←∂ prf}} = ≤←∂ (≤s-extr ind s {{prf}})
+≤s-extr (ind ←∂) (∂→ s) {{()}}
+≤s-extr (ind ←∂) (s ←∂→ s₁) {{()}}
+≤s-extr (∂→ ind) ↓ {{()}}
+≤s-extr (∂→ ind) (s ←∂) {{()}}
+≤s-extr (∂→ ind) (∂→ s) {{onlyInsideC∂→∂→ prf}} = ≤∂→ (≤s-extr ind s {{prf}})
+≤s-extr (∂→ ind) (s ←∂→ s₁) {{()}}
+
+oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside s ind}} → ss ≤s (truncOISetLL s ind {{prf = oi}}) → onlyInside (extend ind ss) ind
+oi⇒ext-truncoi {s = _} ↓ {{oi}} x = onlyInsideCs↓
+oi⇒ext-truncoi {s = ↓} (ind ←∧) {{()}} x
+oi⇒ext-truncoi {s = _ ←∧} (ind ←∧) {{onlyInsideC←∧←∧ oi}} x = onlyInsideC←∧←∧ (oi⇒ext-truncoi ind {{oi = oi}} x)
+oi⇒ext-truncoi {s = ∧→ _} (ind ←∧) {{()}} x
+oi⇒ext-truncoi {s = _ ←∧→ _} (ind ←∧) {{()}} x
+oi⇒ext-truncoi {s = .(∧→ _)} (∧→ ind) {{onlyInsideC∧→∧→ oi}} x = onlyInsideC∧→∧→ (oi⇒ext-truncoi ind {{oi = oi}} x)
+oi⇒ext-truncoi {s = ↓} (ind ←∨) {{()}} x
+oi⇒ext-truncoi {s = _ ←∨} (ind ←∨) {{onlyInsideC←∨←∨ oi}} x = onlyInsideC←∨←∨ (oi⇒ext-truncoi ind {{oi = oi}} x)
+oi⇒ext-truncoi {s = ∨→ _} (ind ←∨) {{()}} x
+oi⇒ext-truncoi {s = _ ←∨→ _} (ind ←∨) {{()}} x
+oi⇒ext-truncoi {s = .(∨→ _)} (∨→ ind) {{onlyInsideC∨→∨→ oi}} x = onlyInsideC∨→∨→ (oi⇒ext-truncoi ind {{oi = oi}} x)
+oi⇒ext-truncoi {s = ↓} (ind ←∂) {{()}} x
+oi⇒ext-truncoi {s = _ ←∂} (ind ←∂) {{onlyInsideC←∂←∂ oi}} x = onlyInsideC←∂←∂ (oi⇒ext-truncoi ind {{oi = oi}} x)
+oi⇒ext-truncoi {s = ∂→ _} (ind ←∂) {{()}} x
+oi⇒ext-truncoi {s = _ ←∂→ _} (ind ←∂) {{()}} x
+oi⇒ext-truncoi {s = .(∂→ _)} (∂→ ind) {{onlyInsideC∂→∂→ oi}} x = onlyInsideC∂→∂→ (oi⇒ext-truncoi ind {{oi = oi}} x)
+
+
+tr-ext⇒id : ∀{i u pll ll s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside (extend ind s) ind}} →  truncOISetLL (extend ind s) ind ≡ s
+tr-ext⇒id ↓ {{onlyInsideCs↓}} = refl
+tr-ext⇒id (ind ←∧) {{onlyInsideC←∧←∧ oi}} = tr-ext⇒id ind
+tr-ext⇒id (∧→ ind) {{onlyInsideC∧→∧→ oi}} = tr-ext⇒id ind
+tr-ext⇒id (ind ←∨) {{onlyInsideC←∨←∨ oi}} = tr-ext⇒id ind
+tr-ext⇒id (∨→ ind) {{onlyInsideC∨→∨→ oi}} = tr-ext⇒id ind
+tr-ext⇒id (ind ←∂) {{onlyInsideC←∂←∂ oi}} = tr-ext⇒id ind
+tr-ext⇒id (∂→ ind) {{onlyInsideC∂→∂→ oi}} = tr-ext⇒id ind
+
+≤⇒tr≤ : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → ss ≤s s → {{ loi : onlyInside ss ind}} → {{oi : onlyInside s ind}} → truncOISetLL ss ind ≤s truncOISetLL s ind
+≤⇒tr≤ ↓ x = x
+≤⇒tr≤ (ind ←∧) ≤id {{onlyInsideC←∧←∧ loi}} {{onlyInsideC←∧←∧ oi}} = ≤⇒tr≤ ind ≤id
+≤⇒tr≤ (ind ←∧) (≤←∧ x) {{onlyInsideC←∧←∧ loi}} {{onlyInsideC←∧←∧ oi}} = ≤⇒tr≤ ind x
+≤⇒tr≤ (∧→ ind) ≤id {{onlyInsideC∧→∧→ loi}} {{onlyInsideC∧→∧→ oi}} = ≤⇒tr≤ ind ≤id
+≤⇒tr≤ (∧→ ind) (≤←∧ x) {{loi}} {{()}}
+≤⇒tr≤ (∧→ ind) (≤∧→ x) {{onlyInsideC∧→∧→ loi}} {{onlyInsideC∧→∧→ oi}} = ≤⇒tr≤ ind x
+≤⇒tr≤ (∧→ ind) (≤←∧→ x x₁) {{loi}} {{()}}
+≤⇒tr≤ (∧→ ind) (≤d←∧ x) {{loi}} {{()}}
+≤⇒tr≤ (∧→ ind) (≤d∧→ x) {{loi}} {{()}}
+≤⇒tr≤ (ind ←∨) ≤id {{onlyInsideC←∨←∨ loi}} {{onlyInsideC←∨←∨ oi}} = ≤⇒tr≤ ind ≤id
+≤⇒tr≤ (ind ←∨) (≤←∨ x) {{onlyInsideC←∨←∨ loi}} {{onlyInsideC←∨←∨ oi}} = ≤⇒tr≤ ind x
+≤⇒tr≤ (∨→ ind) ≤id {{onlyInsideC∨→∨→ loi}} {{onlyInsideC∨→∨→ oi}} = ≤⇒tr≤ ind ≤id
+≤⇒tr≤ (∨→ ind) (≤←∨ x) {{loi}} {{()}}
+≤⇒tr≤ (∨→ ind) (≤∨→ x) {{onlyInsideC∨→∨→ loi}} {{onlyInsideC∨→∨→ oi}} = ≤⇒tr≤ ind x
+≤⇒tr≤ (∨→ ind) (≤←∨→ x x₁) {{loi}} {{()}}
+≤⇒tr≤ (∨→ ind) (≤d←∨ x) {{loi}} {{()}}
+≤⇒tr≤ (∨→ ind) (≤d∨→ x) {{loi}} {{()}}
+≤⇒tr≤ (ind ←∂) ≤id {{onlyInsideC←∂←∂ loi}} {{onlyInsideC←∂←∂ oi}} = ≤⇒tr≤ ind ≤id
+≤⇒tr≤ (ind ←∂) (≤←∂ x) {{onlyInsideC←∂←∂ loi}} {{onlyInsideC←∂←∂ oi}} = ≤⇒tr≤ ind x
+≤⇒tr≤ (∂→ ind) ≤id {{onlyInsideC∂→∂→ loi}} {{onlyInsideC∂→∂→ oi}} = ≤⇒tr≤ ind ≤id
+≤⇒tr≤ (∂→ ind) (≤←∂ x) {{loi}} {{()}}
+≤⇒tr≤ (∂→ ind) (≤∂→ x) {{onlyInsideC∂→∂→ loi}} {{onlyInsideC∂→∂→ oi}} = ≤⇒tr≤ ind x
+≤⇒tr≤ (∂→ ind) (≤←∂→ x x₁) {{loi}} {{()}}
+≤⇒tr≤ (∂→ ind) (≤d←∂ x) {{loi}} {{()}}
+≤⇒tr≤ (∂→ ind) (≤d∂→ x) {{loi}} {{()}}

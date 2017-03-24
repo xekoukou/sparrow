@@ -592,6 +592,7 @@ module _ where
 
   open Data.List
 
+  -- TODO This should be removed as there are no distributive transformations anymore.
   -- In this transformation, we duplicate the set when we use distributive transformations, thus we
   -- have two sets that contains the same number of inputs as before. One of them can be executed
   -- when they join together into one root and a com exists in the Linear Function.
@@ -712,34 +713,87 @@ module _ where
   sptran (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d tr) = sptran ((s ←∂→ s₁) ←∂→ s₂) tr
 
 extend : ∀{i u ll pll} → IndexLL {i} {u} pll ll → SetLL pll → SetLL ll
-extend {ll = ll} {pll = pll} ind s with (replLL ll ind pll) | (∅-add ind pll) | (replLL-id ll ind pll refl)
-... | r | g | refl with (replLL ll ind pll) | (replacePartOf g to s at ind) | (replLL-id ll ind pll refl)
-... | r₂ | m | refl = m
+extend ↓ s = s
+extend (ind ←∧) s = (extend ind s) ←∧
+extend (∧→ ind) s = ∧→ (extend ind s) 
+extend (ind ←∨) s = (extend ind s) ←∨
+extend (∨→ ind) s = ∨→ (extend ind s) 
+extend (ind ←∂) s = (extend ind s) ←∂
+extend (∂→ ind) s = ∂→ (extend ind s) 
 
 data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
-  _≤id_   : ∀{ll s} → _≤s_ {ll = ll} s s
-  _≤←∧_  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧)
-  _≤∧→_  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (∧→ sy)
-  _≤←∨_  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨)
-  _≤∨→_  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (∨→ sy)
-  _≤←∂_  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂)
-  _≤∂→_  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (∂→ sy)
-  _≤←∧→_ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∧ llr} (slx ←∧→ srx) (sly ←∧→ sry)
-  _≤←∨→_ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∨ llr} (slx ←∨→ srx) (sly ←∨→ sry)
-  _≤←∂→_ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∂ llr} (slx ←∂→ srx) (sly ←∂→ sry)
-  _≤d←∧_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧→ s)
-  _≤d∧→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (s ←∧→ sy)
-  _≤d←∨_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨→ s)
-  _≤d∨→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (s ←∨→ sy)
-  _≤d←∂_ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂→ s)
-  _≤d∂→_ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (s ←∂→ sy)
+  ≤id   : ∀{ll s} → _≤s_ {ll = ll} s s
+  ≤←∧  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧)
+  ≤∧→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (∧→ sy)
+  ≤←∨  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨)
+  ≤∨→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (∨→ sy)
+  ≤←∂  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂)
+  ≤∂→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (∂→ sy)
+  ≤←∧→ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∧ llr} (slx ←∧→ srx) (sly ←∧→ sry)
+  ≤←∨→ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∨ llr} (slx ←∨→ srx) (sly ←∨→ sry)
+  ≤←∂→ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∂ llr} (slx ←∂→ srx) (sly ←∂→ sry)
+  ≤d←∧ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧→ s)
+  ≤d∧→ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (s ←∧→ sy)
+  ≤d←∨ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨→ s)
+  ≤d∨→ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (s ←∨→ sy)
+  ≤d←∂ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂→ s)
+  ≤d∂→ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (s ←∂→ sy)
 
 
 ≤s-ext : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → ss ≤s s → extend ind ss ≤s extend ind s
-≤s-ext ↓ ss≤s = {!!}
-≤s-ext (ind ←∧) ss≤s = {!!}
-≤s-ext (∧→ ind) ss≤s = {!!}
-≤s-ext (ind ←∨) ss≤s = {!!}
-≤s-ext (∨→ ind) ss≤s = {!!}
-≤s-ext (ind ←∂) ss≤s = {!!}
-≤s-ext (∂→ ind) ss≤s = {!!}
+≤s-ext ↓ ss≤s = ss≤s
+≤s-ext (ind ←∧) ss≤s = ≤←∧ (≤s-ext ind ss≤s)
+≤s-ext (∧→ ind) ss≤s = ≤∧→ (≤s-ext ind ss≤s)
+≤s-ext (ind ←∨) ss≤s = ≤←∨ (≤s-ext ind ss≤s)
+≤s-ext (∨→ ind) ss≤s = ≤∨→ (≤s-ext ind ss≤s)
+≤s-ext (ind ←∂) ss≤s = ≤←∂ (≤s-ext ind ss≤s)
+≤s-ext (∂→ ind) ss≤s = ≤∂→ (≤s-ext ind ss≤s)
+
+≤s-trans : ∀{i u ll b c} → {a : SetLL {i} {u} ll} → a ≤s b → b ≤s c → a ≤s c
+≤s-trans {c = ↓} ≤id ≤id                        = ≤id
+≤s-trans {c = c ←∧} x ≤id                       = x
+≤s-trans {c = c ←∧} ≤id (≤←∧ y)                 = ≤←∧ y
+≤s-trans {c = c ←∧} (≤←∧ x) (≤←∧ y)             = ≤←∧ (≤s-trans x y)
+≤s-trans {c = ∧→ c} x ≤id                       = x
+≤s-trans {c = ∧→ c} ≤id (≤∧→ y)                 = ≤∧→ y
+≤s-trans {c = ∧→ c} (≤∧→ x) (≤∧→ y)             = ≤∧→ (≤s-trans x y)
+≤s-trans {c = c ←∧→ c₁} x ≤id                   = x
+≤s-trans {c = c ←∧→ c₁} ≤id (≤←∧→ y y₁)         = ≤←∧→ y y₁
+≤s-trans {c = c ←∧→ c₁} (≤←∧→ x x₁) (≤←∧→ y y₁) = ≤←∧→ (≤s-trans x y) (≤s-trans x₁ y₁)
+≤s-trans {c = c ←∧→ c₁} (≤d←∧ x) (≤←∧→ y y₁)    = ≤d←∧ (≤s-trans x y)
+≤s-trans {c = c ←∧→ c₁} (≤d∧→ x) (≤←∧→ y y₁)    = ≤d∧→ (≤s-trans x y₁)
+≤s-trans {c = c ←∧→ c₁} ≤id (≤d←∧ y)            = ≤d←∧ y
+≤s-trans {c = c ←∧→ c₁} (≤←∧ x) (≤d←∧ y)        = ≤d←∧ (≤s-trans x y)
+≤s-trans {c = c ←∧→ c₁} ≤id (≤d∧→ y)            = ≤d∧→ y
+≤s-trans {c = c ←∧→ c₁} (≤∧→ x) (≤d∧→ y)        = ≤d∧→ (≤s-trans x y)
+≤s-trans {c = c ←∨} x ≤id                       = x
+≤s-trans {c = c ←∨} ≤id (≤←∨ y)                 = ≤←∨ y
+≤s-trans {c = c ←∨} (≤←∨ x) (≤←∨ y)             = ≤←∨ (≤s-trans x y)
+≤s-trans {c = ∨→ c} x ≤id                       = x
+≤s-trans {c = ∨→ c} ≤id (≤∨→ y)                 = ≤∨→ y
+≤s-trans {c = ∨→ c} (≤∨→ x) (≤∨→ y)             = ≤∨→ (≤s-trans x y)
+≤s-trans {c = c ←∨→ c₁} x ≤id                   = x
+≤s-trans {c = c ←∨→ c₁} ≤id (≤←∨→ y y₁)         = ≤←∨→ y y₁
+≤s-trans {c = c ←∨→ c₁} (≤←∨→ x x₁) (≤←∨→ y y₁) = ≤←∨→ (≤s-trans x y) (≤s-trans x₁ y₁)
+≤s-trans {c = c ←∨→ c₁} (≤d←∨ x) (≤←∨→ y y₁)    = ≤d←∨ (≤s-trans x y)
+≤s-trans {c = c ←∨→ c₁} (≤d∨→ x) (≤←∨→ y y₁)    = ≤d∨→ (≤s-trans x y₁)
+≤s-trans {c = c ←∨→ c₁} ≤id (≤d←∨ y)            = ≤d←∨ y
+≤s-trans {c = c ←∨→ c₁} (≤←∨ x) (≤d←∨ y)        = ≤d←∨ (≤s-trans x y)
+≤s-trans {c = c ←∨→ c₁} ≤id (≤d∨→ y)            = ≤d∨→ y
+≤s-trans {c = c ←∨→ c₁} (≤∨→ x) (≤d∨→ y)        = ≤d∨→ (≤s-trans x y)
+≤s-trans {c = c ←∂} x ≤id                       = x
+≤s-trans {c = c ←∂} ≤id (≤←∂ y)                 = ≤←∂ y
+≤s-trans {c = c ←∂} (≤←∂ x) (≤←∂ y)             = ≤←∂ (≤s-trans x y)
+≤s-trans {c = ∂→ c} x ≤id                       = x
+≤s-trans {c = ∂→ c} ≤id (≤∂→ y)                 = ≤∂→ y
+≤s-trans {c = ∂→ c} (≤∂→ x) (≤∂→ y)             = ≤∂→ (≤s-trans x y)
+≤s-trans {c = c ←∂→ c₁} x ≤id                   = x
+≤s-trans {c = c ←∂→ c₁} ≤id (≤←∂→ y y₁)         = ≤←∂→ y y₁
+≤s-trans {c = c ←∂→ c₁} (≤←∂→ x x₁) (≤←∂→ y y₁) = ≤←∂→ (≤s-trans x y) (≤s-trans x₁ y₁)
+≤s-trans {c = c ←∂→ c₁} (≤d←∂ x) (≤←∂→ y y₁)    = ≤d←∂ (≤s-trans x y)
+≤s-trans {c = c ←∂→ c₁} (≤d∂→ x) (≤←∂→ y y₁)    = ≤d∂→ (≤s-trans x y₁)
+≤s-trans {c = c ←∂→ c₁} ≤id (≤d←∂ y)            = ≤d←∂ y
+≤s-trans {c = c ←∂→ c₁} (≤←∂ x) (≤d←∂ y)        = ≤d←∂ (≤s-trans x y)
+≤s-trans {c = c ←∂→ c₁} ≤id (≤d∂→ y)            = ≤d∂→ y
+≤s-trans {c = c ←∂→ c₁} (≤∂→ x) (≤d∂→ y)        = ≤d∂→ (≤s-trans x y)
+
