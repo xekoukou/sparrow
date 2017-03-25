@@ -11,8 +11,10 @@ open import Data.Product
 
 -- WellFormed
 -- TODO Check that calls , _⊂_ and the main LFun use all inputs.
+-- Check that there are no obs in the original LinFun.
 
-
+-- Check that the main LFun should not have any calls in its input. (It will not know when/how to unfold them).
+-- This permits the local knowledge of the protocol specification by nodes, while they are working in a bigger network) This will probably be necessary so as to reduce the computation cost of the protocol.
 
 --data IndexLF : ∀{u} → {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {u} {i} {j} {rll} {ll} → Set where
 --  ↓    : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → IndexLF lf

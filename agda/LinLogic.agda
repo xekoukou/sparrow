@@ -3,6 +3,7 @@ module LinLogic where
 
 open import Common
 open import Data.Unit
+import Data.Bool
 
 module _ where
 
@@ -93,6 +94,7 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u wh
   ∂→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∂ ri)
 
 
+
 -- Replaces a node of a linear logic tree with another one.
 replLL : ∀{i u q} → {j : Size< ↑ i} → (ll : LinLogic i {u}) → IndexLL q ll → LinLogic j {u} → LinLogic j {u}
 replLL ll ↓ c            = c
@@ -102,6 +104,17 @@ replLL (l ∨ r) (li ←∨) c = (replLL l li c) ∨ r
 replLL (l ∨ r) (∨→ ri) c = l ∨ (replLL r ri c)
 replLL (l ∂ r) (li ←∂) c = (replLL l li c) ∂ r
 replLL (l ∂ r) (∂→ ri) c = l ∂ (replLL r ri c)
+
+updateIndex : ∀{i u rll ll} → {j : Size< ↑ i} → ∀ nrll → (ind : IndexLL {i} {u} rll ll) → IndexLL {j} {u} nrll (replLL ll ind nrll)
+updateIndex nrll ↓ = ↓
+updateIndex nrll (ind ←∧) = (updateIndex nrll ind) ←∧
+updateIndex nrll (∧→ ind) = ∧→ (updateIndex nrll ind)
+updateIndex nrll (ind ←∨) = (updateIndex nrll ind) ←∨
+updateIndex nrll (∨→ ind) = ∨→ (updateIndex nrll ind)
+updateIndex nrll (ind ←∂) = (updateIndex nrll ind) ←∂
+updateIndex nrll (∂→ ind) = ∂→ (updateIndex nrll ind)
+
+
 
 replLL-id : ∀{i u q} → (ll : LinLogic i {u}) → (ind : IndexLL q ll) → (s : LinLogic i {u}) → q ≡ s → replLL ll ind s ≡ ll
 replLL-id ll ↓ .ll refl = refl
@@ -149,12 +162,12 @@ unfold (ll ∨ ll₁) = (unfold ll) ∨ (unfold ll₁)
 unfold (ll ∂ ll₁) = (unfold ll) ∂ (unfold ll₁)
 unfold (call x) = step x
 
-notCall : ∀{i u} → LinLogic i {u} → Set
-notCall ∅ = ⊤
-notCall (τ x) = ⊤
-notCall (ll ∧ ll₁) = ⊤
-notCall (ll ∨ ll₁) = ⊤
-notCall (ll ∂ ll₁) = ⊤
-notCall (call x) = ⊥
+notOnlyCall : ∀{i u} → LinLogic i {u} → Data.Bool.Bool
+notOnlyCall ∅ = Data.Bool.Bool.true
+notOnlyCall (τ x) = Data.Bool.Bool.true
+notOnlyCall (ll ∧ ll₁) = (notOnlyCall ll) Data.Bool.∨ (notOnlyCall ll₁)
+notOnlyCall (ll ∨ ll₁) =  (notOnlyCall ll) Data.Bool.∨ (notOnlyCall ll₁)
+notOnlyCall (ll ∂ ll₁) =  (notOnlyCall ll) Data.Bool.∨ (notOnlyCall ll₁)
+notOnlyCall (call x) = Data.Bool.Bool.false
 
 

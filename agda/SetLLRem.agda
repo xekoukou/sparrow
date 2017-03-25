@@ -6,6 +6,7 @@ open import SetLL
 open import LinLogic
 import Data.List
 open import Data.Vec
+open import Data.Product
 
 
 
@@ -84,9 +85,6 @@ fillAllLowerRem ll = fillAllLowerRem` ll (λ x → x) where
 
 
 
--- Deletes an index if it is present, otherwise does nothing.
--- Deleting an index that is inside in a ↓ removes everything, since we do not have memories of the indexes of the children.
-
 delRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u ll pll q} → {j : Size< ↑ i} → SetLLRem {pi} {i} pll ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
       → MSetLLRem {pi} {j} pll (replLL ll ind rll)
 delRem s ↓ rll = ∅
@@ -137,6 +135,8 @@ mdelRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u ll pll q} → {j : Size< ↑ 
       → MSetLLRem {pi} {j} pll (replLL ll ind rll)
 mdelRem ∅ ind rll = ∅
 mdelRem (¬∅ x) ind rll = delRem x ind rll
+
+
 
 
 -- If we tranform the linear logic tree, we need to tranform the SetLLRem as well.
@@ -261,6 +261,68 @@ itranRem (s ←∂) (∂→ ind) tr     = s ←∂
 itranRem (∂→ s) (∂→ ind) tr     = ∂→ itranRem s ind tr
 itranRem (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itranRem s₁ ind tr
 
+
+truncSetLLRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u ll pll q} → {j : Size< ↑ i} → MSetLLRem {pi} {i} pll ll → (ind : IndexLL {i} {u} q ll) → MSetLLRem {pi} {i} pll q
+truncSetLLRem ∅ ind = ∅
+truncSetLLRem (¬∅ x) ↓ = ¬∅ x
+truncSetLLRem (¬∅ (x ←∧)) (ind ←∧) = truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (∧→ x)) (ind ←∧) = ∅
+truncSetLLRem (¬∅ (x ←∧→ x₁)) (ind ←∧) = truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (x ←∧)) (∧→ ind) = ∅
+truncSetLLRem (¬∅ (∧→ x)) (∧→ ind) =  truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (x ←∧→ x₁)) (∧→ ind) =  truncSetLLRem (¬∅ x₁) ind
+truncSetLLRem (¬∅ (x ←∨)) (ind ←∨) = truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (∨→ x)) (ind ←∨) = ∅
+truncSetLLRem (¬∅ (x ←∨→ x₁)) (ind ←∨) = truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (x ←∨)) (∨→ ind) = ∅
+truncSetLLRem (¬∅ (∨→ x)) (∨→ ind) =  truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (x ←∨→ x₁)) (∨→ ind) =  truncSetLLRem (¬∅ x₁) ind
+truncSetLLRem (¬∅ (x ←∂)) (ind ←∂) = truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (∂→ x)) (ind ←∂) = ∅
+truncSetLLRem (¬∅ (x ←∂→ x₁)) (ind ←∂) = truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (x ←∂)) (∂→ ind) = ∅
+truncSetLLRem (¬∅ (∂→ x)) (∂→ ind) =  truncSetLLRem (¬∅ x) ind
+truncSetLLRem (¬∅ (x ←∂→ x₁)) (∂→ ind) =  truncSetLLRem (¬∅ x₁) ind
+
+
+extendRem : ∀{pi u oll} → {i : Size< ↑ pi} → ∀{ll pll} → IndexLL {i} {u} pll ll → SetLLRem {pi} {i} oll pll → SetLLRem oll ll
+extendRem ↓ sr = sr
+extendRem (ind ←∧) sr = (extendRem ind sr) ←∧
+extendRem (∧→ ind) sr = ∧→ (extendRem ind sr)
+extendRem (ind ←∨) sr = (extendRem ind sr) ←∨
+extendRem (∨→ ind) sr = ∨→ (extendRem ind sr)
+extendRem (ind ←∂) sr = (extendRem ind sr) ←∂
+extendRem (∂→ ind) sr = ∂→ (extendRem ind sr)
+
+replaceRem : ∀{pi u oll} → {i : Size< ↑ pi} → ∀{ll pll} → IndexLL {i} {u} pll ll → SetLLRem {pi} {i} oll pll → SetLLRem oll ll → SetLLRem oll ll
+replaceRem ↓ esr sr = esr
+replaceRem (ind ←∧) esr (sr ←∧) = replaceRem ind esr sr ←∧
+replaceRem (ind ←∧) esr (∧→ sr) = (extendRem ind esr) ←∧→ sr
+replaceRem (ind ←∧) esr (sr ←∧→ sr₁) = (replaceRem ind esr sr) ←∧→ sr₁
+replaceRem (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendRem ind esr)
+replaceRem (∧→ ind) esr (∧→ sr) = ∧→ replaceRem ind esr sr
+replaceRem (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceRem ind esr sr₁
+replaceRem (ind ←∨) esr (sr ←∨) = replaceRem ind esr sr ←∨
+replaceRem (ind ←∨) esr (∨→ sr) = (extendRem ind esr) ←∨→ sr
+replaceRem (ind ←∨) esr (sr ←∨→ sr₁) = (replaceRem ind esr sr) ←∨→ sr₁
+replaceRem (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendRem ind esr)
+replaceRem (∨→ ind) esr (∨→ sr) = ∨→ replaceRem ind esr sr
+replaceRem (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceRem ind esr sr₁
+replaceRem (ind ←∂) esr (sr ←∂) = replaceRem ind esr sr ←∂
+replaceRem (ind ←∂) esr (∂→ sr) = (extendRem ind esr) ←∂→ sr
+replaceRem (ind ←∂) esr (sr ←∂→ sr₁) = (replaceRem ind esr sr) ←∂→ sr₁
+replaceRem (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendRem ind esr)
+replaceRem (∂→ ind) esr (∂→ sr) = ∂→ replaceRem ind esr sr
+replaceRem (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceRem ind esr sr₁
+
+mreplaceRem : ∀{pi u oll} → {i : Size< ↑ pi} → ∀{ll pll} → IndexLL {i} {u} pll ll → MSetLLRem {pi} {i} oll pll → MSetLLRem oll ll → MSetLLRem oll ll
+mreplaceRem ind ∅ ∅ = ∅
+mreplaceRem {ll = ll} {pll = pll} ind ∅ (¬∅ x) with (replLL ll ind pll) | (delRem x ind pll) | (replLL-id ll ind pll refl)
+... | m | g | refl = g
+mreplaceRem ind (¬∅ x) ∅ = ¬∅ (extendRem ind x)
+mreplaceRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceRem ind x x₁)
+
+
 projToSetLL : {pi : Size} → {i : Size< ↑ pi} → ∀{u} → {pll : LinLogic pi {u}} → {ll : LinLogic i {u}} → SetLLRem {pi} {i} {u} pll ll → SetLL ll 
 projToSetLL (↓∅ x) = ↓
 projToSetLL (↓τ x) = ↓
@@ -279,28 +341,42 @@ projToMSetLL : {pi : Size} → {i : Size< ↑ pi} → ∀{u} → {pll : LinLogic
 projToMSetLL ∅ = ∅
 projToMSetLL (¬∅ x) = ¬∅ (projToSetLL x)
 
+oneElemRem : {pi : Size} → {i : Size< ↑ pi} → ∀{u} → {pll : LinLogic pi {u}} → {ll : LinLogic i {u}} → SetLLRem {pi} {i} {u} pll ll →  Σ (LinLogic pi {u}) (λ rll → IndexLL rll pll)
+oneElemRem (↓∅ x)       = (_ , x)
+oneElemRem (↓τ x)       = (_ , x)
+oneElemRem (↓c x)       = (_ , x)
+oneElemRem (sr ←∧)      = oneElemRem sr
+oneElemRem (∧→ sr)      =  oneElemRem sr
+oneElemRem (sr ←∧→ sr₁) =  oneElemRem sr
+oneElemRem (sr ←∨)      =  oneElemRem sr
+oneElemRem (∨→ sr)      =  oneElemRem sr
+oneElemRem (sr ←∨→ sr₁) =  oneElemRem sr
+oneElemRem (sr ←∂)      =  oneElemRem sr
+oneElemRem (∂→ sr)      =  oneElemRem sr
+oneElemRem (sr ←∂→ sr₁) =  oneElemRem sr
+
 
 complem¬↓⇒¬∅ : {pi : Size} → {i : Size< ↑ pi} → ∀{u} → {pll : LinLogic pi {u}} → {ll : LinLogic i {u}}
                  → (ms : MSetLL ll) → (msr : MSetLLRem {pi} {i} {u} pll ll) → (ms ∪ₘₛ (projToMSetLL msr)) ≡ (¬∅ ↓)
                  → ¬ (ms ≡ ¬∅ ↓) → ¬ (msr ≡ ∅)
 complem¬↓⇒¬∅ ∅ ∅ () nt
-complem¬↓⇒¬∅ ∅ (¬∅ x) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ ↓) msr c nt = λ _ → nt refl
-complem¬↓⇒¬∅ (¬∅ (x ←∧)) ∅ c nt = λ _ → nt c
-complem¬↓⇒¬∅ (¬∅ (x ←∧)) (¬∅ x₁) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (∧→ x)) ∅ c nt = λ _ → nt c
-complem¬↓⇒¬∅ (¬∅ (∧→ x)) (¬∅ x₁) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (x ←∧→ x₁)) ∅ c nt = λ _ → nt c
+complem¬↓⇒¬∅ ∅ (¬∅ x) c nt                = λ ()
+complem¬↓⇒¬∅ (¬∅ ↓) msr c nt              = λ _ → nt refl
+complem¬↓⇒¬∅ (¬∅ (x ←∧)) ∅ c nt           = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (x ←∧)) (¬∅ x₁) c nt     = λ ()
+complem¬↓⇒¬∅ (¬∅ (∧→ x)) ∅ c nt           = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (∧→ x)) (¬∅ x₁) c nt     = λ ()
+complem¬↓⇒¬∅ (¬∅ (x ←∧→ x₁)) ∅ c nt       = λ _ → nt c
 complem¬↓⇒¬∅ (¬∅ (x ←∧→ x₁)) (¬∅ x₂) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (x ←∨)) ∅ c nt = λ _ → nt c
-complem¬↓⇒¬∅ (¬∅ (x ←∨)) (¬∅ x₁) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (∨→ x)) ∅ c nt = λ _ → nt c
-complem¬↓⇒¬∅ (¬∅ (∨→ x)) (¬∅ x₁) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (x ←∨→ x₁)) ∅ c nt = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (x ←∨)) ∅ c nt           = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (x ←∨)) (¬∅ x₁) c nt     = λ ()
+complem¬↓⇒¬∅ (¬∅ (∨→ x)) ∅ c nt           = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (∨→ x)) (¬∅ x₁) c nt     = λ ()
+complem¬↓⇒¬∅ (¬∅ (x ←∨→ x₁)) ∅ c nt       = λ _ → nt c
 complem¬↓⇒¬∅ (¬∅ (x ←∨→ x₁)) (¬∅ x₂) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (x ←∂)) ∅ c nt = λ _ → nt c
-complem¬↓⇒¬∅ (¬∅ (x ←∂)) (¬∅ x₁) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (∂→ x)) ∅ c nt = λ _ → nt c
-complem¬↓⇒¬∅ (¬∅ (∂→ x)) (¬∅ x₁) c nt = λ ()
-complem¬↓⇒¬∅ (¬∅ (x ←∂→ x₁)) ∅ c nt = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (x ←∂)) ∅ c nt           = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (x ←∂)) (¬∅ x₁) c nt     = λ ()
+complem¬↓⇒¬∅ (¬∅ (∂→ x)) ∅ c nt           = λ _ → nt c
+complem¬↓⇒¬∅ (¬∅ (∂→ x)) (¬∅ x₁) c nt     = λ ()
+complem¬↓⇒¬∅ (¬∅ (x ←∂→ x₁)) ∅ c nt       = λ _ → nt c
 complem¬↓⇒¬∅ (¬∅ (x ←∂→ x₁)) (¬∅ x₂) c nt = λ ()

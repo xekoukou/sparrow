@@ -409,6 +409,9 @@ contruct (x ←∂→ x₁) with contruct x | contruct x₁
 ... | g | r = (g ←∂→ r)
 
 
+mcontruct : ∀{i u ll} → MSetLL {i} {u} ll → MSetLL ll
+mcontruct ∅ = ∅
+mcontruct (¬∅ x) = ¬∅ $ contruct x
 
 
 
@@ -587,130 +590,36 @@ itran (s ←∂) (∂→ ind) tr     = s ←∂
 itran (∂→ s) (∂→ ind) tr     = ∂→ itran s ind tr
 itran (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itran s₁ ind tr
 
+truncSetLL : ∀ {i u ll pll} → SetLL ll → (ind : IndexLL {i} {u} pll ll)
+             → MSetLL pll
+truncSetLL s ↓ = ¬∅ s
+truncSetLL ↓ (ind ←∧) = ¬∅ ↓
+truncSetLL (s ←∧) (ind ←∧) = truncSetLL s ind
+truncSetLL (∧→ s) (ind ←∧) = ∅
+truncSetLL (s ←∧→ s₁) (ind ←∧) = truncSetLL s ind
+truncSetLL ↓ (∧→ ind) = ¬∅ ↓
+truncSetLL (s ←∧) (∧→ ind) = ∅
+truncSetLL (∧→ s) (∧→ ind) = truncSetLL s ind
+truncSetLL (s ←∧→ s₁) (∧→ ind) = truncSetLL s₁ ind
+truncSetLL ↓ (ind ←∨) = ¬∅ ↓
+truncSetLL (s ←∨) (ind ←∨) = truncSetLL s ind
+truncSetLL (∨→ s) (ind ←∨) = ∅
+truncSetLL (s ←∨→ s₁) (ind ←∨) = truncSetLL s ind
+truncSetLL ↓ (∨→ ind) = ¬∅ ↓
+truncSetLL (s ←∨) (∨→ ind) = ∅
+truncSetLL (∨→ s) (∨→ ind) = truncSetLL s ind
+truncSetLL (s ←∨→ s₁) (∨→ ind) = truncSetLL s₁ ind
+truncSetLL ↓ (ind ←∂) = ¬∅ ↓
+truncSetLL (s ←∂) (ind ←∂) = truncSetLL s ind
+truncSetLL (∂→ s) (ind ←∂) = ∅
+truncSetLL (s ←∂→ s₁) (ind ←∂) = truncSetLL s ind
+truncSetLL ↓ (∂→ ind) = ¬∅ ↓
+truncSetLL (s ←∂) (∂→ ind) = ∅
+truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
+truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
 
 module _ where
 
-  open Data.List
-
-  -- TODO This should be removed as there are no distributive transformations anymore.
-  -- In this transformation, we duplicate the set when we use distributive transformations, thus we
-  -- have two sets that contains the same number of inputs as before. One of them can be executed
-  -- when they join together into one root and a com exists in the Linear Function.
-  sptran : ∀{i u ll rll} → SetLL ll → (tr : LLTr {i} {u} rll ll)
-         → List (SetLL rll)
-  sptran s I                           = [ s ]
-  sptran ↓ (∂c tr)                     = [ ↓ ]
-  sptran (s ←∂) (∂c tr)                = sptran (∂→ s) tr
-  sptran (∂→ s) (∂c tr)                = sptran (s ←∂) tr
-  sptran (s ←∂→ s₁) (∂c tr)            = sptran (s₁ ←∂→ s) tr
-  sptran ↓ (∨c tr)                     = [ ↓ ]
-  sptran (s ←∨) (∨c tr)                = sptran (∨→ s) tr
-  sptran (∨→ s) (∨c tr)                = sptran (s ←∨) tr
-  sptran (s ←∨→ s₁) (∨c tr)            = sptran (s₁ ←∨→ s) tr
-  sptran ↓ (∧c tr)                     = [ ↓ ]
-  sptran (s ←∧) (∧c tr)                = sptran (∧→ s) tr
-  sptran (∧→ s) (∧c tr)                = sptran (s ←∧) tr
-  sptran (s ←∧→ s₁) (∧c tr)            = sptran (s₁ ←∧→ s) tr
---   sptran ↓ (∧∂d tr)                    = [ ↓ ]
---   sptran (↓ ←∧) (∧∂d tr)               = sptran ((↓ ←∧) ←∂→ (↓ ←∧)) tr
---   sptran ((s ←∂) ←∧) (∧∂d tr)          = sptran ((s ←∧) ←∂) tr
---   sptran ((∂→ s) ←∧) (∧∂d tr)          = sptran (∂→ (s ←∧)) tr
---   sptran ((s ←∂→ s₁) ←∧) (∧∂d tr)      = sptran ((s ←∧) ←∂→ (s₁ ←∧)) tr
---   sptran (∧→ s) (∧∂d tr)               = (sptran ((∧→ s) ←∂) tr) ++ (sptran (∂→ (∧→ s)) tr)
---   sptran (↓ ←∧→ s₁) (∧∂d tr)           = (sptran ((↓ ←∧→ s₁) ←∂→ (↓ ←∧)) tr) ++ (sptran ((↓ ←∧) ←∂→ (↓ ←∧→ s₁)) tr)
---   sptran ((s ←∂) ←∧→ s₁) (∧∂d tr)      = sptran ((s ←∧→ s₁) ←∂) tr
---   sptran ((∂→ s) ←∧→ s₁) (∧∂d tr)      = sptran (∂→ (s ←∧→ s₁)) tr
---   sptran ((s ←∂→ s₁) ←∧→ s₂) (∧∂d tr)  = (sptran ((s ←∧→ s₂) ←∂→ (s₁ ←∧)) tr) ++ (sptran ((s ←∧) ←∂→ (s₁ ←∧→ s₂)) tr)
---   sptran ↓ (∧∨d tr)                    = [ ↓ ]
---   sptran (↓ ←∧) (∧∨d tr)               = sptran ((↓ ←∧) ←∨→ (↓ ←∧)) tr
---   sptran ((s ←∨) ←∧) (∧∨d tr)          = sptran ((s ←∧) ←∨) tr
---   sptran ((∨→ s) ←∧) (∧∨d tr)          = sptran (∨→ (s ←∧)) tr
---   sptran ((s ←∨→ s₁) ←∧) (∧∨d tr)      = sptran ((s ←∧) ←∨→ (s₁ ←∧)) tr
---   sptran (∧→ s) (∧∨d tr)               = (sptran ((∧→ s) ←∨) tr) ++ (sptran (∨→ (∧→ s)) tr)
---   sptran (↓ ←∧→ s₁) (∧∨d tr)           = (sptran ((↓ ←∧→ s₁) ←∨→ (↓ ←∧)) tr) ++ (sptran ((↓ ←∧) ←∨→ (↓ ←∧→ s₁)) tr)
---   sptran ((s ←∨) ←∧→ s₁) (∧∨d tr)      = sptran ((s ←∧→ s₁) ←∨) tr
---   sptran ((∨→ s) ←∧→ s₁) (∧∨d tr)      = sptran (∨→ (s ←∧→ s₁)) tr
---   sptran ((s ←∨→ s₁) ←∧→ s₂) (∧∨d tr)  = (sptran ((s ←∧→ s₂) ←∨→ (s₁ ←∧)) tr) ++ (sptran ((s ←∧) ←∨→ (s₁ ←∧→ s₂)) tr)
---   sptran ↓ (∨∂d tr)                    = [ ↓ ]
---   sptran (↓ ←∨) (∨∂d tr)               = (sptran ((↓ ←∨) ←∂→ (↓ ←∨)) tr)
---   sptran ((s ←∂) ←∨) (∨∂d tr)          = sptran ((s ←∨) ←∂) tr
---   sptran ((∂→ s) ←∨) (∨∂d tr)          = sptran (∂→ (s ←∨)) tr
---   sptran ((s ←∂→ s₁) ←∨) (∨∂d tr)      = sptran ((s ←∨) ←∂→ (s₁ ←∨)) tr
---   sptran (∨→ s) (∨∂d tr)               = (sptran ((∨→ s) ←∂) tr) ++ (sptran (∂→ (∨→ s)) tr)
---   sptran (↓ ←∨→ s₁) (∨∂d tr)           = (sptran ((↓ ←∨→ s₁) ←∂→ (↓ ←∨)) tr) ++ (sptran ((↓ ←∨) ←∂→ (↓ ←∨→ s₁)) tr)
---   sptran ((s ←∂) ←∨→ s₁) (∨∂d tr)      = sptran ((s ←∨→ s₁) ←∂) tr
---   sptran ((∂→ s) ←∨→ s₁) (∨∂d tr)      = sptran (∂→ (s ←∨→ s₁)) tr
---   sptran ((s ←∂→ s₁) ←∨→ s₂) (∨∂d tr)  = (sptran ((s ←∨→ s₂) ←∂→ (s₁ ←∨)) tr) ++ (sptran ((s ←∨) ←∂→ (s₁ ←∨→ s₂)) tr) 
---   sptran ↓ (∂∨d tr)                    = [ ↓ ]
---   sptran (↓ ←∂) (∂∨d tr)               = (sptran ((↓ ←∂) ←∨) tr) ++ (sptran (∨→ (↓ ←∂)) tr)
---   sptran ((s ←∨) ←∂) (∂∨d tr)          = sptran ((s ←∂) ←∨) tr
---   sptran ((∨→ s) ←∂) (∂∨d tr)          = sptran (∨→ (s ←∂)) tr
---   sptran ((s ←∨→ s₁) ←∂) (∂∨d tr)      = sptran ((s ←∂) ←∨→ (s₁ ←∂)) tr
---   sptran (∂→ s) (∂∨d tr)               = (sptran ((∂→ s) ←∨) tr) ++ (sptran (∨→ (∂→ s)) tr)
---   sptran (↓ ←∂→ s₁) (∂∨d tr)           = (sptran ((↓ ←∂→ s₁) ←∨→ (↓ ←∂)) tr) ++ (sptran ((↓ ←∂) ←∨→ (↓ ←∂→ s₁)) tr)
---   sptran ((s ←∨) ←∂→ s₁) (∂∨d tr)      = sptran ((s ←∂→ s₁) ←∨) tr
---   sptran ((∨→ s) ←∂→ s₁) (∂∨d tr)      = sptran (∨→ (s ←∂→ s₁)) tr
---   sptran ((s ←∨→ s₁) ←∂→ s₂) (∂∨d tr)  = (sptran ((s ←∂→ s₂) ←∨→ (s₁ ←∂)) tr) ++ (sptran ((s ←∂) ←∨→ (s₁ ←∂→ s₂)) tr)
-  sptran ↓ (∧∧d tr)                    = [ ↓ ]
-  sptran (↓ ←∧) (∧∧d tr)               = sptran (↓ ←∧→ (↓ ←∧)) tr
-  sptran ((s ←∧) ←∧) (∧∧d tr)          = sptran (s ←∧) tr
-  sptran ((∧→ s) ←∧) (∧∧d tr)          = sptran (∧→ (s ←∧)) tr
-  sptran ((s ←∧→ s₁) ←∧) (∧∧d tr)      = sptran (s ←∧→ (s₁ ←∧)) tr
-  sptran (∧→ s) (∧∧d tr)               = sptran (∧→ (∧→ s)) tr
-  sptran (↓ ←∧→ s₁) (∧∧d tr)           = sptran (↓ ←∧→ (↓ ←∧→ s₁)) tr
-  sptran ((s ←∧) ←∧→ s₁) (∧∧d tr)      = sptran (s ←∧→ (∧→ s₁)) tr
-  sptran ((∧→ s) ←∧→ s₁) (∧∧d tr)      = sptran (∧→ (s ←∧→ s₁)) tr
-  sptran ((s ←∧→ s₁) ←∧→ s₂) (∧∧d tr)  = sptran (s ←∧→ (s₁ ←∧→ s₂)) tr
-  sptran ↓ (¬∧∧d tr)                   = [ ↓ ]
-  sptran (s ←∧) (¬∧∧d tr)              = sptran ((s ←∧) ←∧) tr
-  sptran (∧→ ↓) (¬∧∧d tr)              = sptran ((∧→ ↓) ←∧→ ↓) tr
-  sptran (∧→ (s ←∧)) (¬∧∧d tr)         = sptran ((∧→ s) ←∧) tr
-  sptran (∧→ (∧→ s)) (¬∧∧d tr)         = sptran (∧→ s) tr
-  sptran (∧→ (s ←∧→ s₁)) (¬∧∧d tr)     = sptran ((∧→ s) ←∧→ s₁) tr
-  sptran (s ←∧→ ↓) (¬∧∧d tr)           = sptran ((s ←∧→ ↓) ←∧→ ↓) tr
-  sptran (s ←∧→ (s₁ ←∧)) (¬∧∧d tr)     = sptran ((s ←∧→ s₁) ←∧) tr
-  sptran (s ←∧→ (∧→ s₁)) (¬∧∧d tr)     = sptran ((s ←∧) ←∧→ s₁) tr
-  sptran (s ←∧→ (s₁ ←∧→ s₂)) (¬∧∧d tr) = sptran ((s ←∧→ s₁) ←∧→ s₂) tr
-  sptran ↓ (∨∨d tr)                    = [ ↓ ]
-  sptran (↓ ←∨) (∨∨d tr)               = sptran (↓ ←∨→ (↓ ←∨)) tr
-  sptran ((s ←∨) ←∨) (∨∨d tr)          = sptran (s ←∨) tr
-  sptran ((∨→ s) ←∨) (∨∨d tr)          = sptran (∨→ (s ←∨)) tr
-  sptran ((s ←∨→ s₁) ←∨) (∨∨d tr)      = sptran (s ←∨→ (s₁ ←∨)) tr
-  sptran (∨→ s) (∨∨d tr)               = sptran (∨→ (∨→ s)) tr
-  sptran (↓ ←∨→ s₁) (∨∨d tr)           = sptran (↓ ←∨→ (↓ ←∨→ s₁)) tr
-  sptran ((s ←∨) ←∨→ s₁) (∨∨d tr)      = sptran (s ←∨→ (∨→ s₁)) tr
-  sptran ((∨→ s) ←∨→ s₁) (∨∨d tr)      = sptran (∨→ (s ←∨→ s₁)) tr
-  sptran ((s ←∨→ s₁) ←∨→ s₂) (∨∨d tr)  = sptran (s ←∨→ (s₁ ←∨→ s₂)) tr
-  sptran ↓ (¬∨∨d tr)                   = [ ↓ ]
-  sptran (s ←∨) (¬∨∨d tr)              = sptran ((s ←∨) ←∨) tr
-  sptran (∨→ ↓) (¬∨∨d tr)              = sptran ((∨→ ↓) ←∨→ ↓) tr
-  sptran (∨→ (s ←∨)) (¬∨∨d tr)         = sptran ((∨→ s) ←∨) tr
-  sptran (∨→ (∨→ s)) (¬∨∨d tr)         = sptran (∨→ s) tr
-  sptran (∨→ (s ←∨→ s₁)) (¬∨∨d tr)     = sptran ((∨→ s) ←∨→ s₁) tr
-  sptran (s ←∨→ ↓) (¬∨∨d tr)           = sptran ((s ←∨→ ↓) ←∨→ ↓) tr
-  sptran (s ←∨→ (s₁ ←∨)) (¬∨∨d tr)     = sptran ((s ←∨→ s₁) ←∨) tr
-  sptran (s ←∨→ (∨→ s₁)) (¬∨∨d tr)     = sptran ((s ←∨) ←∨→ s₁) tr
-  sptran (s ←∨→ (s₁ ←∨→ s₂)) (¬∨∨d tr) = sptran ((s ←∨→ s₁) ←∨→ s₂) tr
-  sptran ↓ (∂∂d tr)                    = [ ↓ ]
-  sptran (↓ ←∂) (∂∂d tr)               = sptran (↓ ←∂→ (↓ ←∂)) tr
-  sptran ((s ←∂) ←∂) (∂∂d tr)          = sptran (s ←∂) tr
-  sptran ((∂→ s) ←∂) (∂∂d tr)          = sptran (∂→ (s ←∂)) tr
-  sptran ((s ←∂→ s₁) ←∂) (∂∂d tr)      = sptran (s ←∂→ (s₁ ←∂)) tr
-  sptran (∂→ s) (∂∂d tr)               = sptran (∂→ (∂→ s)) tr
-  sptran (↓ ←∂→ s₁) (∂∂d tr)           = sptran (↓ ←∂→ (↓ ←∂→ s₁)) tr
-  sptran ((s ←∂) ←∂→ s₁) (∂∂d tr)      = sptran (s ←∂→ (∂→ s₁)) tr
-  sptran ((∂→ s) ←∂→ s₁) (∂∂d tr)      = sptran (∂→ (s ←∂→ s₁)) tr
-  sptran ((s ←∂→ s₁) ←∂→ s₂) (∂∂d tr)  = sptran (s ←∂→ (s₁ ←∂→ s₂)) tr
-  sptran ↓ (¬∂∂d tr)                   = [ ↓ ]
-  sptran (s ←∂) (¬∂∂d tr)              = sptran ((s ←∂) ←∂) tr
-  sptran (∂→ ↓) (¬∂∂d tr)              = sptran ((∂→ ↓) ←∂→ ↓) tr
-  sptran (∂→ (s ←∂)) (¬∂∂d tr)         = sptran ((∂→ s) ←∂) tr
-  sptran (∂→ (∂→ s)) (¬∂∂d tr)         = sptran (∂→ s) tr
-  sptran (∂→ (s ←∂→ s₁)) (¬∂∂d tr)     = sptran ((∂→ s) ←∂→ s₁) tr
-  sptran (s ←∂→ ↓) (¬∂∂d tr)           = sptran ((s ←∂→ ↓) ←∂→ ↓) tr
-  sptran (s ←∂→ (s₁ ←∂)) (¬∂∂d tr)     = sptran ((s ←∂→ s₁) ←∂) tr
-  sptran (s ←∂→ (∂→ s₁)) (¬∂∂d tr)     = sptran ((s ←∂) ←∂→ s₁) tr
-  sptran (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d tr) = sptran ((s ←∂→ s₁) ←∂→ s₂) tr
 
 extend : ∀{i u ll pll} → IndexLL {i} {u} pll ll → SetLL pll → SetLL ll
 extend ↓ s = s

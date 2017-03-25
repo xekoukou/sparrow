@@ -331,36 +331,6 @@ module _ where
   replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∂→←∂ x)}} rll) ←∂
   replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (hitsAtLeastOnce←∂→∂→ x)}} rll)
 
-  truncSetLL : ∀ {i u ll pll} → SetLL ll → (ind : IndexLL {i} {u} pll ll)
-               → MSetLL pll
-  truncSetLL s ↓ = ¬∅ s
-  truncSetLL ↓ (ind ←∧) = ¬∅ ↓
-  truncSetLL (s ←∧) (ind ←∧) = truncSetLL s ind
-  truncSetLL (∧→ s) (ind ←∧) = ∅
-  truncSetLL (s ←∧→ s₁) (ind ←∧) = truncSetLL s ind
-  truncSetLL ↓ (∧→ ind) = ¬∅ ↓
-  truncSetLL (s ←∧) (∧→ ind) = ∅
-  truncSetLL (∧→ s) (∧→ ind) = truncSetLL s ind
-  truncSetLL (s ←∧→ s₁) (∧→ ind) = truncSetLL s₁ ind
-  truncSetLL ↓ (ind ←∨) = ¬∅ ↓
-  truncSetLL (s ←∨) (ind ←∨) = truncSetLL s ind
-  truncSetLL (∨→ s) (ind ←∨) = ∅
-  truncSetLL (s ←∨→ s₁) (ind ←∨) = truncSetLL s ind
-  truncSetLL ↓ (∨→ ind) = ¬∅ ↓
-  truncSetLL (s ←∨) (∨→ ind) = ∅
-  truncSetLL (∨→ s) (∨→ ind) = truncSetLL s ind
-  truncSetLL (s ←∨→ s₁) (∨→ ind) = truncSetLL s₁ ind
-  truncSetLL ↓ (ind ←∂) = ¬∅ ↓
-  truncSetLL (s ←∂) (ind ←∂) = truncSetLL s ind
-  truncSetLL (∂→ s) (ind ←∂) = ∅
-  truncSetLL (s ←∂→ s₁) (ind ←∂) = truncSetLL s ind
-  truncSetLL ↓ (∂→ ind) = ¬∅ ↓
-  truncSetLL (s ←∂) (∂→ ind) = ∅
-  truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
-  truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
-
-
-
 
   truncOISetLL : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
                → ⦃ prf : onlyInside s ind ⦄ → SetLL pll

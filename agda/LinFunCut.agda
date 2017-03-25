@@ -1,4 +1,4 @@
---{-# OPTIONS --show-implicit #-}
+-- {-# OPTIONS --show-implicit #-}
 
 module LinFunCut where
 
@@ -8,6 +8,7 @@ open import LinDepT
 open import LinT 
 open import SetLL
 open import SetLLProp
+open import SetLLRem
 open import LinFun
 
 open import Data.List
@@ -28,162 +29,34 @@ module _ where
   ≤rsuc (s≤s x) = s≤s $ ≤rsuc x
 
 
+-- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). 
+nextComsCalls : ∀{pi} → {i : Size< ↑ pi} → ∀{u oll ll} → {j : Size< ↑ i} → ∀{rll} → LFun {u} {i} {j} {rll} {ll} → MSetLLRem {pi} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+nextComsCalls I (sr , s , sc) = (sr , s , sc)
+nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s , sc) with (truncSetLLRem sr ind) 
+... | r = let (esr , es , esc) = nextComsCalls lf (r , s , sc)
+          in nextComsCalls lf₁ ((mreplaceRem (updateIndex ell ind) esr (mdelRem sr ind ell)) , es , esc) -- mdelRem is used to update the type of sr. TODO Maybe remove it in the future.
+nextComsCalls (tr {{ltr = ltr}} lf) (∅ , s , sc) = ( ∅ , s , sc) 
+nextComsCalls (tr {{ltr = ltr}} lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
+nextComsCalls (obs lf) (sr , s , sc) = (∅ , s , sc) -- Since obs is here, it means that the previous LinFun call has not been removed, which means that there are no coms here that can be triggered.
+nextComsCalls (com {ll = _} {frll} df lf) (∅ , s , sc) = (∅ , s , sc)
+nextComsCalls (com {ll = _} {frll} df lf) (¬∅ x , s , sc) with (contruct $ projToSetLL x)
+... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc)
+... | r = (∅ , s , sc)
+nextComsCalls (call x) (∅ , s , sc) = (∅ , s , sc)
+nextComsCalls {pi = pi} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
+  hf : Σ (LinLogic pi {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+  hf (rll , ind) with (replLL oll ind rll) | (madd {q = rll} sc ind rll) | (replLL-id oll ind rll refl)
+  hf (rll , ind) | r | g | refl = (∅ , s , g) -- Here we pick only one element from the memory and add it
+-- to MSetLL oll.
+
+
 
 
 -- Here we assume that cut removes call and obs as soon as the call is possible to be executed,
 -- thus if we reach at a call, we do not continue, it means that this specific subtree will not contain a com
 -- to execute this communication pattern.
 
-fstSp : ∀ {i u ll rll} → (s : SetLL ll) → (ltr : LLTr {i} {u} rll ll) → ⦃ prf : (zero < (length (sptran s ltr))) ⦄ 
-        → SetLL rll
-fstSp s ltr {{prf = prf}} with (sptran s ltr)
-fstSp s ltr {{()}} | []
-fstSp s ltr {{prf}} | x ∷ r = x
 
-sndSp : ∀ {i u ll rll} → (s : SetLL ll) → (ltr : LLTr {i} {u} rll ll) → ⦃ prf : ((suc zero) < (length (sptran s ltr))) ⦄ 
-        → SetLL rll
-sndSp s ltr {{prf = prf}} with (sptran s ltr)
-sndSp s ltr {{()}} | []
-sndSp s ltr {{s≤s ()}} | x ∷ []
-sndSp s ltr {{prf}} | x ∷ x₁ ∷ r = x₁
-
-data cuttable {u} : ∀{i} → {j : Size< ↑ i} → ∀{rll ll} → SetLL ll → LFun {u} {i} {j} {rll} {ll} → Set (lsuc u) where
-  cuttable-s-com : {i : Size} → {j : Size< ↑ i} → ∀{rll ll s frll prfi prfo  df lf}
-                   → ⦃ prf : res-contruct s ≡ ↓ ⦄
-                   → cuttable s (com {u} {i} {j} {rll} {ll} {frll}  ⦃ prfi = prfi ⦄ ⦃ prfo = prfo ⦄ df lf)
-  cuttable-s⊂-oi : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll ell pll s ind elf lf}
-                   → ⦃ oi : onlyInside s ind ⦄
-                   → cuttable (truncOISetLL s ind) elf
-                   → cuttable s (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf lf)
-  cuttable-s⊂-¬ho : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{ll rll pll ell s ind elf lf}
-                   → ⦃ ¬ho : ¬ (hitsAtLeastOnce s ind) ⦄
-                   → cuttable (replSetLL s ind {{prf = ¬ho }} ell) lf
-                   → cuttable s (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf lf)
-  cuttable-s-tr-fst : {i : Size} → {j : Size< ↑ i} → ∀{ll orll rll lf s ltr prftr}
-                      → cuttable (fstSp s ltr ⦃ prf = prftr ⦄) lf
-                      → cuttable s (tr {u} {i} {j} {ll} {orll} {rll} ⦃ ltr ⦄ lf)
-  cuttable-s-tr-snd : {i : Size} → {j : Size< ↑ i} → ∀{ll orll rll lf s ltr prftr}
-                      → cuttable (sndSp s ltr ⦃ prf = prftr ⦄) lf
-                      → cuttable s (tr {u} {i} {j} {ll} {orll} {rll} ⦃ ltr ⦄ lf)
-
-
-
--- TODO This requires that the SetLL is precise. We might need it to also be a superset of a solution.
-canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (cuttable s lf)
-canItBeCut s I = no (λ ())
-canItBeCut s (_⊂_ {ind = ind} lf lf₁) with (isOnlyInside s ind)
-canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes oi with (canItBeCut (truncOISetLL s ind {{prf = oi}}) lf)
-canItBeCut s (lf ⊂ lf₁) | yes oi | (yes p) = yes (cuttable-s⊂-oi p)
-canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes oi | (no ¬p) = no (λ x → helpFunOi x oi ¬p) where
-  helpFunOi : cuttable s (_⊂_ {ind = ind} lf lf₁)
-              → (oi : onlyInside s ind)
-              → ¬ (cuttable (truncOISetLL s ind {{prf = oi}})) lf
-              → ⊥
-  helpFunOi (cuttable-s⊂-oi {{oi = oi}} ct) ex₁ ¬p with (onlyInsideUnique s ind oi ex₁)
-  helpFunOi (cuttable-s⊂-oi {{oi = .ex₁}} ct) ex₁ ¬p | refl = ¬p ct
-  helpFunOi (cuttable-s⊂-¬ho {s = s} {ind = ind} {{¬ho = ¬ho}} ct) oi ¬p = onlyInside¬hitsAtLeastOnce→⊥ s ind oi ¬ho
-canItBeCut s (_⊂_ {ind = ind} lf lf₁)    | no ¬oi with (doesItHitAtLeastOnce s ind)
-canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (yes ho) = no (λ { (cuttable-s⊂-oi {{oi = oi}}   ct) → ¬oi oi 
-                                                                                                    ; (cuttable-s⊂-¬ho {{¬ho = ¬ho}} ct) → ¬ho ho     })
-canItBeCut s (_⊂_ {ell = ell} {ind = ind} lf lf₁)  | no ¬oi | (no ¬ho) with (canItBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁)
-canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (yes p) = yes (cuttable-s⊂-¬ho ⦃ ¬ho = ¬ho ⦄ p)
-canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (no ¬p) = no (λ x → helpFunho x) where
-  helpFunho : cuttable s (lf ⊂ lf₁)
-              → ⊥
-  helpFunho (cuttable-s⊂-oi {{oi = oi}} x) = ¬oi oi
-  helpFunho (cuttable-s⊂-¬ho {{¬ho = ¬ho₁}} x) = ¬p x
-canItBeCut s (tr {{ltr = ltr}} lf) with (( suc zero) ≤? length (sptran s ltr))
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p with (canItBeCut (fstSp s ltr ⦃ prf = p ⦄) lf)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (yes p₁) = yes (cuttable-s-tr-fst {prftr = p} p₁)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p) with (( suc $ suc zero) ≤? length (sptran s ltr))
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p) | (yes p) with (canItBeCut (sndSp s ltr ⦃ prf = p ⦄) lf)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p₂ | (no ¬p) | (yes p) | (yes p₁) = yes (cuttable-s-tr-snd p₁)
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p₁) | (yes p) | (no ¬p) = no hf where
-  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
-  hf (cuttable-s-tr-fst x) = ¬p₁ x
-  hf (cuttable-s-tr-snd {prftr = prftr} x) with (prftr ≤un p)
-  hf (cuttable-s-tr-snd x) | refl = ¬p x
-canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p₁) | (no ¬p) = no hf where
-  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
-  hf (cuttable-s-tr-fst x) = ¬p₁ x
-  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p prftr
-canItBeCut s (tr {{ltr = ltr}} lf) | no ¬p = no hf where
-  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
-  hf (cuttable-s-tr-fst {prftr = prftr} x) = ¬p prftr
-  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p ( ≤-pred $ ≤rsuc prftr)
-canItBeCut s (obs lf) = no (λ ())
-canItBeCut s (com df lf) with (isEq (res-contruct s) ↓)
-canItBeCut s (com df lf) | yes p = yes (cuttable-s-com {s = s} {{ prf = p }})
-canItBeCut s (com df lf) | no ¬p = no hf where
-  hf : cuttable s (com df lf) → ⊥
-  hf (cuttable-s-com {{prf = prf}}) = ¬p prf
-canItBeCut s (call x) = no (λ ())
-
-
-    ---- TODO This requires that the SetLL is precise. We might need it to also be a superset of a solution.
-    --canItBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (Σ (SetLL ll) (λ ss → Σ (ss ≤s s) (λ _ → cuttable ss lf)))
-    --canItBeCut {ll = ll} s I = no hf where
-    --  hf : Σ (SetLL ll) (λ ss → Σ (ss ≤s s) (λ _ → cuttable ss I)) → ⊥
-    --  hf (ss , ss≤s , ())
-    --canItBeCut s (_⊂_ {ind = ind} lf lf₁) with (isOnlyInside s ind)
-    --canItBeCut s (_⊂_ {ind = ind} lf lf₁) | yes oi with (canItBeCut (truncOISetLL s ind {{prf = oi}}) lf)
-    --canItBeCut s (_⊂_ {pll = pll} {ll = ll} {ind = ind} lf lf₁) | yes oi | yes (ss , ss≤trs , p) with (oi⇒ext-truncoi ind {{oi = oi}} ss≤trs)
-    --... | exoi = yes (extend ind ss , ≤s-trans (≤s-ext ind ss≤trs) (≤s-extr ind s {{prf = oi}}) , cuttable-s⊂-oi {{ oi = exoi }} hf ) where
-    --  hf : cuttable (truncOISetLL (extend ind ss) ind {{prf = exoi}}) lf
-    --  hf with (truncOISetLL (extend ind ss) ind {{prf = exoi}}) | ( tr-ext⇒id ind {{oi = exoi}})
-    --  hf | _ | refl = p
-    --canItBeCut s (_⊂_ {pll = pll} {ll = ll} {ind = ind} lf lf₁) | yes oi | (no ¬p) = no hf where
-    --  hf :  Σ (SetLL ll) (λ ss → Σ (ss ≤s s) (λ _ → cuttable ss (_⊂_ {ind = ind} lf lf₁)))
-    --        → ⊥
-    --  hf (ss , ss≤s , cuttable-s⊂-oi {{oi = loi}} ct) = ¬p ((truncOISetLL ss ind , ≤⇒tr≤ ind ss≤s , ct))
-    --  hf (ss , ss≤s , cuttable-s⊂-¬ho ct) = {!!}
-    --
-    ----  no (λ {(ss , ss≤s , x) → helpFunOi x oi ¬p}) where
-    --  helpFunOi : cuttable s (_⊂_ {ind = ind} lf lf₁)
-    --              → (oi : onlyInside s ind)
-    --              → ¬ (cuttable (truncOISetLL s ind {{prf = oi}})) lf
-    --              → ⊥
-    --  helpFunOi (cuttable-s⊂-oi {{oi = oi}} ct) ex₁ ¬p with (onlyInsideUnique s ind oi ex₁)
-    --  helpFunOi (cuttable-s⊂-oi {{oi = .ex₁}} ct) ex₁ ¬p | refl = ¬p ct
-    --  helpFunOi (cuttable-s⊂-¬ho {s = s} {ind = ind} {{¬ho = ¬ho}} ct) oi ¬p = onlyInside¬hitsAtLeastOnce→⊥ s ind oi ¬ho
-    --canItBeCut s y = {!!}
---canItBeCut s (_⊂_ {ind = ind} lf lf₁)    | no ¬oi with (doesItHitAtLeastOnce s ind)
---canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (yes ho) = no (λ { (cuttable-s⊂-oi {{oi = oi}}   ct) → ¬oi oi 
---                                                                                                    ; (cuttable-s⊂-¬ho {{¬ho = ¬ho}} ct) → ¬ho ho     })
---canItBeCut s (_⊂_ {ell = ell} {ind = ind} lf lf₁)  | no ¬oi | (no ¬ho) with (canItBeCut (replSetLL s ind {{prf = ¬ho }} ell) lf₁)
---canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (yes p) = yes (cuttable-s⊂-¬ho ⦃ ¬ho = ¬ho ⦄ p)
---canItBeCut s (lf ⊂ lf₁)    | no ¬oi | (no ¬ho) | (no ¬p) = no (λ x → helpFunho x) where
---  helpFunho : cuttable s (lf ⊂ lf₁)
---              → ⊥
---  helpFunho (cuttable-s⊂-oi {{oi = oi}} x) = ¬oi oi
---  helpFunho (cuttable-s⊂-¬ho {{¬ho = ¬ho₁}} x) = ¬p x
---canItBeCut s (tr {{ltr = ltr}} lf) with (( suc zero) ≤? length (sptran s ltr))
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p with (canItBeCut (fstSp s ltr ⦃ prf = p ⦄) lf)
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (yes p₁) = yes (cuttable-s-tr-fst {prftr = p} p₁)
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p) with (( suc $ suc zero) ≤? length (sptran s ltr))
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p) | (yes p) with (canItBeCut (sndSp s ltr ⦃ prf = p ⦄) lf)
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p₂ | (no ¬p) | (yes p) | (yes p₁) = yes (cuttable-s-tr-snd p₁)
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p₁ | (no ¬p₁) | (yes p) | (no ¬p) = no hf where
---  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
---  hf (cuttable-s-tr-fst x) = ¬p₁ x
---  hf (cuttable-s-tr-snd {prftr = prftr} x) with (prftr ≤un p)
---  hf (cuttable-s-tr-snd x) | refl = ¬p x
---canItBeCut s (tr {{ltr = ltr}} lf) | yes p | (no ¬p₁) | (no ¬p) = no hf where
---  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
---  hf (cuttable-s-tr-fst x) = ¬p₁ x
---  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p prftr
---canItBeCut s (tr {{ltr = ltr}} lf) | no ¬p = no hf where
---  hf : cuttable s (tr {{ltr = ltr}} lf) → ⊥
---  hf (cuttable-s-tr-fst {prftr = prftr} x) = ¬p prftr
---  hf (cuttable-s-tr-snd {prftr = prftr} x) = ¬p ( ≤-pred $ ≤rsuc prftr)
---canItBeCut s (obs lf) = no (λ ())
---canItBeCut s (com df lf) with (isEq (res-contruct s) ↓)
---canItBeCut s (com df lf) | yes p = yes (cuttable-s-com {s = s} {{ prf = p }})
---canItBeCut s (com df lf) | no ¬p = no hf where
---  hf : cuttable s (com df lf) → ⊥
---  hf (cuttable-s-com {{prf = prf}}) = ¬p prf
---canItBeCut s (call x) = no (λ ())
---
 
 data fS {u} (A : Set (lsuc u)) : Set (lsuc u) where
   fYes : A → fS A
@@ -195,49 +68,51 @@ data fS {u} (A : Set (lsuc u)) : Set (lsuc u) where
 -- C) the set of calls that have been unfolded.
 
 -- If the usesInput is not complete, we remove the embedding, we insert the contents of the embedding to the parent and use its computed usesInput for these contents, continuing in the parent embedding.
-cut : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
-      → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
-cut s lf c (usesInputC ui) = cut` s lf c ui where
-  cut` : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → ∀{ms} → usesInputT` lf ms
-        → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
-  cut` s I () ui
-  cut` s (elf ⊂ lf) (cuttable-s⊂-oi c) ui = {!!}
-  cut` s (elf ⊂ lf) (cuttable-s⊂-¬ho c) ui = {!!}
-  cut` s plf@(tr lf) (cuttable-s-tr-fst c) ui = {!!}
-  cut` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
-  cut` s (obs lf) () ui
-  cut` s plf@(com df lf) cuttable-s-com ui with (doesItUseAllInputs lf)
-  cut` s (com df lf) cuttable-s-com ui | yes p = fYes (_ , lf , p)
-  cut` s (com df lf) cuttable-s-com ui | no ¬p = fNo
-  cut` s (call x) () ui
 
 
-module _ where
+--cut : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
+--      → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
+--cut s lf c (usesInputC ui) = cut` s lf c ui where
+--  cut` : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → ∀{ms} → usesInputT` lf ms
+--        → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
+--  cut` s I () ui
+--  cut` s (elf ⊂ lf) (cuttable-s⊂-oi c) ui = {!!}
+--  cut` s (elf ⊂ lf) (cuttable-s⊂-¬ho c) ui = {!!}
+--  cut` s plf@(tr lf) (cuttable-s-tr-fst c) ui = {!!}
+--  cut` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
+--  cut` s (obs lf) () ui
+--  cut` s plf@(com df lf) cuttable-s-com ui with (doesItUseAllInputs lf)
+--  cut` s (com df lf) cuttable-s-com ui | yes p = fYes (_ , lf , p)
+--  cut` s (com df lf) cuttable-s-com ui | no ¬p = fNo
+--  cut` s (call x) () ui
+--
 
-private
-  hf : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → MSetLL ll → (lf : LFun {u} {i} {k} {rll} {ll}) → ∀{ms} → usesInputT` lf ms
-       → (MSetLL rll) × ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
-  hf {ll = ll} ms I ui = {!!} 
-  hf ms (lf ⊂ lf₁) ui = {!!}
-  hf ms (tr lf) ui = {!!}
-  hf ms (obs lf) ui = {!!}
-  hf ms (com df lf) ui = {!!}
-  hf ms (call x) ui = {!!}
-
-  removeCalls : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
-        → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
-  removeCalls s lf c (usesInputC ui) = removeCalls` s lf c ui where
-    removeCalls` : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → ∀{ms} → usesInputT` lf ms
-          → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
-    removeCalls` s I () ui
-    removeCalls` s (elf ⊂ lf) (cuttable-s⊂-oi c) ui = {!!}
-    removeCalls` s (elf ⊂ lf) (cuttable-s⊂-¬ho c) ui = {!!}
-    removeCalls` s plf@(tr lf) (cuttable-s-tr-fst c) ui = {!!}
-    removeCalls` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
-    removeCalls` s (obs lf) () ui
-    removeCalls` s plf@(com df lf) cuttable-s-com ui = {!!}
-    removeCalls` s (call x) () ui
-
+--module _ where
+--
+--private
+--  hf : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → MSetLL ll → (lf : LFun {u} {i} {k} {rll} {ll}) → ∀{ms} → usesInputT` lf ms
+--       → (MSetLL rll) × ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
+--  hf {ll = ll} ms I ui = {!!} 
+--  hf ms (lf ⊂ lf₁) ui = {!!}
+--  hf ms (tr lf) ui = {!!}
+--  hf ms (obs lf) ui = {!!}
+--  hf ms (com df lf) ui = {!!}
+--  hf ms (call x) ui = {!!}
+--
+--  removeCalls : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
+--        → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
+--  removeCalls s lf c (usesInputC ui) = removeCalls` s lf c ui where
+--    removeCalls` : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → ∀{ms} → usesInputT` lf ms
+--          → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
+--    removeCalls` s I () ui
+--    removeCalls` s (elf ⊂ lf) (cuttable-s⊂-oi c) ui = {!!}
+--    removeCalls` s (elf ⊂ lf) (cuttable-s⊂-¬ho c) ui = {!!}
+--    removeCalls` s plf@(tr lf) (cuttable-s-tr-fst c) ui = {!!}
+--    removeCalls` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
+--    removeCalls` s (obs lf) () ui
+--    removeCalls` s plf@(com df lf) cuttable-s-com ui = {!!}
+--    removeCalls` s (call x) () ui
+--
 
 
 -- Important : We need to introduce a null data point like Unit, that serves to express the dependency between events. 

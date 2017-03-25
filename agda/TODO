@@ -1,4 +1,4 @@
-When a set of inputs is cuttable, the complement is also cuttable since it will never be executed, thus it needs to be removed.
+VERY IMPORTANT : When a set of inputs is cuttable, the "complement" is also cuttable since it will never be executed, thus it needs to be removed.
 
 The complement of every \or or \partial is cuttable but not together with their complements, separately.
 
