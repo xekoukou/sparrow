@@ -29,7 +29,7 @@ data MSetLL {i : Size} {u} : LinLogic i {u} → Set where
 
 
 -- Add a node to an empty set (and potentially replace the linear logic sub-tree).
-∅-add : ∀{i u ll rll} → {j : Size< ↑ i} → (ind : IndexLL {i} {u} rll ll) → (nrll : LinLogic j )
+∅-add : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → (nrll : LinLogic i )
         → SetLL (replLL ll ind nrll)
 ∅-add ↓ nrll = ↓
 ∅-add (ind ←∧) nrll = (∅-add ind nrll) ←∧
@@ -40,53 +40,39 @@ data MSetLL {i : Size} {u} : LinLogic i {u} → Set where
 ∅-add (∂→ ind) nrll = ∂→ (∅-add ind nrll)
 
 
--- TODO We shouldn't need this. When issue agda #2409 is resolved, remove this.
-dsize : ∀{i u ll} → {j : Size< ↑ i} → SetLL {i} {u} ll → SetLL {j} ll
-dsize ↓          = ↓
-dsize (x ←∧)     = (dsize x) ←∧
-dsize (∧→ x)     = ∧→ (dsize x)
-dsize (x ←∧→ x₁) = (dsize x ←∧→ dsize x₁)
-dsize (x ←∨)     = (dsize x) ←∨
-dsize (∨→ x)     = ∨→ (dsize x)
-dsize (x ←∨→ x₁) = (dsize x ←∨→ dsize x₁)
-dsize (x ←∂)     = (dsize x) ←∂
-dsize (∂→ x)     = ∂→ (dsize x)
-dsize (x ←∂→ x₁) = (dsize x ←∂→ dsize x₁)
-
-
 -- Add a node to a set (and potentially replace the linear logic sub-tree).
-add : ∀{i u ll q} → {j : Size< ↑ i} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
+add : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic i)
       → SetLL (replLL ll ind rll)
 add ↓ ind rll               = ↓
 add (s ←∧) ↓ rll            = ↓
 add (s ←∧) (ind ←∧) rll     = (add s ind rll) ←∧
-add (s ←∧) (∧→ ind) rll     = dsize s ←∧→ (∅-add ind rll)
+add (s ←∧) (∧→ ind) rll     = s ←∧→ (∅-add ind rll)
 add (∧→ s) ↓ rll            = ↓
-add (∧→ s) (ind ←∧) rll     = (∅-add ind rll) ←∧→ dsize s
+add (∧→ s) (ind ←∧) rll     = (∅-add ind rll) ←∧→ s
 add (∧→ s) (∧→ ind) rll     = ∧→ add s ind rll
 add (s ←∧→ s₁) ↓ rll        = ↓
-add (s ←∧→ s₁) (ind ←∧) rll = (add s ind rll) ←∧→ dsize s₁
-add (s ←∧→ s₁) (∧→ ind) rll = dsize s ←∧→ (add s₁ ind rll)
+add (s ←∧→ s₁) (ind ←∧) rll = (add s ind rll) ←∧→ s₁
+add (s ←∧→ s₁) (∧→ ind) rll = s ←∧→ (add s₁ ind rll)
 add (s ←∨) ↓ rll            = ↓
 add (s ←∨) (ind ←∨) rll     = (add s ind rll) ←∨
-add (s ←∨) (∨→ ind) rll     = dsize s ←∨→ (∅-add ind rll)
+add (s ←∨) (∨→ ind) rll     = s ←∨→ (∅-add ind rll)
 add (∨→ s) ↓ rll            = ↓
-add (∨→ s) (ind ←∨) rll     = (∅-add ind rll) ←∨→ dsize s
+add (∨→ s) (ind ←∨) rll     = (∅-add ind rll) ←∨→ s
 add (∨→ s) (∨→ ind) rll     = ∨→ add s ind rll
 add (s ←∨→ s₁) ↓ rll        = ↓
-add (s ←∨→ s₁) (ind ←∨) rll = (add s ind rll) ←∨→ dsize s₁
-add (s ←∨→ s₁) (∨→ ind) rll = dsize s ←∨→ (add s₁ ind rll)
+add (s ←∨→ s₁) (ind ←∨) rll = (add s ind rll) ←∨→ s₁
+add (s ←∨→ s₁) (∨→ ind) rll = s ←∨→ (add s₁ ind rll)
 add (s ←∂) ↓ rll            = ↓
 add (s ←∂) (ind ←∂) rll     = (add s ind rll) ←∂
-add (s ←∂) (∂→ ind) rll     = dsize s ←∂→ (∅-add ind rll)
+add (s ←∂) (∂→ ind) rll     = s ←∂→ (∅-add ind rll)
 add (∂→ s) ↓ rll            = ↓
-add (∂→ s) (ind ←∂) rll     = (∅-add ind rll) ←∂→ dsize s
+add (∂→ s) (ind ←∂) rll     = (∅-add ind rll) ←∂→ s
 add (∂→ s) (∂→ ind) rll     = ∂→ add s ind rll
 add (s ←∂→ s₁) ↓ rll        = ↓
-add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ dsize s₁
-add (s ←∂→ s₁) (∂→ ind) rll = dsize s ←∂→ (add s₁ ind rll)
+add (s ←∂→ s₁) (ind ←∂) rll = (add s ind rll) ←∂→ s₁
+add (s ←∂→ s₁) (∂→ ind) rll = s ←∂→ (add s₁ ind rll)
 
-madd : ∀{i u ll q} → {j : Size< ↑ i} → MSetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
+madd : ∀{i u ll q} → MSetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic i)
       → MSetLL (replLL ll ind rll)
 madd ∅ ind rll = ¬∅ (∅-add ind rll)
 madd (¬∅ x) ind rll = ¬∅ (add x ind rll)
@@ -139,7 +125,7 @@ _∪ₘₛ_ (¬∅ fs) ∅      = ¬∅ fs
 _∪ₘₛ_ (¬∅ fs) (¬∅ s) = ¬∅ (fs ∪ₛ s)
 
 -- Deletes an index if it is present, otherwise does nothing.
-del : ∀{i u ll q} → {j : Size< ↑ i} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
+del : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic i)
       → MSetLL (replLL ll ind rll)
 del s ↓ rll = ∅
 del ↓ (ind ←∧) rll with (del ↓ ind rll)
@@ -148,65 +134,65 @@ del ↓ (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ ↓)
 del (s ←∧) (ind ←∧) rll with (del s ind rll)
 del (s ←∧) (ind ←∧) rll | ∅ = ∅
 del (s ←∧) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧)
-del (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (dsize s))
+del (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (s))
 del (s ←∧→ s₁) (ind ←∧) rll with (del s ind rll)
-del (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (dsize s₁))
-del (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (dsize s₁))
+del (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (s₁))
+del (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (s₁))
 del ↓ (∧→ ind) rll with (del ↓ ind rll)
 del ↓ (∧→ ind) rll | ∅ = ¬∅ (↓ ←∧)
 del ↓ (∧→ ind) rll | ¬∅ x = ¬∅ (↓ ←∧→ x)
-del (s ←∧) (∧→ ind) rll = ¬∅ ((dsize s) ←∧)
+del (s ←∧) (∧→ ind) rll = ¬∅ ((s) ←∧)
 del (∧→ s) (∧→ ind) rll with (del s ind rll)
 del (∧→ s) (∧→ ind) rll | ∅ = ∅
 del (∧→ s) (∧→ ind) rll | ¬∅ x = ¬∅ (∧→ x)
 del (s ←∧→ s₁) (∧→ ind) rll with (del s₁ ind rll)
-del (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((dsize s) ←∧)
-del (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∧→ x)
+del (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((s) ←∧)
+del (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((s) ←∧→ x)
 del ↓ (ind ←∨) rll with (del ↓ ind rll)
 del ↓ (ind ←∨) rll | ∅ = ¬∅ (∨→ ↓)
 del ↓ (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ ↓)
 del (s ←∨) (ind ←∨) rll with (del s ind rll)
 del (s ←∨) (ind ←∨) rll | ∅ = ∅
 del (s ←∨) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨)
-del (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (dsize s))
+del (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (s))
 del (s ←∨→ s₁) (ind ←∨) rll with (del s ind rll)
-del (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (dsize s₁))
-del (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (dsize s₁))
+del (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (s₁))
+del (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (s₁))
 del ↓ (∨→ ind) rll with (del ↓ ind rll)
 del ↓ (∨→ ind) rll | ∅ = ¬∅ (↓ ←∨)
 del ↓ (∨→ ind) rll | ¬∅ x = ¬∅ (↓ ←∨→ x)
-del (s ←∨) (∨→ ind) rll = ¬∅ ((dsize s) ←∨)
+del (s ←∨) (∨→ ind) rll = ¬∅ ((s) ←∨)
 del (∨→ s) (∨→ ind) rll with (del s ind rll)
 del (∨→ s) (∨→ ind) rll | ∅ = ∅
 del (∨→ s) (∨→ ind) rll | ¬∅ x = ¬∅ (∨→ x)
 del (s ←∨→ s₁) (∨→ ind) rll with (del s₁ ind rll)
-del (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((dsize s) ←∨)
-del (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∨→ x)
+del (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((s) ←∨)
+del (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((s) ←∨→ x)
 del ↓ (ind ←∂) rll with (del ↓ ind rll)
 del ↓ (ind ←∂) rll | ∅ = ¬∅ (∂→ ↓)
 del ↓ (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ ↓)
 del (s ←∂) (ind ←∂) rll with (del s ind rll)
 del (s ←∂) (ind ←∂) rll | ∅ = ∅
 del (s ←∂) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂)
-del (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (dsize s))
+del (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (s))
 del (s ←∂→ s₁) (ind ←∂) rll with (del s ind rll)
-del (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (dsize s₁))
-del (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (dsize s₁))
+del (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (s₁))
+del (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (s₁))
 del ↓ (∂→ ind) rll with (del ↓ ind rll)
 del ↓ (∂→ ind) rll | ∅ = ¬∅ (↓ ←∂)
 del ↓ (∂→ ind) rll | ¬∅ x = ¬∅ (↓ ←∂→ x)
-del (s ←∂) (∂→ ind) rll = ¬∅ ((dsize s) ←∂)
+del (s ←∂) (∂→ ind) rll = ¬∅ ((s) ←∂)
 del (∂→ s) (∂→ ind) rll with (del s ind rll)
 del (∂→ s) (∂→ ind) rll | ∅ = ∅
 del (∂→ s) (∂→ ind) rll | ¬∅ x = ¬∅ (∂→ x)
 del (s ←∂→ s₁) (∂→ ind) rll with (del s₁ ind rll)
-del (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((dsize s) ←∂)
-del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((dsize s) ←∂→ x)
+del (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((s) ←∂)
+del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((s) ←∂→ x)
 
 module _ where
 
   private
-    hf : ∀{i u ll q} → {j : Size< ↑ i} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {j} rll → SetLL (replLL ll ind rll)
+    hf : ∀{i u ll q} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {i} rll → SetLL (replLL ll ind rll)
     hf ↓ b = b
     hf (ind ←∧) b = (hf ind b) ←∧
     hf (∧→ ind) b = ∧→ (hf ind b)
@@ -215,33 +201,33 @@ module _ where
     hf (ind ←∂) b = (hf ind b) ←∂
     hf (∂→ ind) b = ∂→ (hf ind b)
   
-  replacePartOf_to_at_ : ∀{i u ll q} → {j : Size< ↑ i} → ∀{rll} → SetLL ll → SetLL {j} rll → (ind : IndexLL {i} {u} q ll)
+  replacePartOf_to_at_ : ∀{i u ll q} → ∀{rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} q ll)
             → SetLL (replLL ll ind rll)
   replacePartOf a to b at ↓               = b
   replacePartOf ↓ to b at (ind ←∧)        = (replacePartOf ↓ to b at ind) ←∧→ ↓
   replacePartOf a ←∧ to b at (ind ←∧)     = (replacePartOf a to b at ind) ←∧
-  replacePartOf_to_at_ {q                 = q} {rll = rll} (∧→ a) b (ind ←∧) = (hf ind b) ←∧→ (dsize a)
-  replacePartOf a ←∧→ a₁ to b at (ind ←∧) = (replacePartOf a to b at ind) ←∧→ (dsize a₁)
+  replacePartOf_to_at_ {q                 = q} {rll = rll} (∧→ a) b (ind ←∧) = (hf ind b) ←∧→ (a)
+  replacePartOf a ←∧→ a₁ to b at (ind ←∧) = (replacePartOf a to b at ind) ←∧→ (a₁)
   replacePartOf ↓ to b at (∧→ ind)        =  ↓ ←∧→ (replacePartOf ↓ to b at ind)
-  replacePartOf a ←∧ to b at (∧→ ind)     = (dsize a) ←∧→ (hf ind b)  
+  replacePartOf a ←∧ to b at (∧→ ind)     = (a) ←∧→ (hf ind b)  
   replacePartOf ∧→ a to b at (∧→ ind)     = ∧→ (replacePartOf a to b at ind)
-  replacePartOf a ←∧→ a₁ to b at (∧→ ind) = (dsize a) ←∧→ (replacePartOf a₁ to b at ind)
+  replacePartOf a ←∧→ a₁ to b at (∧→ ind) = (a) ←∧→ (replacePartOf a₁ to b at ind)
   replacePartOf ↓ to b at (ind ←∨)        = (replacePartOf ↓ to b at ind) ←∨→ ↓
   replacePartOf a ←∨ to b at (ind ←∨)     = (replacePartOf a to b at ind) ←∨
-  replacePartOf_to_at_ {q                 = q} {rll = rll} (∨→ a) b (ind ←∨) = (hf ind b) ←∨→ (dsize a)
-  replacePartOf a ←∨→ a₁ to b at (ind ←∨) = (replacePartOf a to b at ind) ←∨→ (dsize a₁)
+  replacePartOf_to_at_ {q                 = q} {rll = rll} (∨→ a) b (ind ←∨) = (hf ind b) ←∨→ (a)
+  replacePartOf a ←∨→ a₁ to b at (ind ←∨) = (replacePartOf a to b at ind) ←∨→ (a₁)
   replacePartOf ↓ to b at (∨→ ind)        =  ↓ ←∨→ (replacePartOf ↓ to b at ind)
-  replacePartOf a ←∨ to b at (∨→ ind)     = (dsize a) ←∨→ (hf ind b)  
+  replacePartOf a ←∨ to b at (∨→ ind)     = (a) ←∨→ (hf ind b)  
   replacePartOf ∨→ a to b at (∨→ ind)     = ∨→ (replacePartOf a to b at ind)
-  replacePartOf a ←∨→ a₁ to b at (∨→ ind) = (dsize a) ←∨→ (replacePartOf a₁ to b at ind)
+  replacePartOf a ←∨→ a₁ to b at (∨→ ind) = (a) ←∨→ (replacePartOf a₁ to b at ind)
   replacePartOf ↓ to b at (ind ←∂)        = (replacePartOf ↓ to b at ind) ←∂→ ↓
   replacePartOf a ←∂ to b at (ind ←∂)     = (replacePartOf a to b at ind) ←∂
-  replacePartOf_to_at_ {q                 = q} {rll = rll} (∂→ a) b (ind ←∂) = (hf ind b) ←∂→ (dsize a)
-  replacePartOf a ←∂→ a₁ to b at (ind ←∂) = (replacePartOf a to b at ind) ←∂→ (dsize a₁)
+  replacePartOf_to_at_ {q                 = q} {rll = rll} (∂→ a) b (ind ←∂) = (hf ind b) ←∂→ (a)
+  replacePartOf a ←∂→ a₁ to b at (ind ←∂) = (replacePartOf a to b at ind) ←∂→ (a₁)
   replacePartOf ↓ to b at (∂→ ind)        =  ↓ ←∂→ (replacePartOf ↓ to b at ind)
-  replacePartOf a ←∂ to b at (∂→ ind)     = (dsize a) ←∂→ (hf ind b)  
+  replacePartOf a ←∂ to b at (∂→ ind)     = (a) ←∂→ (hf ind b)  
   replacePartOf ∂→ a to b at (∂→ ind)     = ∂→ (replacePartOf a to b at ind)
-  replacePartOf a ←∂→ a₁ to b at (∂→ ind) = (dsize a) ←∂→ (replacePartOf a₁ to b at ind)
+  replacePartOf a ←∂→ a₁ to b at (∂→ ind) = (a) ←∂→ (replacePartOf a₁ to b at ind)
 
 
 module _ where

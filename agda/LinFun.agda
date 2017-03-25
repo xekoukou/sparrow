@@ -29,145 +29,143 @@ private
 
 
 mutual
-  data LFun {u} : {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → Set (lsuc u) where
-   I   : {i : Size} → ∀{rll} → LFun {u} {i} {_} {rll} {rll}
-   _⊂_ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{pll ll ell rll} → {ind : IndexLL {i} pll ll} → (elf : LFun {_} {i} {j} {ell} {pll})
-         → LFun {_} {j} {k} {rll} {(replLL ll ind ell)}
-         → LFun {_} {i} {k} {rll} {ll}
-   -- Do we need to set ltr as an instance variable?
-   tr  : {i : Size} → {j : Size< ↑ i} → ∀{ll orll rll} → {{ltr : LLTr orll ll}} → LFun {_} {i} {j} {rll} {orll} → LFun {_} {i} {j} {rll} {ll}
-   obs : {i : Size} → {j : Size< i} → {k : Size< ↑ j} → ∀{∞ll rll} → LFun {_} {j} {k} {rll} {(step ∞ll)} → LFun {_} {i} {k} {rll} {call ∞ll}
-   com : {i : Size} → {j : Size< ↑ i} → ∀{rll ll} → {frll : LinLogic i}
+  data LFun {i u} : (ll : LinLogic i {u}) → (rll : LinLogic i {u}) → Set (lsuc u) where
+   I   : ∀{rll} → LFun {i} {u} rll rll
+   _⊂_ : ∀{pll ll ell rll} → {ind : IndexLL {i} {u} pll ll} → (elf : LFun pll ell)
+         → LFun (replLL ll ind ell) rll
+         → LFun ll rll
+   tr  : ∀{ll orll rll} → (ltr : LLTr orll ll) → LFun {i} {u} orll rll → LFun {i} {u} ll rll
+   com : ∀{rll ll} → {frll : LinLogic i}
          → ⦃ prfi : onlyOneNilOrNoNilFinite ll ≡ true ⦄ → ⦃ prfo : onlyOneNilOrNoNilFinite frll ≡ true ⦄
-         → (df : (ldt : LinDepT ll) → LinT ldt → LinDepT frll) → LFun {rll = rll} {ll = frll}
-         → LFun {_} {i} {j} {rll = rll} {ll = ll}
+         → (df : (ldt : LinDepT ll) → LinT ldt → LinDepT frll) → LFun frll rll
+         → LFun {i} {u} ll rll
    --prf guarantees that calls will always contain an input that is not a call. Thus when we remove calls based on previous input availability, only one will be removed for a specific input.
    -- TODO ?? I think that prf is usefull but not for the previous argument. Without prf, we can have LFun that have no concrete inputs.
-   call : {i : Size} → {j : Size< ↑ i} → ∀{ll ∞rll prf} → ∞LFun {i} {_} {∞rll} {ll} {{prf}} → LFun {_} {i} {j} {call ∞rll} {ll}
+   call : ∀{ll ∞rll prf} → ∞LFun {i} {u} ll ∞rll {{prf}} → LFun {i} {u} ll (call ∞rll)
 
 -- We need to create an observe function, that will unfold all first calls. Then when call is unfolded, the remaining calls generate obs.↑
-  record ∞LFun {i : Size} {u} {∞rll : ∞LinLogic i {u}} {ll : LinLogic i {u}} {{prf : notOnlyCall ll ≡ true}} : Set (lsuc u) where
+  record ∞LFun {i u} (ll : LinLogic i {u}) (∞rll : ∞LinLogic i {u}) {{prf : notOnlyCall ll ≡ true}} : Set (lsuc u) where
     coinductive
     field
-      step : {j : Size< i} → Σ (LFun {_} {j} {j} {(step ∞rll)} {unfold ll}) (λ x → usesInputT x) -- ??
+      step : {j : Size< i} → Σ (LFun {j} {u} (unfold ll) ((step ∞rll))) (λ x → usesInputT x) -- ??
 
 -- UsesInput checks that the inputs will be used by the current LFun and not by the LFun of a call. This means that the search for the appropriate com is total, it takes a finite amount of time.
 
-  data usesInputT {i : Size} {j : Size< ↑ i } {u rll ll} (lf : LFun {u} {i} {j} {rll} {ll}) : Set where
-    usesInputC : usesInputT` {i} {j} {u} {rll} {ll} lf ∅ → usesInputT {i} {j} {u} {rll} {ll} lf
+  data usesInputT {i u} {rll ll} (lf : LFun {i} {u} ll rll) : Set where
+    usesInputC : usesInputT` {i} {u} {rll} {ll} lf ∅ → usesInputT {i} {u} {rll} {ll} lf
 
-  data usesInputT` : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → LFun {u} {i} {j} {rll} {ll} → MSetLL ll → Set where
-    usesInputC`I  : {i : Size} → ∀{u ll ms} → usesInputT` {i} {_} {u} {_} {ll} I ms 
-    usesInputC`⊂↓ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll ell ll elf lf ms}
-                    → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {ll} {ll} {ell} {rll} {↓} elf lf) ms
-    usesInputC`⊂←∧∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+  data usesInputT` {i u} : ∀{rll ll} → LFun {i} {u} ll rll → MSetLL ll → Set where
+    usesInputC`I  : ∀{ll ms} → usesInputT` {i} {u} {_} {ll} I ms 
+    usesInputC`⊂↓ : ∀{rll ell ll elf lf ms}
+                    → usesInputT` {i} {u} (_⊂_ {i} {u} {ll} {ll} {ell} {rll} {↓} elf lf) ms
+    usesInputC`⊂←∧∅ : ∀{rll pll lll llr ell ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = ∅-add (ind ←∧) ell in
                         let ll = LinLogic._∧_ lll llr in
-                        usesInputT` {j} {k} {u} {rll} {replLL ll (ind ←∧) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {ind ←∧} elf lf) ∅
-    usesInputC`⊂←∧¬∅c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr ind s elf lf}
-                     →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                        usesInputT` {i} {u} {rll} {replLL ll (ind ←∧) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {ind ←∧} elf lf) ∅
+    usesInputC`⊂←∧¬∅c : ∀{rll pll ell lll llr ind s elf lf}
+                     →  usesInputT` {i} {u} {ell} {pll} elf ∅
                      → {cTo↓ : (contruct $ add s (ind ←∧) ell) ≡ ↓} 
-                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {ind ←∧} elf lf) (¬∅ s)
-    usesInputC`⊂←∧¬∅¬c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr s ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                     → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {ind ←∧} elf lf) (¬∅ s)
+    usesInputC`⊂←∧¬∅¬c : ∀{rll pll ell lll llr s ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = contruct $ add s (ind ←∧) ell in {¬cTo↓ : ¬ (ns ≡ ↓)}
-                      → let ll = LinLogic._∧_ lll llr in usesInputT` {j} {k} {u} {rll} {replLL ll (ind ←∧) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind ←∧} elf lf) (¬∅ s)
-    usesInputC`⊂∧→∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                      → let ll = LinLogic._∧_ lll llr in usesInputT` {i} {u} {rll} {replLL ll (ind ←∧) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind ←∧} elf lf) (¬∅ s)
+    usesInputC`⊂∧→∅ :  ∀{rll pll lll llr ell ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = ∅-add (∧→ ind) ell in
                         let ll = LinLogic._∧_ lll llr in
-                        usesInputT` {j} {k} {u} {rll} {replLL ll (∧→ ind) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {∧→ ind} elf lf) ∅
-    usesInputC`⊂∧→¬∅c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr ind s elf lf}
-                     →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                        usesInputT` {i} {u} {rll} {replLL ll (∧→ ind) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {∧→ ind} elf lf) ∅
+    usesInputC`⊂∧→¬∅c : ∀{rll pll ell lll llr ind s elf lf}
+                     →  usesInputT` {i} {u} {ell} {pll} elf ∅
                      → {cTo↓ : (contruct $ add s (∧→ ind) ell) ≡ ↓} 
-                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {∧→ ind} elf lf) (¬∅ s)
-    usesInputC`⊂∧→¬∅¬c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr s ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                     → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∧_ lll llr} {ell} {rll} {∧→ ind} elf lf) (¬∅ s)
+    usesInputC`⊂∧→¬∅¬c : ∀{rll pll ell lll llr s ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = contruct $ add s (∧→ ind) ell in {¬cTo↓ : ¬ (ns ≡ ↓)}
-                      → let ll = LinLogic._∧_ lll llr in usesInputT` {j} {k} {u} {rll} {replLL ll (∧→ ind) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {∧→ ind} elf lf) (¬∅ s)
-    usesInputC`⊂←∨∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                      → let ll = LinLogic._∧_ lll llr in usesInputT` {i} {u} {rll} {replLL ll (∧→ ind) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {∧→ ind} elf lf) (¬∅ s)
+    usesInputC`⊂←∨∅ : ∀{rll pll lll llr ell ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = ∅-add (ind ←∨) ell in
                         let ll = LinLogic._∨_ lll llr in
-                        usesInputT` {j} {k} {u} {rll} {replLL ll (ind ←∨) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {ind ←∨} elf lf) ∅
-    usesInputC`⊂←∨¬∅c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr ind s elf lf}
-                     →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                        usesInputT` {i} {u} {rll} {replLL ll (ind ←∨) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {ind ←∨} elf lf) ∅
+    usesInputC`⊂←∨¬∅c : ∀{rll pll ell lll llr ind s elf lf}
+                     →  usesInputT` {i} {u} {ell} {pll} elf ∅
                      → {cTo↓ : (contruct $ add s (ind ←∨) ell) ≡ ↓} 
-                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {ind ←∨} elf lf) (¬∅ s)
-    usesInputC`⊂←∨¬∅¬c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr s ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                     → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {ind ←∨} elf lf) (¬∅ s)
+    usesInputC`⊂←∨¬∅¬c : ∀{rll pll ell lll llr s ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = contruct $ add s (ind ←∨) ell in {¬cTo↓ : ¬ (ns ≡ ↓)}
-                      → let ll = LinLogic._∨_ lll llr in usesInputT` {j} {k} {u} {rll} {replLL ll (ind ←∨) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind ←∨} elf lf) (¬∅ s)
-    usesInputC`⊂∨→∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                      → let ll = LinLogic._∨_ lll llr in usesInputT` {i} {u} {rll} {replLL ll (ind ←∨) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind ←∨} elf lf) (¬∅ s)
+    usesInputC`⊂∨→∅ : ∀{rll pll lll llr ell ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = ∅-add (∨→ ind) ell in
                         let ll = LinLogic._∨_ lll llr in
-                        usesInputT` {j} {k} {u} {rll} {replLL ll (∨→ ind) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {∨→ ind} elf lf) ∅
-    usesInputC`⊂∨→¬∅c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr ind s elf lf}
-                     →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                        usesInputT` {i} {u} {rll} {replLL ll (∨→ ind) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {∨→ ind} elf lf) ∅
+    usesInputC`⊂∨→¬∅c : ∀{rll pll ell lll llr ind s elf lf}
+                     →  usesInputT` {i} {u} {ell} {pll} elf ∅
                      → {cTo↓ : (contruct $ add s (∨→ ind) ell) ≡ ↓} 
-                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {∨→ ind} elf lf) (¬∅ s)
-    usesInputC`⊂∨→¬∅¬c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr s ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                     → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∨_ lll llr} {ell} {rll} {∨→ ind} elf lf) (¬∅ s)
+    usesInputC`⊂∨→¬∅¬c : ∀{rll pll ell lll llr s ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = contruct $ add s (∨→ ind) ell in {¬cTo↓ : ¬ (ns ≡ ↓)}
-                      → let ll = LinLogic._∨_ lll llr in usesInputT` {j} {k} {u} {rll} {replLL ll (∨→ ind) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {∨→ ind} elf lf) (¬∅ s)
-    usesInputC`⊂←∂∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                      → let ll = LinLogic._∨_ lll llr in usesInputT` {i} {u} {rll} {replLL ll (∨→ ind) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {∨→ ind} elf lf) (¬∅ s)
+    usesInputC`⊂←∂∅ : ∀{rll pll lll llr ell ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = ∅-add (ind ←∂) ell in
                         let ll = LinLogic._∂_ lll llr in
-                        usesInputT` {j} {k} {u} {rll} {replLL ll (ind ←∂) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {ind ←∂} elf lf) ∅
-    usesInputC`⊂←∂¬∅c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr ind s elf lf}
-                     →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                        usesInputT` {i} {u} {rll} {replLL ll (ind ←∂) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {ind ←∂} elf lf) ∅
+    usesInputC`⊂←∂¬∅c : ∀{rll pll ell lll llr ind s elf lf}
+                     →  usesInputT` {i} {u} {ell} {pll} elf ∅
                      → {cTo↓ : (contruct $ add s (ind ←∂) ell) ≡ ↓} 
-                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {ind ←∂} elf lf) (¬∅ s)
-    usesInputC`⊂←∂¬∅¬c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr s ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                     → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {ind ←∂} elf lf) (¬∅ s)
+    usesInputC`⊂←∂¬∅¬c : ∀{rll pll ell lll llr s ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = contruct $ add s (ind ←∂) ell in {¬cTo↓ : ¬ (ns ≡ ↓)}
-                      → let ll = LinLogic._∂_ lll llr in usesInputT` {j} {k} {u} {rll} {replLL ll (ind ←∂) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind ←∂} elf lf) (¬∅ s)
-    usesInputC`⊂∂→∅ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll lll llr ell ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                      → let ll = LinLogic._∂_ lll llr in usesInputT` {i} {u} {rll} {replLL ll (ind ←∂) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind ←∂} elf lf) (¬∅ s)
+    usesInputC`⊂∂→∅ : ∀{rll pll lll llr ell ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = ∅-add (∂→ ind) ell in
                         let ll = LinLogic._∂_ lll llr in
-                        usesInputT` {j} {k} {u} {rll} {replLL ll (∂→ ind) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {∂→ ind} elf lf) ∅
-    usesInputC`⊂∂→¬∅c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr ind s elf lf}
-                     →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                        usesInputT` {i} {u} {rll} {replLL ll (∂→ ind) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {∂→ ind} elf lf) ∅
+    usesInputC`⊂∂→¬∅c : ∀{rll pll ell lll llr ind s elf lf}
+                     →  usesInputT` {i} {u} {ell} {pll} elf ∅
                      → {cTo↓ : (contruct $ add s (∂→ ind) ell) ≡ ↓} 
-                     → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {∂→ ind} elf lf) (¬∅ s)
-    usesInputC`⊂∂→¬∅¬c : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell lll llr s ind elf lf}
-                      →  usesInputT` {i} {j} {u} {ell} {pll} elf ∅
+                     → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {LinLogic._∂_ lll llr} {ell} {rll} {∂→ ind} elf lf) (¬∅ s)
+    usesInputC`⊂∂→¬∅¬c : ∀{rll pll ell lll llr s ind elf lf}
+                      →  usesInputT` {i} {u} {ell} {pll} elf ∅
                       → let ns = contruct $ add s (∂→ ind) ell in {¬cTo↓ : ¬ (ns ≡ ↓)}
-                      → let ll = LinLogic._∂_ lll llr in usesInputT` {j} {k} {u} {rll} {replLL ll (∂→ ind) ell} lf (¬∅ ns)
-                      → usesInputT` {i} {k} (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {∂→ ind} elf lf) (¬∅ s)
-    usesInputC`tr∅ : {i : Size} → {j : Size< ↑ i} → ∀{u ll rll orll ltr lf}
+                      → let ll = LinLogic._∂_ lll llr in usesInputT` {i} {u} {rll} {replLL ll (∂→ ind) ell} lf (¬∅ ns)
+                      → usesInputT` {i} {u} (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {∂→ ind} elf lf) (¬∅ s)
+    usesInputC`tr∅ : ∀{ll rll orll ltr lf}
                      → usesInputT` lf ∅
-                     → usesInputT` {_} {_} (tr {u} {i} {j}  {ll} {orll} {rll} {{ltr}} lf) ∅
-    usesInputC`trs : {i : Size} → {j : Size< ↑ i} → ∀{u ll rll orll ltr lf s}
+                     → usesInputT` {_} {_} (tr {i} {u} {ll} {orll} {rll} ltr lf) ∅
+    usesInputC`trs : ∀{ll rll orll ltr lf s}
                      → usesInputT` lf $ ¬∅ (SetLL.tran s ltr)
-                     → usesInputT` {_} {_} (tr {u} {i} {j}  {ll} {orll} {rll} {{ltr}} lf) (¬∅ s)
-    usesInputC`com : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll ms frll prfi prfo  df lf}
-                     → usesInputT` (com {u} {i} {j} {rll} {ll} {frll}  ⦃ prfi = prfi ⦄ ⦃ prfo = prfo ⦄ df lf) ms
-    usesInputC`callc : {i : Size} → {j : Size< ↑ i} → ∀{u ∞rll ll ms prf ∞lf}
+                     → usesInputT` {_} {_} (tr {i} {u} {ll} {orll} {rll} ltr lf) (¬∅ s)
+    usesInputC`com : ∀{rll ll ms frll prfi prfo  df lf}
+                     → usesInputT` (com {i} {u} {rll} {ll} {frll}  ⦃ prfi = prfi ⦄ ⦃ prfo = prfo ⦄ df lf) ms
+    usesInputC`callc : ∀{∞rll ll ms prf ∞lf}
                        → {cTo↓ : ((fillWithCalls ll) c∪ₘₛ ms ) ≡ ¬∅ ↓} 
-                       → usesInputT` (call {u} {i} {j} {ll} {∞rll} {prf} ∞lf) ms 
+                       → usesInputT` (call {i} {u} {ll} {∞rll} {prf} ∞lf) ms 
 
 
 open ∞LFun public
 
-doesItUseAllInputs : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → Dec (usesInputT lf)
+doesItUseAllInputs : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {i} {u} ll rll) → Dec (usesInputT lf)
 doesItUseAllInputs {ll = ll} lf with (doesItUseAllInputs` lf ∅) where
-  doesItUseAllInputs` : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → (ms : MSetLL ll) → Dec (usesInputT` lf ms)
+  doesItUseAllInputs` : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {i} {u} ll rll) → (ms : MSetLL ll) → Dec (usesInputT` lf ms)
   doesItUseAllInputs` I ms = yes usesInputC`I
   doesItUseAllInputs` (_⊂_ {ell = ell} {ind = ↓} elf lf) ms = yes usesInputC`⊂↓
   doesItUseAllInputs` plf@(_⊂_ {pll = pll} {ll = ll} {ell = ell} {ind = ind ←∧} elf lf) ∅ with (doesItUseAllInputs` elf ∅)
@@ -302,18 +300,16 @@ doesItUseAllInputs {ll = ll} lf with (doesItUseAllInputs` lf ∅) where
     hf : usesInputT` plf (¬∅ s) → ⊥
     hf (usesInputC`⊂∂→¬∅c y {cTo↓ = cTo↓}) = ¬cTo↓ cTo↓
     hf (usesInputC`⊂∂→¬∅¬c y x) = p x
-  doesItUseAllInputs` plf@(tr lf) ∅ with (doesItUseAllInputs` lf ∅)
+  doesItUseAllInputs` plf@(tr ltr lf) ∅ with (doesItUseAllInputs` lf ∅)
   ... | yes p = yes (usesInputC`tr∅ p)
   ... | no ¬p = no hf where
     hf : usesInputT` plf ∅ → ⊥
     hf (usesInputC`tr∅ x) = ¬p x
-  doesItUseAllInputs` plf@(tr {{ltr = ltr}} lf ) (¬∅ s) with (doesItUseAllInputs` lf $ ¬∅ (SetLL.tran s ltr))
+  doesItUseAllInputs` plf@(tr ltr lf ) (¬∅ s) with (doesItUseAllInputs` lf $ ¬∅ (SetLL.tran s ltr))
   ... | yes p  = yes (usesInputC`trs p)
   ... | no ¬p  = no hf where
     hf : usesInputT` plf (¬∅ s) → ⊥
     hf (usesInputC`trs x) = ¬p x
--- Since we should never reach at obs, we set it to ⊥ in hopes of catching any bugs.
-  doesItUseAllInputs` (obs lf) ms = no (λ ())
   doesItUseAllInputs` (com df lf) ms = yes usesInputC`com
 -- We add all the calls that are here and check if together with ms it contructs to ↓.
   doesItUseAllInputs` {ll = ll} plf@(call x) ms with (isEqM ((fillWithCalls ll) c∪ₘₛ ms) (¬∅ ↓) )
@@ -327,97 +323,4 @@ doesItUseAllInputs {ll = ll} lf with (doesItUseAllInputs` lf ∅) where
     hf (usesInputC x) = ¬p x
 
 
-notObs : ∀{i u ll} → {j : Size< ↑ i} → ∀{rll} → LFun {u} {i} {j} {rll} {ll} → Bool
-notObs I = true
-notObs (lf ⊂ lf₁) = (notObs lf) Data.Bool.∧ notObs lf₁
-notObs (tr lf) = notObs lf
-notObs (obs lf) = false
-notObs (com df lf) = notObs lf
-notObs (call x) = true
 
-
-
--- TODO Remove since it is not necessary to find the unused inputs.
-
-  --module _ where
-  --
-  --  private
-  --    -- The fact that we do fillAllLowerRem is important for the impossible to never be reached because delRem deletes everything we do not have memory of,
-  --    -- thus it removes complete sets if one element is removed from it.
-  --    pdelRem : ∀{pi} → {i : Size< ↑ pi} → ∀{u ll pll q} → {j : Size< ↑ i} → SetLLRem {pi} {i} pll ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic j)
-  --              → SetLLRem {pi} {j} pll (replLL ll ind rll)
-  --    pdelRem sr ind rll with (delRem sr ind rll)
-  --    ... | ∅    = IMPOSSIBLE
-  --    ... | ¬∅ x = x
-  --
-  --
-  --  findUnusedorPrUI : {i : Size} → {j : Size< ↑ i } → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → (usesInputT lf) ⊎ Σ (Size< ↑ i) (λ k → Σ (LinLogic k {u}) (λ ull → (SetLLRem ll ull)))
-  --  findUnusedorPrUI {ll = ll} lf with (findUnusedorPrUI` {pll = ll} lf ∅ (fillAllLowerRem ll)) where
-  --    findUnusedorPrUI` : {pi : Size} → {i : Size< ↑ pi} → {j : Size< ↑ i } → ∀{u rll pll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → (ms : MSetLL ll) → (sr : SetLLRem {pi} pll ll) → (usesInputT` lf ms) ⊎ Σ (Size< ↑ pi) (λ k → Σ (LinLogic k {u}) (λ ull → (SetLLRem pll ull)))
-  --    findUnusedorPrUI` I ms sr = inj₂ (_ , _ , sr)
-  --    findUnusedorPrUI` (_⊂_ {ell = ell} {ind = ↓} elf lf) ms sr = inj₁ usesInputC`⊂↓
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = ind ←∧} elf lf) ∅ sr with (findUnusedorPrUI` lf (¬∅ (∅-add (ind ←∧) ell)) (pdelRem sr (ind ←∧) ell))
-  --    ... | (inj₁ p) = inj₁ (usesInputC`⊂←∧∅ p)
-  --    ... | (inj₂ p) = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = (ind ←∧)} elf lf) (¬∅ s) sr with (isEq (contruct $ add s (ind ←∧) ell) ↓)
-  --    ... | yes cTo↓ = inj₁ (usesInputC`⊂←∧¬∅c {cTo↓ = cTo↓})
-  --    ... | no ¬cTo↓ with (findUnusedorPrUI` lf (¬∅ $ contruct $ add s (ind ←∧) ell) (pdelRem sr (ind ←∧) ell) )
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂←∧¬∅¬c {¬cTo↓ = ¬cTo↓} p)
-  --    ... | inj₂ p  = inj₂ p 
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = ∧→ ind} elf lf) ∅ sr with (findUnusedorPrUI` lf (¬∅ (∅-add (∧→ ind) ell)) (pdelRem sr (∧→ ind) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂∧→∅ p)
-  --    ... | inj₂ p = inj₂ p 
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = (∧→ ind)} elf lf) (¬∅ s) sr with (isEq (contruct $ add s (∧→ ind) ell) ↓)
-  --    ... | yes cTo↓ = inj₁ (usesInputC`⊂∧→¬∅c {cTo↓ = cTo↓})
-  --    ... | no ¬cTo↓ with (findUnusedorPrUI` lf (¬∅ $ contruct $ add s (∧→ ind) ell) (pdelRem sr (∧→ ind) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂∧→¬∅¬c {¬cTo↓ = ¬cTo↓} p)
-  --    ... | inj₂ p  = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = ind ←∨} elf lf) ∅ sr with (findUnusedorPrUI` lf (¬∅ (∅-add (ind ←∨) ell)) (pdelRem sr (ind ←∨) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂←∨∅ p)
-  --    ... | inj₂ p = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = (ind ←∨)} elf lf) (¬∅ s) sr with (isEq (contruct $ add s (ind ←∨) ell) ↓)
-  --    ... | yes cTo↓ = inj₁ (usesInputC`⊂←∨¬∅c {cTo↓ = cTo↓}) 
-  --    ... | no ¬cTo↓ with (findUnusedorPrUI` lf (¬∅ $ contruct $ add s (ind ←∨) ell) (pdelRem sr (ind ←∨) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂←∨¬∅¬c {¬cTo↓ = ¬cTo↓} p)
-  --    ... | inj₂ p  = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = ∨→ ind} elf lf) ∅ sr with (findUnusedorPrUI` lf (¬∅ (∅-add (∨→ ind) ell)) (pdelRem sr (∨→ ind) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂∨→∅ p)
-  --    ... | inj₂ p = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = (∨→ ind)} elf lf) (¬∅ s) sr with (isEq (contruct $ add s (∨→ ind) ell) ↓)
-  --    ... | yes cTo↓ = inj₁ (usesInputC`⊂∨→¬∅c {cTo↓ = cTo↓})
-  --    ... | no ¬cTo↓ with (findUnusedorPrUI` lf (¬∅ $ contruct $ add s (∨→ ind) ell) (pdelRem sr (∨→ ind) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂∨→¬∅¬c {¬cTo↓ = ¬cTo↓} p)
-  --    ... | inj₂ p  = inj₂ p 
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = ind ←∂} elf lf) ∅ sr with (findUnusedorPrUI` lf (¬∅ (∅-add (ind ←∂) ell)) (pdelRem sr (ind ←∂) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂←∂∅ p)
-  --    ... | inj₂ p = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = (ind ←∂)} elf lf) (¬∅ s) sr with (isEq (contruct $ add s (ind ←∂) ell) ↓)
-  --    ... | yes cTo↓ = inj₁ (usesInputC`⊂←∂¬∅c {cTo↓ = cTo↓}) 
-  --    ... | no ¬cTo↓ with (findUnusedorPrUI` lf (¬∅ $ contruct $ add s (ind ←∂) ell) (pdelRem sr (ind ←∂) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂←∂¬∅¬c {¬cTo↓ = ¬cTo↓} p)
-  --    ... | inj₂ p  = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = ∂→ ind} elf lf) ∅ sr with (findUnusedorPrUI` lf (¬∅ (∅-add (∂→ ind) ell)) (pdelRem sr (∂→ ind) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂∂→∅ p)
-  --    ... | inj₂ p = inj₂ p
-  --    findUnusedorPrUI` plf@(_⊂_ {ell = ell} {ind = (∂→ ind)} elf lf) (¬∅ s) sr with (isEq (contruct $ add s (∂→ ind) ell) ↓)
-  --    ... | yes cTo↓ = inj₁ (usesInputC`⊂∂→¬∅c {cTo↓ = cTo↓})
-  --    ... | no ¬cTo↓ with (findUnusedorPrUI` lf (¬∅ $ contruct $ add s (∂→ ind) ell) (pdelRem sr (∂→ ind) ell))
-  --    ... | inj₁ p = inj₁ (usesInputC`⊂∂→¬∅¬c {¬cTo↓ = ¬cTo↓} p)
-  --    ... | inj₂ p  = inj₂ p
-  --    findUnusedorPrUI` plf@(tr {{ltr = ltr}} lf) ∅ sr with (findUnusedorPrUI` lf ∅ (tranRem sr ltr))
-  --    ... | inj₁ p = inj₁ (usesInputC`tr∅ p)
-  --    ... | inj₂ p = inj₂ p
-  --    findUnusedorPrUI` plf@(tr {{ltr = ltr}} lf ) (¬∅ s) sr with (findUnusedorPrUI` lf (¬∅ (SetLL.tran s ltr)) (tranRem sr ltr))
-  --    ... | inj₁ p  = inj₁ (usesInputC`trs p)
-  --    ... | inj₂ p  = inj₂ p 
-  --  -- Since we should never reach at obs, we set it to IMPOSSIBLE
-  --    findUnusedorPrUI` (obs lf) ms sr = IMPOSSIBLE
-  --    findUnusedorPrUI` (com df lf) ms sr = inj₁ usesInputC`com
-  --  -- We add all the calls that are here and check if together with ms it contructs to ↓.
-  --    findUnusedorPrUI` {ll = ll} plf@(call x) ms sr with (isEqM ((fillWithCalls ll) c∪ₘₛ ms) (¬∅ ↓) )
-  --    ... | yes cTo↓ = inj₁ (usesInputC`callc {cTo↓ = cTo↓})
-  --    ... | no ¬cTo↓ = inj₂ (_ , _ , sr)
-  --  ... | inj₁ p = inj₁ (usesInputC p)
-  --  ... | inj₂ p = inj₂ p 
-  --  
-  --

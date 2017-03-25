@@ -293,8 +293,8 @@ module _ where
 
 
 -- Replace the linear logic sub-tree.
-  replSetLL : ∀{i u ll q} → {j : Size< ↑ i} → (s : SetLL ll) → (ind : IndexLL {i} {u} q ll)
-              → .{{ prf : ¬ (hitsAtLeastOnce s ind) }} → (rll : LinLogic j)
+  replSetLL : ∀{i u ll q} → (s : SetLL ll) → (ind : IndexLL {i} {u} q ll)
+              → .{{ prf : ¬ (hitsAtLeastOnce s ind) }} → (rll : LinLogic i)
               → (SetLL (replLL ll ind rll))
   replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
   replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
@@ -305,27 +305,27 @@ module _ where
   replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
   replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∧↓)
   replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∧←∧ x)}} rll) ←∧
-  replSetLL (s ←∧) (∧→ ind) {{prf}} rll = dsize s ←∧
+  replSetLL (s ←∧) (∧→ ind) {{prf}} rll = s ←∧
   replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce∧→↓)
-  replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ dsize s
+  replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ s
   replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce∧→∧→ x)}} rll)
   replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∧→↓)
   replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∧→←∧ x)}} rll) ←∧
   replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (hitsAtLeastOnce←∧→∧→ x)}} rll)
   replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∨↓)
   replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∨←∨ x)}} rll) ←∨
-  replSetLL (s ←∨) (∨→ ind) {{prf}} rll = dsize s ←∨
+  replSetLL (s ←∨) (∨→ ind) {{prf}} rll = s ←∨
   replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce∨→↓)
-  replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ dsize s
+  replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ s
   replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce∨→∨→ x)}} rll)
   replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∨→↓)
   replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∨→←∨ x)}} rll) ←∨
   replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (hitsAtLeastOnce←∨→∨→ x)}} rll)
   replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∂↓)
   replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∂←∂ x)}} rll) ←∂
-  replSetLL (s ←∂) (∂→ ind) {{prf}} rll = dsize s ←∂
+  replSetLL (s ←∂) (∂→ ind) {{prf}} rll = s ←∂
   replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce∂→↓)
-  replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ dsize s
+  replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ s
   replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce∂→∂→ x)}} rll)
   replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∂→↓)
   replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∂→←∂ x)}} rll) ←∂

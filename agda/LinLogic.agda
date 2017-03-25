@@ -96,7 +96,7 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u wh
 
 
 -- Replaces a node of a linear logic tree with another one.
-replLL : ∀{i u q} → {j : Size< ↑ i} → (ll : LinLogic i {u}) → IndexLL q ll → LinLogic j {u} → LinLogic j {u}
+replLL : ∀{i u q} → (ll : LinLogic i {u}) → IndexLL q ll → LinLogic i {u} → LinLogic i {u}
 replLL ll ↓ c            = c
 replLL (l ∧ r) (li ←∧) c = (replLL l li c) ∧ r
 replLL (l ∧ r) (∧→ ri) c = l ∧ (replLL r ri c)
@@ -105,7 +105,7 @@ replLL (l ∨ r) (∨→ ri) c = l ∨ (replLL r ri c)
 replLL (l ∂ r) (li ←∂) c = (replLL l li c) ∂ r
 replLL (l ∂ r) (∂→ ri) c = l ∂ (replLL r ri c)
 
-updateIndex : ∀{i u rll ll} → {j : Size< ↑ i} → ∀ nrll → (ind : IndexLL {i} {u} rll ll) → IndexLL {j} {u} nrll (replLL ll ind nrll)
+updateIndex : ∀{i u rll ll} → ∀ nrll → (ind : IndexLL {i} {u} rll ll) → IndexLL {i} {u} nrll (replLL ll ind nrll)
 updateIndex nrll ↓ = ↓
 updateIndex nrll (ind ←∧) = (updateIndex nrll ind) ←∧
 updateIndex nrll (∧→ ind) = ∧→ (updateIndex nrll ind)

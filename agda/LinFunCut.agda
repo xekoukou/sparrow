@@ -30,21 +30,20 @@ module _ where
 
 
 -- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). 
-nextComsCalls : ∀{pi} → {i : Size< ↑ pi} → ∀{u oll ll} → {j : Size< ↑ i} → ∀{rll} → LFun {u} {i} {j} {rll} {ll} → MSetLLRem {pi} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
 nextComsCalls I (sr , s , sc) = (sr , s , sc)
 nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s , sc) with (truncSetLLRem sr ind) 
 ... | r = let (esr , es , esc) = nextComsCalls lf (r , s , sc)
           in nextComsCalls lf₁ ((mreplaceRem (updateIndex ell ind) esr (mdelRem sr ind ell)) , es , esc) -- mdelRem is used to update the type of sr. TODO Maybe remove it in the future.
-nextComsCalls (tr {{ltr = ltr}} lf) (∅ , s , sc) = ( ∅ , s , sc) 
-nextComsCalls (tr {{ltr = ltr}} lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
-nextComsCalls (obs lf) (sr , s , sc) = (∅ , s , sc) -- Since obs is here, it means that the previous LinFun call has not been removed, which means that there are no coms here that can be triggered.
+nextComsCalls (tr ltr lf) (∅ , s , sc) = ( ∅ , s , sc) 
+nextComsCalls (tr ltr lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
 nextComsCalls (com {ll = _} {frll} df lf) (∅ , s , sc) = (∅ , s , sc)
 nextComsCalls (com {ll = _} {frll} df lf) (¬∅ x , s , sc) with (contruct $ projToSetLL x)
 ... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc)
 ... | r = (∅ , s , sc)
 nextComsCalls (call x) (∅ , s , sc) = (∅ , s , sc)
-nextComsCalls {pi = pi} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
-  hf : Σ (LinLogic pi {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
+  hf : Σ (LinLogic i {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLL oll × MSetLL oll
   hf (rll , ind) with (replLL oll ind rll) | (madd {q = rll} sc ind rll) | (replLL-id oll ind rll refl)
   hf (rll , ind) | r | g | refl = (∅ , s , g) -- Here we pick only one element from the memory and add it
 -- to MSetLL oll.
@@ -164,11 +163,11 @@ module _ where
 -- The indoi points us to the last transformation of the LinLogic, the last place we received data.
 -- We need to preserve the ∨(or) choices of the previous inputs.
   mutual
-    data Spec :  {i : Size} → {j : Size< i} → ∀{u ll rll} → LinDepT ll → LFun {u} {i} {j} {rll} {ll} → Set where  
+    data Spec :  {i : Size} → ∀{u ll rll} → LinDepT ll → LFun {i} {u} ll rll → Set where  
 
 
 --  canBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → SetLL ll → LFun {u} {i} {j} {rll} {ll} → Bool × LinLogic j {u}
-    data Input {u} : {i : Size} {j : Size< ↑ i} → ∀{rll ll} →  LinDepT ll → LFun {u} {i} {j} {rll} {ll} → Set (lsuc u) where
+    data Input {u} : {i : Size} → ∀{rll ll} →  LinDepT ll → LFun {i} {u} ll rll → Set (lsuc u) where
 --      I    : {i : Size} {j : Size< ↑ i} → ∀{rll ll ldt lf} → ⦃ prf : nextLFun {i} {j} {u} {rll} {ll} lf ≡ I ⦄ → Input {rll = rll} ldt lf
 --      next : {i : Size} {j : Size< ↑ i} → ∀{rll ll ldt lf} → (s : SetLL ll) → let cbc = canBeCut s lf in LinT (proj₂ cbc) → ⦃ prf : nextLFun {i} {j} {u} {rll} {ll} lf ≡ com ⦄ → Input {u} {i} {j} {rll} {ll} ldt lf
 --      next : in → Input → Input
