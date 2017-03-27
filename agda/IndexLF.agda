@@ -303,9 +303,16 @@ findCallGraph (tr ltr lf) if ∅ ms = ∅ , ms
 findCallGraph (tr ltr lf) if (¬∅ x) ms = findCallGraph lf (λ x → if (tr x)) (¬∅ $ tranLFCRem x ltr) ms
 findCallGraph (com df lf) if ∅ ms = findCallGraph lf (λ x → if (com x)) ∅ ms
 findCallGraph (com df lf) if (¬∅ x) ms = IMPOSSIBLE
-findCallGraph {ll = ll} {rll = rll} {olf = olf} (call x) if msr ms = {!!} -- where
-
---findCallGraph {ll = ll} {rll = call .∞rll} {olf = olf} (call {∞rll = ∞rll} x) if msr ms = {!!} -- where
-
---  hf : IndexLFC olf → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFCRem olf rll × MSetLFC olf olf
---  hf oic msr ms = {!!}
+findCallGraph {ll = ll} {rll = call .∞rll} {olf = olf} (call {∞rll = ∞rll} x) if msr ms = ¬∅ (∅-addLFCRem ↓ (if ↓c)) , hf (if ↓c) msr ms where
+  hf : ∀{ll} → IndexLFC olf → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFC olf olf
+  hf oic ∅ ms = ms
+  hf oic (¬∅ (↓c x₁)) ms₁ = maddLFC ms₁ oic x₁ 
+  hf oic (¬∅ (x₁ ←∧)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (∧→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (x₁ ←∧→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (x₁ ←∨)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (∨→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (x₁ ←∨→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (x₁ ←∂)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (∂→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
+  hf oic (¬∅ (x₁ ←∂→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
