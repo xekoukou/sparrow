@@ -15,20 +15,19 @@ open import Data.Product
 
 -- Check that the main LFun should not have any calls in its input. (It will not know when/how to unfold them).
 -- This permits the local knowledge of the protocol specification by nodes, while they are working in a bigger network) This will probably be necessary so as to reduce the computation cost of the protocol.
+-- IMPORTANT : In a multiparty protocol, it is necessary to have a com in the LinFun of the call for each party/node or not at all.
+-- This way we guarantee that all nodes are able to cut LinFun at a finite time (totality).
+-- The above means that the main LFun will have all the protocol roles, and calls are allows to have less roles than before.
+--  ↓↓↓↓↓
+-- Protocol locality though might allow us to have more roles in the calls. Because a node that has a local protocol does not need to cut the main protocol, cut execution takes finite time.
+-- protocol locality requires to prove local equivalence of the main protocol with the local one in this specific part.
+-- I need to define what local equivalence is.
 
---data IndexLF : ∀{u} → {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → LFun {u} {i} {j} {rll} {ll} → Set where
---  ↓    : {i : Size} → {j : Size< ↑ i} → ∀{u rll ll} → (lf : LFun {u} {i} {j} {rll} {ll}) → IndexLF lf
---  _←⊂_ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell ll ind elf prf lf}
---         → IndexLF elf
---         → IndexLF (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf {{prf}} lf)
---  _⊂→_ : {i : Size} → {j : Size< ↑ i} → {k : Size< ↑ j} → ∀{u rll pll ell ll ind elf prf lf}
---         → IndexLF lf
---         → IndexLF (_⊂_ {u} {i} {j} {k} {pll} {ll} {ell} {rll} {ind} elf {{prf}} lf)
---  tr   : {i : Size} → {j : Size< ↑ i} → ∀{u ll orll rll} → {{ltr : LLTr orll ll}} → {lf : LFun {u} {i} {j} {rll} {orll}}
---         → IndexLF lf → IndexLF (tr {{ltr = ltr}} lf) 
---
 
---  _←⊂_ : {i : Size} → {j : Size< ↑ i} → {rll : LinLogic j {u}} → {ll : LinLogic i {u}} → (lf : LFun {u} {i} {j} {rll} {ll}) → IndexLF lf
+
+-------------
+
+
 
 --                                       ↓ probably the subtrees that contain all the inputs. 
 -- We need to keep truck of all the latest subtrees that are outputs of coms. We can then check whether a transformation permutates them. If so , the tr is acceptable.
@@ -156,7 +155,5 @@ module _ where
       extractSetLLD` n (tr ltr lf₁) sd sr = extractSetLLD` n lf₁ sd (tranRem sr ltr)
       extractSetLLD` {oll = oll} n (com {ll = ll} {frll = frll} df lf₁) sd sr with extractSetLLD` n lf₁ sd (fillAllLowerRem frll)
       ... | (n₁ , r) = (suc n₁ , fillAllLowerD oll (dec n₁ r)) 
-      extractSetLLD` {oll = oll} n (call x) (↓c d) sr = (n , fillAllLowerD oll d) -- Here, we simply give the descendants of the call ∞rll to all the inputs of call. Since the inputs are not part of a single
-      -- independent com , but of possibly many assynchronous independent coms, we should not create a new descendant like we did with the com.
-  
-  
+      extractSetLLD` {oll = oll} n (call x) (↓c end) sr = (n , fillAllLowerD oll end) -- We set all call inputs to calls to not have end as descendant.
+      extractSetLLD` {oll = oll} n (call x) (↓c (dec x₁ x₂)) sr = IMPOSSIBLE

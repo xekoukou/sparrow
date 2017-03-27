@@ -29,17 +29,17 @@ module _ where
   ≤rsuc (s≤s x) = s≤s $ ≤rsuc x
 
 
--- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). 
+-- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). IMPORTANT. TODO
 nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
 nextComsCalls I (sr , s , sc) = (sr , s , sc)
 nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s , sc) with (truncSetLLRem sr ind) 
 ... | r = let (esr , es , esc) = nextComsCalls lf (r , s , sc)
-          in nextComsCalls lf₁ ((mreplaceRem (updateIndex ell ind) esr (mdelRem sr ind ell)) , es , esc) -- mdelRem is used to update the type of sr. TODO Maybe remove it in the future.
+          in nextComsCalls lf₁ (mreplaceRem ind esr sr , es , esc)
 nextComsCalls (tr ltr lf) (∅ , s , sc) = ( ∅ , s , sc) 
 nextComsCalls (tr ltr lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
 nextComsCalls (com {ll = _} {frll} df lf) (∅ , s , sc) = (∅ , s , sc)
 nextComsCalls (com {ll = _} {frll} df lf) (¬∅ x , s , sc) with (contruct $ projToSetLL x)
-... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc)
+... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc) -- Since we haven't cleaned the transf, the mcontruct will not result on unique ↓. After we do the transformations, it should. IMPORTANT TODO.
 ... | r = (∅ , s , sc)
 nextComsCalls (call x) (∅ , s , sc) = (∅ , s , sc)
 nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where

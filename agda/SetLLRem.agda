@@ -280,32 +280,31 @@ extendRem (∨→ ind) sr = ∨→ (extendRem ind sr)
 extendRem (ind ←∂) sr = (extendRem ind sr) ←∂
 extendRem (∂→ ind) sr = ∂→ (extendRem ind sr)
 
-replaceRem : ∀{i u oll} → ∀{ll pll} → IndexLL {i} {u} pll ll → SetLLRem {i} oll pll → SetLLRem oll ll → SetLLRem oll ll
+replaceRem : ∀{i u oll} → ∀{ll pll rll} → (ind : IndexLL {i} {u} pll ll) → SetLLRem {i} oll rll → SetLLRem oll ll → SetLLRem oll (replLL ll ind rll)
 replaceRem ↓ esr sr = esr
-replaceRem (ind ←∧) esr (sr ←∧) = replaceRem ind esr sr ←∧
-replaceRem (ind ←∧) esr (∧→ sr) = (extendRem ind esr) ←∧→ sr
-replaceRem (ind ←∧) esr (sr ←∧→ sr₁) = (replaceRem ind esr sr) ←∧→ sr₁
-replaceRem (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendRem ind esr)
-replaceRem (∧→ ind) esr (∧→ sr) = ∧→ replaceRem ind esr sr
-replaceRem (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceRem ind esr sr₁
-replaceRem (ind ←∨) esr (sr ←∨) = replaceRem ind esr sr ←∨
-replaceRem (ind ←∨) esr (∨→ sr) = (extendRem ind esr) ←∨→ sr
-replaceRem (ind ←∨) esr (sr ←∨→ sr₁) = (replaceRem ind esr sr) ←∨→ sr₁
-replaceRem (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendRem ind esr)
-replaceRem (∨→ ind) esr (∨→ sr) = ∨→ replaceRem ind esr sr
-replaceRem (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceRem ind esr sr₁
-replaceRem (ind ←∂) esr (sr ←∂) = replaceRem ind esr sr ←∂
-replaceRem (ind ←∂) esr (∂→ sr) = (extendRem ind esr) ←∂→ sr
-replaceRem (ind ←∂) esr (sr ←∂→ sr₁) = (replaceRem ind esr sr) ←∂→ sr₁
-replaceRem (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendRem ind esr)
-replaceRem (∂→ ind) esr (∂→ sr) = ∂→ replaceRem ind esr sr
-replaceRem (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceRem ind esr sr₁
+replaceRem {rll = rll} (ind ←∧) esr (sr ←∧) = replaceRem ind esr sr ←∧
+replaceRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendRem (updateIndex rll ind) esr) ←∧→ sr
+replaceRem {rll = rll} (ind ←∧) esr (sr ←∧→ sr₁) = (replaceRem ind esr sr) ←∧→ sr₁
+replaceRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendRem (updateIndex rll ind) esr)
+replaceRem {rll = rll} (∧→ ind) esr (∧→ sr) = ∧→ replaceRem ind esr sr
+replaceRem {rll = rll} (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceRem ind esr sr₁
+replaceRem {rll = rll} (ind ←∨) esr (sr ←∨) = replaceRem ind esr sr ←∨
+replaceRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendRem (updateIndex rll ind) esr) ←∨→ sr
+replaceRem {rll = rll} (ind ←∨) esr (sr ←∨→ sr₁) = (replaceRem ind esr sr) ←∨→ sr₁
+replaceRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendRem (updateIndex rll ind) esr)
+replaceRem {rll = rll} (∨→ ind) esr (∨→ sr) = ∨→ replaceRem ind esr sr
+replaceRem {rll = rll} (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceRem ind esr sr₁
+replaceRem {rll = rll} (ind ←∂) esr (sr ←∂) = replaceRem ind esr sr ←∂
+replaceRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendRem (updateIndex rll ind) esr) ←∂→ sr
+replaceRem {rll = rll} (ind ←∂) esr (sr ←∂→ sr₁) = (replaceRem ind esr sr) ←∂→ sr₁
+replaceRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendRem (updateIndex rll ind) esr)
+replaceRem {rll = rll} (∂→ ind) esr (∂→ sr) = ∂→ replaceRem ind esr sr
+replaceRem {rll = rll} (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceRem ind esr sr₁
 
-mreplaceRem : ∀{i u oll} → ∀{ll pll} → IndexLL {i} {u} pll ll → MSetLLRem {i} oll pll → MSetLLRem oll ll → MSetLLRem oll ll
+mreplaceRem : ∀{i u oll} → ∀{ll pll rll} → (ind : IndexLL {i} {u} pll ll) → MSetLLRem {i} oll rll → MSetLLRem oll ll → MSetLLRem oll (replLL ll ind rll)
 mreplaceRem ind ∅ ∅ = ∅
-mreplaceRem {ll = ll} {pll = pll} ind ∅ (¬∅ x) with (replLL ll ind pll) | (delRem x ind pll) | (replLL-id ll ind pll refl)
-... | m | g | refl = g
-mreplaceRem ind (¬∅ x) ∅ = ¬∅ (extendRem ind x)
+mreplaceRem {ll = ll} {pll = pll} {rll = rll} ind ∅ (¬∅ x) = delRem x ind rll
+mreplaceRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendRem (updateIndex rll ind) x)
 mreplaceRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceRem ind x x₁)
 
 
