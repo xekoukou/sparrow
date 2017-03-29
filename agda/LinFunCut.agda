@@ -10,6 +10,7 @@ open import SetLL
 open import SetLLProp
 open import SetLLRem
 open import LinFun
+open import IndexLF
 
 open import Data.List
 open import Data.Product
@@ -28,25 +29,76 @@ module _ where
   ≤rsuc z≤n = z≤n
   ≤rsuc (s≤s x) = s≤s $ ≤rsuc x
 
+-- This function should be used after we have removed the specific com, the transformations, and the calls.
+-- It is to be used to find the next coms that are available.
+
+nextComs : ∀{i u ll rll} → LFun {i} {u} ll rll → MSetLL ll
+nextComs {ll = ll} lf = proj₂ $ nextComs` lf (¬∅ (fillAllLowerRem ll) , ∅) where
+  nextComs` : ∀{i u oll ll rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLL oll → MSetLLRem oll rll × MSetLL oll
+  nextComs` I (sr , s) = (sr , s)
+  nextComs` (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s) with (truncSetLLRem sr ind) 
+  ... | r = let (esr , es) = nextComs` lf (r , s)
+            in nextComs` lf₁ (mreplaceRem ind esr sr , es)
+  nextComs` (tr ltr lf) (∅ , s) = ( ∅ , s) 
+  nextComs` (tr ltr lf) (¬∅ x , s) = nextComs` lf ((¬∅ $ tranRem x ltr) , s)
+  nextComs` (com {ll = _} {frll} df lf) (∅ , s) = (∅ , s)
+  nextComs` (com {ll = _} {frll} df lf) (¬∅ x , s) with (contruct $ projToSetLL x)
+  ... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x))) -- This leads to a unique ↓ because we have cleaned the transformations.
+  ... | r = (∅ , s)
+  nextComs` (call x) (∅ , s) = (∅ , s)
+  nextComs` (call x) (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
+
+removeCom : ∀{i u ll rll} → LFun {i} {u} ll rll → (ind : IndexLL pll ll) → Σ (LinLogic {i} {u}) (λ x → LFun {i} {u} (replLL ll ind x) rll)
+
+-- Here we have removed the com, but not the transformations or calls.We need to find the next available coms so as to remove the
+-- transformations that will make it a single ↓. Also, we need to find if there are calls that are reachable from the outside.
 
 -- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). IMPORTANT. TODO
-nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
-nextComsCalls I (sr , s , sc) = (sr , s , sc)
-nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s , sc) with (truncSetLLRem sr ind) 
-... | r = let (esr , es , esc) = nextComsCalls lf (r , s , sc)
-          in nextComsCalls lf₁ (mreplaceRem ind esr sr , es , esc)
-nextComsCalls (tr ltr lf) (∅ , s , sc) = ( ∅ , s , sc) 
-nextComsCalls (tr ltr lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
-nextComsCalls (com {ll = _} {frll} df lf) (∅ , s , sc) = (∅ , s , sc)
-nextComsCalls (com {ll = _} {frll} df lf) (¬∅ x , s , sc) with (contruct $ projToSetLL x)
-... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc) -- Since we haven't cleaned the transf, the mcontruct will not result on unique ↓. After we do the transformations, it should. IMPORTANT TODO.
-... | r = (∅ , s , sc)
-nextComsCalls (call x) (∅ , s , sc) = (∅ , s , sc)
-nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
-  hf : Σ (LinLogic i {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem {i} oll rll × MSetLLRem oll rll × MSetLL oll × MSetLL oll
+nextComsCalls I (cm , sr , s , sc) = (cm , sr , s , sc)
+nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (cm , sr , s , sc) with (truncSetLLRem cm ind) | (truncSetLLRem sr ind) 
+... | c | r = let (ecm , esr , es , esc) = nextComsCalls lf (c , r , s , sc)
+          in nextComsCalls lf₁ (mreplaceRem ind ecm cm , mreplaceRem ind esr sr , es , esc)
+nextComsCalls (tr ltr lf) (cm , ∅ , s , sc) = (∅ , ∅ , s , sc) 
+nextComsCalls (tr ltr lf) (∅ , ¬∅ x , s , sc) = nextComsCalls lf (∅ , (¬∅ $ tranRem x ltr) , s , sc)
+nextComsCalls (tr ltr lf) (¬∅ cx , ¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem cx ltr) , (¬∅ $ tranRem x ltr) , s , sc)
+nextComsCalls (com {ll = _} {frll} df lf) (∅ , ∅ , s , sc) = (∅ , ∅ , s , sc)
+nextComsCalls (com {ll = _} {frll} df lf) (¬∅ cx , ∅ , s , sc) = IMPOSSIBLE
+nextComsCalls (com {ll = _} {frll} df lf) (cm , ¬∅ x , s , sc) with (contruct $ projToSetLL x)
+nextComsCalls (com {_} {_} {frll} df lf) (∅ , ¬∅ x , s , sc) | ↓ = {!!}
+nextComsCalls (com {rll} {_} {frll} df lf) (¬∅ x₁ , ¬∅ x , s , sc) | ↓ = (∅ , ¬∅ (fillAllLowerRem rll) , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc) -- Since we haven't cleaned the transf, the mcontruct will not result on unique ↓. After we do the transformations, it should. IMPORTANT TODO.
+... | r = (∅ , ∅ , s , sc)
+nextComsCalls (call x) (∅ , ∅ , s , sc) = (∅ , ∅ , s , sc)
+nextComsCalls (call x) (¬∅ cx , ∅ , s , sc) = IMPOSSIBLE
+nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (∅ , ¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
+  hf : Σ (LinLogic i {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLLRem oll rll × MSetLL oll × MSetLL oll
   hf (rll , ind) with (replLL oll ind rll) | (madd {q = rll} sc ind rll) | (replLL-id oll ind rll refl)
-  hf (rll , ind) | r | g | refl = (∅ , s , g) -- Here we pick only one element from the memory and add it
+  hf (rll , ind) | r | g | refl = (∅ , ∅ , s , g) -- Here we pick only one element from the memory and add it
 -- to MSetLL oll.
+nextComsCalls (call x) (¬∅ cx , ¬∅ x₁ , s , sc) = IMPOSSIBLE
+
+
+
+
+---- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). IMPORTANT. TODO
+--nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+--nextComsCalls I (sr , s , sc) = (sr , s , sc)
+--nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s , sc) with (truncSetLLRem sr ind) 
+--... | r = let (esr , es , esc) = nextComsCalls lf (r , s , sc)
+--          in nextComsCalls lf₁ (mreplaceRem ind esr sr , es , esc)
+--nextComsCalls (tr ltr lf) (∅ , s , sc) = ( ∅ , s , sc) 
+--nextComsCalls (tr ltr lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
+--nextComsCalls (com {ll = _} {frll} df lf) (∅ , s , sc) = (∅ , s , sc)
+--nextComsCalls (com {ll = _} {frll} df lf) (¬∅ x , s , sc) with (contruct $ projToSetLL x)
+--... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc) -- Since we haven't cleaned the transf, the mcontruct will not result on unique ↓. After we do the transformations, it should. IMPORTANT TODO.
+--... | r = (∅ , s , sc)
+--nextComsCalls (call x) (∅ , s , sc) = (∅ , s , sc)
+--nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
+--  hf : Σ (LinLogic i {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLL oll × MSetLL oll
+--  hf (rll , ind) with (replLL oll ind rll) | (madd {q = rll} sc ind rll) | (replLL-id oll ind rll refl)
+--  hf (rll , ind) | r | g | refl = (∅ , s , g) -- Here we pick only one element from the memory and add it
+---- to MSetLL oll.
+--
 
 
 

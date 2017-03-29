@@ -12,25 +12,38 @@ open import LinFun
 
 open import Data.Product
 
-
-data IndexLFC {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
-  ↓c    : ∀{ll ∞rll prf ∞lf} → IndexLFC (call {i} {u} {ll} {∞rll} {prf} ∞lf)
+-- I use it to point to the next coms that are cuttable, thus there is no call before them.
+data IndexLFCo {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
   _←⊂ : ∀{rll pll ell ll ind elf lf}
-         → IndexLFC elf
-         → IndexLFC (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → IndexLFCo elf
+         → IndexLFCo (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   ⊂→_ : ∀{rll pll ell ll ind elf lf}
-         → IndexLFC lf
-         → IndexLFC (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → IndexLFCo lf
+         → IndexLFCo (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
-         → IndexLFC lf → IndexLFC (tr ltr lf) 
+         → IndexLFCo lf → IndexLFCo (tr ltr lf) 
+  ↓com : ∀{rll ll frll prfi prfo df lf}
+         → IndexLFCo (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
+
+
+data IndexLFCa {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
+  ↓c    : ∀{ll ∞rll prf ∞lf} → IndexLFCa (call {i} {u} {ll} {∞rll} {prf} ∞lf)
+  _←⊂ : ∀{rll pll ell ll ind elf lf}
+         → IndexLFCa elf
+         → IndexLFCa (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  ⊂→_ : ∀{rll pll ell ll ind elf lf}
+         → IndexLFCa lf
+         → IndexLFCa (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
+         → IndexLFCa lf → IndexLFCa (tr ltr lf) 
   com  : ∀{rll ll frll prfi prfo df lf}
-         → IndexLFC lf
-         → IndexLFC (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
+         → IndexLFCa lf
+         → IndexLFCa (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
 
 
 
 data SetLFC {i u oll orll} (olf : LFun {i} {u} oll orll) : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
-  ↓c    : ∀{ll ∞rll prf ∞lf} → IndexLFC olf → SetLFC olf (call {i} {u} {ll} {∞rll} {prf} ∞lf)
+  ↓c    : ∀{ll ∞rll prf ∞lf} → IndexLFCa olf → SetLFC olf (call {i} {u} {ll} {∞rll} {prf} ∞lf)
   _←⊂ : ∀{rll pll ell ll ind elf lf}
          → SetLFC olf elf
          → SetLFC olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
@@ -52,14 +65,14 @@ data MSetLFC {i u oll orll} (olf : LFun {i} {u} oll orll) : ∀{ll rll} → LFun
   ∅   : ∀{ll rll} → {lf : LFun {i} {u} ll rll}            → MSetLFC olf lf
   ¬∅  : ∀{ll rll} → {lf : LFun {i} {u} ll rll} → SetLFC olf lf → MSetLFC olf lf
 
-∅-addLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → IndexLFC olf → IndexLFC lf → SetLFC olf lf 
+∅-addLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → IndexLFCa olf → IndexLFCa lf → SetLFC olf lf 
 ∅-addLFC oic ↓c = ↓c oic
 ∅-addLFC oic (ic ←⊂) = (∅-addLFC oic ic) ←⊂
 ∅-addLFC oic (⊂→ ic) = ⊂→ (∅-addLFC oic ic)
 ∅-addLFC oic (tr ic) = tr (∅-addLFC oic ic)
 ∅-addLFC oic (com ic) = com (∅-addLFC oic ic)
 
-addLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → SetLFC olf lf → IndexLFC olf → IndexLFC lf → SetLFC olf lf 
+addLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → SetLFC olf lf → IndexLFCa olf → IndexLFCa lf → SetLFC olf lf 
 addLFC (↓c x) oic ↓c = ↓c oic -- replace
 addLFC (s ←⊂) oic (ic ←⊂) = (addLFC s oic ic) ←⊂
 addLFC (⊂→ s) oic (ic ←⊂) = (∅-addLFC oic ic) ←⊂→ s
@@ -71,12 +84,12 @@ addLFC (tr s) oic (tr ic) = tr (addLFC s oic ic)
 addLFC (com s) oic (com ic) = com (addLFC s oic ic)
 
 
-maddLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → MSetLFC olf lf → IndexLFC olf → IndexLFC lf → MSetLFC olf lf
+maddLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → MSetLFC olf lf → IndexLFCa olf → IndexLFCa lf → MSetLFC olf lf
 maddLFC ∅ oic ic = ¬∅ (∅-addLFC oic ic)
 maddLFC (¬∅ x) oic ic = ¬∅ (addLFC x oic ic)
 
 data SetLFCRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} → Set (lsuc u) where
-  ↓c    : ∀{∞ll} → IndexLFC {i} olf                     → SetLFCRem olf (call ∞ll)
+  ↓c    : ∀{∞ll} → IndexLFCa {i} olf                     → SetLFCRem olf (call ∞ll)
   _←∧   : ∀{rs ls} → SetLFCRem olf ls                   → SetLFCRem olf (ls ∧ rs)
   ∧→_   : ∀{rs ls} → SetLFCRem olf rs                   → SetLFCRem olf (ls ∧ rs)
   _←∧→_ : ∀{rs ls} → SetLFCRem olf ls → SetLFCRem olf rs → SetLFCRem olf (ls ∧ rs)
@@ -91,7 +104,7 @@ data MSetLFCRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} �
   ∅   : ∀{ll}            → MSetLFCRem olf ll
   ¬∅  : ∀{ll} → SetLFCRem olf ll → MSetLFCRem olf ll
 
-∅-addLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFC olf
+∅-addLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFCa olf
         → SetLFCRem olf ll
 ∅-addLFCRem ↓ m = ↓c m
 ∅-addLFCRem (ind ←∧) m = (∅-addLFCRem ind m) ←∧
@@ -101,7 +114,7 @@ data MSetLFCRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} �
 ∅-addLFCRem (ind ←∂) m = (∅-addLFCRem ind m) ←∂
 ∅-addLFCRem (∂→ ind) m = ∂→ (∅-addLFCRem ind m)
 
-addLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → SetLFCRem olf ll → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFC olf
+addLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → SetLFCRem olf ll → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFCa olf
         → SetLFCRem olf ll
 addLFCRem (↓c rm) ind m               = ↓c m
 addLFCRem (s ←∧) (ind ←∧) m     = (addLFCRem s ind m) ←∧
@@ -123,10 +136,10 @@ addLFCRem (∂→ s) (∂→ ind) m     = ∂→ addLFCRem s ind m
 addLFCRem (s ←∂→ s₁) (ind ←∂) m = (addLFCRem s ind m) ←∂→ s₁
 addLFCRem (s ←∂→ s₁) (∂→ ind) m = s ←∂→ (addLFCRem s₁ ind m)
 
-madd : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → MSetLFCRem olf ll → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFC olf
+maddLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → MSetLFCRem olf ll → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFCa olf
       → MSetLFCRem olf ll
-madd ∅ ind m = ¬∅ (∅-addLFCRem ind m)
-madd (¬∅ x) ind m = ¬∅ (addLFCRem x ind m)
+maddLFCRem ∅ ind m = ¬∅ (∅-addLFCRem ind m)
+maddLFCRem (¬∅ x) ind m = ¬∅ (addLFCRem x ind m)
 
 
 truncSetLFCRem : ∀{i} → ∀{u ll oll orll q} → {olf : LFun {i} {u} oll orll} → MSetLFCRem {i} {u} olf ll → (ind : IndexLL {i} {u} q ll) → MSetLFCRem {i} olf q
@@ -295,24 +308,29 @@ mreplaceLFCRem {rll = rll} ind ∅ (¬∅ x) = delLFCRem x ind rll
 mreplaceLFCRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFCRem (updateIndex rll ind) x)
 mreplaceLFCRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceLFCRem ind x x₁)
 
-findCallGraph : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → (lf : LFun {i} {u} ll rll) → (IndexLFC lf → IndexLFC olf) → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFCRem olf rll × MSetLFC olf olf
-findCallGraph I if msr ms = msr , ms
-findCallGraph (_⊂_ {ind = ind} lf lf₁) if msr ms = let emsr , ems = findCallGraph lf (λ x → if (x ←⊂)) (truncSetLFCRem msr ind) ms
-                                                in findCallGraph lf₁ (λ x → if (⊂→ x)) (mreplaceLFCRem ind emsr msr) ems 
-findCallGraph (tr ltr lf) if ∅ ms = ∅ , ms
-findCallGraph (tr ltr lf) if (¬∅ x) ms = findCallGraph lf (λ x → if (tr x)) (¬∅ $ tranLFCRem x ltr) ms
-findCallGraph (com df lf) if ∅ ms = findCallGraph lf (λ x → if (com x)) ∅ ms
-findCallGraph (com df lf) if (¬∅ x) ms = IMPOSSIBLE
-findCallGraph {ll = ll} {rll = call .∞rll} {olf = olf} (call {∞rll = ∞rll} x) if msr ms = ¬∅ (∅-addLFCRem ↓ (if ↓c)) , hf (if ↓c) msr ms where
-  hf : ∀{ll} → IndexLFC olf → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFC olf olf
-  hf oic ∅ ms = ms
-  hf oic (¬∅ (↓c x₁)) ms₁ = maddLFC ms₁ oic x₁ 
-  hf oic (¬∅ (x₁ ←∧)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (∧→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (x₁ ←∧→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (x₁ ←∨)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (∨→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (x₁ ←∨→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (x₁ ←∂)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (∂→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
-  hf oic (¬∅ (x₁ ←∂→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
+
+findCallGraph : ∀{i u oll orll} → (olf : LFun {i} {u} oll orll) → MSetLFC olf olf
+findCallGraph olf = proj₂ $ findCallGraph` olf (λ x → x) ∅ ∅ where
+  findCallGraph` : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → (lf : LFun {i} {u} ll rll) → (IndexLFCa lf → IndexLFCa olf) → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFCRem olf rll × MSetLFC olf olf
+  findCallGraph` I if msr ms = msr , ms
+  findCallGraph` (_⊂_ {ind = ind} lf lf₁) if msr ms = let emsr , ems = findCallGraph` lf (λ x → if (x ←⊂)) (truncSetLFCRem msr ind) ms
+                                                  in findCallGraph` lf₁ (λ x → if (⊂→ x)) (mreplaceLFCRem ind emsr msr) ems 
+  findCallGraph` (tr ltr lf) if ∅ ms = ∅ , ms
+  findCallGraph` (tr ltr lf) if (¬∅ x) ms = findCallGraph` lf (λ x → if (tr x)) (¬∅ $ tranLFCRem x ltr) ms
+  findCallGraph` (com df lf) if ∅ ms = findCallGraph` lf (λ x → if (com x)) ∅ ms
+  findCallGraph` (com df lf) if (¬∅ x) ms = IMPOSSIBLE
+  findCallGraph` {ll = ll} {rll = call .∞rll} {olf = olf} (call {∞rll = ∞rll} x) if msr ms = ¬∅ (∅-addLFCRem ↓ (if ↓c)) , hf (if ↓c) msr ms where
+    hf : ∀{ll} → IndexLFCa olf → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFC olf olf
+    hf oic ∅ ms = ms
+    hf oic (¬∅ (↓c x₁)) ms₁ = maddLFC ms₁ oic x₁ 
+    hf oic (¬∅ (x₁ ←∧)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (∧→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (x₁ ←∧→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (x₁ ←∨)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (∨→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (x₁ ←∨→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (x₁ ←∂)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (∂→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
+    hf oic (¬∅ (x₁ ←∂→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁
+
+
