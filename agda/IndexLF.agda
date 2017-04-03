@@ -3,326 +3,488 @@ module IndexLF where
 
 open import Common
 open import LinLogic
---open import LinDepT
---open import LinT 
---open import SetLL
---open import SetLLProp
---open import SetLLRem
 open import LinFun
 
 open import Data.Product
+open import Data.Unit
 
--- I use it to point to the next coms that are cuttable, thus there is no call before them.
-data IndexLFCo {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
+
+
+data IndexLF {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
+  ↓    : ∀{ll rll} → {lf : LFun ll rll} → IndexLF lf
   _←⊂ : ∀{rll pll ell ll ind elf lf}
-         → IndexLFCo elf
-         → IndexLFCo (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → IndexLF elf
+         → IndexLF (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   ⊂→_ : ∀{rll pll ell ll ind elf lf}
-         → IndexLFCo lf
-         → IndexLFCo (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → IndexLF lf
+         → IndexLF (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
-         → IndexLFCo lf → IndexLFCo (tr ltr lf) 
-  ↓com : ∀{rll ll frll prfi prfo df lf}
-         → IndexLFCo (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
-
-
-data IndexLFCa {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
-  ↓c    : ∀{ll ∞rll prf ∞lf} → IndexLFCa (call {i} {u} {ll} {∞rll} {prf} ∞lf)
-  _←⊂ : ∀{rll pll ell ll ind elf lf}
-         → IndexLFCa elf
-         → IndexLFCa (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
-  ⊂→_ : ∀{rll pll ell ll ind elf lf}
-         → IndexLFCa lf
-         → IndexLFCa (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
-  tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
-         → IndexLFCa lf → IndexLFCa (tr ltr lf) 
+         → IndexLF lf → IndexLF (tr ltr lf) 
   com  : ∀{rll ll frll prfi prfo df lf}
-         → IndexLFCa lf
-         → IndexLFCa (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
+         → IndexLF lf
+         → IndexLF (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
+
+
+lastCom : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → IndexLF lf → Set
+lastCom {lf      = I} ↓ = ⊥
+lastCom {lf      = lf ⊂ lf₁} ↓ = ⊥
+lastCom {lf      = tr ltr lf} ↓ = ⊥
+lastCom {lf      = com df lf} ↓ = ⊤
+lastCom {lf      = call x} ↓ = ⊥
+lastCom (ic ←⊂)  = lastCom ic
+lastCom (⊂→ ic)  = lastCom ic
+lastCom (tr ic)  = lastCom ic
+lastCom (com ic) = lastCom ic
+
+lastCall : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → IndexLF lf → Set
+lastCall {lf      = I} ↓ = ⊥
+lastCall {lf      = lf ⊂ lf₁} ↓ = ⊥
+lastCall {lf      = tr ltr lf} ↓ = ⊥
+lastCall {lf      = com df lf} ↓ = ⊥
+lastCall {lf      = call x} ↓ = ⊤ 
+lastCall (ic ←⊂)  = lastCall ic
+lastCall (⊂→ ic)  = lastCall ic
+lastCall (tr ic)  = lastCall ic
+lastCall (com ic) = lastCall ic
+
+module _ where
+
+  open import SetLL
+  open import Data.Maybe
+  open import Category.Monad
+  open RawMonad {f = lzero} (monad)
+  
+  private
+  -- reverseTran returns nothing if during the reversion, it finds a com.
+  -- TODO This function might be useful outside of the module.
+
+    reverseTran : ∀{i u ll rll} → LFun ll rll → SetLL {i} {u} rll → Maybe $ SetLL {i} {u} ll
+    reverseTran I s = just s
+    reverseTran (_⊂_ {ell = ell} {ind = ind} lf lf₁) s with (reverseTran lf₁ s)
+    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | just x with (truncSetLL x (updateIndex ell ind))
+    reverseTran (_⊂_ {pll} {_} {ell} {_} {ind} lf lf₁) s | just x | ∅ with (del x (updateIndex ell ind) pll)
+    -- We are trying to update the type of x with del. Since trunc resulted in ∅, deletion will not.
+    -- TODO There must be a better way.
+    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | just x | ∅ | ∅ = IMPOSSIBLE
+    reverseTran (_⊂_ {pll} {ll} {ell} {_} {ind} lf lf₁) s | just x | ∅ | (¬∅ x₁) with (replLL (replLL ll ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+    reverseTran (_⊂_ {_} {ll} {ell} {_} {ind} lf lf₁) s | just x | ∅ | (¬∅ x₁) | g | refl = just x₁
+    reverseTran (_⊂_ {_} {ll} {ell} {_} {ind} lf lf₁) s | just x | (¬∅ x₁) with (reverseTran lf x₁)
+    reverseTran (_⊂_ {pll} {ll} {ell} {_} {ind} lf lf₁) s | just x | (¬∅ x₁) | (just x₂) = just $ hf ( (replacePartOf x to x₂ at (updateIndex ell ind))) where
+    -- TODO Maybe reuse this function for the code above.
+      hf : SetLL (replLL (replLL ll ind ell) (updateIndex ell ind) pll) → SetLL ll
+      hf x with (replLL (replLL ll ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+      hf x₃ | r | refl = x₃ 
+    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | just x | (¬∅ x₁) | nothing = nothing
+    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | nothing = nothing 
+    reverseTran (tr ltr lf) s = (reverseTran lf s) >>= λ x → just $ tran x $ revTr ltr 
+    reverseTran (com df lf) s = nothing
+    reverseTran (call x) s = nothing -- ?
+
+-- Pick a better name.
+  setRevNoComs : ∀{i u ll pll ell} → (ind : IndexLL {i} {u} pll ll) → SetLL (replLL ll ind ell) → LFun pll ell → Maybe $ SetLL ll
+  setRevNoComs {ell = ell} ind s lf with (truncSetLL s (updateIndex ell ind))
+  setRevNoComs {_} {_} {_} {pll} {ell} ind s lf | ∅ with (del s (updateIndex ell ind) pll)       -- TODO We simply update the type. There must be a better way.
+  setRevNoComs {_} {_} {_} {_} {ell} ind s lf | ∅ | ∅ = IMPOSSIBLE
+  setRevNoComs {_} {_} {ll} {pll} {ell} ind s lf | ∅ | ¬∅ x = return $ hf x where
+    hf : SetLL (replLL (replLL ll ind ell) (updateIndex ell ind) pll) → SetLL ll
+    hf x with (replLL (replLL ll ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+    hf x₃ | r | refl = x₃ 
+  setRevNoComs {_} {_} {_} {_} {ell} ind s lf | ¬∅ x = (reverseTran lf x) >>= (λ y → return $ extend ind y ) 
+  
+  data IndexLFCo {i u} (cll : LinLogic i {u}) (frll : LinLogic i {u}) : ∀{ll rll} → SetLL ll → LFun {i} {u} ll rll → Set (u) where
+    _←⊂ : ∀{rll pll ell ll ind elf lf s}
+           → IndexLFCo cll frll s elf
+           → IndexLFCo cll frll (extend ind s) (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+    ⊂→_ : ∀{rll pll ell ll ind elf lf s rs}
+           → IndexLFCo cll frll s lf
+           → {prf : just rs ≡ setRevNoComs ind s elf}
+           → IndexLFCo cll frll rs (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+    tr   : ∀{ll orll rll s rs} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
+           → IndexLFCo cll frll s lf
+           → {prf : rs ≡ tran s (revTr ltr) }
+           → IndexLFCo cll frll rs (tr ltr lf) 
+    ↓  : ∀{rll prfi prfo df lf}
+           → IndexLFCo cll frll ↓ (com {i} {u} {rll} {cll} {frll} {{prfi}} {{prfo}} df lf)
+  
+module _ {u : Level} where
+
+  open import SetLL
+  open import Data.Maybe
+  open import Category.Monad
+  open RawMonad {f = lsuc u} (monad)
+  open import Relation.Binary.PropositionalEquality 
+
+  private
+    hf : ∀{i u ll pll ell} → (ind : IndexLL {i} {u} pll ll) → (s : SetLL (replLL ll ind ell)) → (elf : LFun pll ell) → Maybe $ Σ (SetLL ll) (λ x → just x ≡ setRevNoComs ind s elf)
+    hf ind s elf with (setRevNoComs ind s elf)
+    hf ind s elf | just x = just (x , refl)
+    hf ind s elf | nothing = nothing
+
+    hf2 : ∀ {i u ll rll} → (s : SetLL rll) → (ltr : LLTr {i} {u} rll ll) → Σ (SetLL ll) (λ rs → rs ≡ tran s (revTr ltr))
+    hf2 s ltr with (tran s (revTr ltr))
+    ... | r = r , refl
+    
+  indLFtoLFCo : ∀{i ll rll} → {lf : LFun {i} {u} ll rll} → IndexLF lf → Maybe $ Σ (LinLogic i {u}) ( λ  cll → Σ (LinLogic i {u}) (λ frll → Σ (SetLL ll) (λ s → IndexLFCo {i = i} {u = u} cll frll s lf)))
+  indLFtoLFCo {lf = I} ↓ = nothing
+  indLFtoLFCo {lf = lf ⊂ lf₁} ↓ = nothing
+  indLFtoLFCo {lf = tr ltr lf} ↓ = nothing
+  indLFtoLFCo {lf = com {ll = cll} {frll = frll} df lf} ↓ = just (cll , frll , ↓ , ↓)
+  indLFtoLFCo {lf = call x} ↓ = nothing
+  indLFtoLFCo (_←⊂ {ind = ind} ic) = (indLFtoLFCo ic) >>= (λ {(cll , frll , s , x) → just (cll , frll , extend ind s , (x ←⊂))}) 
+  indLFtoLFCo (⊂→_ {ind = ind} {elf = elf} ic) with (indLFtoLFCo ic)
+  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | nothing = nothing
+  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) with (hf ind s elf)
+  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) | (just (rs , prf)) = just (cll , frll , rs , (⊂→_ x {prf = prf}))
+  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) | nothing = nothing
+  indLFtoLFCo (tr {ltr = ltr} ic) with (indLFtoLFCo ic)
+  ... | nothing = nothing
+  ... | just (cll , frll , s , x) with (hf2 s ltr)
+  indLFtoLFCo (tr {_} {_} {_} {ltr} ic) | just (cll , frll , s , x) | ( rs , prf) = just (cll , frll , rs , (tr x {prf = prf}))
+  indLFtoLFCo (com ic) = nothing 
 
 
 
-data SetLFC {i u oll orll} (olf : LFun {i} {u} oll orll) : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
-  ↓c    : ∀{ll ∞rll prf ∞lf} → IndexLFCa olf → SetLFC olf (call {i} {u} {ll} {∞rll} {prf} ∞lf)
+data SetLF {i u oll orll} (olf : LFun {i} {u} oll orll) : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
+  ↓    : ∀{ll rll} → {lf : LFun ll rll} → IndexLF olf → SetLF olf lf
   _←⊂ : ∀{rll pll ell ll ind elf lf}
-         → SetLFC olf elf
-         → SetLFC olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → SetLF olf elf
+         → SetLF olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   ⊂→_ : ∀{rll pll ell ll ind elf lf}
-         → SetLFC olf lf
-         → SetLFC olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → SetLF olf lf
+         → SetLF olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   _←⊂→_ : ∀{rll pll ell ll ind elf lf}
-         → SetLFC olf elf
-         → SetLFC olf lf
-         → SetLFC olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+         → SetLF olf elf
+         → SetLF olf lf
+         → SetLF olf (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
-         → SetLFC olf lf
-         → SetLFC olf (tr ltr lf) 
+         → SetLF olf lf
+         → SetLF olf (tr ltr lf) 
   com  : ∀{rll ll frll prfi prfo df lf}
-         → SetLFC olf lf
-         → SetLFC olf (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
+         → SetLF olf lf
+         → SetLF olf (com {i} {u} {rll} {ll} {frll} {{prfi}} {{prfo}} df lf)
 
-data MSetLFC {i u oll orll} (olf : LFun {i} {u} oll orll) : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
-  ∅   : ∀{ll rll} → {lf : LFun {i} {u} ll rll}            → MSetLFC olf lf
-  ¬∅  : ∀{ll rll} → {lf : LFun {i} {u} ll rll} → SetLFC olf lf → MSetLFC olf lf
+data MSetLF {i u oll orll} (olf : LFun {i} {u} oll orll) : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
+  ∅   : ∀{ll rll} → {lf : LFun {i} {u} ll rll}            → MSetLF olf lf
+  ¬∅  : ∀{ll rll} → {lf : LFun {i} {u} ll rll} → SetLF olf lf → MSetLF olf lf
 
-∅-addLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → IndexLFCa olf → IndexLFCa lf → SetLFC olf lf 
-∅-addLFC oic ↓c = ↓c oic
-∅-addLFC oic (ic ←⊂) = (∅-addLFC oic ic) ←⊂
-∅-addLFC oic (⊂→ ic) = ⊂→ (∅-addLFC oic ic)
-∅-addLFC oic (tr ic) = tr (∅-addLFC oic ic)
-∅-addLFC oic (com ic) = com (∅-addLFC oic ic)
+∅-addLF : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → IndexLF olf → IndexLF lf → SetLF olf lf 
+∅-addLF oic ↓ = ↓ oic
+∅-addLF oic (ic ←⊂) = (∅-addLF oic ic) ←⊂
+∅-addLF oic (⊂→ ic) = ⊂→ (∅-addLF oic ic)
+∅-addLF oic (tr ic) = tr (∅-addLF oic ic)
+∅-addLF oic (com ic) = com (∅-addLF oic ic)
 
-addLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → SetLFC olf lf → IndexLFCa olf → IndexLFCa lf → SetLFC olf lf 
-addLFC (↓c x) oic ↓c = ↓c oic -- replace
-addLFC (s ←⊂) oic (ic ←⊂) = (addLFC s oic ic) ←⊂
-addLFC (⊂→ s) oic (ic ←⊂) = (∅-addLFC oic ic) ←⊂→ s
-addLFC (s ←⊂→ s₁) oic (ic ←⊂) =  (addLFC s oic ic) ←⊂→ s₁
-addLFC (s ←⊂) oic (⊂→ ic) = s ←⊂→ (∅-addLFC oic ic)
-addLFC (⊂→ s) oic (⊂→ ic) = ⊂→ (addLFC s oic ic)
-addLFC (s ←⊂→ s₁) oic (⊂→ ic) = s ←⊂→ (addLFC s₁ oic ic)
-addLFC (tr s) oic (tr ic) = tr (addLFC s oic ic)
-addLFC (com s) oic (com ic) = com (addLFC s oic ic)
-
-
-maddLFC : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → MSetLFC olf lf → IndexLFCa olf → IndexLFCa lf → MSetLFC olf lf
-maddLFC ∅ oic ic = ¬∅ (∅-addLFC oic ic)
-maddLFC (¬∅ x) oic ic = ¬∅ (addLFC x oic ic)
-
-data SetLFCRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} → Set (lsuc u) where
-  ↓c    : ∀{∞ll} → IndexLFCa {i} olf                     → SetLFCRem olf (call ∞ll)
-  _←∧   : ∀{rs ls} → SetLFCRem olf ls                   → SetLFCRem olf (ls ∧ rs)
-  ∧→_   : ∀{rs ls} → SetLFCRem olf rs                   → SetLFCRem olf (ls ∧ rs)
-  _←∧→_ : ∀{rs ls} → SetLFCRem olf ls → SetLFCRem olf rs → SetLFCRem olf (ls ∧ rs)
-  _←∨   : ∀{rs ls} → SetLFCRem olf ls                   → SetLFCRem olf (ls ∨ rs)
-  ∨→_   : ∀{rs ls} → SetLFCRem olf rs                   → SetLFCRem olf (ls ∨ rs)
-  _←∨→_ : ∀{rs ls} → SetLFCRem olf ls → SetLFCRem olf rs → SetLFCRem olf (ls ∨ rs)
-  _←∂   : ∀{rs ls} → SetLFCRem olf ls                   → SetLFCRem olf (ls ∂ rs)
-  ∂→_   : ∀{rs ls} → SetLFCRem olf rs                   → SetLFCRem olf (ls ∂ rs)
-  _←∂→_ : ∀{rs ls} → SetLFCRem olf ls → SetLFCRem olf rs → SetLFCRem olf (ls ∂ rs)
-
-data MSetLFCRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} → Set (lsuc u) where
-  ∅   : ∀{ll}            → MSetLFCRem olf ll
-  ¬∅  : ∀{ll} → SetLFCRem olf ll → MSetLFCRem olf ll
-
-∅-addLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFCa olf
-        → SetLFCRem olf ll
-∅-addLFCRem ↓ m = ↓c m
-∅-addLFCRem (ind ←∧) m = (∅-addLFCRem ind m) ←∧
-∅-addLFCRem (∧→ ind) m = ∧→ (∅-addLFCRem ind m)
-∅-addLFCRem (ind ←∨) m = (∅-addLFCRem ind m) ←∨
-∅-addLFCRem (∨→ ind) m = ∨→ (∅-addLFCRem ind m)
-∅-addLFCRem (ind ←∂) m = (∅-addLFCRem ind m) ←∂
-∅-addLFCRem (∂→ ind) m = ∂→ (∅-addLFCRem ind m)
-
-addLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → SetLFCRem olf ll → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFCa olf
-        → SetLFCRem olf ll
-addLFCRem (↓c rm) ind m               = ↓c m
-addLFCRem (s ←∧) (ind ←∧) m     = (addLFCRem s ind m) ←∧
-addLFCRem (s ←∧) (∧→ ind) m     = s ←∧→ (∅-addLFCRem ind m)
-addLFCRem (∧→ s) (ind ←∧) m     = (∅-addLFCRem ind m) ←∧→ s
-addLFCRem (∧→ s) (∧→ ind) m     = ∧→ addLFCRem s ind m
-addLFCRem (s ←∧→ s₁) (ind ←∧) m = (addLFCRem s ind m) ←∧→ s₁
-addLFCRem (s ←∧→ s₁) (∧→ ind) m = s ←∧→ (addLFCRem s₁ ind m)
-addLFCRem (s ←∨) (ind ←∨) m     = (addLFCRem s ind m) ←∨
-addLFCRem (s ←∨) (∨→ ind) m     = s ←∨→ (∅-addLFCRem ind m)
-addLFCRem (∨→ s) (ind ←∨) m     = (∅-addLFCRem ind m) ←∨→ s
-addLFCRem (∨→ s) (∨→ ind) m     = ∨→ addLFCRem s ind m
-addLFCRem (s ←∨→ s₁) (ind ←∨) m = (addLFCRem s ind m) ←∨→ s₁
-addLFCRem (s ←∨→ s₁) (∨→ ind) m = s ←∨→ (addLFCRem s₁ ind m)
-addLFCRem (s ←∂) (ind ←∂) m     = (addLFCRem s ind m) ←∂
-addLFCRem (s ←∂) (∂→ ind) m     = s ←∂→ (∅-addLFCRem ind m)
-addLFCRem (∂→ s) (ind ←∂) m     = (∅-addLFCRem ind m) ←∂→ s
-addLFCRem (∂→ s) (∂→ ind) m     = ∂→ addLFCRem s ind m
-addLFCRem (s ←∂→ s₁) (ind ←∂) m = (addLFCRem s ind m) ←∂→ s₁
-addLFCRem (s ←∂→ s₁) (∂→ ind) m = s ←∂→ (addLFCRem s₁ ind m)
-
-maddLFCRem : ∀{i u ll ∞rll oll orll} → {olf : LFun {i} {u} oll orll} → MSetLFCRem olf ll → (ind : IndexLL {i} {u} (call ∞rll) ll) → IndexLFCa olf
-      → MSetLFCRem olf ll
-maddLFCRem ∅ ind m = ¬∅ (∅-addLFCRem ind m)
-maddLFCRem (¬∅ x) ind m = ¬∅ (addLFCRem x ind m)
+addLF : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → SetLF olf lf → IndexLF olf → IndexLF lf → SetLF olf lf 
+addLF (↓ x) oic ↓            = ↓ oic -- We replace the previous info
+addLF (s ←⊂) oic ↓           = ↓ oic -- We replace the previous info
+addLF (⊂→ s) oic ↓           = ↓ oic -- We replace the previous info
+addLF (s ←⊂→ s₁) oic ↓       = ↓ oic -- We replace the previous info
+addLF (tr s) oic ↓           = ↓ oic -- We replace the previous info
+addLF (com s) oic ↓          = ↓ oic -- We replace the previous info
+addLF (↓ x) oic (com ic)     =  com (∅-addLF oic ic) -- We replace the previous info
+addLF (↓ x) oic (ic ←⊂)      = (∅-addLF oic ic) ←⊂ -- We replace the previous info
+addLF (s ←⊂) oic (ic ←⊂)     = (addLF s oic ic) ←⊂
+addLF (⊂→ s) oic (ic ←⊂)     = (∅-addLF oic ic) ←⊂→ s
+addLF (s ←⊂→ s₁) oic (ic ←⊂) =  (addLF s oic ic) ←⊂→ s₁
+addLF (↓ x) oic (⊂→ ic)      = ⊂→ (∅-addLF oic ic) -- We replace the previous info
+addLF (s ←⊂) oic (⊂→ ic)     = s ←⊂→ (∅-addLF oic ic)
+addLF (⊂→ s) oic (⊂→ ic)     = ⊂→ (addLF s oic ic)
+addLF (s ←⊂→ s₁) oic (⊂→ ic) = s ←⊂→ (addLF s₁ oic ic)
+addLF (↓ x) oic (tr ic)      = tr (∅-addLF oic ic) -- We replace the previous info
+addLF (tr s) oic (tr ic)     = tr (addLF s oic ic)
+addLF (com s) oic (com ic)   = com (addLF s oic ic)
 
 
-truncSetLFCRem : ∀{i} → ∀{u ll oll orll q} → {olf : LFun {i} {u} oll orll} → MSetLFCRem {i} {u} olf ll → (ind : IndexLL {i} {u} q ll) → MSetLFCRem {i} olf q
-truncSetLFCRem ∅ ind = ∅
-truncSetLFCRem (¬∅ x) ↓ = ¬∅ x
-truncSetLFCRem (¬∅ (x ←∧)) (ind ←∧) = truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (∧→ x)) (ind ←∧) = ∅
-truncSetLFCRem (¬∅ (x ←∧→ x₁)) (ind ←∧) = truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (x ←∧)) (∧→ ind) = ∅
-truncSetLFCRem (¬∅ (∧→ x)) (∧→ ind) =  truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (x ←∧→ x₁)) (∧→ ind) =  truncSetLFCRem (¬∅ x₁) ind
-truncSetLFCRem (¬∅ (x ←∨)) (ind ←∨) = truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (∨→ x)) (ind ←∨) = ∅
-truncSetLFCRem (¬∅ (x ←∨→ x₁)) (ind ←∨) = truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (x ←∨)) (∨→ ind) = ∅
-truncSetLFCRem (¬∅ (∨→ x)) (∨→ ind) =  truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (x ←∨→ x₁)) (∨→ ind) =  truncSetLFCRem (¬∅ x₁) ind
-truncSetLFCRem (¬∅ (x ←∂)) (ind ←∂) = truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (∂→ x)) (ind ←∂) = ∅
-truncSetLFCRem (¬∅ (x ←∂→ x₁)) (ind ←∂) = truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (x ←∂)) (∂→ ind) = ∅
-truncSetLFCRem (¬∅ (∂→ x)) (∂→ ind) =  truncSetLFCRem (¬∅ x) ind
-truncSetLFCRem (¬∅ (x ←∂→ x₁)) (∂→ ind) =  truncSetLFCRem (¬∅ x₁) ind
+maddLF : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → {lf : LFun {i} {u} ll rll} → MSetLF olf lf → IndexLF olf → IndexLF lf → MSetLF olf lf
+maddLF ∅ oic ic = ¬∅ (∅-addLF oic ic)
+maddLF (¬∅ x) oic ic = ¬∅ (addLF x oic ic)
 
-delLFCRem : ∀{i u oll orll ll pll} → {olf : LFun {i} {u} oll orll} → SetLFCRem {i} olf ll → (ind : IndexLL {i} {u} pll ll) → (rll : LinLogic i)
-      → MSetLFCRem {i} olf (replLL ll ind rll)
-delLFCRem s ↓ rll = ∅
-delLFCRem (s ←∧) (ind ←∧) rll with (delLFCRem s ind rll)
-delLFCRem (s ←∧) (ind ←∧) rll | ∅ = ∅
-delLFCRem (s ←∧) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧)
-delLFCRem (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (s))
-delLFCRem (s ←∧→ s₁) (ind ←∧) rll with (delLFCRem s ind rll)
-delLFCRem (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (s₁))
-delLFCRem (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (s₁))
-delLFCRem (s ←∧) (∧→ ind) rll = ¬∅ ((s) ←∧)
-delLFCRem (∧→ s) (∧→ ind) rll with (delLFCRem s ind rll)
-delLFCRem (∧→ s) (∧→ ind) rll | ∅ = ∅
-delLFCRem (∧→ s) (∧→ ind) rll | ¬∅ x = ¬∅ (∧→ x)
-delLFCRem (s ←∧→ s₁) (∧→ ind) rll with (delLFCRem s₁ ind rll)
-delLFCRem (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((s) ←∧)
-delLFCRem (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((s) ←∧→ x)
-delLFCRem (s ←∨) (ind ←∨) rll with (delLFCRem s ind rll)
-delLFCRem (s ←∨) (ind ←∨) rll | ∅ = ∅
-delLFCRem (s ←∨) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨)
-delLFCRem (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (s))
-delLFCRem (s ←∨→ s₁) (ind ←∨) rll with (delLFCRem s ind rll)
-delLFCRem (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (s₁))
-delLFCRem (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (s₁))
-delLFCRem (s ←∨) (∨→ ind) rll = ¬∅ ((s) ←∨)
-delLFCRem (∨→ s) (∨→ ind) rll with (delLFCRem s ind rll)
-delLFCRem (∨→ s) (∨→ ind) rll | ∅ = ∅
-delLFCRem (∨→ s) (∨→ ind) rll | ¬∅ x = ¬∅ (∨→ x)
-delLFCRem (s ←∨→ s₁) (∨→ ind) rll with (delLFCRem s₁ ind rll)
-delLFCRem (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((s) ←∨)
-delLFCRem (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((s) ←∨→ x)
-delLFCRem (s ←∂) (ind ←∂) rll with (delLFCRem s ind rll)
-delLFCRem (s ←∂) (ind ←∂) rll | ∅ = ∅
-delLFCRem (s ←∂) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂)
-delLFCRem (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (s))
-delLFCRem (s ←∂→ s₁) (ind ←∂) rll with (delLFCRem s ind rll)
-delLFCRem (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (s₁))
-delLFCRem (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (s₁))
-delLFCRem (s ←∂) (∂→ ind) rll = ¬∅ ((s) ←∂)
-delLFCRem (∂→ s) (∂→ ind) rll with (delLFCRem s ind rll)
-delLFCRem (∂→ s) (∂→ ind) rll | ∅ = ∅
-delLFCRem (∂→ s) (∂→ ind) rll | ¬∅ x = ¬∅ (∂→ x)
-delLFCRem (s ←∂→ s₁) (∂→ ind) rll with (delLFCRem s₁ ind rll)
-delLFCRem (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((s) ←∂)
-delLFCRem (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((s) ←∂→ x)
+data SetLFRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} → Set (lsuc u) where
+  ↓    : ∀{ll} → IndexLF {i} olf                     → SetLFRem olf ll
+  _←∧   : ∀{rs ls} → SetLFRem olf ls                   → SetLFRem olf (ls ∧ rs)
+  ∧→_   : ∀{rs ls} → SetLFRem olf rs                   → SetLFRem olf (ls ∧ rs)
+  _←∧→_ : ∀{rs ls} → SetLFRem olf ls → SetLFRem olf rs → SetLFRem olf (ls ∧ rs)
+  _←∨   : ∀{rs ls} → SetLFRem olf ls                   → SetLFRem olf (ls ∨ rs)
+  ∨→_   : ∀{rs ls} → SetLFRem olf rs                   → SetLFRem olf (ls ∨ rs)
+  _←∨→_ : ∀{rs ls} → SetLFRem olf ls → SetLFRem olf rs → SetLFRem olf (ls ∨ rs)
+  _←∂   : ∀{rs ls} → SetLFRem olf ls                   → SetLFRem olf (ls ∂ rs)
+  ∂→_   : ∀{rs ls} → SetLFRem olf rs                   → SetLFRem olf (ls ∂ rs)
+  _←∂→_ : ∀{rs ls} → SetLFRem olf ls → SetLFRem olf rs → SetLFRem olf (ls ∂ rs)
 
-mdelLFCRem : ∀{i u oll orll ll pll} → {olf : LFun {i} {u} oll orll} → MSetLFCRem {i} olf ll → (ind : IndexLL {i} {u} pll ll) → (rll : LinLogic i)
-             → MSetLFCRem {i} olf (replLL ll ind rll)
-mdelLFCRem ∅ ind rll = ∅
-mdelLFCRem (¬∅ x) ind rll = delLFCRem x ind rll
+data MSetLFRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} → Set (lsuc u) where
+  ∅   : ∀{ll}            → MSetLFRem olf ll
+  ¬∅  : ∀{ll} → SetLFRem olf ll → MSetLFRem olf ll
 
-tranLFCRem : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → SetLFCRem {i} olf ll → (tr : LLTr {i} {u} rll ll)
-       → SetLFCRem olf rll
-tranLFCRem s I                           = s
-tranLFCRem (s ←∂) (∂c ltr)                = tranLFCRem (∂→ s) ltr
-tranLFCRem (∂→ s) (∂c ltr)                = tranLFCRem (s ←∂) ltr
-tranLFCRem (s ←∂→ s₁) (∂c ltr)            = tranLFCRem (s₁ ←∂→ s) ltr
-tranLFCRem (s ←∨) (∨c ltr)                = tranLFCRem (∨→ s) ltr
-tranLFCRem (∨→ s) (∨c ltr)                = tranLFCRem (s ←∨) ltr
-tranLFCRem (s ←∨→ s₁) (∨c ltr)            = tranLFCRem (s₁ ←∨→ s) ltr
-tranLFCRem (s ←∧) (∧c ltr)                = tranLFCRem (∧→ s) ltr
-tranLFCRem (∧→ s) (∧c ltr)                = tranLFCRem (s ←∧) ltr
-tranLFCRem (s ←∧→ s₁) (∧c ltr)            = tranLFCRem (s₁ ←∧→ s) ltr
-tranLFCRem ((s ←∧) ←∧) (∧∧d ltr)          = tranLFCRem (s ←∧) ltr
-tranLFCRem ((∧→ s) ←∧) (∧∧d ltr)          = tranLFCRem (∧→ (s ←∧)) ltr
-tranLFCRem ((s ←∧→ s₁) ←∧) (∧∧d ltr)      = tranLFCRem (s ←∧→ (s₁ ←∧)) ltr
-tranLFCRem (∧→ s) (∧∧d ltr)               = tranLFCRem (∧→ (∧→ s)) ltr
-tranLFCRem ((s ←∧) ←∧→ s₁) (∧∧d ltr)      = tranLFCRem (s ←∧→ (∧→ s₁)) ltr
-tranLFCRem ((∧→ s) ←∧→ s₁) (∧∧d ltr)      = tranLFCRem (∧→ (s ←∧→ s₁)) ltr
-tranLFCRem ((s ←∧→ s₁) ←∧→ s₂) (∧∧d ltr)  = tranLFCRem (s ←∧→ (s₁ ←∧→ s₂)) ltr
-tranLFCRem (s ←∧) (¬∧∧d ltr)              = tranLFCRem ((s ←∧) ←∧) ltr
-tranLFCRem (∧→ (s ←∧)) (¬∧∧d ltr)         = tranLFCRem ((∧→ s) ←∧) ltr
-tranLFCRem (∧→ (∧→ s)) (¬∧∧d ltr)         = tranLFCRem (∧→ s) ltr
-tranLFCRem (∧→ (s ←∧→ s₁)) (¬∧∧d ltr)     = tranLFCRem ((∧→ s) ←∧→ s₁) ltr
-tranLFCRem (s ←∧→ (s₁ ←∧)) (¬∧∧d ltr)     = tranLFCRem ((s ←∧→ s₁) ←∧) ltr
-tranLFCRem (s ←∧→ (∧→ s₁)) (¬∧∧d ltr)     = tranLFCRem ((s ←∧) ←∧→ s₁) ltr
-tranLFCRem (s ←∧→ (s₁ ←∧→ s₂)) (¬∧∧d ltr) = tranLFCRem ((s ←∧→ s₁) ←∧→ s₂) ltr
-tranLFCRem ((s ←∨) ←∨) (∨∨d ltr)          = tranLFCRem (s ←∨) ltr
-tranLFCRem ((∨→ s) ←∨) (∨∨d ltr)          = tranLFCRem (∨→ (s ←∨)) ltr
-tranLFCRem ((s ←∨→ s₁) ←∨) (∨∨d ltr)      = tranLFCRem (s ←∨→ (s₁ ←∨)) ltr
-tranLFCRem (∨→ s) (∨∨d ltr)               = tranLFCRem (∨→ (∨→ s)) ltr
-tranLFCRem ((s ←∨) ←∨→ s₁) (∨∨d ltr)      = tranLFCRem (s ←∨→ (∨→ s₁)) ltr
-tranLFCRem ((∨→ s) ←∨→ s₁) (∨∨d ltr)      = tranLFCRem (∨→ (s ←∨→ s₁)) ltr
-tranLFCRem ((s ←∨→ s₁) ←∨→ s₂) (∨∨d ltr)  = tranLFCRem (s ←∨→ (s₁ ←∨→ s₂)) ltr
-tranLFCRem (s ←∨) (¬∨∨d ltr)              = tranLFCRem ((s ←∨) ←∨) ltr
-tranLFCRem (∨→ (s ←∨)) (¬∨∨d ltr)         = tranLFCRem ((∨→ s) ←∨) ltr
-tranLFCRem (∨→ (∨→ s)) (¬∨∨d ltr)         = tranLFCRem (∨→ s) ltr
-tranLFCRem (∨→ (s ←∨→ s₁)) (¬∨∨d ltr)     = tranLFCRem ((∨→ s) ←∨→ s₁) ltr
-tranLFCRem (s ←∨→ (s₁ ←∨)) (¬∨∨d ltr)     = tranLFCRem ((s ←∨→ s₁) ←∨) ltr
-tranLFCRem (s ←∨→ (∨→ s₁)) (¬∨∨d ltr)     = tranLFCRem ((s ←∨) ←∨→ s₁) ltr
-tranLFCRem (s ←∨→ (s₁ ←∨→ s₂)) (¬∨∨d ltr) = tranLFCRem ((s ←∨→ s₁) ←∨→ s₂) ltr
-tranLFCRem ((s ←∂) ←∂) (∂∂d ltr)          = tranLFCRem (s ←∂) ltr
-tranLFCRem ((∂→ s) ←∂) (∂∂d ltr)          = tranLFCRem (∂→ (s ←∂)) ltr
-tranLFCRem ((s ←∂→ s₁) ←∂) (∂∂d ltr)      = tranLFCRem (s ←∂→ (s₁ ←∂)) ltr
-tranLFCRem (∂→ s) (∂∂d ltr)               = tranLFCRem (∂→ (∂→ s)) ltr
-tranLFCRem ((s ←∂) ←∂→ s₁) (∂∂d ltr)      = tranLFCRem (s ←∂→ (∂→ s₁)) ltr
-tranLFCRem ((∂→ s) ←∂→ s₁) (∂∂d ltr)      = tranLFCRem (∂→ (s ←∂→ s₁)) ltr
-tranLFCRem ((s ←∂→ s₁) ←∂→ s₂) (∂∂d ltr)  = tranLFCRem (s ←∂→ (s₁ ←∂→ s₂)) ltr
-tranLFCRem (s ←∂) (¬∂∂d ltr)              = tranLFCRem ((s ←∂) ←∂) ltr
-tranLFCRem (∂→ (s ←∂)) (¬∂∂d ltr)         = tranLFCRem ((∂→ s) ←∂) ltr
-tranLFCRem (∂→ (∂→ s)) (¬∂∂d ltr)         = tranLFCRem (∂→ s) ltr
-tranLFCRem (∂→ (s ←∂→ s₁)) (¬∂∂d ltr)     = tranLFCRem ((∂→ s) ←∂→ s₁) ltr
-tranLFCRem (s ←∂→ (s₁ ←∂)) (¬∂∂d ltr)     = tranLFCRem ((s ←∂→ s₁) ←∂) ltr
-tranLFCRem (s ←∂→ (∂→ s₁)) (¬∂∂d ltr)     = tranLFCRem ((s ←∂) ←∂→ s₁) ltr
-tranLFCRem (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d ltr) = tranLFCRem ((s ←∂→ s₁) ←∂→ s₂) ltr
+∅-addLFRem : ∀{i u ll pll oll orll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → IndexLF olf
+        → SetLFRem olf ll
+∅-addLFRem ↓ m = ↓ m
+∅-addLFRem (ind ←∧) m = (∅-addLFRem ind m) ←∧
+∅-addLFRem (∧→ ind) m = ∧→ (∅-addLFRem ind m)
+∅-addLFRem (ind ←∨) m = (∅-addLFRem ind m) ←∨
+∅-addLFRem (∨→ ind) m = ∨→ (∅-addLFRem ind m)
+∅-addLFRem (ind ←∂) m = (∅-addLFRem ind m) ←∂
+∅-addLFRem (∂→ ind) m = ∂→ (∅-addLFRem ind m)
+
+addLFRem : ∀{i u ll pll oll orll} → {olf : LFun {i} {u} oll orll} → SetLFRem olf ll → (ind : IndexLL {i} {u} pll ll) → IndexLF olf
+        → SetLFRem olf ll
+addLFRem (↓ rm) ind m          = ↓ m
+addLFRem (x ←∧) ↓ m            = ↓ m
+addLFRem (∧→ x) ↓ m            = ↓ m --TODO Here we lose the information that is at lower levels.
+addLFRem (x ←∧→ x₁) ↓ m        = ↓ m
+addLFRem (x ←∨) ↓ m            = ↓ m
+addLFRem (∨→ x) ↓ m            = ↓ m
+addLFRem (x ←∨→ x₁) ↓ m        = ↓ m
+addLFRem (x ←∂) ↓ m            = ↓ m
+addLFRem (∂→ x) ↓ m            = ↓ m
+addLFRem (x ←∂→ x₁) ↓ m        = ↓ m
+addLFRem (s ←∧) (ind ←∧) m     = (addLFRem s ind m) ←∧
+addLFRem (s ←∧) (∧→ ind) m     = s ←∧→ (∅-addLFRem ind m)
+addLFRem (∧→ s) (ind ←∧) m     = (∅-addLFRem ind m) ←∧→ s
+addLFRem (∧→ s) (∧→ ind) m     = ∧→ addLFRem s ind m
+addLFRem (s ←∧→ s₁) (ind ←∧) m = (addLFRem s ind m) ←∧→ s₁
+addLFRem (s ←∧→ s₁) (∧→ ind) m = s ←∧→ (addLFRem s₁ ind m)
+addLFRem (s ←∨) (ind ←∨) m     = (addLFRem s ind m) ←∨
+addLFRem (s ←∨) (∨→ ind) m     = s ←∨→ (∅-addLFRem ind m)
+addLFRem (∨→ s) (ind ←∨) m     = (∅-addLFRem ind m) ←∨→ s
+addLFRem (∨→ s) (∨→ ind) m     = ∨→ addLFRem s ind m
+addLFRem (s ←∨→ s₁) (ind ←∨) m = (addLFRem s ind m) ←∨→ s₁
+addLFRem (s ←∨→ s₁) (∨→ ind) m = s ←∨→ (addLFRem s₁ ind m)
+addLFRem (s ←∂) (ind ←∂) m     = (addLFRem s ind m) ←∂
+addLFRem (s ←∂) (∂→ ind) m     = s ←∂→ (∅-addLFRem ind m)
+addLFRem (∂→ s) (ind ←∂) m     = (∅-addLFRem ind m) ←∂→ s
+addLFRem (∂→ s) (∂→ ind) m     = ∂→ addLFRem s ind m
+addLFRem (s ←∂→ s₁) (ind ←∂) m = (addLFRem s ind m) ←∂→ s₁
+addLFRem (s ←∂→ s₁) (∂→ ind) m = s ←∂→ (addLFRem s₁ ind m)
+
+maddLFRem : ∀{i u ll pll oll orll} → {olf : LFun {i} {u} oll orll} → MSetLFRem olf ll → (ind : IndexLL {i} {u} pll ll) → IndexLF olf
+      → MSetLFRem olf ll
+maddLFRem ∅ ind m = ¬∅ (∅-addLFRem ind m)
+maddLFRem (¬∅ x) ind m = ¬∅ (addLFRem x ind m)
 
 
-extendLFCRem : ∀{i u oll orll ll pll} → {olf : LFun {i} {u} oll orll} → IndexLL {i} {u} pll ll → SetLFCRem {i} olf pll → SetLFCRem olf ll
-extendLFCRem ↓ sr = sr
-extendLFCRem (ind ←∧) sr = (extendLFCRem ind sr) ←∧
-extendLFCRem (∧→ ind) sr = ∧→ (extendLFCRem ind sr)
-extendLFCRem (ind ←∨) sr = (extendLFCRem ind sr) ←∨
-extendLFCRem (∨→ ind) sr = ∨→ (extendLFCRem ind sr)
-extendLFCRem (ind ←∂) sr = (extendLFCRem ind sr) ←∂
-extendLFCRem (∂→ ind) sr = ∂→ (extendLFCRem ind sr)
+truncSetLFRem : ∀{i} → ∀{u ll oll orll q} → {olf : LFun {i} {u} oll orll} → MSetLFRem {i} {u} olf ll → (ind : IndexLL {i} {u} q ll) → MSetLFRem {i} olf q
+truncSetLFRem ∅ ind = ∅
+truncSetLFRem (¬∅ x) ↓ = ¬∅ x
+truncSetLFRem (¬∅ (↓ x)) (ind ←∧) = ∅
+truncSetLFRem (¬∅ (x ←∧)) (ind ←∧) = truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (∧→ x)) (ind ←∧) = ∅
+truncSetLFRem (¬∅ (x ←∧→ x₁)) (ind ←∧) = truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (↓ x)) (∧→ ind) = ∅
+truncSetLFRem (¬∅ (x ←∧)) (∧→ ind) = ∅
+truncSetLFRem (¬∅ (∧→ x)) (∧→ ind) =  truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (x ←∧→ x₁)) (∧→ ind) =  truncSetLFRem (¬∅ x₁) ind
+truncSetLFRem (¬∅ (↓ x)) (ind ←∨) = ∅
+truncSetLFRem (¬∅ (x ←∨)) (ind ←∨) = truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (∨→ x)) (ind ←∨) = ∅
+truncSetLFRem (¬∅ (x ←∨→ x₁)) (ind ←∨) = truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (↓ x)) (∨→ ind) = ∅
+truncSetLFRem (¬∅ (x ←∨)) (∨→ ind) = ∅
+truncSetLFRem (¬∅ (∨→ x)) (∨→ ind) =  truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (x ←∨→ x₁)) (∨→ ind) =  truncSetLFRem (¬∅ x₁) ind
+truncSetLFRem (¬∅ (↓ x)) (ind ←∂) = ∅
+truncSetLFRem (¬∅ (x ←∂)) (ind ←∂) = truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (∂→ x)) (ind ←∂) = ∅
+truncSetLFRem (¬∅ (x ←∂→ x₁)) (ind ←∂) = truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (↓ x)) (∂→ ind) = ∅
+truncSetLFRem (¬∅ (x ←∂)) (∂→ ind) = ∅
+truncSetLFRem (¬∅ (∂→ x)) (∂→ ind) =  truncSetLFRem (¬∅ x) ind
+truncSetLFRem (¬∅ (x ←∂→ x₁)) (∂→ ind) =  truncSetLFRem (¬∅ x₁) ind
 
-replaceLFCRem : ∀{i u oll orll ll pll rll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → SetLFCRem {i} olf rll → SetLFCRem olf ll → SetLFCRem olf (replLL ll ind rll)
-replaceLFCRem ↓ esr sr = esr
-replaceLFCRem {rll = rll} (ind ←∧) esr (sr ←∧) = replaceLFCRem ind esr sr ←∧
-replaceLFCRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendLFCRem (updateIndex rll ind) esr) ←∧→ sr
-replaceLFCRem {rll = rll} (ind ←∧) esr (sr ←∧→ sr₁) = (replaceLFCRem ind esr sr) ←∧→ sr₁
-replaceLFCRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendLFCRem (updateIndex rll ind) esr)
-replaceLFCRem {rll = rll} (∧→ ind) esr (∧→ sr) = ∧→ replaceLFCRem ind esr sr
-replaceLFCRem {rll = rll} (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceLFCRem ind esr sr₁
-replaceLFCRem {rll = rll} (ind ←∨) esr (sr ←∨) = replaceLFCRem ind esr sr ←∨
-replaceLFCRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendLFCRem (updateIndex rll ind) esr) ←∨→ sr
-replaceLFCRem {rll = rll} (ind ←∨) esr (sr ←∨→ sr₁) = (replaceLFCRem ind esr sr) ←∨→ sr₁
-replaceLFCRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendLFCRem (updateIndex rll ind) esr)
-replaceLFCRem {rll = rll} (∨→ ind) esr (∨→ sr) = ∨→ replaceLFCRem ind esr sr
-replaceLFCRem {rll = rll} (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceLFCRem ind esr sr₁
-replaceLFCRem {rll = rll} (ind ←∂) esr (sr ←∂) = replaceLFCRem ind esr sr ←∂
-replaceLFCRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendLFCRem (updateIndex rll ind) esr) ←∂→ sr
-replaceLFCRem {rll = rll} (ind ←∂) esr (sr ←∂→ sr₁) = (replaceLFCRem ind esr sr) ←∂→ sr₁
-replaceLFCRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendLFCRem (updateIndex rll ind) esr)
-replaceLFCRem {rll = rll} (∂→ ind) esr (∂→ sr) = ∂→ replaceLFCRem ind esr sr
-replaceLFCRem {rll = rll} (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceLFCRem ind esr sr₁
+delLFRem : ∀{i u oll orll ll pll} → {olf : LFun {i} {u} oll orll} → SetLFRem {i} olf ll → (ind : IndexLL {i} {u} pll ll) → (rll : LinLogic i)
+      → MSetLFRem {i} olf (replLL ll ind rll)
+delLFRem s ↓ rll = ∅
+delLFRem (↓ x) (ind ←∧) rll = ∅ -- We loose Information.
+delLFRem (s ←∧) (ind ←∧) rll with (delLFRem s ind rll)
+delLFRem (s ←∧) (ind ←∧) rll | ∅ = ∅
+delLFRem (s ←∧) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧)
+delLFRem (∧→ s) (ind ←∧) rll = ¬∅ (∧→ (s))
+delLFRem (s ←∧→ s₁) (ind ←∧) rll with (delLFRem s ind rll)
+delLFRem (s ←∧→ s₁) (ind ←∧) rll | ∅ = ¬∅ (∧→ (s₁))
+delLFRem (s ←∧→ s₁) (ind ←∧) rll | ¬∅ x = ¬∅ (x ←∧→ (s₁))
+delLFRem (↓ x) (∧→ ind) rll = ∅ --
+delLFRem (s ←∧) (∧→ ind) rll = ¬∅ ((s) ←∧)
+delLFRem (∧→ s) (∧→ ind) rll with (delLFRem s ind rll)
+delLFRem (∧→ s) (∧→ ind) rll | ∅ = ∅
+delLFRem (∧→ s) (∧→ ind) rll | ¬∅ x = ¬∅ (∧→ x)
+delLFRem (s ←∧→ s₁) (∧→ ind) rll with (delLFRem s₁ ind rll)
+delLFRem (s ←∧→ s₁) (∧→ ind) rll | ∅ = ¬∅ ((s) ←∧)
+delLFRem (s ←∧→ s₁) (∧→ ind) rll | ¬∅ x = ¬∅ ((s) ←∧→ x)
+delLFRem (↓ x) (ind ←∨) rll = ∅
+delLFRem (s ←∨) (ind ←∨) rll with (delLFRem s ind rll)
+delLFRem (s ←∨) (ind ←∨) rll | ∅ = ∅
+delLFRem (s ←∨) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨)
+delLFRem (∨→ s) (ind ←∨) rll = ¬∅ (∨→ (s))
+delLFRem (s ←∨→ s₁) (ind ←∨) rll with (delLFRem s ind rll)
+delLFRem (s ←∨→ s₁) (ind ←∨) rll | ∅ = ¬∅ (∨→ (s₁))
+delLFRem (s ←∨→ s₁) (ind ←∨) rll | ¬∅ x = ¬∅ (x ←∨→ (s₁))
+delLFRem (↓ x) (∨→ ind) rll = ∅
+delLFRem (s ←∨) (∨→ ind) rll = ¬∅ ((s) ←∨)
+delLFRem (∨→ s) (∨→ ind) rll with (delLFRem s ind rll)
+delLFRem (∨→ s) (∨→ ind) rll | ∅ = ∅
+delLFRem (∨→ s) (∨→ ind) rll | ¬∅ x = ¬∅ (∨→ x)
+delLFRem (s ←∨→ s₁) (∨→ ind) rll with (delLFRem s₁ ind rll)
+delLFRem (s ←∨→ s₁) (∨→ ind) rll | ∅ = ¬∅ ((s) ←∨)
+delLFRem (s ←∨→ s₁) (∨→ ind) rll | ¬∅ x = ¬∅ ((s) ←∨→ x)
+delLFRem (↓ x) (ind ←∂) rll = ∅
+delLFRem (s ←∂) (ind ←∂) rll with (delLFRem s ind rll)
+delLFRem (s ←∂) (ind ←∂) rll | ∅ = ∅
+delLFRem (s ←∂) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂)
+delLFRem (∂→ s) (ind ←∂) rll = ¬∅ (∂→ (s))
+delLFRem (s ←∂→ s₁) (ind ←∂) rll with (delLFRem s ind rll)
+delLFRem (s ←∂→ s₁) (ind ←∂) rll | ∅ = ¬∅ (∂→ (s₁))
+delLFRem (s ←∂→ s₁) (ind ←∂) rll | ¬∅ x = ¬∅ (x ←∂→ (s₁))
+delLFRem (↓ x) (∂→ ind) rll = ∅
+delLFRem (s ←∂) (∂→ ind) rll = ¬∅ ((s) ←∂)
+delLFRem (∂→ s) (∂→ ind) rll with (delLFRem s ind rll)
+delLFRem (∂→ s) (∂→ ind) rll | ∅ = ∅
+delLFRem (∂→ s) (∂→ ind) rll | ¬∅ x = ¬∅ (∂→ x)
+delLFRem (s ←∂→ s₁) (∂→ ind) rll with (delLFRem s₁ ind rll)
+delLFRem (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((s) ←∂)
+delLFRem (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((s) ←∂→ x)
+
+mdelLFRem : ∀{i u oll orll ll pll} → {olf : LFun {i} {u} oll orll} → MSetLFRem {i} olf ll → (ind : IndexLL {i} {u} pll ll) → (rll : LinLogic i)
+             → MSetLFRem {i} olf (replLL ll ind rll)
+mdelLFRem ∅ ind rll = ∅
+mdelLFRem (¬∅ x) ind rll = delLFRem x ind rll
+
+tranLFRem : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → SetLFRem {i} olf ll → (tr : LLTr {i} {u} rll ll)
+       → SetLFRem olf rll
+tranLFRem s I                           = s
+tranLFRem (s ←∂) (∂c ltr)                = tranLFRem (∂→ s) ltr
+tranLFRem (↓ x) (∂c ltr)                = ↓ x
+tranLFRem (∂→ s) (∂c ltr)                = tranLFRem (s ←∂) ltr
+tranLFRem (s ←∂→ s₁) (∂c ltr)            = tranLFRem (s₁ ←∂→ s) ltr
+tranLFRem (s ←∨) (∨c ltr)                = tranLFRem (∨→ s) ltr
+tranLFRem (↓ x) (∨c ltr)                = ↓ x
+tranLFRem (∨→ s) (∨c ltr)                = tranLFRem (s ←∨) ltr
+tranLFRem (s ←∨→ s₁) (∨c ltr)            = tranLFRem (s₁ ←∨→ s) ltr
+tranLFRem (s ←∧) (∧c ltr)                = tranLFRem (∧→ s) ltr
+tranLFRem (↓ x) (∧c ltr)                = ↓ x
+tranLFRem (∧→ s) (∧c ltr)                = tranLFRem (s ←∧) ltr
+tranLFRem (s ←∧→ s₁) (∧c ltr)            = tranLFRem (s₁ ←∧→ s) ltr
+tranLFRem ((s ←∧) ←∧) (∧∧d ltr)          = tranLFRem (s ←∧) ltr
+tranLFRem (↓ x) (∧∧d ltr)          = ↓ x
+tranLFRem ((↓ x) ←∧) (∧∧d ltr)          = tranLFRem ((↓ x) ←∧→ ((↓ x) ←∧)) ltr
+tranLFRem ((∧→ s) ←∧) (∧∧d ltr)          = tranLFRem (∧→ (s ←∧)) ltr
+tranLFRem ((s ←∧→ s₁) ←∧) (∧∧d ltr)      = tranLFRem (s ←∧→ (s₁ ←∧)) ltr
+tranLFRem (∧→ s) (∧∧d ltr)               = tranLFRem (∧→ (∧→ s)) ltr
+tranLFRem ((↓ x) ←∧→ s₁) (∧∧d ltr)      = tranLFRem ((↓ x) ←∧→ ((↓ x) ←∧→ s₁)) ltr
+tranLFRem ((s ←∧) ←∧→ s₁) (∧∧d ltr)      = tranLFRem (s ←∧→ (∧→ s₁)) ltr
+tranLFRem ((∧→ s) ←∧→ s₁) (∧∧d ltr)      = tranLFRem (∧→ (s ←∧→ s₁)) ltr
+tranLFRem ((s ←∧→ s₁) ←∧→ s₂) (∧∧d ltr)  = tranLFRem (s ←∧→ (s₁ ←∧→ s₂)) ltr
+tranLFRem (s ←∧) (¬∧∧d ltr)              = tranLFRem ((s ←∧) ←∧) ltr
+tranLFRem (↓ x) (¬∧∧d ltr)              = ↓ x
+tranLFRem (∧→ (↓ x)) (¬∧∧d ltr)         = tranLFRem ((∧→ (↓ x)) ←∧→ (↓ x)) ltr
+tranLFRem (∧→ (s ←∧)) (¬∧∧d ltr)         = tranLFRem ((∧→ s) ←∧) ltr
+tranLFRem (∧→ (∧→ s)) (¬∧∧d ltr)         = tranLFRem (∧→ s) ltr
+tranLFRem (∧→ (s ←∧→ s₁)) (¬∧∧d ltr)     = tranLFRem ((∧→ s) ←∧→ s₁) ltr
+tranLFRem (s ←∧→ (↓ x)) (¬∧∧d ltr)     = tranLFRem ((s ←∧→ (↓ x)) ←∧→ (↓ x)) ltr
+tranLFRem (s ←∧→ (s₁ ←∧)) (¬∧∧d ltr)     = tranLFRem ((s ←∧→ s₁) ←∧) ltr
+tranLFRem (s ←∧→ (∧→ s₁)) (¬∧∧d ltr)     = tranLFRem ((s ←∧) ←∧→ s₁) ltr
+tranLFRem (s ←∧→ (s₁ ←∧→ s₂)) (¬∧∧d ltr) = tranLFRem ((s ←∧→ s₁) ←∧→ s₂) ltr
+tranLFRem ((s ←∨) ←∨) (∨∨d ltr)          = tranLFRem (s ←∨) ltr
+tranLFRem (↓ x) (∨∨d ltr)          = ↓ x
+tranLFRem ((↓ x) ←∨) (∨∨d ltr)          = tranLFRem ((↓ x) ←∨→ ((↓ x) ←∨)) ltr
+tranLFRem ((∨→ s) ←∨) (∨∨d ltr)          = tranLFRem (∨→ (s ←∨)) ltr
+tranLFRem ((s ←∨→ s₁) ←∨) (∨∨d ltr)      = tranLFRem (s ←∨→ (s₁ ←∨)) ltr
+tranLFRem (∨→ s) (∨∨d ltr)               = tranLFRem (∨→ (∨→ s)) ltr
+tranLFRem ((↓ x) ←∨→ s₁) (∨∨d ltr)      = tranLFRem ((↓ x) ←∨→ ((↓ x) ←∨→ s₁)) ltr
+tranLFRem ((s ←∨) ←∨→ s₁) (∨∨d ltr)      = tranLFRem (s ←∨→ (∨→ s₁)) ltr
+tranLFRem ((∨→ s) ←∨→ s₁) (∨∨d ltr)      = tranLFRem (∨→ (s ←∨→ s₁)) ltr
+tranLFRem ((s ←∨→ s₁) ←∨→ s₂) (∨∨d ltr)  = tranLFRem (s ←∨→ (s₁ ←∨→ s₂)) ltr
+tranLFRem (s ←∨) (¬∨∨d ltr)              = tranLFRem ((s ←∨) ←∨) ltr
+tranLFRem (↓ x) (¬∨∨d ltr)              = ↓ x
+tranLFRem (∨→ (↓ x)) (¬∨∨d ltr)         = tranLFRem ((∨→ (↓ x)) ←∨→ (↓ x)) ltr
+tranLFRem (∨→ (s ←∨)) (¬∨∨d ltr)         = tranLFRem ((∨→ s) ←∨) ltr
+tranLFRem (∨→ (∨→ s)) (¬∨∨d ltr)         = tranLFRem (∨→ s) ltr
+tranLFRem (∨→ (s ←∨→ s₁)) (¬∨∨d ltr)     = tranLFRem ((∨→ s) ←∨→ s₁) ltr
+tranLFRem (s ←∨→ (↓ x)) (¬∨∨d ltr)     = tranLFRem ((s ←∨→ (↓ x)) ←∨→ (↓ x)) ltr
+tranLFRem (s ←∨→ (s₁ ←∨)) (¬∨∨d ltr)     = tranLFRem ((s ←∨→ s₁) ←∨) ltr
+tranLFRem (s ←∨→ (∨→ s₁)) (¬∨∨d ltr)     = tranLFRem ((s ←∨) ←∨→ s₁) ltr
+tranLFRem (s ←∨→ (s₁ ←∨→ s₂)) (¬∨∨d ltr) = tranLFRem ((s ←∨→ s₁) ←∨→ s₂) ltr
+tranLFRem ((s ←∂) ←∂) (∂∂d ltr)          = tranLFRem (s ←∂) ltr
+tranLFRem (↓ x) (∂∂d ltr)          = ↓ x
+tranLFRem ((↓ x) ←∂) (∂∂d ltr)          = tranLFRem ((↓ x) ←∂→ ((↓ x) ←∂)) ltr
+tranLFRem ((∂→ s) ←∂) (∂∂d ltr)          = tranLFRem (∂→ (s ←∂)) ltr
+tranLFRem ((s ←∂→ s₁) ←∂) (∂∂d ltr)      = tranLFRem (s ←∂→ (s₁ ←∂)) ltr
+tranLFRem (∂→ s) (∂∂d ltr)               = tranLFRem (∂→ (∂→ s)) ltr
+tranLFRem ((↓ x) ←∂→ s₁) (∂∂d ltr)      = tranLFRem ((↓ x) ←∂→ ((↓ x) ←∂→ s₁)) ltr
+tranLFRem ((s ←∂) ←∂→ s₁) (∂∂d ltr)      = tranLFRem (s ←∂→ (∂→ s₁)) ltr
+tranLFRem ((∂→ s) ←∂→ s₁) (∂∂d ltr)      = tranLFRem (∂→ (s ←∂→ s₁)) ltr
+tranLFRem ((s ←∂→ s₁) ←∂→ s₂) (∂∂d ltr)  = tranLFRem (s ←∂→ (s₁ ←∂→ s₂)) ltr
+tranLFRem (s ←∂) (¬∂∂d ltr)              = tranLFRem ((s ←∂) ←∂) ltr
+tranLFRem (∂→ (s ←∂)) (¬∂∂d ltr)         = tranLFRem ((∂→ s) ←∂) ltr
+tranLFRem (↓ x) (¬∂∂d ltr)         = ↓ x
+tranLFRem (∂→ (↓ x)) (¬∂∂d ltr)         = tranLFRem ((∂→ (↓ x)) ←∂→ (↓ x)) ltr
+tranLFRem (∂→ (∂→ s)) (¬∂∂d ltr)         = tranLFRem (∂→ s) ltr
+tranLFRem (∂→ (s ←∂→ s₁)) (¬∂∂d ltr)     = tranLFRem ((∂→ s) ←∂→ s₁) ltr
+tranLFRem (s ←∂→ (↓ x)) (¬∂∂d ltr)     = tranLFRem ((s ←∂→ (↓ x)) ←∂→ (↓ x)) ltr
+tranLFRem (s ←∂→ (s₁ ←∂)) (¬∂∂d ltr)     = tranLFRem ((s ←∂→ s₁) ←∂) ltr
+tranLFRem (s ←∂→ (∂→ s₁)) (¬∂∂d ltr)     = tranLFRem ((s ←∂) ←∂→ s₁) ltr
+tranLFRem (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d ltr) = tranLFRem ((s ←∂→ s₁) ←∂→ s₂) ltr
 
 
-mreplaceLFCRem :  ∀{i u oll orll ll pll rll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → MSetLFCRem {i} olf rll → MSetLFCRem olf ll → MSetLFCRem olf (replLL ll ind rll)
-mreplaceLFCRem ind ∅ ∅ = ∅
-mreplaceLFCRem {rll = rll} ind ∅ (¬∅ x) = delLFCRem x ind rll
-mreplaceLFCRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFCRem (updateIndex rll ind) x)
-mreplaceLFCRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceLFCRem ind x x₁)
+extendLFRem : ∀{i u oll orll ll pll} → {olf : LFun {i} {u} oll orll} → IndexLL {i} {u} pll ll → SetLFRem {i} olf pll → SetLFRem olf ll
+extendLFRem ↓ sr = sr
+extendLFRem (ind ←∧) sr = (extendLFRem ind sr) ←∧
+extendLFRem (∧→ ind) sr = ∧→ (extendLFRem ind sr)
+extendLFRem (ind ←∨) sr = (extendLFRem ind sr) ←∨
+extendLFRem (∨→ ind) sr = ∨→ (extendLFRem ind sr)
+extendLFRem (ind ←∂) sr = (extendLFRem ind sr) ←∂
+extendLFRem (∂→ ind) sr = ∂→ (extendLFRem ind sr)
+
+replaceLFRem : ∀{i u oll orll ll pll rll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → SetLFRem {i} olf rll → SetLFRem olf ll → SetLFRem olf (replLL ll ind rll)
+replaceLFRem ↓ esr sr = esr
+replaceLFRem {rll = rll} (ind ←∧) esr (↓ x) = (extendLFRem (updateIndex rll ind) esr) ←∧
+replaceLFRem {rll = rll} (ind ←∧) esr (sr ←∧) = replaceLFRem ind esr sr ←∧
+replaceLFRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendLFRem (updateIndex rll ind) esr) ←∧→ sr
+replaceLFRem {rll = rll} (ind ←∧) esr (sr ←∧→ sr₁) = (replaceLFRem ind esr sr) ←∧→ sr₁
+replaceLFRem {rll = rll} (∧→ ind) esr (↓ x) = ∧→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∧→ ind) esr (∧→ sr) = ∧→ replaceLFRem ind esr sr
+replaceLFRem {rll = rll} (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceLFRem ind esr sr₁
+replaceLFRem {rll = rll} (ind ←∨) esr (↓ x) = (extendLFRem (updateIndex rll ind) esr) ←∨
+replaceLFRem {rll = rll} (ind ←∨) esr (sr ←∨) = replaceLFRem ind esr sr ←∨
+replaceLFRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendLFRem (updateIndex rll ind) esr) ←∨→ sr
+replaceLFRem {rll = rll} (ind ←∨) esr (sr ←∨→ sr₁) = (replaceLFRem ind esr sr) ←∨→ sr₁
+replaceLFRem {rll = rll} (∨→ ind) esr (↓ x) = ∨→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∨→ ind) esr (∨→ sr) = ∨→ replaceLFRem ind esr sr
+replaceLFRem {rll = rll} (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceLFRem ind esr sr₁
+replaceLFRem {rll = rll} (ind ←∂) esr (↓ x) = (extendLFRem (updateIndex rll ind) esr) ←∂
+replaceLFRem {rll = rll} (ind ←∂) esr (sr ←∂) = replaceLFRem ind esr sr ←∂
+replaceLFRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendLFRem (updateIndex rll ind) esr) ←∂→ sr
+replaceLFRem {rll = rll} (ind ←∂) esr (sr ←∂→ sr₁) = (replaceLFRem ind esr sr) ←∂→ sr₁
+replaceLFRem {rll = rll} (∂→ ind) esr (↓ x) = ∂→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∂→ ind) esr (∂→ sr) = ∂→ replaceLFRem ind esr sr
+replaceLFRem {rll = rll} (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceLFRem ind esr sr₁
 
 
-findCallGraph : ∀{i u oll orll} → (olf : LFun {i} {u} oll orll) → MSetLFC olf olf
+mreplaceLFRem :  ∀{i u oll orll ll pll rll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → MSetLFRem {i} olf rll → MSetLFRem olf ll → MSetLFRem olf (replLL ll ind rll)
+mreplaceLFRem ind ∅ ∅ = ∅
+mreplaceLFRem {rll = rll} ind ∅ (¬∅ x) = delLFRem x ind rll
+mreplaceLFRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFRem (updateIndex rll ind) x)
+mreplaceLFRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceLFRem ind x x₁)
+
+
+
+-- Move this function to LinFunCut
+
+findCallGraph : ∀{i u oll orll} → (olf : LFun {i} {u} oll orll) → MSetLF olf olf
 findCallGraph olf = proj₂ $ findCallGraph` olf (λ x → x) ∅ ∅ where
-  findCallGraph` : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → (lf : LFun {i} {u} ll rll) → (IndexLFCa lf → IndexLFCa olf) → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFCRem olf rll × MSetLFC olf olf
+  findCallGraph` : ∀{i u oll orll ll rll} → {olf : LFun {i} {u} oll orll} → (lf : LFun {i} {u} ll rll) → (IndexLF lf → IndexLF olf) → MSetLFRem olf ll → MSetLF olf olf → MSetLFRem olf rll × MSetLF olf olf
   findCallGraph` I if msr ms = msr , ms
-  findCallGraph` (_⊂_ {ind = ind} lf lf₁) if msr ms = let emsr , ems = findCallGraph` lf (λ x → if (x ←⊂)) (truncSetLFCRem msr ind) ms
-                                                  in findCallGraph` lf₁ (λ x → if (⊂→ x)) (mreplaceLFCRem ind emsr msr) ems 
+  findCallGraph` (_⊂_ {ind = ind} lf lf₁) if msr ms = let emsr , ems = findCallGraph` lf (λ x → if (x ←⊂)) (truncSetLFRem msr ind) ms
+                                                  in findCallGraph` lf₁ (λ x → if (⊂→ x)) (mreplaceLFRem ind emsr msr) ems 
   findCallGraph` (tr ltr lf) if ∅ ms = ∅ , ms
-  findCallGraph` (tr ltr lf) if (¬∅ x) ms = findCallGraph` lf (λ x → if (tr x)) (¬∅ $ tranLFCRem x ltr) ms
+  findCallGraph` (tr ltr lf) if (¬∅ x) ms = findCallGraph` lf (λ x → if (tr x)) (¬∅ $ tranLFRem x ltr) ms
   findCallGraph` (com df lf) if ∅ ms = findCallGraph` lf (λ x → if (com x)) ∅ ms
   findCallGraph` (com df lf) if (¬∅ x) ms = IMPOSSIBLE
-  findCallGraph` {ll = ll} {rll = call .∞rll} {olf = olf} (call {∞rll = ∞rll} x) if msr ms = ¬∅ (∅-addLFCRem ↓ (if ↓c)) , hf (if ↓c) msr ms where
-    hf : ∀{ll} → IndexLFCa olf → MSetLFCRem olf ll → MSetLFC olf olf → MSetLFC olf olf
+  findCallGraph` {ll = ll} {rll = call .∞rll} {olf = olf} (call {∞rll = ∞rll} x) if msr ms = ¬∅ (∅-addLFRem ↓ (if ↓)) , hf (if ↓) msr ms where
+    hf : ∀{ll} → IndexLF olf → MSetLFRem olf ll → MSetLF olf olf → MSetLF olf olf
     hf oic ∅ ms = ms
-    hf oic (¬∅ (↓c x₁)) ms₁ = maddLFC ms₁ oic x₁ 
+    hf oic (¬∅ (↓ x₁)) ms₁ = maddLF ms₁ oic x₁ 
     hf oic (¬∅ (x₁ ←∧)) ms₁ = hf oic (¬∅ x₁) ms₁
     hf oic (¬∅ (∧→ x₁)) ms₁ = hf oic (¬∅ x₁) ms₁
     hf oic (¬∅ (x₁ ←∧→ x₂)) ms₁ = hf oic (¬∅ x₁) ms₁

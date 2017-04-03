@@ -4,6 +4,7 @@ module SetLL where
 
 open import Common hiding (_≤_)
 open import LinLogic
+open import LinLogicProp
 import Data.List
 
 
@@ -189,6 +190,7 @@ del (s ←∂→ s₁) (∂→ ind) rll with (del s₁ ind rll)
 del (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((s) ←∂)
 del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((s) ←∂→ x)
 
+
 module _ where
 
   private
@@ -228,6 +230,52 @@ module _ where
   replacePartOf a ←∂ to b at (∂→ ind)     = (a) ←∂→ (hf ind b)  
   replacePartOf ∂→ a to b at (∂→ ind)     = ∂→ (replacePartOf a to b at ind)
   replacePartOf a ←∂→ a₁ to b at (∂→ ind) = (a) ←∂→ (replacePartOf a₁ to b at ind)
+
+
+module _ {u} where
+
+  open import Data.Maybe
+  open import Data.Product
+  open import Category.Monad
+  open RawMonad {f = lsuc u} (monad)
+
+  
+  setToIndex : ∀{i ll} → SetLL {i} {u} ll → Maybe $ Σ (LinLogic i {u}) (λ x → IndexLL x ll)
+  setToIndex {ll = ll} ↓ = just (ll , ↓)
+  setToIndex (s ←∧) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∧) })
+  setToIndex (∧→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∧→ ind) })
+  setToIndex (s ←∧→ s₁) = nothing
+  setToIndex (s ←∨) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∨) })
+  setToIndex (∨→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∨→ ind) })
+  setToIndex (s ←∨→ s₁) = nothing
+  setToIndex (s ←∂) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∂) })
+  setToIndex (∂→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∂→ ind) })
+  setToIndex (s ←∂→ s₁) = nothing
+  
+  msetToIndex : ∀{i ll} → MSetLL {i} {u} ll → Maybe $ Σ (LinLogic i {u}) (λ x → IndexLL x ll)
+  msetToIndex ∅ = nothing
+  msetToIndex (¬∅ x) = setToIndex x
+
+  pickOne : ∀{i ll} → SetLL {i} {u} ll → Σ (LinLogic i {u}) (λ x → IndexLL x ll)
+  pickOne {ll = ll} ↓ = ll , ↓
+  pickOne (s ←∧) with (pickOne s)
+  ... | (rll , ind) = (rll , ind ←∧)
+  pickOne (∧→ s) with (pickOne s)
+  ... | (rll , ind) = (rll , ∧→ ind)
+  pickOne (s ←∧→ s₁) with (pickOne s)
+  ... | (rll , ind) = rll , ind ←∧
+  pickOne (s ←∨) with (pickOne s)
+  ... | (rll , ind) = rll , ind ←∨
+  pickOne (∨→ s) with (pickOne s)
+  ... | (rll , ind) = rll , ∨→ ind
+  pickOne (s ←∨→ s₁) with (pickOne s)
+  ... | (rll , ind) = rll , ind ←∨
+  pickOne (s ←∂) with (pickOne s)
+  ... | (rll , ind) = rll , ind ←∂
+  pickOne (∂→ s) with (pickOne s)
+  ... | (rll , ind) = rll , ∂→ ind
+  pickOne (s ←∂→ s₁) with (pickOne s)
+  ... | (rll , ind) = rll , ind ←∂
 
 
 module _ where
@@ -446,46 +494,6 @@ tran ↓ (∧c tr)                     = ↓
 tran (s ←∧) (∧c tr)                = tran (∧→ s) tr
 tran (∧→ s) (∧c tr)                = tran (s ←∧) tr
 tran (s ←∧→ s₁) (∧c tr)            = tran (s₁ ←∧→ s) tr
--- tran ↓ (∧∂d tr)                    = ↓
--- tran (↓ ←∧) (∧∂d tr)               = tran ((↓ ←∧) ←∂→ (↓ ←∧)) tr
--- tran ((s ←∂) ←∧) (∧∂d tr)          = tran ((s ←∧) ←∂) tr
--- tran ((∂→ s) ←∧) (∧∂d tr)          = tran (∂→ (s ←∧)) tr
--- tran ((s ←∂→ s₁) ←∧) (∧∂d tr)      = tran ((s ←∧) ←∂→ (s₁ ←∧)) tr
--- tran (∧→ s) (∧∂d tr)               = tran ((∧→ s) ←∂→ (∧→ s)) tr
--- tran (↓ ←∧→ s₁) (∧∂d tr)           = tran ((↓ ←∧→ s₁) ←∂→ (↓ ←∧→ s₁)) tr
--- tran ((s ←∂) ←∧→ s₁) (∧∂d tr)      = tran ((s ←∧→ s₁) ←∂) tr
--- tran ((∂→ s) ←∧→ s₁) (∧∂d tr)      = tran (∂→ (s ←∧→ s₁)) tr
--- tran ((s ←∂→ s₁) ←∧→ s₂) (∧∂d tr)  = tran ((s ←∧→ s₂) ←∂→ (s₁ ←∧→ s₂)) tr
--- tran ↓ (∧∨d tr)                    = ↓
--- tran (↓ ←∧) (∧∨d tr)               = tran ((↓ ←∧) ←∨→ (↓ ←∧)) tr
--- tran ((s ←∨) ←∧) (∧∨d tr)          = tran ((s ←∧) ←∨) tr
--- tran ((∨→ s) ←∧) (∧∨d tr)          = tran (∨→ (s ←∧)) tr
--- tran ((s ←∨→ s₁) ←∧) (∧∨d tr)      = tran ((s ←∧) ←∨→ (s₁ ←∧)) tr
--- tran (∧→ s) (∧∨d tr)               = tran ((∧→ s) ←∨→ (∧→ s)) tr
--- tran (↓ ←∧→ s₁) (∧∨d tr)           = tran ((↓ ←∧→ s₁) ←∨→ (↓ ←∧→ s₁)) tr
--- tran ((s ←∨) ←∧→ s₁) (∧∨d tr)      = tran ((s ←∧→ s₁) ←∨) tr
--- tran ((∨→ s) ←∧→ s₁) (∧∨d tr)      = tran (∨→ (s ←∧→ s₁)) tr
--- tran ((s ←∨→ s₁) ←∧→ s₂) (∧∨d tr)  = tran ((s ←∧→ s₂) ←∨→ (s₁ ←∧→ s₂)) tr
--- tran ↓ (∨∂d tr)                    = ↓
--- tran (↓ ←∨) (∨∂d tr)               = tran ((↓ ←∨) ←∂→ (↓ ←∨)) tr
--- tran ((s ←∂) ←∨) (∨∂d tr)          = tran ((s ←∨) ←∂) tr
--- tran ((∂→ s) ←∨) (∨∂d tr)          = tran (∂→ (s ←∨)) tr
--- tran ((s ←∂→ s₁) ←∨) (∨∂d tr)      = tran ((s ←∨) ←∂→ (s₁ ←∨)) tr
--- tran (∨→ s) (∨∂d tr)               = tran ((∨→ s) ←∂→ (∨→ s)) tr
--- tran (↓ ←∨→ s₁) (∨∂d tr)           = tran ((↓ ←∨→ s₁) ←∂→ (↓ ←∨→ s₁)) tr
--- tran ((s ←∂) ←∨→ s₁) (∨∂d tr)      = tran ((s ←∨→ s₁) ←∂) tr
--- tran ((∂→ s) ←∨→ s₁) (∨∂d tr)      = tran (∂→ (s ←∨→ s₁)) tr
--- tran ((s ←∂→ s₁) ←∨→ s₂) (∨∂d tr)  = tran ((s ←∨→ s₂) ←∂→ (s₁ ←∨→ s₂)) tr 
--- tran ↓ (∂∨d tr)                    = ↓
--- tran (↓ ←∂) (∂∨d tr)               = tran ((↓ ←∂) ←∨→ (↓ ←∂)) tr
--- tran ((s ←∨) ←∂) (∂∨d tr)          = tran ((s ←∂) ←∨) tr
--- tran ((∨→ s) ←∂) (∂∨d tr)          = tran (∨→ (s ←∂)) tr
--- tran ((s ←∨→ s₁) ←∂) (∂∨d tr)      = tran ((s ←∂) ←∨→ (s₁ ←∂)) tr
--- tran (∂→ s) (∂∨d tr)               = tran ((∂→ s) ←∨→ (∂→ s)) tr
--- tran (↓ ←∂→ s₁) (∂∨d tr)           = tran ((↓ ←∂→ s₁) ←∨→ (↓ ←∂→ s₁)) tr
--- tran ((s ←∨) ←∂→ s₁) (∂∨d tr)      = tran ((s ←∂→ s₁) ←∨) tr
--- tran ((∨→ s) ←∂→ s₁) (∂∨d tr)      = tran (∨→ (s ←∂→ s₁)) tr
--- tran ((s ←∨→ s₁) ←∂→ s₂) (∂∨d tr)  = tran ((s ←∂→ s₂) ←∨→ (s₁ ←∂→ s₂)) tr 
 tran ↓ (∧∧d tr)                    = ↓
 tran (↓ ←∧) (∧∧d tr)               = tran (↓ ←∧→ (↓ ←∧)) tr
 tran ((s ←∧) ←∧) (∧∧d tr)          = tran (s ←∧) tr
