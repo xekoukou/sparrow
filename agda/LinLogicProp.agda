@@ -22,19 +22,19 @@ replLL-id (_ ∂ ri) (∂→ ind) s prf with (replLL ri ind s) | (replLL-id ri i
 replLL-id (_ ∂ ri) (∂→ ind) s prf | .ri | refl = refl
 
 
-replLL-inv : ∀{i u ll ell pll} → (ind : IndexLL {i} {u} pll ll) → replLL (replLL ll ind ell) (updateIndex ell ind) pll ≡ ll
+replLL-inv : ∀{i u ll ell pll} → (ind : IndexLL {i} {u} pll ll) → replLL (replLL ll ind ell) (updInd ell ind) pll ≡ ll
 replLL-inv ↓ = refl
-replLL-inv {ll = li ∧ ri} {ell = ell} {pll = pll} (ind ←∧) with (replLL (replLL li ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+replLL-inv {ll = li ∧ ri} {ell = ell} {pll = pll} (ind ←∧) with (replLL (replLL li ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∧ ri} {ell} {pll} (ind ←∧) | .li | refl = refl
-replLL-inv {ll = li ∧ ri} {ell = ell} {pll = pll} (∧→ ind) with (replLL (replLL ri ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+replLL-inv {ll = li ∧ ri} {ell = ell} {pll = pll} (∧→ ind) with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∧ ri} {ell} {pll} (∧→ ind) | .ri | refl = refl
-replLL-inv {ll = li ∨ ri} {ell = ell} {pll = pll} (ind ←∨) with (replLL (replLL li ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+replLL-inv {ll = li ∨ ri} {ell = ell} {pll = pll} (ind ←∨) with (replLL (replLL li ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∨ ri} {ell} {pll} (ind ←∨) | .li | refl = refl
-replLL-inv {ll = li ∨ ri} {ell = ell} {pll = pll} (∨→ ind) with (replLL (replLL ri ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+replLL-inv {ll = li ∨ ri} {ell = ell} {pll = pll} (∨→ ind) with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∨ ri} {ell} {pll} (∨→ ind) | .ri | refl = refl
-replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (ind ←∂) with (replLL (replLL li ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (ind ←∂) with (replLL (replLL li ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∂ ri} {ell} {pll} (ind ←∂) | .li | refl = refl
-replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (∂→ ind) with (replLL (replLL ri ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
+replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (∂→ ind) with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∂ ri} {ell} {pll} (∂→ ind) | .ri | refl = refl
 
 module _ where

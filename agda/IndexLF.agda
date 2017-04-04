@@ -2,6 +2,7 @@
 module IndexLF where
 
 open import Common
+open import IndexLLProp
 open import LinLogic
 open import LinFun
 
@@ -47,100 +48,42 @@ lastCall (⊂→ ic)  = lastCall ic
 lastCall (tr ic)  = lastCall ic
 lastCall (com ic) = lastCall ic
 
-module _ where
-
-  open import SetLL
-  open import Data.Maybe
-  open import Category.Monad
-  open RawMonad {f = lzero} (monad)
-  
-  private
-  -- reverseTran returns nothing if during the reversion, it finds a com.
-  -- TODO This function might be useful outside of the module.
-
-    reverseTran : ∀{i u ll rll} → LFun ll rll → SetLL {i} {u} rll → Maybe $ SetLL {i} {u} ll
-    reverseTran I s = just s
-    reverseTran (_⊂_ {ell = ell} {ind = ind} lf lf₁) s with (reverseTran lf₁ s)
-    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | just x with (truncSetLL x (updateIndex ell ind))
-    reverseTran (_⊂_ {pll} {_} {ell} {_} {ind} lf lf₁) s | just x | ∅ with (del x (updateIndex ell ind) pll)
-    -- We are trying to update the type of x with del. Since trunc resulted in ∅, deletion will not.
-    -- TODO There must be a better way.
-    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | just x | ∅ | ∅ = IMPOSSIBLE
-    reverseTran (_⊂_ {pll} {ll} {ell} {_} {ind} lf lf₁) s | just x | ∅ | (¬∅ x₁) with (replLL (replLL ll ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
-    reverseTran (_⊂_ {_} {ll} {ell} {_} {ind} lf lf₁) s | just x | ∅ | (¬∅ x₁) | g | refl = just x₁
-    reverseTran (_⊂_ {_} {ll} {ell} {_} {ind} lf lf₁) s | just x | (¬∅ x₁) with (reverseTran lf x₁)
-    reverseTran (_⊂_ {pll} {ll} {ell} {_} {ind} lf lf₁) s | just x | (¬∅ x₁) | (just x₂) = just $ hf ( (replacePartOf x to x₂ at (updateIndex ell ind))) where
-    -- TODO Maybe reuse this function for the code above.
-      hf : SetLL (replLL (replLL ll ind ell) (updateIndex ell ind) pll) → SetLL ll
-      hf x with (replLL (replLL ll ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
-      hf x₃ | r | refl = x₃ 
-    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | just x | (¬∅ x₁) | nothing = nothing
-    reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) s | nothing = nothing 
-    reverseTran (tr ltr lf) s = (reverseTran lf s) >>= λ x → just $ tran x $ revTr ltr 
-    reverseTran (com df lf) s = nothing
-    reverseTran (call x) s = nothing -- ?
-
--- Pick a better name.
-  setRevNoComs : ∀{i u ll pll ell} → (ind : IndexLL {i} {u} pll ll) → SetLL (replLL ll ind ell) → LFun pll ell → Maybe $ SetLL ll
-  setRevNoComs {ell = ell} ind s lf with (truncSetLL s (updateIndex ell ind))
-  setRevNoComs {_} {_} {_} {pll} {ell} ind s lf | ∅ with (del s (updateIndex ell ind) pll)       -- TODO We simply update the type. There must be a better way.
-  setRevNoComs {_} {_} {_} {_} {ell} ind s lf | ∅ | ∅ = IMPOSSIBLE
-  setRevNoComs {_} {_} {ll} {pll} {ell} ind s lf | ∅ | ¬∅ x = return $ hf x where
-    hf : SetLL (replLL (replLL ll ind ell) (updateIndex ell ind) pll) → SetLL ll
-    hf x with (replLL (replLL ll ind ell) (updateIndex ell ind) pll) | (replLL-inv {ell = ell} ind)
-    hf x₃ | r | refl = x₃ 
-  setRevNoComs {_} {_} {_} {_} {ell} ind s lf | ¬∅ x = (reverseTran lf x) >>= (λ y → return $ extend ind y ) 
-  
-  data IndexLFCo {i u} (cll : LinLogic i {u}) (frll : LinLogic i {u}) : ∀{ll rll} → SetLL ll → LFun {i} {u} ll rll → Set (u) where
-    _←⊂ : ∀{rll pll ell ll ind elf lf s}
-           → IndexLFCo cll frll s elf
-           → IndexLFCo cll frll (extend ind s) (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
-    ⊂→_ : ∀{rll pll ell ll ind elf lf s rs}
-           → IndexLFCo cll frll s lf
-           → {prf : just rs ≡ setRevNoComs ind s elf}
-           → IndexLFCo cll frll rs (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
-    tr   : ∀{ll orll rll s rs} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
-           → IndexLFCo cll frll s lf
-           → {prf : rs ≡ tran s (revTr ltr) }
-           → IndexLFCo cll frll rs (tr ltr lf) 
-    ↓  : ∀{rll prfi prfo df lf}
-           → IndexLFCo cll frll ↓ (com {i} {u} {rll} {cll} {frll} {{prfi}} {{prfo}} df lf)
-  
-module _ {u : Level} where
-
-  open import SetLL
-  open import Data.Maybe
-  open import Category.Monad
-  open RawMonad {f = lsuc u} (monad)
-  open import Relation.Binary.PropositionalEquality 
-
-  private
-    hf : ∀{i u ll pll ell} → (ind : IndexLL {i} {u} pll ll) → (s : SetLL (replLL ll ind ell)) → (elf : LFun pll ell) → Maybe $ Σ (SetLL ll) (λ x → just x ≡ setRevNoComs ind s elf)
-    hf ind s elf with (setRevNoComs ind s elf)
-    hf ind s elf | just x = just (x , refl)
-    hf ind s elf | nothing = nothing
-
-    hf2 : ∀ {i u ll rll} → (s : SetLL rll) → (ltr : LLTr {i} {u} rll ll) → Σ (SetLL ll) (λ rs → rs ≡ tran s (revTr ltr))
-    hf2 s ltr with (tran s (revTr ltr))
-    ... | r = r , refl
-    
-  indLFtoLFCo : ∀{i ll rll} → {lf : LFun {i} {u} ll rll} → IndexLF lf → Maybe $ Σ (LinLogic i {u}) ( λ  cll → Σ (LinLogic i {u}) (λ frll → Σ (SetLL ll) (λ s → IndexLFCo {i = i} {u = u} cll frll s lf)))
-  indLFtoLFCo {lf = I} ↓ = nothing
-  indLFtoLFCo {lf = lf ⊂ lf₁} ↓ = nothing
-  indLFtoLFCo {lf = tr ltr lf} ↓ = nothing
-  indLFtoLFCo {lf = com {ll = cll} {frll = frll} df lf} ↓ = just (cll , frll , ↓ , ↓)
-  indLFtoLFCo {lf = call x} ↓ = nothing
-  indLFtoLFCo (_←⊂ {ind = ind} ic) = (indLFtoLFCo ic) >>= (λ {(cll , frll , s , x) → just (cll , frll , extend ind s , (x ←⊂))}) 
-  indLFtoLFCo (⊂→_ {ind = ind} {elf = elf} ic) with (indLFtoLFCo ic)
-  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | nothing = nothing
-  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) with (hf ind s elf)
-  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) | (just (rs , prf)) = just (cll , frll , rs , (⊂→_ x {prf = prf}))
-  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) | nothing = nothing
-  indLFtoLFCo (tr {ltr = ltr} ic) with (indLFtoLFCo ic)
-  ... | nothing = nothing
-  ... | just (cll , frll , s , x) with (hf2 s ltr)
-  indLFtoLFCo (tr {_} {_} {_} {ltr} ic) | just (cll , frll , s , x) | ( rs , prf) = just (cll , frll , rs , (tr x {prf = prf}))
-  indLFtoLFCo (com ic) = nothing 
+-- To be removed since we will probably not need it anymore.  
+--module _ {u : Level} where
+--
+--  open import SetLL
+--  open import Data.Maybe
+--  open import Category.Monad
+--  open RawMonad {f = lsuc u} (monad)
+--  open import Relation.Binary.PropositionalEquality 
+--
+--  private
+--    hf : ∀{i u ll pll ell} → (ind : IndexLL {i} {u} pll ll) → (s : SetLL (replLL ll ind ell)) → (elf : LFun pll ell) → Maybe $ Σ (SetLL ll) (λ x → just x ≡ setRevNoComs ind s elf)
+--    hf ind s elf with (setRevNoComs ind s elf)
+--    hf ind s elf | just x = just (x , refl)
+--    hf ind s elf | nothing = nothing
+--
+--    hf2 : ∀ {i u ll rll} → (s : SetLL rll) → (ltr : LLTr {i} {u} rll ll) → Σ (SetLL ll) (λ rs → rs ≡ tran s (revTr ltr))
+--    hf2 s ltr with (tran s (revTr ltr))
+--    ... | r = r , refl
+--    
+--  indLFtoLFCo : ∀{i ll rll} → {lf : LFun {i} {u} ll rll} → IndexLF lf → Maybe $ Σ (LinLogic i {u}) ( λ  cll → Σ (LinLogic i {u}) (λ frll → Σ (SetLL ll) (λ s → IndexLFCo {i = i} {u = u} cll frll s lf)))
+--  indLFtoLFCo {lf = I} ↓ = nothing
+--  indLFtoLFCo {lf = lf ⊂ lf₁} ↓ = nothing
+--  indLFtoLFCo {lf = tr ltr lf} ↓ = nothing
+--  indLFtoLFCo {lf = com {ll = cll} {frll = frll} df lf} ↓ = just (cll , frll , ↓ , ↓)
+--  indLFtoLFCo {lf = call x} ↓ = nothing
+--  indLFtoLFCo (_←⊂ {ind = ind} ic) = (indLFtoLFCo ic) >>= (λ {(cll , frll , s , x) → just (cll , frll , extend ind s , (x ←⊂))}) 
+--  indLFtoLFCo (⊂→_ {ind = ind} {elf = elf} ic) with (indLFtoLFCo ic)
+--  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | nothing = nothing
+--  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) with (hf ind s elf)
+--  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) | (just (rs , prf)) = just (cll , frll , rs , (⊂→_ x {prf = prf}))
+--  indLFtoLFCo (⊂→_ {_} {_} {_} {_} {ind} {elf} ic) | just (cll , frll , s , x) | nothing = nothing
+--  indLFtoLFCo (tr {ltr = ltr} ic) with (indLFtoLFCo ic)
+--  ... | nothing = nothing
+--  ... | just (cll , frll , s , x) with (hf2 s ltr)
+--  indLFtoLFCo (tr {_} {_} {_} {ltr} ic) | just (cll , frll , s , x) | ( rs , prf) = just (cll , frll , rs , (tr x {prf = prf}))
+--  indLFtoLFCo (com ic) = nothing 
 
 
 
@@ -435,28 +378,28 @@ extendLFRem (∂→ ind) sr = ∂→ (extendLFRem ind sr)
 
 replaceLFRem : ∀{i u oll orll ll pll rll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → SetLFRem {i} olf rll → SetLFRem olf ll → SetLFRem olf (replLL ll ind rll)
 replaceLFRem ↓ esr sr = esr
-replaceLFRem {rll = rll} (ind ←∧) esr (↓ x) = (extendLFRem (updateIndex rll ind) esr) ←∧
+replaceLFRem {rll = rll} (ind ←∧) esr (↓ x) = (extendLFRem (updInd rll ind) esr) ←∧
 replaceLFRem {rll = rll} (ind ←∧) esr (sr ←∧) = replaceLFRem ind esr sr ←∧
-replaceLFRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendLFRem (updateIndex rll ind) esr) ←∧→ sr
+replaceLFRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendLFRem (updInd rll ind) esr) ←∧→ sr
 replaceLFRem {rll = rll} (ind ←∧) esr (sr ←∧→ sr₁) = (replaceLFRem ind esr sr) ←∧→ sr₁
-replaceLFRem {rll = rll} (∧→ ind) esr (↓ x) = ∧→ (extendLFRem (updateIndex rll ind) esr)
-replaceLFRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∧→ ind) esr (↓ x) = ∧→ (extendLFRem (updInd rll ind) esr)
+replaceLFRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendLFRem (updInd rll ind) esr)
 replaceLFRem {rll = rll} (∧→ ind) esr (∧→ sr) = ∧→ replaceLFRem ind esr sr
 replaceLFRem {rll = rll} (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceLFRem ind esr sr₁
-replaceLFRem {rll = rll} (ind ←∨) esr (↓ x) = (extendLFRem (updateIndex rll ind) esr) ←∨
+replaceLFRem {rll = rll} (ind ←∨) esr (↓ x) = (extendLFRem (updInd rll ind) esr) ←∨
 replaceLFRem {rll = rll} (ind ←∨) esr (sr ←∨) = replaceLFRem ind esr sr ←∨
-replaceLFRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendLFRem (updateIndex rll ind) esr) ←∨→ sr
+replaceLFRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendLFRem (updInd rll ind) esr) ←∨→ sr
 replaceLFRem {rll = rll} (ind ←∨) esr (sr ←∨→ sr₁) = (replaceLFRem ind esr sr) ←∨→ sr₁
-replaceLFRem {rll = rll} (∨→ ind) esr (↓ x) = ∨→ (extendLFRem (updateIndex rll ind) esr)
-replaceLFRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∨→ ind) esr (↓ x) = ∨→ (extendLFRem (updInd rll ind) esr)
+replaceLFRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendLFRem (updInd rll ind) esr)
 replaceLFRem {rll = rll} (∨→ ind) esr (∨→ sr) = ∨→ replaceLFRem ind esr sr
 replaceLFRem {rll = rll} (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceLFRem ind esr sr₁
-replaceLFRem {rll = rll} (ind ←∂) esr (↓ x) = (extendLFRem (updateIndex rll ind) esr) ←∂
+replaceLFRem {rll = rll} (ind ←∂) esr (↓ x) = (extendLFRem (updInd rll ind) esr) ←∂
 replaceLFRem {rll = rll} (ind ←∂) esr (sr ←∂) = replaceLFRem ind esr sr ←∂
-replaceLFRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendLFRem (updateIndex rll ind) esr) ←∂→ sr
+replaceLFRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendLFRem (updInd rll ind) esr) ←∂→ sr
 replaceLFRem {rll = rll} (ind ←∂) esr (sr ←∂→ sr₁) = (replaceLFRem ind esr sr) ←∂→ sr₁
-replaceLFRem {rll = rll} (∂→ ind) esr (↓ x) = ∂→ (extendLFRem (updateIndex rll ind) esr)
-replaceLFRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendLFRem (updateIndex rll ind) esr)
+replaceLFRem {rll = rll} (∂→ ind) esr (↓ x) = ∂→ (extendLFRem (updInd rll ind) esr)
+replaceLFRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendLFRem (updInd rll ind) esr)
 replaceLFRem {rll = rll} (∂→ ind) esr (∂→ sr) = ∂→ replaceLFRem ind esr sr
 replaceLFRem {rll = rll} (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceLFRem ind esr sr₁
 
@@ -464,7 +407,7 @@ replaceLFRem {rll = rll} (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ re
 mreplaceLFRem :  ∀{i u oll orll ll pll rll} → {olf : LFun {i} {u} oll orll} → (ind : IndexLL {i} {u} pll ll) → MSetLFRem {i} olf rll → MSetLFRem olf ll → MSetLFRem olf (replLL ll ind rll)
 mreplaceLFRem ind ∅ ∅ = ∅
 mreplaceLFRem {rll = rll} ind ∅ (¬∅ x) = delLFRem x ind rll
-mreplaceLFRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFRem (updateIndex rll ind) x)
+mreplaceLFRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFRem (updInd rll ind) x)
 mreplaceLFRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceLFRem ind x x₁)
 
 

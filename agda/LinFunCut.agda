@@ -11,6 +11,7 @@ open import SetLLProp
 open import SetLLRem
 open import LinFun
 open import IndexLF
+open import IndexLFCo
 
 open import Data.List
 open import Data.Product
@@ -52,15 +53,15 @@ nextComs {i} {u} {ll = ll} olf = proj₂ $ nextComs` olf (λ x → x) (¬∅ (fi
   nextComs` (call x) if (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
 
 
--- Maybe we need to replace IndexLFCo and s with something better in the future. TODO
-removeCom : ∀{i u ll rll cll frll s} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo cll frll s lf) → let (_ , ind) = pickOne s in LFun {i} {u} (replLL ll ind frll) rll
-removeCom I ()
-removeCom (_⊂_ elf lf) ic = {!!}
-removeCom (tr ltr lf) (tr ic) with (removeCom lf ic)
-... | r = tr {!!} {!!}
-removeCom (com df lf) ↓ = lf
-removeCom (call x) ()
-
+---- Maybe we need to replace IndexLFCo and s with something better in the future. TODO
+--removeCom : ∀{i u ll rll cll frll s} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo cll frll s lf) → let (_ , ind) = pickOne s in LFun {i} {u} (replLL ll ind frll) rll
+--removeCom I ()
+--removeCom (_⊂_ elf lf) ic = {!!}
+--removeCom (tr ltr lf) (tr ic) with (removeCom lf ic)
+--... | r = tr {!!} {!!}
+--removeCom (com df lf) ↓ = lf
+--removeCom (call x) ()
+--
 -- Here we have removed the com, but not the transformations or calls.We need to find the next available coms so as to remove the
 -- transformations that will make it a single ↓. Also, we need to find if there are calls that are reachable from the outside.
 

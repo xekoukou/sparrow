@@ -4,6 +4,7 @@ module LinFun where
 
 open import Common
 open import LinLogic
+open import LinLogicProp
 open import LinDepT
 open import LinT 
 open import SetLL

@@ -4,6 +4,8 @@ module SetLLRem where
 open import Common hiding (_≤_)
 open import SetLL
 open import LinLogic
+open import IndexLLProp
+open import LinLogicProp
 import Data.List
 open import Data.Vec
 open import Data.Product
@@ -243,28 +245,28 @@ extendRem (∂→ ind) sr = ∂→ (extendRem ind sr)
 replaceRem : ∀{i u oll} → ∀{ll pll rll} → (ind : IndexLL {i} {u} pll ll) → SetLLRem {i} oll rll → SetLLRem oll ll → SetLLRem oll (replLL ll ind rll)
 replaceRem ↓ esr sr = esr
 replaceRem {rll = rll} (ind ←∧) esr (sr ←∧) = replaceRem ind esr sr ←∧
-replaceRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendRem (updateIndex rll ind) esr) ←∧→ sr
+replaceRem {rll = rll} (ind ←∧) esr (∧→ sr) = (extendRem (updInd rll ind) esr) ←∧→ sr
 replaceRem {rll = rll} (ind ←∧) esr (sr ←∧→ sr₁) = (replaceRem ind esr sr) ←∧→ sr₁
-replaceRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendRem (updateIndex rll ind) esr)
+replaceRem {rll = rll} (∧→ ind) esr (sr ←∧) = sr ←∧→ (extendRem (updInd rll ind) esr)
 replaceRem {rll = rll} (∧→ ind) esr (∧→ sr) = ∧→ replaceRem ind esr sr
 replaceRem {rll = rll} (∧→ ind) esr (sr ←∧→ sr₁) = sr ←∧→ replaceRem ind esr sr₁
 replaceRem {rll = rll} (ind ←∨) esr (sr ←∨) = replaceRem ind esr sr ←∨
-replaceRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendRem (updateIndex rll ind) esr) ←∨→ sr
+replaceRem {rll = rll} (ind ←∨) esr (∨→ sr) = (extendRem (updInd rll ind) esr) ←∨→ sr
 replaceRem {rll = rll} (ind ←∨) esr (sr ←∨→ sr₁) = (replaceRem ind esr sr) ←∨→ sr₁
-replaceRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendRem (updateIndex rll ind) esr)
+replaceRem {rll = rll} (∨→ ind) esr (sr ←∨) = sr ←∨→ (extendRem (updInd rll ind) esr)
 replaceRem {rll = rll} (∨→ ind) esr (∨→ sr) = ∨→ replaceRem ind esr sr
 replaceRem {rll = rll} (∨→ ind) esr (sr ←∨→ sr₁) = sr ←∨→ replaceRem ind esr sr₁
 replaceRem {rll = rll} (ind ←∂) esr (sr ←∂) = replaceRem ind esr sr ←∂
-replaceRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendRem (updateIndex rll ind) esr) ←∂→ sr
+replaceRem {rll = rll} (ind ←∂) esr (∂→ sr) = (extendRem (updInd rll ind) esr) ←∂→ sr
 replaceRem {rll = rll} (ind ←∂) esr (sr ←∂→ sr₁) = (replaceRem ind esr sr) ←∂→ sr₁
-replaceRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendRem (updateIndex rll ind) esr)
+replaceRem {rll = rll} (∂→ ind) esr (sr ←∂) = sr ←∂→ (extendRem (updInd rll ind) esr)
 replaceRem {rll = rll} (∂→ ind) esr (∂→ sr) = ∂→ replaceRem ind esr sr
 replaceRem {rll = rll} (∂→ ind) esr (sr ←∂→ sr₁) = sr ←∂→ replaceRem ind esr sr₁
 
 mreplaceRem : ∀{i u oll} → ∀{ll pll rll} → (ind : IndexLL {i} {u} pll ll) → MSetLLRem {i} oll rll → MSetLLRem oll ll → MSetLLRem oll (replLL ll ind rll)
 mreplaceRem ind ∅ ∅ = ∅
 mreplaceRem {ll = ll} {pll = pll} {rll = rll} ind ∅ (¬∅ x) = delRem x ind rll
-mreplaceRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendRem (updateIndex rll ind) x)
+mreplaceRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendRem (updInd rll ind) x)
 mreplaceRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceRem ind x x₁)
 
 
