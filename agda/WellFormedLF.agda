@@ -1,4 +1,4 @@
--- {-# OPTIONS --show-implicit #-}
+-- {-# OPTIONS --exact-split #-}
 
 module WellFormedLF where
 

@@ -1,5 +1,4 @@
-
-
+{-# OPTIONS --exact-split #-}
 module SetLL where
 
 open import Common hiding (_≤_)
@@ -430,16 +429,19 @@ contruct (x ←∧)     = (contruct x) ←∧
 contruct (∧→ x)     = ∧→ (contruct x)
 contruct (x ←∧→ x₁) with contruct x | contruct x₁
 ... | ↓ | ↓ = ↓
+{-# CATCHALL #-}
 ... | g | r = (g ←∧→ r)
 contruct (x ←∨)     = (contruct x) ←∨
 contruct (∨→ x)     = ∨→ (contruct x)
 contruct (x ←∨→ x₁) with contruct x | contruct x₁
 ... | ↓ | ↓ = ↓
+{-# CATCHALL #-}
 ... | g | r = (g ←∨→ r)
 contruct (x ←∂)     = (contruct x) ←∂
 contruct (∂→ x)     = ∂→ (contruct x)
 contruct (x ←∂→ x₁) with contruct x | contruct x₁
 ... | ↓ | ↓ = ↓
+{-# CATCHALL #-}
 ... | g | r = (g ←∂→ r)
 
 
@@ -458,24 +460,31 @@ res-contruct (x ←∧)     = (res-contruct x) ←∧
 res-contruct (∧→ x)     = ∧→ (res-contruct x)
 res-contruct (x ←∧→ x₁) with res-contruct x | res-contruct x₁
 ... | ↓ | ↓ = ↓
+{-# CATCHALL #-}
 ... | g | r = (g ←∧→ r)
 res-contruct (x ←∨) with res-contruct x
 ... | ↓ = ↓
+{-# CATCHALL #-}
 ... | g = (g ←∨)
 res-contruct (∨→ x) with res-contruct x 
 ... | ↓ = ↓
+{-# CATCHALL #-}
 ... | g = (∨→ g)
 res-contruct (x ←∨→ x₁) with res-contruct x | res-contruct x₁
 ... | ↓ | ↓ = ↓
+{-# CATCHALL #-}
 ... | g | r = (g ←∨→ r)
 res-contruct (x ←∂) with res-contruct x
 ... | ↓ = ↓
+{-# CATCHALL #-}
 ... | g = (g ←∂)
 res-contruct (∂→ x) with res-contruct x
 ... | ↓ = ↓
+{-# CATCHALL #-}
 ... | g = (∂→ g)
 res-contruct (x ←∂→ x₁) with res-contruct x | res-contruct x₁
 ... | ↓ | ↓ = ↓
+{-# CATCHALL #-}
 ... | g | r = (g ←∂→ r)
 
 -- If we transform the linear logic tree, we need to transform the SetLL as well.

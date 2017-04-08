@@ -1,9 +1,10 @@
--- {-# OPTIONS --show-implicit #-}
+{-# OPTIONS --exact-split #-}
 
 module LinFunCut where
 
 open import Common
 open import LinLogic
+open import IndexLLProp
 open import LinDepT
 open import LinT 
 open import SetLL
@@ -13,10 +14,12 @@ open import LinFun
 open import IndexLF
 open import IndexLFCo
 
+open import Relation.Binary.PropositionalEquality
 open import Data.List
 open import Data.Product
 open import Data.Nat
 open import Data.Maybe
+open import Category.Monad
 
 
 -- Some simple properties of Natural numbers that are missing from agda-stdlib
@@ -31,37 +34,76 @@ module _ where
   ≤rsuc z≤n = z≤n
   ≤rsuc (s≤s x) = s≤s $ ≤rsuc x
 
+module _ {u : Level} where
+
+  open RawMonad {f = u} (Data.Maybe.monad)
+
 -- This function should be used after we have removed the specific com, the transformations, and the calls.
 -- It is to be used to find the next coms that are available.
+  private
+    data TMaybe {A : Set u} (B : A → Set u) : Maybe A → Set u where
+      Nothing : TMaybe B nothing
+      Just : {a : A} → B a → TMaybe B (just a)
+  
+  nextComs : ∀{i ll rll} → (olf : LFun {i} {u} ll rll) → MSetLFCoRem olf ll
+  nextComs {i} {ll = oll} olf = proj₂ $ nextComs` olf (λ cll iind → just iind) (λ frll cll iind ic → Just ic) (¬∅ (fillAllLowerRem oll) , ∅) where
+    nextComs` : ∀{ll rll} → (lf : LFun {i} {u} ll rll)
+                → (iif : ((cll : LinLogic i {u}) → IndexLL cll ll → Maybe $ IndexLL cll oll))
+                → ((frll cll : LinLogic i {u}) → (iind : IndexLL cll ll) → IndexLFCo frll iind lf → TMaybe (λ x → IndexLFCo frll x olf) (iif cll iind) )
+                → MSetLLRem {i} oll ll × MSetLFCoRem olf oll
+                → MSetLLRem oll rll × MSetLFCoRem olf oll
+    nextComs` I iif if (sr , s) = (sr , s)
+    nextComs` (_⊂_ {ll = ll} {ell = ell} {ind = ind} lf lf₁) iif if (sr , s) with (truncSetLLRem sr ind) 
+    ... | r with (nextComs` lf (λ cll iind → iif cll (ind +ᵢ iind)) (λ frll cll iind ic → if frll cll (ind +ᵢ iind) (ic ←⊂)) (r , s))
+    ... | (esr , es) = nextComs` lf₁ (λ cll iind → niif cll iind (indRevNoComs ind iind lf)) nif (mreplaceRem ind esr sr , es) where
 
-nextComs : ∀{i u ll rll} → (olf : LFun {i} {u} ll rll) → MSetLFRem olf ll
-nextComs {i} {u} {ll = ll} olf = proj₂ $ nextComs` olf (λ x → x) (¬∅ (fillAllLowerRem ll) , ∅) where
-  nextComs` : ∀{oll ll rll} → (lf : LFun {i} {u} ll rll) → (IndexLF lf → IndexLF olf) → MSetLLRem {i} oll ll × MSetLFRem olf oll → MSetLLRem oll rll × MSetLFRem olf oll
-  nextComs` I if (sr , s) = (sr , s)
-  nextComs` (_⊂_ {ell = ell} {ind = ind} lf lf₁) if (sr , s) with (truncSetLLRem sr ind) 
-  ... | r = let (esr , es) = nextComs` lf (λ x → if (x ←⊂)) (r , s)
-            in nextComs` lf₁ (λ x → if (⊂→ x)) (mreplaceRem ind esr sr , es)
-  nextComs` (tr ltr lf) if (∅ , s) = ( ∅ , s) 
-  nextComs` (tr ltr lf) if (¬∅ x , s) = nextComs` lf (λ x → if (tr x)) ((¬∅ $ tranRem x ltr) , s)
-  nextComs` (com {ll = _} {frll} df lf) if (∅ , s) = (∅ , s)
-  nextComs` (com {ll = _} {frll} df lf) if (¬∅ x , s) with (contruct $ projToSetLL x)
-  nextComs` (com {_} {_} {frll} df lf) if (¬∅ x , s) | ↓ with (msetToIndex (mcontruct $ reConSet x))
-  nextComs` (com {_} {_} {frll} df lf) if (¬∅ x , s) | ↓ | (just (_ , ind)) = (∅ , maddLFRem s ind (if ↓))
-  nextComs` (com {_} {_} {frll} df lf) if (¬∅ x , s) | ↓ | nothing = IMPOSSIBLE -- This leads to a unique ↓ because we have cleaned the transformations.
-  nextComs` (com {_} {_} {frll} df lf) if (¬∅ x , s) | r = (∅ , s)
-  nextComs` (call x) if (∅ , s) = (∅ , s)
-  nextComs` (call x) if (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
+      niif : ((cll : LinLogic i {u}) → IndexLL cll (replLL ll ind ell) → Maybe $ IndexLL cll ll → Maybe $ IndexLL cll oll)
+      niif cll iind (just lx) = iif cll lx
+      niif cll iind nothing = nothing
+
+      nif : ((frll cll : LinLogic i {u}) → (iind : IndexLL cll (replLL ll ind ell)) → IndexLFCo frll iind lf₁ → TMaybe (λ x → IndexLFCo frll x olf) (niif cll iind (indRevNoComs ind iind lf)) )
+      nif frll cll iind ic with (indRevNoComs ind iind lf) | (inspect (λ x → indRevNoComs ind iind x) lf)
+      nif frll cll iind ic | just x | [ eq ] = if frll cll x (⊂→_ ic {prf = sym eq})
+      nif frll cll iind ic | nothing | g = Nothing
+    nextComs` (tr ltr lf) iif if (∅ , s) = ( ∅ , s) 
+    nextComs` (tr {ll = ll} {orll = orll} ltr lf) iif if (¬∅ x , s) = nextComs` lf (λ cll iind → niif cll iind (IndexLLProp.tran iind (revTr ltr))) nif ((¬∅ $ tranRem x ltr) , s) where
+
+      niif : ((cll : LinLogic i {u}) → IndexLL cll orll → Maybe $ IndexLL cll ll → Maybe $ IndexLL cll oll)
+      niif cll iind (just lx) = iif cll lx
+      niif cll iind nothing = nothing
+
+      nif : ((frll cll : LinLogic i {u}) → (iind : IndexLL cll orll) → IndexLFCo frll iind lf → TMaybe (λ x → IndexLFCo frll x olf) (niif cll iind (IndexLLProp.tran iind (revTr ltr))))
+      nif frll cll iind ic with (IndexLLProp.tran iind (revTr ltr)) | (inspect (λ x → IndexLLProp.tran x (revTr ltr)) iind)
+      nif frll cll iind ic | just x | [ eq ] = if frll cll x (tr ic {prf = sym eq})
+      nif frll cll iind ic | nothing | g = Nothing
+    nextComs` (com {ll = _} {frll} df lf) iif if (∅ , s) = (∅ , s)
+    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x , s) with (contruct $ projToSetLL x)
+    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x , s)  | ↓ with (iif cll ↓) | (if frll cll ↓ ↓)
+    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x₂ , s) | ↓ | just x₁ | (Just x) =  ∅ , maddLFCoRem s x₁ x
+    nextComs` (com {_} {_} {frll} df lf) iif if (¬∅ x , s)     | ↓ | nothing | g = ∅ , s
+    {-# CATCHALL #-}
+    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x , s)  | r = (∅ , s)
+    nextComs` (call x) iif if (∅ , s) = (∅ , s)
+    nextComs` (call x) iif if (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
+
+module _ where
+  private
+    gl : ∀{i u cll ll pll ell} → (rs : IndexLL {i} {u} cll ll) → (ind : IndexLL pll ll) → (lind : IndexLL cll (replLL ll ind ell)) → (lf : LFun pll ell) → just rs ≡ indRevNoComs ind lind lf → (ind -ₘᵢ rs ≡ nothing) × (rs -ₘᵢ ind ≡ nothing)
+    gl rs ind lind lf eq = {!!}
 
 
----- Maybe we need to replace IndexLFCo and s with something better in the future. TODO
---removeCom : ∀{i u ll rll cll frll s} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo cll frll s lf) → let (_ , ind) = pickOne s in LFun {i} {u} (replLL ll ind frll) rll
---removeCom I ()
---removeCom (_⊂_ elf lf) ic = {!!}
---removeCom (tr ltr lf) (tr ic) with (removeCom lf ic)
---... | r = tr {!!} {!!}
---removeCom (com df lf) ↓ = lf
---removeCom (call x) ()
---
+  removeCom : ∀{i u ll rll cll frll} → {ind : IndexLL cll ll} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo frll ind lf) → LFun {i} {u} (replLL ll ind frll) rll
+  removeCom I ()
+  removeCom {frll = frll} (_⊂_ {pll = pll} {ll = ll} {ind = ind} lf lf₁) (_←⊂ {lind = lind} ic) with (replLL ll ind (replLL pll lind frll)) | (drepl=>repl+ {frll = frll} ind lind)
+  removeCom {frll = frll} (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) (_←⊂ {lind = lind} ic)  | .(replLL ll (ind +ᵢ lind) frll) | refl = _⊂_ {ind = (updIndGen frll ind lind)} (removeCom lf ic) (hf lf₁)  where
+    hf : LFun (replLL ll ind ell) rll → LFun (replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) rll
+    hf x with (replLL ll ind ell) | (remRepl {frll = frll} {ell = ell} ind lind) 
+    hf x | .(replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) | refl = x
+  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) = _⊂_ {ind = {!!}} lf {!!} -- lf ⊂ (removeCom lf₁ ic)
+  removeCom (tr ltr lf) (tr ic) = {!!} -- tr ltr (removeCom lf ic)
+  removeCom (com df lf) ic = {!!}
+  removeCom (call x) ()
+
 -- Here we have removed the com, but not the transformations or calls.We need to find the next available coms so as to remove the
 -- transformations that will make it a single ↓. Also, we need to find if there are calls that are reachable from the outside.
 

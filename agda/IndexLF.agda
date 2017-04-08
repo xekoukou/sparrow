@@ -1,4 +1,4 @@
-
+{-# OPTIONS --exact-split #-}
 module IndexLF where
 
 open import Common

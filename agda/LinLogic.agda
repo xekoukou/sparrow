@@ -1,3 +1,4 @@
+{-# OPTIONS --exact-split #-}
 
 module LinLogic where
 
