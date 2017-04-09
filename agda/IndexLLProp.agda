@@ -147,26 +147,26 @@ _-ᵢ_ : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : In
 ((∂→ bind) -ᵢ (∂→ sind)) (≤ᵢ∂→ eq) = (bind -ᵢ sind) eq
 
 
-b-s≡j⇒b≤ᵢs : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : IndexLL pll ll) →  Σ (IndexLL {i} {u} cll pll) (λ x → (bind -ₘᵢ sind) ≡ just x) → sind ≤ᵢ bind
-b-s≡j⇒b≤ᵢs bind ↓ (rs , x) = ≤ᵢ↓
-b-s≡j⇒b≤ᵢs ↓ (sind ←∧) (rs , ())
-b-s≡j⇒b≤ᵢs (bind ←∧) (sind ←∧) (rs , x) = ≤ᵢ←∧ $ b-s≡j⇒b≤ᵢs bind sind (rs , x)
-b-s≡j⇒b≤ᵢs (∧→ bind) (sind ←∧) (rs , ())
-b-s≡j⇒b≤ᵢs ↓ (∧→ sind) (rs , ())
-b-s≡j⇒b≤ᵢs (bind ←∧) (∧→ sind) (rs , ())
-b-s≡j⇒b≤ᵢs (∧→ bind) (∧→ sind) (rs , x) = ≤ᵢ∧→ $ b-s≡j⇒b≤ᵢs bind sind (rs , x)
-b-s≡j⇒b≤ᵢs ↓ (sind ←∨) (rs , ())
-b-s≡j⇒b≤ᵢs (bind ←∨) (sind ←∨) (rs , x) = ≤ᵢ←∨ $ b-s≡j⇒b≤ᵢs bind sind (rs , x)
-b-s≡j⇒b≤ᵢs (∨→ bind) (sind ←∨) (rs , ())
-b-s≡j⇒b≤ᵢs ↓ (∨→ sind) (rs , ())
-b-s≡j⇒b≤ᵢs (bind ←∨) (∨→ sind) (rs , ())
-b-s≡j⇒b≤ᵢs (∨→ bind) (∨→ sind) (rs , x) =  ≤ᵢ∨→ $ b-s≡j⇒b≤ᵢs bind sind (rs , x)
-b-s≡j⇒b≤ᵢs ↓ (sind ←∂) (rs , ())
-b-s≡j⇒b≤ᵢs (bind ←∂) (sind ←∂) (rs , x) = ≤ᵢ←∂ $ b-s≡j⇒b≤ᵢs bind sind (rs , x)
-b-s≡j⇒b≤ᵢs (∂→ bind) (sind ←∂) (rs , ())
-b-s≡j⇒b≤ᵢs ↓ (∂→ sind) (rs , ())
-b-s≡j⇒b≤ᵢs (bind ←∂) (∂→ sind) (rs , ())
-b-s≡j⇒b≤ᵢs (∂→ bind) (∂→ sind) (rs , x) = ≤ᵢ∂→ $ b-s≡j⇒b≤ᵢs bind sind (rs , x)
+b-s≡j⇒s≤ᵢb : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : IndexLL pll ll) →  Σ (IndexLL {i} {u} cll pll) (λ x → (bind -ₘᵢ sind) ≡ just x) → sind ≤ᵢ bind
+b-s≡j⇒s≤ᵢb bind ↓ (rs , x) = ≤ᵢ↓
+b-s≡j⇒s≤ᵢb ↓ (sind ←∧) (rs , ())
+b-s≡j⇒s≤ᵢb (bind ←∧) (sind ←∧) (rs , x) = ≤ᵢ←∧ $ b-s≡j⇒s≤ᵢb bind sind (rs , x)
+b-s≡j⇒s≤ᵢb (∧→ bind) (sind ←∧) (rs , ())
+b-s≡j⇒s≤ᵢb ↓ (∧→ sind) (rs , ())
+b-s≡j⇒s≤ᵢb (bind ←∧) (∧→ sind) (rs , ())
+b-s≡j⇒s≤ᵢb (∧→ bind) (∧→ sind) (rs , x) = ≤ᵢ∧→ $ b-s≡j⇒s≤ᵢb bind sind (rs , x)
+b-s≡j⇒s≤ᵢb ↓ (sind ←∨) (rs , ())
+b-s≡j⇒s≤ᵢb (bind ←∨) (sind ←∨) (rs , x) = ≤ᵢ←∨ $ b-s≡j⇒s≤ᵢb bind sind (rs , x)
+b-s≡j⇒s≤ᵢb (∨→ bind) (sind ←∨) (rs , ())
+b-s≡j⇒s≤ᵢb ↓ (∨→ sind) (rs , ())
+b-s≡j⇒s≤ᵢb (bind ←∨) (∨→ sind) (rs , ())
+b-s≡j⇒s≤ᵢb (∨→ bind) (∨→ sind) (rs , x) =  ≤ᵢ∨→ $ b-s≡j⇒s≤ᵢb bind sind (rs , x)
+b-s≡j⇒s≤ᵢb ↓ (sind ←∂) (rs , ())
+b-s≡j⇒s≤ᵢb (bind ←∂) (sind ←∂) (rs , x) = ≤ᵢ←∂ $ b-s≡j⇒s≤ᵢb bind sind (rs , x)
+b-s≡j⇒s≤ᵢb (∂→ bind) (sind ←∂) (rs , ())
+b-s≡j⇒s≤ᵢb ↓ (∂→ sind) (rs , ())
+b-s≡j⇒s≤ᵢb (bind ←∂) (∂→ sind) (rs , ())
+b-s≡j⇒s≤ᵢb (∂→ bind) (∂→ sind) (rs , x) = ≤ᵢ∂→ $ b-s≡j⇒s≤ᵢb bind sind (rs , x)
 
 
 revUpdInd : ∀{i u ll cll ell pll} → (b : IndexLL pll ll) → (a : IndexLL {i} {u} cll (replLL ll b ell)) → a -ₘᵢ (updInd ell b) ≡ nothing → (updInd ell b) -ₘᵢ a ≡ nothing → IndexLL cll ll

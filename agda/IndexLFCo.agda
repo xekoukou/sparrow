@@ -33,8 +33,13 @@ module _ where
   reverseTran (tr ltr lf) i₁ | nothing = nothing
   reverseTran (com df lf) i = nothing
   reverseTran (call x) i = nothing 
-  
-  
+
+  data ReverseTranT {i u} : ∀{ll cll rll} → LFun ll rll → IndexLL {i} {u} cll rll → Set u where
+    cr1 : ∀{cll rll} → {iind : IndexLL {i} {u} cll rll} → ReverseTranT I iind
+    cr2 : ∀{ll cll rll ell pll ind lf₁ lf x x₁ x₂} → {iind : IndexLL {i} {u} cll rll} → (just x ≡ reverseTran lf₁ iind) → (just x₁ ≡ x -ₘᵢ (updInd ell ind)) → (just x₂ ≡ reverseTran lf x₁) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
+    cr3 : ∀{ll cll rll ell pll ind lf₁ lf x } → {iind : IndexLL {i} {u} cll rll} → (just x ≡ reverseTran lf₁ iind) → (eq₁ : (nothing ≡ x -ₘᵢ (updInd ell ind))) → (eq₂ :((updInd ell ind) -ₘᵢ x ≡ nothing)) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
+    cr4 : ∀{ll cll orll rll lf x} → {ltr : LLTr orll ll} → {iind : IndexLL {i} {u} cll rll} → (just x ≡ reverseTran lf iind) → ReverseTranT (tr ltr lf) iind
+
   -- This is almost the same code as above but it is required in IndexLFCo.
   indRevNoComs : ∀{i u ll pll ell cll} → (ind : IndexLL {i} {u} pll ll) → IndexLL cll (replLL ll ind ell) → LFun pll ell → Maybe $ IndexLL cll ll
   indRevNoComs {ell = ell} ind lind lf with (inspect (lind -ₘᵢ (updInd ell ind)))
@@ -45,6 +50,9 @@ module _ where
   indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq | (just x with-≡ eq₁) = nothing
   indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq | (nothing with-≡ eq₁) = just $ revUpdInd ind lind eq eq₁
    
+  data IndRevNoComsT {i u ll pll ell cll} {ind : IndexLL {i} {u} pll ll} {lind : IndexLL cll (replLL ll ind ell)} {lf : LFun pll ell} : Set u where
+    c1 : ∀{x x₁} → (just x ≡ lind -ₘᵢ (updInd ell ind)) → (x₁ ≡ reverseTran lf x) → IndRevNoComsT
+    c2 : (nothing ≡ lind -ₘᵢ (updInd ell ind)) → (nothing ≡ (updInd ell ind) -ₘᵢ lind) → IndRevNoComsT
 
 data IndexLFCo {i u cll} (frll : LinLogic i {u}) : ∀{ll rll} → IndexLL cll ll → LFun {i} {u} ll rll → Set (u) where
   _←⊂ : ∀{rll pll ell ll ind elf lf lind}

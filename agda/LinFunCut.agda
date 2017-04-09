@@ -87,10 +87,23 @@ module _ {u : Level} where
     nextComs` (call x) iif if (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
 
 module _ where
-  private
-    gl : ∀{i u cll ll pll ell} → (rs : IndexLL {i} {u} cll ll) → (ind : IndexLL pll ll) → (lind : IndexLL cll (replLL ll ind ell)) → (lf : LFun pll ell) → just rs ≡ indRevNoComs ind lind lf → (ind -ₘᵢ rs ≡ nothing) × (rs -ₘᵢ ind ≡ nothing)
-    gl rs ind lind lf eq = {!!}
 
+  private
+--    ho : ∀{i u pll ll ell cll frll rs} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll (replLL ll ind ell)) → (lf : LFun pll ell) → (just rs ≡ indRevNoComs ind lind lf) → IndexLL pll (replLL ll rs frll)
+--    ho {rs = rs} ind lind lf eq with (indRevNoComs ind lind lf)
+--    ho {rs = .rs} ind lind lf refl | just rs = {!!}
+--    ho ind lind lf () | nothing
+
+    ge : ∀{i u ll ell pll frll cll rs} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll (replLL ll ind ell))
+         → (lf : LFun pll ell) → (just rs ≡ indRevNoComs ind lind lf) → (eq2 : (ind -ₘᵢ rs) ≡ nothing) → (eq1 : (rs -ₘᵢ ind) ≡ nothing)
+         → replLL (replLL ll rs frll) (updIndPart rs ind eq2 eq1) ell ≡ replLL (replLL ll ind ell) lind frll
+    ge {ell = ell} ind lind lf req eq1 eq2 with (Deprecated-inspect.inspect (lind -ₘᵢ (updInd ell ind))) 
+    ge {_} {_} {_} {ell} ind lind lf req eq1 eq2 | just x Deprecated-inspect.with-≡ eq with (reverseTran lf x)
+    ge {_} {_} {_} {ell} ind lind lf req eq1 eq2 | just x Deprecated-inspect.with-≡ eq | (just x₁) with (indRevNoComs ind lind lf)
+    ge {_} {_} {_} {ell} ind lind lf req eq1 eq2 | just x Deprecated-inspect.with-≡ eq | (just x₁) | (just x₂) = {!!}
+    ge {_} {_} {_} {ell} ind lind lf req eq1 eq2 | just x Deprecated-inspect.with-≡ eq | (just x₁) | nothing = {!!}
+    ge {_} {_} {_} {ell} ind lind lf req eq1 eq2 | just x Deprecated-inspect.with-≡ eq | nothing = {!!}
+    ge {_} {_} {_} {ell} ind lind lf req eq1 eq2 | nothing Deprecated-inspect.with-≡ eq = {!!}
 
   removeCom : ∀{i u ll rll cll frll} → {ind : IndexLL cll ll} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo frll ind lf) → LFun {i} {u} (replLL ll ind frll) rll
   removeCom I ()
@@ -99,7 +112,11 @@ module _ where
     hf : LFun (replLL ll ind ell) rll → LFun (replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) rll
     hf x with (replLL ll ind ell) | (remRepl {frll = frll} {ell = ell} ind lind) 
     hf x | .(replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) | refl = x
-  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) = _⊂_ {ind = {!!}} lf {!!} -- lf ⊂ (removeCom lf₁ ic)
+  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) with (rs -ₘᵢ ind) | (inspect (λ x → (rs -ₘᵢ x)) ind) | (ind -ₘᵢ rs) | (inspect (λ x → (x -ₘᵢ rs)) ind)
+  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) | just x | [ eq1 ] | just g | [ eq2 ]  = {!!}
+  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) | just x | [ eq1 ] | nothing | [ eq2 ] = {!!}
+  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) | nothing | [ eq1 ] | just g | [ eq2 ]  = {!!}
+  removeCom {ind = rs} (_⊂_ {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic {prf = prf}) | nothing | [ eq1 ] | nothing | [ eq2 ] = _⊂_ {ind = updIndPart rs ind eq2 eq1} lf {!removeCom lf₁ ic!}
   removeCom (tr ltr lf) (tr ic) = {!!} -- tr ltr (removeCom lf ic)
   removeCom (com df lf) ic = {!!}
   removeCom (call x) ()
