@@ -10,57 +10,82 @@ open import Data.Maybe
 
 module _ where
 
-  import Relation.Binary.PropositionalEquality
+  open import Relation.Binary.PropositionalEquality using (sym)
   open  Relation.Binary.PropositionalEquality.Deprecated-inspect
 
 
   -- reverseTran returns nothing if during the reversion, it finds a com.
   -- or if the cll is transformed.
   
-  reverseTran : ∀{i u ll cll rll} → LFun ll rll → IndexLL {i} {u} cll rll → Maybe $ IndexLL cll ll
-  reverseTran I i = just i
-  reverseTran (_⊂_ {ell = ell} {ind = ind} lf lf₁) i with (reverseTran lf₁ i)
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i | just x with (inspect (x -ₘᵢ (updInd ell ind)))
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i | just x | ((just x₁) with-≡ eq₁) with (reverseTran lf x₁)
-  reverseTran (_⊂_ {pll} {ll} {ell} {_} {ind} lf lf₁) i | just x | ((just x₁) with-≡ eq₁) | (just x₂) = just $ ind +ᵢ x₂
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i | just x | ((just x₁) with-≡ eq₁) | nothing = nothing
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i | just x | (nothing with-≡ eq₁) with (inspect ((updInd ell ind) -ₘᵢ x))
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i₁ | just x | (nothing with-≡ eq₁) | ((just x₁) with-≡ eq₂) = nothing -- We do not accept transformations that change the cll. The cll definitely changes here. (unless lf only has I).
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i₁ | just x | (nothing with-≡ eq₁) | (nothing with-≡ eq₂) = just $ revUpdInd ind x eq₁ eq₂
-  reverseTran (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) i | nothing = nothing
-  reverseTran (tr ltr lf) i with (reverseTran lf i)
-  reverseTran (tr ltr lf) i₁ | just x = tran x $ revTr ltr
-  reverseTran (tr ltr lf) i₁ | nothing = nothing
-  reverseTran (com df lf) i = nothing
-  reverseTran (call x) i = nothing 
 
-  data ReverseTranT {i u} : ∀{ll cll rll} → LFun ll rll → IndexLL {i} {u} cll rll → Set u where
-    cr1 : ∀{cll rll} → {iind : IndexLL {i} {u} cll rll} → ReverseTranT I iind
-    cr2 : ∀{ll cll rll ell pll ind lf₁ lf x x₁ x₂} → {iind : IndexLL {i} {u} cll rll} → (just x ≡ reverseTran lf₁ iind) → (just x₁ ≡ x -ₘᵢ (updInd ell ind)) → (just x₂ ≡ reverseTran lf x₁) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
-    cr3 : ∀{ll cll rll ell pll ind lf₁ lf x } → {iind : IndexLL {i} {u} cll rll} → (just x ≡ reverseTran lf₁ iind) → (eq₁ : (nothing ≡ x -ₘᵢ (updInd ell ind))) → (eq₂ :((updInd ell ind) -ₘᵢ x ≡ nothing)) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
-    cr4 : ∀{ll cll orll rll lf x} → {ltr : LLTr orll ll} → {iind : IndexLL {i} {u} cll rll} → (just x ≡ reverseTran lf iind) → ReverseTranT (tr ltr lf) iind
 
-  -- This is almost the same code as above but it is required in IndexLFCo.
-  indRevNoComs : ∀{i u ll pll ell cll} → (ind : IndexLL {i} {u} pll ll) → IndexLL cll (replLL ll ind ell) → LFun pll ell → Maybe $ IndexLL cll ll
-  indRevNoComs {ell = ell} ind lind lf with (inspect (lind -ₘᵢ (updInd ell ind)))
-  indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | just x with-≡ eq with (reverseTran lf x)
-  indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | just x with-≡ eq | (just x₁) = just $ ind +ᵢ x₁
-  indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | just x with-≡ eq | nothing = nothing
-  indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq with (inspect ((updInd ell ind) -ₘᵢ lind))
-  indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq | (just x with-≡ eq₁) = nothing
-  indRevNoComs {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq | (nothing with-≡ eq₁) = just $ revUpdInd ind lind eq eq₁
-   
+  mutual
+    data ReverseTranT {i u} : ∀{ll cll rll} → LFun ll rll → IndexLL {i} {u} cll rll → Set u where
+      cr1 : ∀{cll rll} → {iind : IndexLL {i} {u} cll rll} → ReverseTranT I iind
+      cr2 : ∀{ll cll rll ell pll ind lf₁ lf x₁} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf₁ iind) → let x = reverseTran lf₁ iind rvT₁ in (just x₁ ≡ x -ₘᵢ (updInd ell ind)) → (rvT₂ : ReverseTranT lf x₁) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
+      cr3 : ∀{ll cll rll ell pll ind lf₁ lf} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf₁ iind) → let x = reverseTran lf₁ iind rvT₁ in (eq₁ : (x -ₘᵢ (updInd ell ind) ≡ nothing)) → (eq₂ :((updInd ell ind) -ₘᵢ x ≡ nothing)) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
+      cr4 : ∀{ll cll orll rll lf x} → {ltr : LLTr orll ll} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf iind) → (just x ≡ tran (reverseTran lf iind rvT₁) (revTr ltr)) → ReverseTranT (tr ltr lf) iind
+
+
+
+    -- reverseTran returns nothing if during the reversion, it finds a com.
+    -- or if the cll is transformed.
+  
+    reverseTran : ∀{i u ll cll rll} → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll) → ReverseTranT lf iind → IndexLL cll ll
+    reverseTran .I iind cr1 = iind
+    reverseTran (_⊂_ {ind = ind} lf lf₁) iind (cr2 {x₁ = x₁} pr x pr₁) =  ind +ᵢ (reverseTran lf x₁ pr₁)
+    reverseTran (_⊂_ {ind = ind} _ lf₁) iind (cr3 pr eq₁ eq₂) = revUpdInd ind (reverseTran lf₁ iind pr) eq₁ eq₂
+    reverseTran (tr ltr lf) iind (cr4 {x = x} pr eq) = x
+
+
+  getReverseTranT : ∀{i u ll cll rll} → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll) → Maybe $ ReverseTranT lf iind
+  getReverseTranT I iind = just cr1
+  getReverseTranT (_⊂_ {ell = ell} {ind = ind} lf lf₁) iind with (getReverseTranT lf₁ iind)
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | just x with (inspect ((reverseTran lf₁ iind x) -ₘᵢ (updInd ell ind)))
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | just x | ((just x₁) with-≡ eq) with (getReverseTranT lf x₁)
+  getReverseTranT (_⊂_ {pll} {ll} {ell} {rll} {ind} lf lf₁) iind | just x | (just x₁ with-≡ eq) | (just x₂) = just (cr2 x (sym eq) x₂)
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | just x | (just x₁ with-≡ eq) | nothing = nothing
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | just x | (nothing with-≡ eq) with (inspect ((updInd ell ind) -ₘᵢ (reverseTran lf₁ iind x)))
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | just x | (nothing with-≡ eq) | (just x₁ with-≡ eq₁) = nothing -- We do not accept transformations that change the cll. The cll definitely changes here. (unless lf only has iind).
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | just x | (nothing with-≡ eq) | (nothing with-≡ eq₁) = just (cr3 x eq eq₁)
+  getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind | nothing = nothing
+  getReverseTranT (tr ltr lf) iind with (getReverseTranT lf iind)
+  getReverseTranT (tr ltr lf) iind | just x with (inspect (tran (reverseTran lf iind x) (revTr ltr)))
+  getReverseTranT (tr ltr lf) iind | just x | (just x₁ with-≡ eq) = just (cr4 x (sym eq))
+  getReverseTranT (tr ltr lf) iind | just x | (nothing with-≡ eq) = nothing
+  getReverseTranT (tr ltr lf) iind | nothing = nothing
+  getReverseTranT (com df lf) iind = nothing
+  getReverseTranT (call x) iind = nothing
+
   data IndRevNoComsT {i u ll pll ell cll} {ind : IndexLL {i} {u} pll ll} {lind : IndexLL cll (replLL ll ind ell)} {lf : LFun pll ell} : Set u where
-    c1 : ∀{x x₁} → (just x ≡ lind -ₘᵢ (updInd ell ind)) → (x₁ ≡ reverseTran lf x) → IndRevNoComsT
-    c2 : (nothing ≡ lind -ₘᵢ (updInd ell ind)) → (nothing ≡ (updInd ell ind) -ₘᵢ lind) → IndRevNoComsT
+    c1 : ∀{x} → (just x ≡ lind -ₘᵢ (updInd ell ind)) → (ReverseTranT lf x) → IndRevNoComsT
+    c2 : (lind -ₘᵢ (updInd ell ind) ≡ nothing) → ((updInd ell ind) -ₘᵢ lind ≡ nothing) → IndRevNoComsT
 
+
+  indRevNoComs : ∀{i u ll pll ell cll} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll (replLL ll ind ell)) → (lf : LFun pll ell) → IndRevNoComsT {ind = ind} {lind = lind} {lf = lf} → IndexLL cll ll
+  indRevNoComs ind lind lf (c1 {x = x} b pr) = ind +ᵢ (reverseTran lf x pr)
+  indRevNoComs ind lind lf (c2 eq₁ eq₂) = revUpdInd ind lind eq₁ eq₂
+
+
+-- This is almost the same code as above but it is required in IndexLFCo.
+  getIndRevNoComsT : ∀{i u ll pll ell cll} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll (replLL ll ind ell)) → (lf : LFun pll ell) → Maybe $ IndRevNoComsT {ind = ind} {lind = lind} {lf = lf}
+  getIndRevNoComsT {ell = ell} ind lind lf with (inspect (lind -ₘᵢ (updInd ell ind)))
+  getIndRevNoComsT {_} {_} {_} {_} {ell} ind lind lf | just x with-≡ eq with (getReverseTranT lf x)
+  getIndRevNoComsT {_} {_} {_} {_} {ell} ind lind lf | just x with-≡ eq | (just x₁) = just (c1 (sym eq) x₁)
+  getIndRevNoComsT {_} {_} {_} {_} {ell} ind lind lf | just x with-≡ eq | nothing = nothing
+  getIndRevNoComsT {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq with (inspect ((updInd ell ind) -ₘᵢ lind))
+  getIndRevNoComsT {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq | (just x with-≡ eq₁) = nothing
+  getIndRevNoComsT {_} {_} {_} {_} {ell} ind lind lf | nothing with-≡ eq | (nothing with-≡ eq₁) = just (c2 eq eq₁)
+
+  
 data IndexLFCo {i u cll} (frll : LinLogic i {u}) : ∀{ll rll} → IndexLL cll ll → LFun {i} {u} ll rll → Set (u) where
   _←⊂ : ∀{rll pll ell ll ind elf lf lind}
          → IndexLFCo frll lind elf
          → IndexLFCo frll (ind +ᵢ lind) (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   ⊂→_ : ∀{rll pll ell ll ind elf lf lind rs}
          → IndexLFCo frll lind lf
-         → {prf : just rs ≡ indRevNoComs ind lind elf}
+         → (irnc : IndRevNoComsT {ind = ind} {lind = lind} {lf = elf})
+         → {prf : rs ≡ indRevNoComs ind lind elf irnc}
          → IndexLFCo frll rs (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
   tr   : ∀{ll orll rll lind rs} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
          → IndexLFCo frll lind lf
