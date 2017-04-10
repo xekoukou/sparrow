@@ -8,7 +8,14 @@ open import Data.Unit
 module _ where
 
   open import Data.Vec 
-  
+
+  -- TODO IMPORTANT: Maybe we need to add a 4th connector
+  -- If any of the inputs is received, "proceed" with the next com.
+  -- This is different from ∨ or ∂ because more than one inputs may be received.
+  -- It is closer to the ∧ because all inputs might potentially arive.
+  -- This connector can potentially be emulated by using an ∧ that has a timeout of zero after
+  -- it receives the first input. (The remaining inputs will be set to the empty constructor.)
+
   mutual
     -- Linear Logic Connectives : Used to describe the input
     -- and output of an agent.
@@ -30,7 +37,7 @@ module _ where
       -- The input or output of a linear function.
       -- The function can be recursive or corecursive.
       call : ∞LinLogic i {u}                     → LinLogic i
-  
+       
     record ∞LinLogic (i : Size) {u} : Set (lsuc u) where
       coinductive
       field

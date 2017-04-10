@@ -214,6 +214,30 @@ updIndPart (∂→ b) (a ←∂) eq1 eq2 = a ←∂
 updIndPart (∂→ b) (∂→ a) eq1 eq2 = ∂→ updIndPart b a eq1 eq2
 
 
+rev⇒rs-i≡n : ∀{i u ll cll ell pll} → (ind : IndexLL pll ll) → (lind : IndexLL {i} {u} cll (replLL ll ind ell))
+             → (eq₁ : (lind -ₘᵢ (updInd ell ind) ≡ nothing)) → (eq₂ : ((updInd ell ind) -ₘᵢ lind ≡ nothing))
+             → let rs = revUpdInd ind lind eq₁ eq₂ in ((rs -ₘᵢ ind) ≡ nothing) × ((ind -ₘᵢ rs) ≡ nothing)
+rev⇒rs-i≡n ↓ lind () eq2
+rev⇒rs-i≡n (ind ←∧) ↓ eq1 ()
+rev⇒rs-i≡n (ind ←∧) (lind ←∧) eq1 eq2 = rev⇒rs-i≡n ind lind eq1 eq2
+rev⇒rs-i≡n (ind ←∧) (∧→ lind) eq1 eq2 = refl , refl
+rev⇒rs-i≡n (∧→ ind) ↓ eq1 ()
+rev⇒rs-i≡n (∧→ ind) (lind ←∧) eq1 eq2 = refl , refl
+rev⇒rs-i≡n (∧→ ind) (∧→ lind) eq1 eq2 = rev⇒rs-i≡n ind lind eq1 eq2
+rev⇒rs-i≡n (ind ←∨) ↓ eq1 ()
+rev⇒rs-i≡n (ind ←∨) (lind ←∨) eq1 eq2 = rev⇒rs-i≡n ind lind eq1 eq2
+rev⇒rs-i≡n (ind ←∨) (∨→ lind) eq1 eq2 = refl , refl
+rev⇒rs-i≡n (∨→ ind) ↓ eq1 ()
+rev⇒rs-i≡n (∨→ ind) (lind ←∨) eq1 eq2 = refl , refl
+rev⇒rs-i≡n (∨→ ind) (∨→ lind) eq1 eq2 = rev⇒rs-i≡n ind lind eq1 eq2
+rev⇒rs-i≡n (ind ←∂) ↓ eq1 ()
+rev⇒rs-i≡n (ind ←∂) (lind ←∂) eq1 eq2 = rev⇒rs-i≡n ind lind eq1 eq2
+rev⇒rs-i≡n (ind ←∂) (∂→ lind) eq1 eq2 = refl , refl
+rev⇒rs-i≡n (∂→ ind) ↓ eq1 ()
+rev⇒rs-i≡n (∂→ ind) (lind ←∂) eq1 eq2 = refl , refl
+rev⇒rs-i≡n (∂→ ind) (∂→ lind) eq1 eq2 = rev⇒rs-i≡n ind lind eq1 eq2
+
+
 
 drepl=>repl+ : ∀{i u pll ll cll frll} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll pll) → (replLL ll ind (replLL pll lind frll)) ≡ replLL ll (ind +ᵢ lind) frll
 drepl=>repl+ ↓ lind = refl
@@ -229,6 +253,9 @@ drepl=>repl+ {pll = pll} {ll = li ∂ ri} {frll = frll} (ind ←∂) lind with (
 drepl=>repl+ {_} {_} {pll} {li ∂ ri} {_} {frll} (ind ←∂) lind | .(replLL li (ind +ᵢ lind) frll) | refl = refl
 drepl=>repl+ {pll = pll} {ll = li ∂ ri} {frll = frll} (∂→ ind) lind with (replLL ri ind (replLL pll lind frll)) | (drepl=>repl+ {frll = frll} ind lind)
 drepl=>repl+ {_} {_} {pll} {li ∂ ri} {_} {frll} (∂→ ind) lind | .(replLL ri (ind +ᵢ lind) frll) | refl = refl
+
+
+
 
 remRepl : ∀{i u ll frll ell pll cll} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll pll) → replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell ≡ replLL ll ind ell
 remRepl ↓ lind = refl
