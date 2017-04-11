@@ -87,7 +87,7 @@ data IndexLFCo {i u cll} (frll : LinLogic i {u}) : ∀{ll rll} → IndexLL cll l
          → (irnc : IndRevNoComsT {ind = ind} {lind = lind} {lf = elf})
          → {prf : rs ≡ indRevNoComs ind lind elf irnc}
          → IndexLFCo frll rs (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
-  tr   : ∀{ll orll rll lind rs} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
+  tr  : ∀{ll orll rll lind rs} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
          → IndexLFCo frll lind lf
          → {prf : just rs ≡ tran lind (revTr ltr) }
          → IndexLFCo frll rs (tr ltr lf) 

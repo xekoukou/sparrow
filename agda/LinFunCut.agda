@@ -88,7 +88,23 @@ module _ {u : Level} where
     nextComs` (call x) iif if (∅ , s) = (∅ , s)
     nextComs` (call x) iif if (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
 
+
+
+
+
+
 module _ where
+
+  updateLF : ∀{i u ll cll rll frll} → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll) → (rvT : ReverseTranT lf iind) → LFun (replLL ll (reverseTran lf iind rvT) frll) (replLL rll iind frll)
+  updateLF I iind cr1 = I
+  updateLF {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} elf lf) iind (cr2 {x₁ = x₁} rvT eq rvT₁) = _⊂_ {ind = updIndGen frll ind (reverseTran elf x₁ rvT₁)} (updateLF {frll = frll} elf x₁ rvT₁) {!updateLF {frll = frll} lf iind rvT!} where
+    hf : LFun (replLL (replLL ll ind ell) (reverseTran lf iind rvT) frll) (replLL rll iind frll) → LFun (replLL (replLL ll (ind +ᵢ reverseTran elf x₁ rvT₁) frll) (updIndGen frll ind (reverseTran elf x₁ rvT₁)) (replLL ell x₁ frll)) (replLL rll iind frll)
+    hf lf = {!!}
+  updateLF (elf ⊂ lf) iind (cr3 rvT eq₁ eq₂) = {!!}
+  updateLF (tr ltr lf) iind rvT = {!!}
+  updateLF (com df lf) iind rvT = {!!}
+  updateLF (call x) iind rvT = {!!}
+
 
   removeCom : ∀{i u ll rll cll frll} → {ind : IndexLL cll ll} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo frll ind lf) → LFun {i} {u} (replLL ll ind frll) rll
   removeCom I ()
@@ -97,13 +113,51 @@ module _ where
     hf : LFun (replLL ll ind ell) rll → LFun (replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) rll
     hf x with (replLL ll ind ell) | (remRepl {frll = frll} {ell = ell} ind lind) 
     hf x | .(replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) | refl = x
-  removeCom {ll = ll} {frll = frll} {ind = .(ind +ᵢ _)} (_⊂_ {pll = pll} {ll = .ll} {rll = rll} {ind = ind} .I lf₁) (⊂→_ {lind = lind} ic (c1 {x = x} eq cr1) {refl}) = _⊂_ {ind = updIndGen frll ind x} I {!hf!} where
+
+  removeCom {i} {u} {ll = ll} {frll = frll} {ind = .(ind +ᵢ _)} (_⊂_ {pll = pll} {rll = rll} {ind = ind} .I lf₁) (⊂→_ {lind = lind} ic (c1 {x = x} eq cr1) {refl}) =  _⊂_ {ind = updIndGen frll ind x} I hf where
     hf : LFun (replLL (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) (replLL pll x frll)) rll
-    hf with (replLL (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) pll) | (remRepl {frll = frll} {ell = pll} ind x)
-    hf | _ | refl = {! removeCom lf₁ ic !}
-  removeCom {ind = rc} (_⊂_ {ind = ind} .(_ ⊂ _) lf₁) (⊂→_ {lind = lind} ic (c1 eq (cr2 rT x₂ rT₁)) {prf}) = {!!}
-  removeCom {ind = rc} (_⊂_ {ind = ind} .(_ ⊂ _) lf₁) (⊂→_ {lind = lind} ic (c1 eq (cr3 rT eq₁ eq₂)) {prf}) = {!!}
-  removeCom {ind = rc} (_⊂_ {ind = ind} .(tr _ _) lf₁) (⊂→_ {lind = lind} ic (c1 eq (cr4 rT x₂)) {prf}) = {!!}
+    hf with (replLL (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) (replLL pll x frll)) | (replLL-id (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) (replLL pll x frll) refl)
+    hf | _ | refl with (replLL ll (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq) where
+      hf2 : ∀{pll ll cll frll} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll (replLL ll ind pll)) → (x : IndexLL cll pll) → just x ≡ (lind -ₘᵢ updInd pll ind) → replLL ll (ind +ᵢ x) frll ≡ replLL (replLL ll ind pll) lind frll
+      hf2 ↓ lind .lind refl = refl
+      hf2 (ind ←∧) ↓ x ()
+      hf2 {ll = li ∧ ri} {frll = frll} (ind ←∧) (lind ←∧) x eq with (replLL li (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
+      hf2 {_} {li ∧ ri} {_} {frll} (ind ←∧) (lind ←∧) x₁ eq₁ | .(replLL (replLL li ind _) lind frll) | refl = refl
+      hf2 (ind ←∧) (∧→ lind) x ()
+      hf2 (∧→ ind) ↓ x ()
+      hf2 (∧→ ind) (lind ←∧) x ()
+      hf2 {ll = li ∧ ri} {frll = frll} (∧→ ind) (∧→ lind) x eq with (replLL ri (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
+      hf2 {_} {li ∧ ri} {_} {frll} (∧→ ind) (∧→ lind) x₁ eq₁ | .(replLL (replLL ri ind _) lind frll) | refl = refl
+      hf2 (ind ←∨) ↓ x ()
+      hf2 {ll = li ∨ ri} {frll = frll} (ind ←∨) (lind ←∨) x eq with (replLL li (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
+      hf2 {_} {li ∨ ri} {_} {frll} (ind ←∨) (lind ←∨) x₁ eq₁ | .(replLL (replLL li ind _) lind frll) | refl = refl
+      hf2 (ind ←∨) (∨→ lind) x ()
+      hf2 (∨→ ind) ↓ x ()
+      hf2 (∨→ ind) (lind ←∨) x ()
+      hf2 {ll = li ∨ ri} {frll = frll} (∨→ ind) (∨→ lind) x eq with (replLL ri (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
+      hf2 {_} {li ∨ ri} {_} {frll} (∨→ ind) (∨→ lind) x₁ eq₁ | .(replLL (replLL ri ind _) lind frll) | refl = refl
+      hf2 (ind ←∂) ↓ x ()
+      hf2 {ll = li ∂ ri} {frll = frll} (ind ←∂) (lind ←∂) x eq with (replLL li (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
+      hf2 {_} {li ∂ ri} {_} {frll} (ind ←∂) (lind ←∂) x₁ eq₁ | .(replLL (replLL li ind _) lind frll) | refl = refl
+      hf2 (ind ←∂) (∂→ lind) x ()
+      hf2 (∂→ ind) ↓ x ()
+      hf2 (∂→ ind) (lind ←∂) x ()
+      hf2 {ll = li ∂ ri} {frll = frll} (∂→ ind) (∂→ lind) x eq with (replLL ri (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
+      hf2 {_} {li ∂ ri} {_} {frll} (∂→ ind) (∂→ lind) x₁ eq₁ | .(replLL (replLL ri ind _) lind frll) | refl = refl
+    hf | _ | refl | _ | refl = removeCom lf₁ ic 
+
+  removeCom {frll = frll} (_⊂_ {ll = ll} {ell = ell} {ind = ind} (_⊂_ {ind = eind} eelf elf) lf) (⊂→_ {lind = lind} ic (c1 {x = x} eq (cr2 {x₁ = ex} rT eeq erT)) {refl}) with (reverseTran eelf ex erT) | (inspect (λ x → reverseTran eelf ex x) erT)
+  ... | g | [ isp1 ] = _⊂_ {ell = replLL ell x frll} {ind = updIndGen frll ind (eind +ᵢ g)} {!!} {!removeCom lf ic!} -- both c1 and cr2 have the same requirements.
+
+
+
+
+
+
+  removeCom (_⊂_ {ind = ind} (_⊂_ eelf elf) lf) (⊂→_ {lind = lind} ic (c1 eq (cr3 rT eq₁ eq₂)) {refl}) = {!!} -- same as c2
+  
+  removeCom (_⊂_ {ind = ind} .(tr _ _) lf₁) (⊂→_ {lind = lind} ic (c1 eq (cr4 rT x₂)) {refl}) = {!!} -- same as tr below
+  
   removeCom {i} {u} {rll = rll} {cll = cll} {frll = frll} {ind = .(revUpdInd ind lind eq₁ eq₂)} (_⊂_ {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic (c2 eq₁ eq₂) {refl}) with (rev⇒rs-i≡n ind lind eq₁ eq₂)
   ... | (req₁ , req₂) = _⊂_ {ind = updIndPart (revUpdInd ind lind eq₁ eq₂) ind req₂ req₁} lf (hf2 (removeCom lf₁ ic))  where
     hf : ∀{ll ell} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL {i} {u} cll (replLL ll ind ell))
@@ -141,7 +195,7 @@ module _ where
     hf2 lf | _ | refl = lf
 
   removeCom (tr ltr lf) (tr ic) = {!!} -- tr ltr (removeCom lf ic)
-  removeCom (com df lf) ic = {!!}
+  removeCom (com df lf) ↓ = lf
   removeCom (call x) ()
 
 -- Here we have removed the com, but not the transformations or calls.We need to find the next available coms so as to remove the

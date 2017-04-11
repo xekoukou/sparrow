@@ -271,3 +271,5 @@ remRepl {ll = li ∂ ri} {frll = frll} {ell = ell} (ind ←∂) lind with (replL
 remRepl {_} {_} {li ∂ ri} {frll} {ell} (ind ←∂) lind | .(replLL li ind ell) | refl = refl
 remRepl {ll = li ∂ ri} {frll = frll} {ell = ell} (∂→ ind) lind with (replLL (replLL ri (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) | (remRepl {frll = frll} {ell = ell} ind lind)
 remRepl {_} {_} {li ∂ ri} {frll} {ell} (∂→ ind) lind | .(replLL ri ind ell) | refl = refl
+
+
