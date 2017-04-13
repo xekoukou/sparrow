@@ -6,7 +6,67 @@ open import LinLogic
 open import IndexLLProp
 import Data.Bool
 
+data StructEqLL {i u} : LinLogic i {u} → LinLogic i {u} → Set (lsuc u) where
+ ∅∅   : StructEqLL ∅ ∅
+ ττ   : ∀{nx ny dtx dty x y} → StructEqLL (τ {i} {u} {nx} {dtx} x) (τ {i} {u} {ny} {dty} y)
+ _∧∧_ : ∀{lix rix liy riy} → StructEqLL lix liy  → StructEqLL rix riy
+        → StructEqLL (lix ∧ rix) (liy ∧ riy)
+ _∨∨_ : ∀{lix rix liy riy} → StructEqLL lix liy  → StructEqLL rix riy
+        → StructEqLL (lix ∨ rix) (liy ∨ riy)
+ _∂∂_  : ∀{lix rix liy riy} → StructEqLL lix liy  → StructEqLL rix riy
+        → StructEqLL (lix ∂ rix) (liy ∂ riy)
+ cc   : ∀{∞llx ∞lly} → StructEqLL (call ∞llx) (call ∞lly)
+ 
 
+
+isEqLL : ∀{i u} → (ll : LinLogic i {u}) → (oll : LinLogic i {u}) → Dec (StructEqLL ll oll)
+isEqLL ∅ ∅ = yes ∅∅
+isEqLL ∅ (τ x) = no (λ ())
+isEqLL ∅ (oll ∧ oll₁) = no (λ ())
+isEqLL ∅ (oll ∨ oll₁) = no (λ ())
+isEqLL ∅ (oll ∂ oll₁) = no (λ ())
+isEqLL ∅ (call x) = no (λ ())
+isEqLL (τ x) ∅ = no (λ ())
+isEqLL (τ x) (τ x₁) = yes ττ
+isEqLL (τ x) (oll ∧ oll₁) = no (λ ())
+isEqLL (τ x) (oll ∨ oll₁) = no (λ ())
+isEqLL (τ x) (oll ∂ oll₁) = no (λ ())
+isEqLL (τ x) (call x₁) = no (λ ())
+isEqLL (ll ∧ ll₁) ∅ = no (λ ())
+isEqLL (ll ∧ ll₁) (τ x) = no (λ ())
+isEqLL (ll ∧ ll₁) (oll ∧ oll₁) with (isEqLL ll oll) | (isEqLL ll₁ oll₁)
+isEqLL (ll ∧ ll₁) (oll ∧ oll₁) | yes p | (yes p₁) = yes (p ∧∧ p₁)
+isEqLL (ll ∧ ll₁) (oll ∧ oll₁) | yes p | (no ¬p) = no (λ {(_ ∧∧ p₁) → ¬p p₁})
+isEqLL (ll ∧ ll₁) (oll ∧ oll₁) | no ¬p | g = no (λ {(p ∧∧ _) → ¬p p})
+isEqLL (ll ∧ ll₁) (oll ∨ oll₁) = no (λ ())
+isEqLL (ll ∧ ll₁) (oll ∂ oll₁) = no (λ ())
+isEqLL (ll ∧ ll₁) (call x) = no (λ ())
+isEqLL (ll ∨ ll₁) ∅ = no (λ ())
+isEqLL (ll ∨ ll₁) (τ x) = no (λ ())
+isEqLL (ll ∨ ll₁) (oll ∧ oll₁) = no (λ ())
+isEqLL (ll ∨ ll₁) (oll ∨ oll₁) with (isEqLL ll oll) | (isEqLL ll₁ oll₁)
+isEqLL (ll ∨ ll₁) (oll ∨ oll₁) | yes p | (yes p₁) = yes (p ∨∨ p₁)
+isEqLL (ll ∨ ll₁) (oll ∨ oll₁) | yes p | (no ¬p) = no (λ {(_ ∨∨ p₁) → ¬p p₁})
+isEqLL (ll ∨ ll₁) (oll ∨ oll₁) | no ¬p | g = no (λ {(p ∨∨ _) → ¬p p})
+isEqLL (ll ∨ ll₁) (oll ∂ oll₁) = no (λ ())
+isEqLL (ll ∨ ll₁) (call x) = no (λ ())
+isEqLL (ll ∂ ll₁) ∅ = no (λ ())
+isEqLL (ll ∂ ll₁) (τ x) = no (λ ())
+isEqLL (ll ∂ ll₁) (oll ∧ oll₁) = no (λ ())
+isEqLL (ll ∂ ll₁) (oll ∨ oll₁) = no (λ ())
+isEqLL (ll ∂ ll₁) (oll ∂ oll₁) with (isEqLL ll oll) | (isEqLL ll₁ oll₁)
+isEqLL (ll ∂ ll₁) (oll ∂ oll₁) | yes p | (yes p₁) = yes (p ∂∂ p₁)
+isEqLL (ll ∂ ll₁) (oll ∂ oll₁) | yes p | (no ¬p) = no (λ {(_ ∂∂ p₁) → ¬p p₁})
+isEqLL (ll ∂ ll₁) (oll ∂ oll₁) | no ¬p | g = no (λ {(p ∂∂ _) → ¬p p})
+isEqLL (ll ∂ ll₁) (call x) = no (λ ())
+isEqLL (call x) ∅ = no (λ ())
+isEqLL (call x) (τ x₁) = no (λ ())
+isEqLL (call x) (oll ∧ oll₁) = no (λ ())
+isEqLL (call x) (oll ∨ oll₁) = no (λ ())
+isEqLL (call x) (oll ∂ oll₁) = no (λ ())
+isEqLL (call x) (call x₁) = yes cc
+
+-- TODO Maybe we need to use a catchall here?
 replLL-id : ∀{i u q} → (ll : LinLogic i {u}) → (ind : IndexLL q ll) → (s : LinLogic i {u}) → q ≡ s → replLL ll ind s ≡ ll
 replLL-id ll ↓ .ll refl = refl
 replLL-id (li ∧ _) (ind ←∧) s prf with (replLL li ind s) | (replLL-id li ind s prf)
@@ -22,21 +82,6 @@ replLL-id (li ∂ _) (ind ←∂) s prf | .li | refl = refl
 replLL-id (_ ∂ ri) (∂→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
 replLL-id (_ ∂ ri) (∂→ ind) s prf | .ri | refl = refl
 
-
-replLL-inv : ∀{i u ll ell pll} → (ind : IndexLL {i} {u} pll ll) → replLL (replLL ll ind ell) (updInd ell ind) pll ≡ ll
-replLL-inv ↓ = refl
-replLL-inv {ll = li ∧ ri} {ell = ell} {pll = pll} (ind ←∧) with (replLL (replLL li ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
-replLL-inv {_} {_} {li ∧ ri} {ell} {pll} (ind ←∧) | .li | refl = refl
-replLL-inv {ll = li ∧ ri} {ell = ell} {pll = pll} (∧→ ind) with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
-replLL-inv {_} {_} {li ∧ ri} {ell} {pll} (∧→ ind) | .ri | refl = refl
-replLL-inv {ll = li ∨ ri} {ell = ell} {pll = pll} (ind ←∨) with (replLL (replLL li ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
-replLL-inv {_} {_} {li ∨ ri} {ell} {pll} (ind ←∨) | .li | refl = refl
-replLL-inv {ll = li ∨ ri} {ell = ell} {pll = pll} (∨→ ind) with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
-replLL-inv {_} {_} {li ∨ ri} {ell} {pll} (∨→ ind) | .ri | refl = refl
-replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (ind ←∂) with (replLL (replLL li ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
-replLL-inv {_} {_} {li ∂ ri} {ell} {pll} (ind ←∂) | .li | refl = refl
-replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (∂→ ind) with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
-replLL-inv {_} {_} {li ∂ ri} {ell} {pll} (∂→ ind) | .ri | refl = refl
 
 module _ where
 

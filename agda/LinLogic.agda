@@ -77,8 +77,9 @@ data LLTr {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsuc u
 --  ∨∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ r) ∧ (l₂ ∨ r)) → LLTr rll ((l₁ ∧ l₂) ∨ r)
 -- Not possible to choose which path to take if r arrives, since ∂ might not be triggered at all.
 -- The two are not the same.
---  ∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r)) → LLTr rll ((l₁ ∨ l₂) ∂ r)                                   
-  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
+--  ∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r)) → LLTr rll ((l₁ ∨ l₂) ∂ r)
+
+-- Not possible because there are two instances of LinDepT r and we do not know which to choose.
 --  ¬∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ l₂) ∂ r) → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r))
 -- Not possible to duplicate resources.  
 --  ∂∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ r) ∧ (l₂ ∂ r)) → LLTr rll ((l₁ ∧ l₂) ∂ r)
@@ -115,6 +116,8 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u wh
   ∨→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∨ ri) 
   _←∂ : ∀{li ri} → IndexLL rll li → IndexLL rll (li ∂ ri) 
   ∂→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∂ ri)
+
+
 
 
 -- Replaces a node of a linear logic tree with another one.
