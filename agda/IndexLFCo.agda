@@ -24,7 +24,7 @@ module _ where
       cr1 : ∀{cll rll} → {iind : IndexLL {i} {u} cll rll} → ReverseTranT I iind
       cr2 : ∀{ll cll rll ell pll ind lf₁ lf x₁} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf₁ iind) → let x = reverseTran lf₁ iind rvT₁ in (just x₁ ≡ x -ₘᵢ (updInd ell ind)) → (rvT₂ : ReverseTranT lf x₁) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
       cr3 : ∀{ll cll rll ell pll ind lf₁ lf} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf₁ iind) → let x = reverseTran lf₁ iind rvT₁ in (eq₁ : (x -ₘᵢ (updInd ell ind) ≡ nothing)) → (eq₂ :((updInd ell ind) -ₘᵢ x ≡ nothing)) → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
-      cr4 : ∀{ll cll orll rll lf x} → {ltr : LLTr orll ll} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf iind) → (just x ≡ tran (reverseTran lf iind rvT₁) (revTr ltr)) → ReverseTranT (tr ltr lf) iind
+      cr4 : ∀{ll cll orll rll lf} → {ltr : LLTr orll ll} → {iind : IndexLL {i} {u} cll rll} → (rvT₁ : ReverseTranT lf iind) → UpTran (reverseTran lf iind rvT₁) (revTr ltr) → ReverseTranT (tr ltr lf) iind
 
 
 
@@ -35,7 +35,7 @@ module _ where
     reverseTran .I iind cr1 = iind
     reverseTran (_⊂_ {ind = ind} lf lf₁) iind (cr2 {x₁ = x₁} pr x pr₁) =  ind +ᵢ (reverseTran lf x₁ pr₁)
     reverseTran (_⊂_ {ind = ind} _ lf₁) iind (cr3 pr eq₁ eq₂) = revUpdInd ind (reverseTran lf₁ iind pr) eq₁ eq₂
-    reverseTran (tr ltr lf) iind (cr4 {x = x} pr eq) = x
+    reverseTran (tr ltr lf) iind (cr4 pr ut) = tran (reverseTran lf iind pr) (revTr ltr) ut
 
 
   getReverseTranT : ∀{i u ll cll rll} → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll) → Maybe $ ReverseTranT lf iind
