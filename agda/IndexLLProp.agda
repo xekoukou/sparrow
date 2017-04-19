@@ -63,6 +63,17 @@ data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {
   a≤ᵢb : a ≤ᵢ b → Orderedᵢ a b
   b≤ᵢa : b ≤ᵢ a → Orderedᵢ a b
 
+flipOrdᵢ : ∀{i u gll fll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL {i} {u} fll ll}
+           → Orderedᵢ a b → Orderedᵢ b a
+flipOrdᵢ (a≤ᵢb x) = b≤ᵢa x
+flipOrdᵢ (b≤ᵢa x) = a≤ᵢb x
+
+flipNotOrdᵢ : ∀{i u gll fll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL {i} {u} fll ll}
+              → ¬ Orderedᵢ a b → ¬ Orderedᵢ b a
+flipNotOrdᵢ nord = λ x → nord (flipOrdᵢ x) 
+
+
+
 
 _-ᵢ_ : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : IndexLL pll ll) → (sind ≤ᵢ bind)
        → IndexLL cll pll
@@ -86,11 +97,43 @@ a≤ᵢb-morph (∨→ emi) (∨→ ind) frll (≤ᵢ∨→ lt) = ∨→ a≤ᵢ
 a≤ᵢb-morph (emi ←∂) (ind ←∂) frll (≤ᵢ←∂ lt) = a≤ᵢb-morph emi ind frll lt ←∂
 a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢb-morph emi ind frll lt
 
+
+
+replLL-a≤b≡a : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll) → ∀ gll
+               → (ind : IndexLL rll ll) → ∀ frll → (lt : emi ≤ᵢ ind)
+               → replLL (replLL ll ind frll) (a≤ᵢb-morph emi ind frll lt) gll ≡ replLL ll emi gll
+replLL-a≤b≡a ↓ gll ind frll ≤ᵢ↓ = refl
+replLL-a≤b≡a {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll (≤ᵢ←∧ lt)
+  with (replLL (replLL li ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
+       | (replLL-a≤b≡a emi gll ind frll lt)
+replLL-a≤b≡a {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll (≤ᵢ←∧ lt) | .(replLL li emi gll) | refl = refl
+replLL-a≤b≡a {ll = li ∧ ri} (∧→ emi) gll (∧→ ind) frll (≤ᵢ∧→ lt)
+  with (replLL (replLL ri ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
+       | (replLL-a≤b≡a emi gll ind frll lt)
+replLL-a≤b≡a {ll = li ∧ ri} (∧→ emi) gll (∧→ ind) frll (≤ᵢ∧→ lt) | .(replLL ri emi gll) | refl = refl
+replLL-a≤b≡a {ll = li ∨ ri} (emi ←∨) gll (ind ←∨) frll (≤ᵢ←∨ lt)
+  with (replLL (replLL li ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
+       | (replLL-a≤b≡a emi gll ind frll lt)
+replLL-a≤b≡a {ll = li ∨ ri} (emi ←∨) gll (ind ←∨) frll (≤ᵢ←∨ lt) | .(replLL li emi gll) | refl = refl
+replLL-a≤b≡a {ll = li ∨ ri} (∨→ emi) gll (∨→ ind) frll (≤ᵢ∨→ lt)
+  with (replLL (replLL ri ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
+       | (replLL-a≤b≡a emi gll ind frll lt)
+replLL-a≤b≡a {ll = li ∨ ri} (∨→ emi) gll (∨→ ind) frll (≤ᵢ∨→ lt) | .(replLL ri emi gll) | refl = refl
+replLL-a≤b≡a {ll = li ∂ ri} (emi ←∂) gll (ind ←∂) frll (≤ᵢ←∂ lt)
+  with (replLL (replLL li ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
+       | (replLL-a≤b≡a emi gll ind frll lt)
+replLL-a≤b≡a {ll = li ∂ ri} (emi ←∂) gll (ind ←∂) frll (≤ᵢ←∂ lt) | .(replLL li emi gll) | refl = refl
+replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂→ lt)
+  with (replLL (replLL ri ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
+       | (replLL-a≤b≡a emi gll ind frll lt)
+replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂→ lt) | .(replLL ri emi gll) | refl = refl
+
+
 ¬ord-morph : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
-             → (ind : IndexLL rll ll) → ∀ frll → (nord : ¬ Orderedᵢ ind emi)
+             → (ind : IndexLL rll ll) → ∀ frll → .(nord : ¬ Orderedᵢ ind emi)
              → IndexLL fll (replLL ll ind frll)
-¬ord-morph ↓ ind frll nord = ⊥-elim $ nord (b≤ᵢa ≤ᵢ↓)
-¬ord-morph (emi ←∧) ↓ frll nord = ⊥-elim $ nord (a≤ᵢb ≤ᵢ↓) 
+¬ord-morph ↓ ind frll nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+¬ord-morph (emi ←∧) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓)) 
 ¬ord-morph (emi ←∧) (ind ←∧) frll nord
            with (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ←∧ lt))
@@ -98,7 +141,7 @@ a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢ
                 }))
 ... | r = r ←∧
 ¬ord-morph (emi ←∧) (∧→ ind) frll nord = emi ←∧
-¬ord-morph (∧→ emi) ↓ frll nord = ⊥-elim $ nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph (∧→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
 ¬ord-morph (∧→ emi) (ind ←∧) frll nord = ∧→ emi
 ¬ord-morph (∧→ emi) (∧→ ind) frll nord
            with (¬ord-morph emi ind frll
@@ -106,7 +149,7 @@ a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢ
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ∧→ lt))
                 }))
 ... | r = ∧→ r
-¬ord-morph (emi ←∨) ↓ frll nord = ⊥-elim $ nord (a≤ᵢb ≤ᵢ↓) 
+¬ord-morph (emi ←∨) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓)) 
 ¬ord-morph (emi ←∨) (ind ←∨) frll nord
            with (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ←∨ lt))
@@ -114,7 +157,7 @@ a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢ
                 }))
 ... | r = r ←∨
 ¬ord-morph (emi ←∨) (∨→ ind) frll nord = emi ←∨
-¬ord-morph (∨→ emi) ↓ frll nord = ⊥-elim $ nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph (∨→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
 ¬ord-morph (∨→ emi) (ind ←∨) frll nord = ∨→ emi
 ¬ord-morph (∨→ emi) (∨→ ind) frll nord
            with (¬ord-morph emi ind frll
@@ -122,7 +165,7 @@ a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢ
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ∨→ lt))
                 }))
 ... | r = ∨→ r
-¬ord-morph (emi ←∂) ↓ frll nord = ⊥-elim $ nord (a≤ᵢb ≤ᵢ↓) 
+¬ord-morph (emi ←∂) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓) )
 ¬ord-morph (emi ←∂) (ind ←∂) frll nord
            with (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ←∂ lt))
@@ -130,7 +173,7 @@ a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢ
                 }))
 ... | r = r ←∂
 ¬ord-morph (emi ←∂) (∂→ ind) frll nord = emi ←∂
-¬ord-morph (∂→ emi) ↓ frll nord = ⊥-elim $ nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph (∂→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
 ¬ord-morph (∂→ emi) (ind ←∂) frll nord = ∂→ emi
 ¬ord-morph (∂→ emi) (∂→ ind) frll nord
            with (¬ord-morph emi ind frll
@@ -139,6 +182,32 @@ a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢ
                 }))
 ... | r = ∂→ r
 
+module _ where
+
+  replLL-¬ordab≡ba : ∀{i u rll ll fll}
+    → (emi : IndexLL {i} {u} fll ll) → ∀ gll
+    → (ind : IndexLL rll ll) → ∀ frll
+    → .(nord : ¬ Orderedᵢ ind emi)
+    → replLL (replLL ll ind frll) (¬ord-morph emi ind frll nord) gll ≡ replLL (replLL ll emi gll) (¬ord-morph ind emi gll (flipNotOrdᵢ nord)) frll
+  replLL-¬ordab≡ba ↓ gll ind frll nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+  replLL-¬ordab≡ba (emi ←∧) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+  replLL-¬ordab≡ba {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll nord
+    with (replLL (replLL li ind frll) (¬ord-morph emi ind frll hf) gll)
+    | replLL-¬ordab≡ba emi gll ind frll hf where
+      .hf : (¬ Orderedᵢ ind emi)
+      hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∧ x))
+              ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∧ x))})
+  ... | g | r = {!!}
+  replLL-¬ordab≡ba (emi ←∧) gll (∧→ ind) frll nord = {!!}
+  replLL-¬ordab≡ba (∧→ emi) gll ind frll nord = {!!}
+  replLL-¬ordab≡ba (emi ←∨) gll ind frll nord = {!!}
+  replLL-¬ordab≡ba (∨→ emi) gll ind frll nord = {!!}
+  replLL-¬ordab≡ba (emi ←∂) gll ind frll nord = {!!}
+  replLL-¬ordab≡ba (∂→ emi) gll ind frll nord = {!!}
+   
+
+--flipOrdᵢ (a≤ᵢb x) = b≤ᵢa x
+--flipOrdᵢ (b≤ᵢa x) = a≤ᵢb x
 
 _+ᵢ_ : ∀{i u pll cll ll} → IndexLL {i} {u} pll ll → IndexLL cll pll → IndexLL cll ll
 _+ᵢ_ ↓ is = is
@@ -535,7 +604,7 @@ updInd nrll (∨→ ind) = ∨→ (updInd nrll ind)
 updInd nrll (ind ←∂) = (updInd nrll ind) ←∂
 updInd nrll (∂→ ind) = ∂→ (updInd nrll ind)
 
-
+-- Maybe instead of this function use a≤ᵢb-morph
 updIndGen : ∀{i u pll ll cll} → ∀ nrll → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll pll)
             → IndexLL {i} {u} (replLL pll lind nrll) (replLL ll (ind +ᵢ lind) nrll)
 updIndGen nrll ↓ lind = ↓
