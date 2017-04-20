@@ -182,32 +182,64 @@ replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂�
                 }))
 ... | r = ∂→ r
 
-module _ where
 
-  replLL-¬ordab≡ba : ∀{i u rll ll fll}
-    → (emi : IndexLL {i} {u} fll ll) → ∀ gll
-    → (ind : IndexLL rll ll) → ∀ frll
-    → .(nord : ¬ Orderedᵢ ind emi)
-    → replLL (replLL ll ind frll) (¬ord-morph emi ind frll nord) gll ≡ replLL (replLL ll emi gll) (¬ord-morph ind emi gll (flipNotOrdᵢ nord)) frll
-  replLL-¬ordab≡ba ↓ gll ind frll nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
-  replLL-¬ordab≡ba (emi ←∧) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
-  replLL-¬ordab≡ba {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll nord
-    with (replLL (replLL li ind frll) (¬ord-morph emi ind frll hf) gll)
-    | replLL-¬ordab≡ba emi gll ind frll hf where
-      .hf : (¬ Orderedᵢ ind emi)
-      hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∧ x))
-              ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∧ x))})
-  ... | g | r = {!!}
-  replLL-¬ordab≡ba (emi ←∧) gll (∧→ ind) frll nord = {!!}
-  replLL-¬ordab≡ba (∧→ emi) gll ind frll nord = {!!}
-  replLL-¬ordab≡ba (emi ←∨) gll ind frll nord = {!!}
-  replLL-¬ordab≡ba (∨→ emi) gll ind frll nord = {!!}
-  replLL-¬ordab≡ba (emi ←∂) gll ind frll nord = {!!}
-  replLL-¬ordab≡ba (∂→ emi) gll ind frll nord = {!!}
-   
+replLL-¬ordab≡ba : ∀{i u rll ll fll}
+  → (emi : IndexLL {i} {u} fll ll) → ∀ gll
+  → (ind : IndexLL rll ll) → ∀ frll
+  → .(nord : ¬ Orderedᵢ ind emi)
+  → replLL (replLL ll ind frll) (¬ord-morph emi ind frll nord) gll ≡ replLL (replLL ll emi gll) (¬ord-morph ind emi gll (flipNotOrdᵢ nord)) frll
+replLL-¬ordab≡ba ↓ gll ind frll nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+replLL-¬ordab≡ba (emi ←∧) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+replLL-¬ordab≡ba {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll nord
+  with replLL-¬ordab≡ba emi gll ind frll hf where
+    .hf : (¬ Orderedᵢ ind emi)
+    hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∧ x))
+            ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∧ x))})
+... | r = cong (λ x → x ∧ ri) r
+replLL-¬ordab≡ba (emi ←∧) gll (∧→ ind) frll nord = refl
+replLL-¬ordab≡ba (∧→ emi) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+replLL-¬ordab≡ba {ll = li ∧ ri} (∧→ emi) gll (∧→ ind) frll nord
+  with replLL-¬ordab≡ba emi gll ind frll hf where
+    .hf : (¬ Orderedᵢ ind emi)
+    hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∧→ x))
+            ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∧→ x))})
+... | r = cong (λ x → li ∧ x) r
+replLL-¬ordab≡ba (∧→ emi) gll (ind ←∧) frll nord = refl
+replLL-¬ordab≡ba (emi ←∨) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+replLL-¬ordab≡ba {ll = li ∨ ri} (emi ←∨) gll (ind ←∨) frll nord
+  with replLL-¬ordab≡ba emi gll ind frll hf where
+    .hf : (¬ Orderedᵢ ind emi)
+    hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∨ x))
+            ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∨ x))})
+... | r = cong (λ x → x ∨ ri) r
+replLL-¬ordab≡ba (emi ←∨) gll (∨→ ind) frll nord = refl
+replLL-¬ordab≡ba (∨→ emi) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+replLL-¬ordab≡ba {ll = li ∨ ri} (∨→ emi) gll (∨→ ind) frll nord
+  with replLL-¬ordab≡ba emi gll ind frll hf where
+    .hf : (¬ Orderedᵢ ind emi)
+    hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∨→ x))
+            ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∨→ x))})
+... | r = cong (λ x → li ∨ x) r
+replLL-¬ordab≡ba (∨→ emi) gll (ind ←∨) frll nord = refl
+replLL-¬ordab≡ba (emi ←∂) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+replLL-¬ordab≡ba {ll = li ∂ ri} (emi ←∂) gll (ind ←∂) frll nord
+  with replLL-¬ordab≡ba emi gll ind frll hf where
+    .hf : (¬ Orderedᵢ ind emi)
+    hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∂ x))
+            ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∂ x))})
+... | r = cong (λ x → x ∂ ri) r
+replLL-¬ordab≡ba (emi ←∂) gll (∂→ ind) frll nord = refl
+replLL-¬ordab≡ba (∂→ emi) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+replLL-¬ordab≡ba {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll nord
+  with replLL-¬ordab≡ba emi gll ind frll hf where
+    .hf : (¬ Orderedᵢ ind emi)
+    hf = (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∂→ x))
+            ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∂→ x))})
+... | r = cong (λ x → li ∂ x) r
+replLL-¬ordab≡ba (∂→ emi) gll (ind ←∂) frll nord = refl
+ 
 
---flipOrdᵢ (a≤ᵢb x) = b≤ᵢa x
---flipOrdᵢ (b≤ᵢa x) = a≤ᵢb x
+
 
 _+ᵢ_ : ∀{i u pll cll ll} → IndexLL {i} {u} pll ll → IndexLL cll pll → IndexLL cll ll
 _+ᵢ_ ↓ is = is
