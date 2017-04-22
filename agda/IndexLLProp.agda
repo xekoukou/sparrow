@@ -24,6 +24,15 @@ data _≤ᵢ_ {i u gll fll} : ∀{ll} → IndexLL {i} {u} gll ll → IndexLL {i}
   ≤ᵢ∂→ : ∀{li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≤ᵢ bind)
          → _≤ᵢ_ {ll = li ∂ ri} (∂→ sind) (∂→ bind)
 
+≤ᵢ-reflexive : ∀{i u gll ll} → (ind : IndexLL {i} {u} gll ll) → ind ≤ᵢ ind
+≤ᵢ-reflexive ↓ = ≤ᵢ↓
+≤ᵢ-reflexive (ind ←∧) = ≤ᵢ←∧ (≤ᵢ-reflexive ind)
+≤ᵢ-reflexive (∧→ ind) = ≤ᵢ∧→ (≤ᵢ-reflexive ind)
+≤ᵢ-reflexive (ind ←∨) = ≤ᵢ←∨ (≤ᵢ-reflexive ind)
+≤ᵢ-reflexive (∨→ ind) = ≤ᵢ∨→ (≤ᵢ-reflexive ind)
+≤ᵢ-reflexive (ind ←∂) = ≤ᵢ←∂ (≤ᵢ-reflexive ind)
+≤ᵢ-reflexive (∂→ ind) = ≤ᵢ∂→ (≤ᵢ-reflexive ind)
+
 
 
 isLTi : ∀{i u gll ll fll} → (s : IndexLL {i} {u} gll ll) → (b : IndexLL fll ll) → Dec (s ≤ᵢ b)
@@ -63,6 +72,16 @@ data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {
   a≤ᵢb : a ≤ᵢ b → Orderedᵢ a b
   b≤ᵢa : b ≤ᵢ a → Orderedᵢ a b
 
+isOrdᵢ : ∀{i u gll fll ll} → (a : IndexLL {i} {u} gll ll) → (b : IndexLL {i} {u} fll ll)
+         → Dec (Orderedᵢ a b)
+isOrdᵢ a b with (isLTi a b) | (isLTi b a)
+isOrdᵢ a b | yes p | r = yes (a≤ᵢb p)
+isOrdᵢ a b | no ¬p | (yes p) = yes (b≤ᵢa p)
+isOrdᵢ a b | no ¬p | (no ¬p₁) = no ((λ { (a≤ᵢb p) → ¬p p
+                                       ; (b≤ᵢa p) → ¬p₁ p }))
+
+
+
 flipOrdᵢ : ∀{i u gll fll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL {i} {u} fll ll}
            → Orderedᵢ a b → Orderedᵢ b a
 flipOrdᵢ (a≤ᵢb x) = b≤ᵢa x
@@ -73,6 +92,10 @@ flipNotOrdᵢ : ∀{i u gll fll ll} → {a : IndexLL {i} {u} gll ll} → {b : In
 flipNotOrdᵢ nord = λ x → nord (flipOrdᵢ x) 
 
 
+¬lt¬gt⇒¬Ord : ∀{i u gll fll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL {i} {u} fll ll}
+              → ¬ (a ≤ᵢ b) → ¬ (b ≤ᵢ a) → ¬(Orderedᵢ a b)
+¬lt¬gt⇒¬Ord nlt ngt (a≤ᵢb x) = nlt x
+¬lt¬gt⇒¬Ord nlt ngt (b≤ᵢa x) = ngt x
 
 
 _-ᵢ_ : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : IndexLL pll ll) → (sind ≤ᵢ bind)
@@ -84,6 +107,17 @@ _-ᵢ_ : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : In
 ((∨→ bind) -ᵢ (∨→ sind)) (≤ᵢ∨→ eq) = (bind -ᵢ sind) eq
 ((bind ←∂) -ᵢ (sind ←∂)) (≤ᵢ←∂ eq) = (bind -ᵢ sind) eq
 ((∂→ bind) -ᵢ (∂→ sind)) (≤ᵢ∂→ eq) = (bind -ᵢ sind) eq
+
+
+replLL-↓ : ∀{i u pll ell ll} → ∀(ind : IndexLL {i} {u} pll ll)
+           → replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell ≡ ell
+replLL-↓ ↓ = refl
+replLL-↓ (ind ←∧) = replLL-↓ ind
+replLL-↓ (∧→ ind) = replLL-↓ ind
+replLL-↓ (ind ←∨) = replLL-↓ ind
+replLL-↓ (∨→ ind) = replLL-↓ ind
+replLL-↓ (ind ←∂) = replLL-↓ ind
+replLL-↓ (∂→ ind) = replLL-↓ ind
 
 
 a≤ᵢb-morph : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
@@ -237,6 +271,45 @@ replLL-¬ordab≡ba {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll nord
             ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∂→ x))})
 ... | r = cong (λ x → li ∂ x) r
 replLL-¬ordab≡ba (∂→ emi) gll (ind ←∂) frll nord = refl
+ 
+
+lemma₁-¬ord-a≤ᵢb : ∀{i u ll pll rll fll}
+      → (emi : IndexLL {i} {u} fll ll)
+      → (ind : IndexLL rll ll) → ∀ ell → (lt : emi ≤ᵢ ind)
+      → (omi : IndexLL pll (replLL ll ind ell))
+      → .(nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind ell lt) omi)
+      → IndexLL pll ll
+lemma₁-¬ord-a≤ᵢb ↓ ind ell ≤ᵢ↓ omi nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) (omi ←∧) nord
+     = (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∧ x))
+                                  ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∧ x)) })) ←∧
+lemma₁-¬ord-a≤ᵢb (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) (∧→ omi) nord = ∧→ omi
+lemma₁-¬ord-a≤ᵢb (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) (omi ←∧) nord = omi ←∧
+lemma₁-¬ord-a≤ᵢb (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) (∧→ omi) nord
+     = ∧→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∧→ x))
+                                     ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∧→ x)) })) 
+lemma₁-¬ord-a≤ᵢb (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) (omi ←∨) nord
+     = (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∨ x))
+                                  ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∨ x)) })) ←∨
+lemma₁-¬ord-a≤ᵢb (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) (∨→ omi) nord = ∨→ omi
+lemma₁-¬ord-a≤ᵢb (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) (omi ←∨) nord = omi ←∨
+lemma₁-¬ord-a≤ᵢb (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) (∨→ omi) nord
+     = ∨→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∨→ x))
+                                     ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∨→ x)) })) 
+lemma₁-¬ord-a≤ᵢb (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) (omi ←∂) nord
+     = (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ←∂ x))
+                                  ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ←∂ x)) })) ←∂
+lemma₁-¬ord-a≤ᵢb (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) (∂→ omi) nord = ∂→ omi
+lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (omi ←∂) nord = omi ←∂
+lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (∂→ omi) nord
+     = ∂→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∂→ x))
+                                     ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∂→ x)) })) 
  
 
 
