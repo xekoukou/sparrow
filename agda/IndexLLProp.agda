@@ -384,7 +384,7 @@ a+[b-a]=b (∂→ a) (∂→ b) (≤ᵢ∂→ lt) | .b | refl = refl
 
 
 
--- A predicate that is true if pll is not transformed by pll.
+-- A predicate that is true if pll is not transformed by ltr.
 
 data UpTran {i u} : ∀ {ll pll rll} → IndexLL pll ll → LLTr {i} {u} rll ll → Set u where
   indI : ∀{pll ll} → {ind : IndexLL pll ll} → UpTran ind I

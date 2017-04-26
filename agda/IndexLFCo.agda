@@ -159,7 +159,10 @@ data IndexLFCo {i u cll} (frll : LinLogic i {u}) : ∀{ll rll}
          → IndexLFCo  frll ↓ (com {i} {u} {rll} {cll} {frll} {{prfi}} {{prfo}} df lf)
 
 
-
+-- TODO We only use this when cll = ll in ↓, but it is difficult to transform SetLFCoRem.
+-- The ind we save is the initial index at the beginning {oll}. During tranLFCoRem, we would have to
+-- prove that cll does not change during this transformation. The information to prove that, exists in
+-- IndexLFCo (tr) but we would need to show that the ltr is part of olf of IndexLFCo and then extract the information from IndexLFCo.
 data SetLFCoRem {i u oll orll} (olf : LFun {i} {u} oll orll) : LinLogic i {u} → Set (lsuc u) where
   ↓    : ∀{ll cll frll} → {ind : IndexLL {i} {u} cll oll} → IndexLFCo frll ind olf → SetLFCoRem olf ll
   _←∧   : ∀{rs ls} → SetLFCoRem olf ls                   → SetLFCoRem olf (ls ∧ rs)
@@ -438,3 +441,109 @@ mreplaceLFCoRem ind ∅ ∅ = ∅
 mreplaceLFCoRem {rll = rll} ind ∅ (¬∅ x) = delLFCoRem x ind rll
 mreplaceLFCoRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFCoRem (updInd rll ind) x)
 mreplaceLFCoRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceLFCoRem ind x x₁)
+
+
+--------------------------------------
+
+-- TODO I need better names and to try to understand whether some of those data types can be merged.
+
+data IndexLFCof {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set where
+  ↓  : ∀{cll frll rll prfi prfo df lf}
+         → IndexLFCof (com {i} {u} {rll} {cll} {frll} {{prfi}} {{prfo}} df lf)
+  _←⊂ : ∀{rll pll ell ll ind elf lf}
+         → IndexLFCof elf
+         → IndexLFCof (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  ⊂→_ : ∀{rll pll ell ll ind elf lf}
+         → IndexLFCof lf
+         → IndexLFCof (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
+         → IndexLFCof lf → IndexLFCof (tr ltr lf) 
+
+
+
+data SetLFCof {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
+  ↓  : ∀{cll frll rll prfi prfo df lf}
+         → SetLFCof (com {i} {u} {rll} {cll} {frll} {{prfi}} {{prfo}} df lf)
+  _←⊂ : ∀{rll pll ell ll ind elf lf}
+         → SetLFCof elf
+         → SetLFCof (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  ⊂→_ : ∀{rll pll ell ll ind elf lf}
+         → SetLFCof lf
+         → SetLFCof (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  _←⊂→_ : ∀{rll pll ell ll ind elf lf}
+         → SetLFCof elf
+         → SetLFCof lf
+         → SetLFCof (_⊂_ {i} {u} {pll} {ll} {ell} {rll} {ind} elf lf)
+  tr   : ∀{ll orll rll} → {ltr : LLTr orll ll} → {lf : LFun {i} {u} orll rll}
+         → SetLFCof lf
+         → SetLFCof (tr ltr lf) 
+
+data MSetLFCof {i u} : ∀{ll rll} → LFun {i} {u} ll rll → Set (lsuc u) where
+  ∅   : ∀{ll rll} → {lf : LFun {i} {u} ll rll}            → MSetLFCof lf
+  ¬∅  : ∀{ll rll} → {lf : LFun {i} {u} ll rll} → SetLFCof lf → MSetLFCof lf
+
+∅-addLFCof : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → IndexLFCof lf → SetLFCof lf 
+∅-addLFCof ↓ = ↓
+∅-addLFCof (ic ←⊂) = (∅-addLFCof ic) ←⊂
+∅-addLFCof (⊂→ ic) = ⊂→ (∅-addLFCof ic)
+∅-addLFCof (tr ic) = tr (∅-addLFCof ic)
+
+addLFCof : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → SetLFCof lf → IndexLFCof lf → SetLFCof lf 
+addLFCof ↓ ↓            = ↓ -- We replace the previous info
+addLFCof (s ←⊂) (ic ←⊂)     = (addLFCof s ic) ←⊂
+addLFCof (⊂→ s) (ic ←⊂)     = (∅-addLFCof ic) ←⊂→ s
+addLFCof (s ←⊂→ s₁) (ic ←⊂) =  (addLFCof s ic) ←⊂→ s₁
+addLFCof (s ←⊂) (⊂→ ic)     = s ←⊂→ (∅-addLFCof ic)
+addLFCof (⊂→ s) (⊂→ ic)     = ⊂→ (addLFCof s ic)
+addLFCof (s ←⊂→ s₁) (⊂→ ic) = s ←⊂→ (addLFCof s₁ ic)
+addLFCof (tr s) (tr ic)     = tr (addLFCof s ic)
+
+
+maddLFCof : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → MSetLFCof lf → IndexLFCof lf → MSetLFCof lf
+maddLFCof ∅ ic = ¬∅ (∅-addLFCof ic)
+maddLFCof (¬∅ x) ic = ¬∅ (addLFCof x ic)
+
+
+
+delLFCof : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → SetLFCof lf → IndexLFCof lf → MSetLFCof lf
+delLFCof x ↓                = ∅
+delLFCof (x ←⊂) (ic ←⊂) with (delLFCof x ic)
+delLFCof (x ←⊂) (ic ←⊂) | ∅ = ∅
+delLFCof (x ←⊂) (ic ←⊂) | ¬∅ x₁ = ¬∅ (x₁ ←⊂)
+delLFCof (⊂→ x) (ic ←⊂)     = ¬∅ (⊂→ x) 
+delLFCof (x ←⊂→ x₁) (ic ←⊂) with (delLFCof x ic)
+delLFCof (x ←⊂→ x₁) (ic ←⊂) | ∅ = ¬∅ (⊂→ x₁)
+delLFCof (x ←⊂→ x₂) (ic ←⊂) | ¬∅ x₁ = ¬∅ (x₁ ←⊂→ x₂)
+delLFCof (x ←⊂) (⊂→ ic) = ¬∅ (x ←⊂)
+delLFCof (⊂→ x) (⊂→ ic) with (delLFCof x ic)
+delLFCof (⊂→ x) (⊂→ ic) | ∅ = ∅
+delLFCof (⊂→ x) (⊂→ ic) | ¬∅ x₁ = ¬∅ (⊂→ x₁)
+delLFCof (x ←⊂→ x₁) (⊂→ ic) with (delLFCof x₁ ic)
+delLFCof (x ←⊂→ x₁) (⊂→ ic) | ∅ = ¬∅ (⊂→ x₁)
+delLFCof (x ←⊂→ x₁) (⊂→ ic) | ¬∅ x₂ = ¬∅ (x ←⊂→ x₂)
+delLFCof (tr x) (tr ic) with (delLFCof x ic)
+delLFCof (tr x) (tr ic) | ∅ = ∅
+delLFCof (tr x) (tr ic) | ¬∅ x₁ = ¬∅ (tr x₁)
+
+
+mdelLFCof : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → MSetLFCof lf → IndexLFCof lf → MSetLFCof lf
+mdelLFCof ∅ ic = ∅
+mdelLFCof (¬∅ x) ic = delLFCof x ic
+
+_+ₛₗ_ : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → SetLFCof lf → SetLFCof lf → SetLFCof lf
+↓ +ₛₗ b = ↓
+(a ←⊂) +ₛₗ (b ←⊂) = (a +ₛₗ b) ←⊂
+(a ←⊂) +ₛₗ (⊂→ b) = a ←⊂→ b
+(a ←⊂) +ₛₗ (b ←⊂→ b₁) = (a +ₛₗ b) ←⊂→ b₁
+(⊂→ a) +ₛₗ (b ←⊂) = b ←⊂→ a
+(⊂→ a) +ₛₗ (⊂→ b) = ⊂→ (a +ₛₗ b)
+(⊂→ a) +ₛₗ (b ←⊂→ b₁) = b ←⊂→ (a +ₛₗ b₁)
+(a ←⊂→ a₁) +ₛₗ (b ←⊂) = (a +ₛₗ b) ←⊂→ a₁
+(a ←⊂→ a₁) +ₛₗ (⊂→ b) = a ←⊂→ (a₁ +ₛₗ b)
+(a ←⊂→ a₁) +ₛₗ (b ←⊂→ b₁) = (a +ₛₗ b) ←⊂→ (a₁ +ₛₗ b₁)
+tr a +ₛₗ tr b = tr (a +ₛₗ b)
+
+_+ₘₛₗ_ : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → MSetLFCof lf → MSetLFCof lf → MSetLFCof lf
+∅ +ₘₛₗ b = b
+¬∅ x +ₘₛₗ ∅ = ¬∅ x
+¬∅ x +ₘₛₗ ¬∅ x₁ = ¬∅ (x +ₛₗ x₁)

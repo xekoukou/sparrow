@@ -35,349 +35,97 @@ module _ where
   ≤rsuc z≤n = z≤n
   ≤rsuc (s≤s x) = s≤s $ ≤rsuc x
 
+
+-- Finding all the reachable Coms and then removing all the unnecessary ones might not be efficient. The code becomes simple though.
+findComs : ∀{i u ll rll} → (lf : LFun {i} {u} ll rll) → MSetLFCof lf
+findComs {i} {u} I = ∅
+findComs {i} {u} (lf ⊂ lf₁) with (findComs lf) | findComs lf₁
+findComs {i} {u} (lf ⊂ lf₁) | ∅ | ∅ = ∅
+findComs {i} {u} (lf ⊂ lf₁) | ∅ | ¬∅ x = ¬∅ (⊂→ x)
+findComs {i} {u} (lf ⊂ lf₁) | ¬∅ x | ∅ = ¬∅ (x ←⊂)
+findComs {i} {u} (lf ⊂ lf₁) | ¬∅ x | (¬∅ x₁) = ¬∅ (x ←⊂→ x₁)
+findComs {i} {u} (tr ltr lf) with (findComs lf)
+findComs {i} {u} (tr ltr lf) | ∅ = ∅
+findComs {i} {u} (tr ltr lf) | ¬∅ x = ¬∅ (tr x)
+findComs {i} {u} (com df lf) = ¬∅ ↓
+findComs {i} {u} (call x) = ∅ 
+
+
 module _ {u : Level} where
 
-  open RawMonad {f = u} (Data.Maybe.monad)
+  open import Data.List
 
--- This function should be used after we have removed the specific com, the transformations, and the calls.
--- It is to be used to find the next coms that are available.
   private
-    data TMaybe {A : Set u} (B : A → Set u) : Maybe A → Set u where
-      Nothing : TMaybe B nothing
-      Just : {a : A} → B a → TMaybe B (just a)
+    tranLFMSetLLRem : ∀{i oll ll rll} → (lf : LFun {i} {u} ll rll) → MSetLLRem oll ll → MSetLLRem oll rll
+    tranLFMSetLLRem lf ∅ = ∅
+    tranLFMSetLLRem I (¬∅ x) = ¬∅ x
+    tranLFMSetLLRem (_⊂_ {ind = ind} lf lf₁) (¬∅ x) = tranLFMSetLLRem lf₁ nmx where
+      tlf = tranLFMSetLLRem lf (truncSetLLRem (¬∅ x) ind)
+      nmx = mreplaceRem ind tlf (¬∅ x)
+    tranLFMSetLLRem (tr ltr lf) (¬∅ x) = tranLFMSetLLRem lf (¬∅ (tranRem x ltr))
+    tranLFMSetLLRem (com df lf) (¬∅ x) = IMPOSSIBLE -- ? I doubt that we will ever reach at this point. The set will be empty due to returnNext emptying it.
+    tranLFMSetLLRem (call x) (¬∅ x₁) = IMPOSSIBLE -- We have removed all such coms.
   
-  nextComs : ∀{i ll rll} → (olf : LFun {i} {u} ll rll) → MSetLFCoRem olf ll
-  nextComs {i} {ll = oll} olf = proj₂ $ nextComs` olf (λ cll iind → just iind) (λ frll cll iind ic → Just ic) (¬∅ (fillAllLowerRem oll) , ∅) where
-    nextComs` : ∀{ll rll} → (lf : LFun {i} {u} ll rll)
-                → (iif : ((cll : LinLogic i {u}) → IndexLL cll ll → Maybe $ IndexLL cll oll))
-                → ((frll cll : LinLogic i {u}) → (iind : IndexLL cll ll) → IndexLFCo frll iind lf → TMaybe (λ x → IndexLFCo frll x olf) (iif cll iind) )
-                → MSetLLRem {i} oll ll × MSetLFCoRem olf oll
-                → MSetLLRem oll rll × MSetLFCoRem olf oll
-    nextComs` I iif if (sr , s) = (sr , s)
-    nextComs` (_⊂_ {ll = ll} {ell = ell} {ind = ind} lf lf₁) iif if (sr , s) with (truncSetLLRem sr ind) 
-    ... | r with (nextComs` lf (λ cll iind → iif cll (ind +ᵢ iind)) (λ frll cll iind ic → if frll cll (ind +ᵢ iind) (ic ←⊂)) (r , s))
-    ... | (esr , es) = nextComs` lf₁ (λ cll iind → niif cll iind (getIndRevNoComsT ind iind lf >>= λ x → just $ indRevNoComs ind iind lf x)) nif (mreplaceRem ind esr sr , es) where
+  open RawMonad {f = lsuc u} (Data.Maybe.monad)
 
-      niif : ((cll : LinLogic i {u}) → IndexLL cll (replLL ll ind ell) → Maybe $ IndexLL cll ll → Maybe $ IndexLL cll oll)
-      niif cll iind (just lx) = iif cll lx
-      niif cll iind nothing = nothing
-
-      nif : ((frll cll : LinLogic i {u}) → (iind : IndexLL cll (replLL ll ind ell)) → IndexLFCo frll iind lf₁ → TMaybe (λ x → IndexLFCo frll x olf) (niif cll iind ( getIndRevNoComsT ind iind lf >>= λ x → just $ indRevNoComs ind iind lf x)) )
-      nif frll cll iind ic with (getIndRevNoComsT ind iind lf)
-      nif frll cll iind ic | just iT with (indRevNoComs ind iind lf iT) | (inspect (λ x → indRevNoComs ind iind lf x) iT)
-      nif frll cll iind ic | just iT | x | Reveal_·_is_.[ eq ] = if frll cll x (⊂→_ ic iT {prf = sym eq})
-      nif frll cll iind ic | nothing = Nothing
-    nextComs` (tr ltr lf) iif if (∅ , s) = ( ∅ , s) 
-    nextComs` (tr {ll = ll} {orll = orll} ltr lf) iif if (¬∅ x , s) = nextComs` lf (λ cll iind → niif cll iind (IndexLLProp.tran iind (revTr ltr))) nif ((¬∅ $ tranRem x ltr) , s) where
-
-      niif : ((cll : LinLogic i {u}) → IndexLL cll orll → Maybe $ IndexLL cll ll → Maybe $ IndexLL cll oll)
-      niif cll iind (just lx) = iif cll lx
-      niif cll iind nothing = nothing
-
-      nif : ((frll cll : LinLogic i {u}) → (iind : IndexLL cll orll) → IndexLFCo frll iind lf → TMaybe (λ x → IndexLFCo frll x olf) (niif cll iind (IndexLLProp.tran iind (revTr ltr))))
-      nif frll cll iind ic with (IndexLLProp.tran iind (revTr ltr)) | (inspect (λ x → IndexLLProp.tran x (revTr ltr)) iind)
-      nif frll cll iind ic | just x | [ eq ] = if frll cll x (tr ic {prf = sym eq})
-      nif frll cll iind ic | nothing | g = Nothing
-    nextComs` (com {ll = _} {frll} df lf) iif if (∅ , s) = (∅ , s)
-    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x , s) with (contruct $ projToSetLL x)
-    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x , s)  | ↓ with (iif cll ↓) | (if frll cll ↓ ↓)
-    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x₂ , s) | ↓ | just x₁ | (Just x) =  ∅ , maddLFCoRem s x₁ x
-    nextComs` (com {_} {_} {frll} df lf) iif if (¬∅ x , s)     | ↓ | nothing | g = ∅ , s
-    {-# CATCHALL #-}
-    nextComs` (com {ll = cll} {frll} df lf) iif if (¬∅ x , s)  | r = (∅ , s)
-    nextComs` (call x) iif if (∅ , s) = (∅ , s)
-    nextComs` (call x) iif if (¬∅ x₁ , s) = IMPOSSIBLE -- Since we have removed all calls that are reached from the outside, this is impossible. 
-
-
-
-
-
-
-module _ where
-
-  updateLF : ∀{i u ll cll rll frll} → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll) → (rvT : ReverseTranT lf iind) → LFun (replLL ll (reverseTran lf iind rvT) frll) (replLL rll iind frll)
-  updateLF I iind cr1 = I
-  updateLF {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} elf lf) iind (cr2 {x₁ = x₁} rvT eq rvT₁) = _⊂_ {ind = updIndGen frll ind (reverseTran elf x₁ rvT₁)} (updateLF {frll = frll} elf x₁ rvT₁) {!updateLF {frll = frll} lf iind rvT!} where
-    hf : LFun (replLL (replLL ll ind ell) (reverseTran lf iind rvT) frll) (replLL rll iind frll) → LFun (replLL (replLL ll (ind +ᵢ reverseTran elf x₁ rvT₁) frll) (updIndGen frll ind (reverseTran elf x₁ rvT₁)) (replLL ell x₁ frll)) (replLL rll iind frll)
-    hf lf = {!!}
-  updateLF (elf ⊂ lf) iind (cr3 rvT eq₁ eq₂) = {!!}
-  updateLF (tr ltr lf) iind rvT = {!!}
-  updateLF (com df lf) iind rvT = {!!}
-  updateLF (call x) iind rvT = {!!}
-
-
-  removeCom : ∀{i u ll rll cll frll} → {ind : IndexLL cll ll} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo frll ind lf) → LFun {i} {u} (replLL ll ind frll) rll
-  removeCom I ()
-  removeCom {frll = frll} (_⊂_ {pll = pll} {ll = ll} {ind = ind} lf lf₁) (_←⊂ {lind = lind} ic) with (replLL ll ind (replLL pll lind frll)) | (drepl=>repl+ {frll = frll} ind lind)
-  removeCom {frll = frll} (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) (_←⊂ {lind = lind} ic)  | .(replLL ll (ind +ᵢ lind) frll) | refl = _⊂_ {ind = (updIndGen frll ind lind)} (removeCom lf ic) (hf lf₁)  where
-    hf : LFun (replLL ll ind ell) rll → LFun (replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) rll
-    hf x with (replLL ll ind ell) | (remRepl {frll = frll} {ell = ell} ind lind) 
-    hf x | .(replLL (replLL ll (ind +ᵢ lind) frll) (updIndGen frll ind lind) ell) | refl = x
-
-  removeCom {i} {u} {ll = ll} {frll = frll} {ind = .(ind +ᵢ _)} (_⊂_ {pll = pll} {rll = rll} {ind = ind} .I lf₁) (⊂→_ {lind = lind} ic (c1 {x = x} eq cr1) {refl}) =  _⊂_ {ind = updIndGen frll ind x} I hf where
-    hf : LFun (replLL (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) (replLL pll x frll)) rll
-    hf with (replLL (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) (replLL pll x frll)) | (replLL-id (replLL ll (ind +ᵢ x) frll) (updIndGen frll ind x) (replLL pll x frll) refl)
-    hf | _ | refl with (replLL ll (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq) where
-      hf2 : ∀{pll ll cll frll} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL cll (replLL ll ind pll)) → (x : IndexLL cll pll) → just x ≡ (lind -ₘᵢ updInd pll ind) → replLL ll (ind +ᵢ x) frll ≡ replLL (replLL ll ind pll) lind frll
-      hf2 ↓ lind .lind refl = refl
-      hf2 (ind ←∧) ↓ x ()
-      hf2 {ll = li ∧ ri} {frll = frll} (ind ←∧) (lind ←∧) x eq with (replLL li (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
-      hf2 {_} {li ∧ ri} {_} {frll} (ind ←∧) (lind ←∧) x₁ eq₁ | .(replLL (replLL li ind _) lind frll) | refl = refl
-      hf2 (ind ←∧) (∧→ lind) x ()
-      hf2 (∧→ ind) ↓ x ()
-      hf2 (∧→ ind) (lind ←∧) x ()
-      hf2 {ll = li ∧ ri} {frll = frll} (∧→ ind) (∧→ lind) x eq with (replLL ri (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
-      hf2 {_} {li ∧ ri} {_} {frll} (∧→ ind) (∧→ lind) x₁ eq₁ | .(replLL (replLL ri ind _) lind frll) | refl = refl
-      hf2 (ind ←∨) ↓ x ()
-      hf2 {ll = li ∨ ri} {frll = frll} (ind ←∨) (lind ←∨) x eq with (replLL li (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
-      hf2 {_} {li ∨ ri} {_} {frll} (ind ←∨) (lind ←∨) x₁ eq₁ | .(replLL (replLL li ind _) lind frll) | refl = refl
-      hf2 (ind ←∨) (∨→ lind) x ()
-      hf2 (∨→ ind) ↓ x ()
-      hf2 (∨→ ind) (lind ←∨) x ()
-      hf2 {ll = li ∨ ri} {frll = frll} (∨→ ind) (∨→ lind) x eq with (replLL ri (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
-      hf2 {_} {li ∨ ri} {_} {frll} (∨→ ind) (∨→ lind) x₁ eq₁ | .(replLL (replLL ri ind _) lind frll) | refl = refl
-      hf2 (ind ←∂) ↓ x ()
-      hf2 {ll = li ∂ ri} {frll = frll} (ind ←∂) (lind ←∂) x eq with (replLL li (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
-      hf2 {_} {li ∂ ri} {_} {frll} (ind ←∂) (lind ←∂) x₁ eq₁ | .(replLL (replLL li ind _) lind frll) | refl = refl
-      hf2 (ind ←∂) (∂→ lind) x ()
-      hf2 (∂→ ind) ↓ x ()
-      hf2 (∂→ ind) (lind ←∂) x ()
-      hf2 {ll = li ∂ ri} {frll = frll} (∂→ ind) (∂→ lind) x eq with (replLL ri (ind +ᵢ x) frll) | (hf2 {frll = frll} ind lind x eq)
-      hf2 {_} {li ∂ ri} {_} {frll} (∂→ ind) (∂→ lind) x₁ eq₁ | .(replLL (replLL ri ind _) lind frll) | refl = refl
-    hf | _ | refl | _ | refl = removeCom lf₁ ic 
-
-  removeCom {frll = frll} (_⊂_ {ll = ll} {ell = ell} {ind = ind} (_⊂_ {ind = eind} eelf elf) lf) (⊂→_ {lind = lind} ic (c1 {x = x} eq (cr2 {x₁ = ex} rT eeq erT)) {refl}) with (reverseTran eelf ex erT) | (inspect (λ x → reverseTran eelf ex x) erT)
-  ... | g | [ isp1 ] = _⊂_ {ell = replLL ell x frll} {ind = updIndGen frll ind (eind +ᵢ g)} {!!} {!removeCom lf ic!} -- both c1 and cr2 have the same requirements.
-
-
-
-
-
-
-  removeCom (_⊂_ {ind = ind} (_⊂_ eelf elf) lf) (⊂→_ {lind = lind} ic (c1 eq (cr3 rT eq₁ eq₂)) {refl}) = {!!} -- same as c2
+  -- Returns the next IndexLF that is not shadowed by other coms.
+  -- It also returns the IndexLL to the external LinLogic that is the input of that com.
+  -- TODO We have not proved and thus assume that the IndexLFCof we find here can always be proved to be IndexLFCo.
+  -- If that assumption is correct, then the returning LinLogic will be removed from the MSetLLRem.
+  -- It also returns the reduced SetLFCof. (multiple removals could have been made).
+  returnNext : ∀{i oll ll rll} → (lf : LFun {i} {u} ll rll) → MSetLLRem oll ll → SetLFCof lf → Maybe ((Σ (LinLogic i {u}) (λ rll → IndexLL rll oll)) × MSetLFCof lf × IndexLFCof lf)
+  returnNext lf ∅ s = nothing
+  returnNext I (¬∅ sr) ()
+  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂) = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , (¬∅ (ns ←⊂)) , (nic ←⊂))
+                                                           ; (nl , ∅ , nic) → return (nl , ∅ , (nic ←⊂))}                  where
+    n = returnNext lf (truncSetLLRem (¬∅ sr) ind) s
+  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (⊂→ s) = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , ¬∅ (⊂→ ns) , (⊂→ nic))
+                                                           ; (nl , ∅ , nic) → return (nl , ∅ , (⊂→ nic))}                  where
+    ns = mreplaceRem ind (tranLFMSetLLRem lf (truncSetLLRem (¬∅ sr) ind)) (¬∅ sr)
+    n = returnNext lf₁ ns s
+  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) with (returnNext lf (truncSetLLRem (¬∅ sr) ind) s)
+  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) | just (nl , ¬∅ ns , nic) = just ((nl , ¬∅ (ns ←⊂→ s₁) , nic ←⊂))
+  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) | just (nl , ∅ , nic) = just ((nl , ¬∅ (⊂→ s₁) , nic ←⊂))
+  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) | nothing = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , ¬∅ (⊂→ ns) , (⊂→ nic))
+                                                                         ; (nl , ∅ , nic) → return (nl , ∅ , (⊂→ nic))}                  where
+    ns = mreplaceRem ind (tranLFMSetLLRem lf (truncSetLLRem (¬∅ sr) ind)) (¬∅ sr)
+    n = returnNext lf₁ ns s₁
   
-  removeCom (_⊂_ {ind = ind} .(tr _ _) lf₁) (⊂→_ {lind = lind} ic (c1 eq (cr4 rT x₂)) {refl}) = {!!} -- same as tr below
+  returnNext (tr ltr lf) (¬∅ x) (tr s) = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , ¬∅ (tr ns) , (tr nic))
+                                                  ; (nl , ∅ , nic) → return (nl , ∅ , (tr nic))}                  where
+    n = returnNext lf (¬∅ (tranRem x ltr)) s
+  returnNext (com {ll = _} {frll} df lf) (¬∅ x) ↓ with (contruct (projToSetLL x))
+  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | ↓ with (setToIndex (contruct (conSet x)))
+  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | ↓ | just r = just ( r , (∅ , ↓))
+  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | ↓ | nothing = IMPOSSIBLE -- IMPORTANT conSet x needs to be a single ↓ or our assumptions are wrong. -- setToIndex returns nothing if not.
+  {-# CATCHALL #-}
+  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | r = nothing
+  returnNext (call x) (¬∅ sr) ()
   
-  removeCom {i} {u} {rll = rll} {cll = cll} {frll = frll} {ind = .(revUpdInd ind lind eq₁ eq₂)} (_⊂_ {pll = pll} {ll = ll} {ell = ell} {ind = ind} lf lf₁) (⊂→_ {lind = lind} ic (c2 eq₁ eq₂) {refl}) with (rev⇒rs-i≡n ind lind eq₁ eq₂)
-  ... | (req₁ , req₂) = _⊂_ {ind = updIndPart (revUpdInd ind lind eq₁ eq₂) ind req₂ req₁} lf (hf2 (removeCom lf₁ ic))  where
-    hf : ∀{ll ell} → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL {i} {u} cll (replLL ll ind ell))
-         → (eq₂ : (updInd ell ind -ₘᵢ lind) ≡ nothing) → (eq₁ : (lind -ₘᵢ updInd ell ind) ≡ nothing)
-         → (req₂ : (ind -ₘᵢ revUpdInd ind lind eq₁ eq₂) ≡ nothing) → (req₁ : (revUpdInd ind lind eq₁ eq₂ -ₘᵢ ind) ≡ nothing)
-         → (replLL (replLL ll (revUpdInd ind lind eq₁ eq₂) frll) (updIndPart (revUpdInd ind lind eq₁ eq₂) ind req₂ req₁) ell) ≡ (replLL (replLL ll ind ell) lind frll)
-    hf ↓ lind₁ eq2 () req1 req2
-    hf (ind ←∧) ↓ () eq1 req1 req2
-    hf {ll = li ∧ ri} {ell = ell} (ind ←∧) (lind ←∧) eq2 eq1 req1 req2 with (replLL (replLL li (revUpdInd ind lind eq1 eq2) frll) (updIndPart (revUpdInd ind lind eq1 eq2) ind req1 req2) ell) | (hf ind lind eq2 eq1 req1 req2)
-    hf {li ∧ ri} {ell} (ind ←∧) (lind ←∧) eq2 eq1 req1 req2 | .(replLL (replLL li ind ell) lind _) | refl = refl
-    hf (ind ←∧) (∧→ lind) refl refl req1 req2 = refl
-    hf (∧→ ind) ↓ () refl req1 req2
-    hf (∧→ ind) (lind₁ ←∧) refl refl req1 req2 = refl
-    hf {ll = li ∧ ri} {ell = ell} (∧→ ind) (∧→ lind) eq2 eq1 req1 req2  with (replLL (replLL ri (revUpdInd ind lind eq1 eq2) frll) (updIndPart (revUpdInd ind lind eq1 eq2) ind req1 req2) ell) | (hf ind lind eq2 eq1 req1 req2)
-    hf {li ∧ ri} {ell} (∧→ ind) (∧→ lind) eq2 eq1 req1 req2 | .(replLL (replLL ri ind ell) lind _) | refl = refl
-    hf (ind ←∨) ↓ () eq1 req1 req2
-    hf {ll = li ∨ ri} {ell = ell} (ind ←∨) (lind ←∨) eq2 eq1 req1 req2 with (replLL (replLL li (revUpdInd ind lind eq1 eq2) frll) (updIndPart (revUpdInd ind lind eq1 eq2) ind req1 req2) ell) | (hf ind lind eq2 eq1 req1 req2)
-    hf {li ∨ ri} {ell} (ind ←∨) (lind ←∨) eq2 eq1 req1 req2 | .(replLL (replLL li ind ell) lind _) | refl = refl
-    hf (ind ←∨) (∨→ lind) refl refl req1 req2 = refl
-    hf (∨→ ind) ↓ () refl req1 req2
-    hf (∨→ ind) (lind₁ ←∨) refl refl req1 req2 = refl
-    hf {ll = li ∨ ri} {ell = ell} (∨→ ind) (∨→ lind) eq2 eq1 req1 req2  with (replLL (replLL ri (revUpdInd ind lind eq1 eq2) frll) (updIndPart (revUpdInd ind lind eq1 eq2) ind req1 req2) ell) | (hf ind lind eq2 eq1 req1 req2)
-    hf {li ∨ ri} {ell} (∨→ ind) (∨→ lind) eq2 eq1 req1 req2 | .(replLL (replLL ri ind ell) lind _) | refl = refl
-    hf (ind ←∂) ↓ () eq1 req1 req2
-    hf {ll = li ∂ ri} {ell = ell} (ind ←∂) (lind ←∂) eq2 eq1 req1 req2 with (replLL (replLL li (revUpdInd ind lind eq1 eq2) frll) (updIndPart (revUpdInd ind lind eq1 eq2) ind req1 req2) ell) | (hf ind lind eq2 eq1 req1 req2)
-    hf {li ∂ ri} {ell} (ind ←∂) (lind ←∂) eq2 eq1 req1 req2 | .(replLL (replLL li ind ell) lind _) | refl = refl
-    hf (ind ←∂) (∂→ lind) refl refl req1 req2 = refl
-    hf (∂→ ind) ↓ () refl req1 req2
-    hf (∂→ ind) (lind₁ ←∂) refl refl req1 req2 = refl
-    hf {ll = li ∂ ri} {ell = ell} (∂→ ind) (∂→ lind) eq2 eq1 req1 req2  with (replLL (replLL ri (revUpdInd ind lind eq1 eq2) frll) (updIndPart (revUpdInd ind lind eq1 eq2) ind req1 req2) ell) | (hf ind lind eq2 eq1 req1 req2)
-    hf {li ∂ ri} {ell} (∂→ ind) (∂→ lind) eq2 eq1 req1 req2 | .(replLL (replLL ri ind ell) lind _) | refl = refl
+  -- We check that the IndexLFCof we found from returnNext is actually an IndexLFCo.
+  -- IMPORTANT This should always be as such, thus we put IMPOSSIBLE on the other case.
 
-    hf2 : LFun (replLL (replLL ll ind ell) lind frll) rll →  LFun (replLL (replLL ll (revUpdInd ind lind eq₁ eq₂) frll) (updIndPart (revUpdInd ind lind eq₁ eq₂) ind req₂ req₁) ell) rll
-    hf2 lf with (replLL (replLL ll (revUpdInd ind lind eq₁ eq₂) frll) (updIndPart (revUpdInd ind lind eq₁ eq₂) ind req₂ req₁) ell) | (hf ind lind eq₂ eq₁ req₂ req₁)
-    hf2 lf | _ | refl = lf
+  turnToCo : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → IndexLFCof lf → Maybe (Σ (LinLogic i {u}) (λ cll → Σ (LinLogic i {u}) (λ frll → Σ (IndexLL cll ll) (λ ind → IndexLFCo {i} {u} {cll} frll ind lf))))
+  turnToCo I ()
+  turnToCo (_⊂_ {ind = ind} lf lf₁) (ic ←⊂) = n >>= λ {(cll , frll , lind , ico) → return (cll , frll , ind +ᵢ lind , ico ←⊂ )} where
+    n = turnToCo lf ic
+  turnToCo (_⊂_ {ind = ind} lf lf₁) (⊂→ ic) = n >>= λ {(cll , frll , lind , ico) → getIndRevNoComsT ind lind lf >>= λ irnc → return (cll , frll , indRevNoComs ind lind lf irnc , (⊂→ ico) irnc )} where
+    n = turnToCo lf₁ ic
+  turnToCo (tr ltr lf) (tr ic) = n >>= λ {(cll , frll , ind , ico) → (hf ind (revTr ltr)) >>= (λ lut → return (cll , frll , IndexLLProp.tran ind (revTr ltr) (lower lut) , tr ico (lower lut)))  } where
+    n = turnToCo lf ic
+    hf : ∀ {i ll pll rll} → (ind : IndexLL pll ll) → (ltr : LLTr {i} {u} rll ll) → Maybe (Lift {ℓ = lsuc u} (UpTran ind ltr))
+    hf ind ltr with (isUpTran ind ltr)
+    hf ind ltr | yes p = just (lift p)
+    hf ind ltr | no ¬p = nothing
+  turnToCo (com {ll = cll} {frll = frll} df lf) ↓ = just (cll , frll , ↓ , ↓)
+  turnToCo (call x) ()
+  
 
-  removeCom (tr ltr lf) (tr ic) = {!!} -- tr ltr (removeCom lf ic)
-  removeCom (com df lf) ↓ = lf
-  removeCom (call x) ()
-
--- Here we have removed the com, but not the transformations or calls.We need to find the next available coms so as to remove the
--- transformations that will make it a single ↓. Also, we need to find if there are calls that are reachable from the outside.
-
--- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). IMPORTANT. TODO
---nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem {i} oll rll × MSetLLRem oll rll × MSetLL oll × MSetLL oll
---nextComsCalls I (cm , sr , s , sc) = (cm , sr , s , sc)
---nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (cm , sr , s , sc) with (truncSetLLRem cm ind) | (truncSetLLRem sr ind) 
---... | c | r = let (ecm , esr , es , esc) = nextComsCalls lf (c , r , s , sc)
---          in nextComsCalls lf₁ (mreplaceRem ind ecm cm , mreplaceRem ind esr sr , es , esc)
---nextComsCalls (tr ltr lf) (cm , ∅ , s , sc) = (∅ , ∅ , s , sc) 
---nextComsCalls (tr ltr lf) (∅ , ¬∅ x , s , sc) = nextComsCalls lf (∅ , (¬∅ $ tranRem x ltr) , s , sc)
---nextComsCalls (tr ltr lf) (¬∅ cx , ¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem cx ltr) , (¬∅ $ tranRem x ltr) , s , sc)
---nextComsCalls (com {ll = _} {frll} df lf) (∅ , ∅ , s , sc) = (∅ , ∅ , s , sc)
---nextComsCalls (com {ll = _} {frll} df lf) (¬∅ cx , ∅ , s , sc) = IMPOSSIBLE
---nextComsCalls (com {ll = _} {frll} df lf) (cm , ¬∅ x , s , sc) with (contruct $ projToSetLL x)
---nextComsCalls (com {_} {_} {frll} df lf) (∅ , ¬∅ x , s , sc) | ↓ = {!!}
---nextComsCalls (com {rll} {_} {frll} df lf) (¬∅ x₁ , ¬∅ x , s , sc) | ↓ = (∅ , ¬∅ (fillAllLowerRem rll) , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc) -- Since we haven't cleaned the transf, the mcontruct will not result on unique ↓. After we do the transformations, it should. IMPORTANT TODO.
---... | r = (∅ , ∅ , s , sc)
---nextComsCalls (call x) (∅ , ∅ , s , sc) = (∅ , ∅ , s , sc)
---nextComsCalls (call x) (¬∅ cx , ∅ , s , sc) = IMPOSSIBLE
---nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (∅ , ¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
---  hf : Σ (LinLogic i {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLLRem oll rll × MSetLL oll × MSetLL oll
---  hf (rll , ind) with (replLL oll ind rll) | (madd {q = rll} sc ind rll) | (replLL-id oll ind rll refl)
---  hf (rll , ind) | r | g | refl = (∅ , ∅ , s , g) -- Here we pick only one element from the memory and add it
----- to MSetLL oll.
---nextComsCalls (call x) (¬∅ cx , ¬∅ x₁ , s , sc) = IMPOSSIBLE
---
-
-
-
----- See WellFormed. We check that the external/main LinFun has no calls, thus oneElemRem will not pick a "↓c" (memory for call since they do not exist). IMPORTANT. TODO
---nextComsCalls : ∀{i u oll ll} → ∀{rll} → LFun {i} {u} ll rll → MSetLLRem {i} oll ll × MSetLL oll × MSetLL oll → MSetLLRem oll rll × MSetLL oll × MSetLL oll
---nextComsCalls I (sr , s , sc) = (sr , s , sc)
---nextComsCalls (_⊂_ {ell = ell} {ind = ind} lf lf₁) (sr , s , sc) with (truncSetLLRem sr ind) 
---... | r = let (esr , es , esc) = nextComsCalls lf (r , s , sc)
---          in nextComsCalls lf₁ (mreplaceRem ind esr sr , es , esc)
---nextComsCalls (tr ltr lf) (∅ , s , sc) = ( ∅ , s , sc) 
---nextComsCalls (tr ltr lf) (¬∅ x , s , sc) = nextComsCalls lf ((¬∅ $ tranRem x ltr) , s , sc)
---nextComsCalls (com {ll = _} {frll} df lf) (∅ , s , sc) = (∅ , s , sc)
---nextComsCalls (com {ll = _} {frll} df lf) (¬∅ x , s , sc) with (contruct $ projToSetLL x)
---... | ↓ = (∅ , (s ∪ₘₛ (mcontruct $ reConSet x)) , sc) -- Since we haven't cleaned the transf, the mcontruct will not result on unique ↓. After we do the transformations, it should. IMPORTANT TODO.
---... | r = (∅ , s , sc)
---nextComsCalls (call x) (∅ , s , sc) = (∅ , s , sc)
---nextComsCalls {i = i} {u = u} {oll = oll} {rll = rll} (call x) (¬∅ x₁ , s , sc) = hf (oneElemRem x₁) where
---  hf : Σ (LinLogic i {u}) (λ rll → IndexLL rll oll) → MSetLLRem oll rll × MSetLL oll × MSetLL oll
---  hf (rll , ind) with (replLL oll ind rll) | (madd {q = rll} sc ind rll) | (replLL-id oll ind rll refl)
---  hf (rll , ind) | r | g | refl = (∅ , s , g) -- Here we pick only one element from the memory and add it
----- to MSetLL oll.
---
-
-
-
-
--- Here we assume that cut removes call and obs as soon as the call is possible to be executed,
--- thus if we reach at a call, we do not continue, it means that this specific subtree will not contain a com
--- to execute this communication pattern.
-
-
-
-data fS {u} (A : Set (lsuc u)) : Set (lsuc u) where
-  fYes : A → fS A
-  fNo : fS A
-
--- We need to return
--- A) the remaining set of inputs
--- B) the computed usesInputs with the inputs that have been found to be used.
--- C) the set of calls that have been unfolded.
-
--- If the usesInput is not complete, we remove the embedding, we insert the contents of the embedding to the parent and use its computed usesInput for these contents, continuing in the parent embedding.
-
-
---cut : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
---      → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
---cut s lf c (usesInputC ui) = cut` s lf c ui where
---  cut` : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → ∀{ms} → usesInputT` lf ms
---        → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
---  cut` s I () ui
---  cut` s (elf ⊂ lf) (cuttable-s⊂-oi c) ui = {!!}
---  cut` s (elf ⊂ lf) (cuttable-s⊂-¬ho c) ui = {!!}
---  cut` s plf@(tr lf) (cuttable-s-tr-fst c) ui = {!!}
---  cut` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
---  cut` s (obs lf) () ui
---  cut` s plf@(com df lf) cuttable-s-com ui with (doesItUseAllInputs lf)
---  cut` s (com df lf) cuttable-s-com ui | yes p = fYes (_ , lf , p)
---  cut` s (com df lf) cuttable-s-com ui | no ¬p = fNo
---  cut` s (call x) () ui
---
-
---module _ where
---
---private
---  hf : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → MSetLL ll → (lf : LFun {u} {i} {k} {rll} {ll}) → ∀{ms} → usesInputT` lf ms
---       → (MSetLL rll) × ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
---  hf {ll = ll} ms I ui = {!!} 
---  hf ms (lf ⊂ lf₁) ui = {!!}
---  hf ms (tr lf) ui = {!!}
---  hf ms (obs lf) ui = {!!}
---  hf ms (com df lf) ui = {!!}
---  hf ms (call x) ui = {!!}
---
---  removeCalls : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → usesInputT lf
---        → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
---  removeCalls s lf c (usesInputC ui) = removeCalls` s lf c ui where
---    removeCalls` : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → (s : SetLL ll) → (lf : LFun {u} {i} {k} {rll} {ll}) → cuttable s lf → ∀{ms} → usesInputT` lf ms
---          → fS ( Σ (LinLogic i) (λ dll → Σ (LFun {u} {i} {k} {rll} {dll}) (λ lf → usesInputT lf)) )
---    removeCalls` s I () ui
---    removeCalls` s (elf ⊂ lf) (cuttable-s⊂-oi c) ui = {!!}
---    removeCalls` s (elf ⊂ lf) (cuttable-s⊂-¬ho c) ui = {!!}
---    removeCalls` s plf@(tr lf) (cuttable-s-tr-fst c) ui = {!!}
---    removeCalls` s plf@(tr lf) (cuttable-s-tr-snd c) ui = {!!}
---    removeCalls` s (obs lf) () ui
---    removeCalls` s plf@(com df lf) cuttable-s-com ui = {!!}
---    removeCalls` s (call x) () ui
---
-
-
--- Important : We need to introduce a null data point like Unit, that serves to express the dependency between events. 
--- We prohibit LFun Calls that do not depend on a previous com.
-
--- We remove all the calls who have one of their inputs received and replace them with LFun.
--- We add obs to all the other calls that did not trigger the unfolding and then an embedding of the LFun with ⊂. We use the "usesInput" that is created by step.
-
--- By removing the calls , the usesInput of the main function is preserved.
--- We also unfold all calls that depend on the call of this call. These are finite by definition of LFun (being inductive data type).
-
---  mutual
-  -- We use this when we compute the next LFun and the next output, thus the size is allowed to be lowered by one.
---    removeCall : {i : Size} → {j : Size< i}  → {k : Size< ↑ i} → ∀{u rll ll} → LFun {u} {i} {k} {rll} {ll} → LFun {u} {i} {k} {rll} {ll}
---    removeCall I = I
---    removeCall (_⊂_ {ind = ind} lf lf₁) = {!!} -- _⊂_ {ind = ind} (removeCall lf) {{prf = prf}} (removeCall lf₁)  -- We need to only remove call that do not depend on a previous com.
---    removeCall (tr lf) = tr $ removeCall lf
---    removeCall (obs lf) = {!!}
---    removeCall (com df lf) = com df $ lf
---    removeCall (call ∞lf lf₁) = {!!} -- let st = step ∞lf in
---      {!!} -- _⊂_ {ind = ↓} (proj₁ st) {{prf = proj₂ st}} (removeCall lf₁) 
---
---    usesInput→usesInput$removeCall : {i : Size} → {j : Size< i } → {k : Size< ↑ i} → ∀{u rll ll} → (lf : LFun {u} {i} {k} {rll} {ll}) → usesInput lf ≡ ⊤ → usesInput (removeCall lf) ≡ ⊤
---    usesInput→usesInput$removeCall I prf = prf
---    usesInput→usesInput$removeCall (lf ⊂ lf₁) prf = {!!}
---    usesInput→usesInput$removeCall (tr lf) prf = {!!}
---    usesInput→usesInput$removeCall (obs lf) prf = {!!}
---    usesInput→usesInput$removeCall (com df lf) prf = {!!}
---    usesInput→usesInput$removeCall (call x lf) prf = {!!}
---    
-
-
-
-
-
---  cut : ∀{i u} → {j : Size< ↑ i} → ∀{rll ll} → {s : SetLL ll} → {lf : LFun} → cuttable {u} {i} {j} {rll} s lf
---  cut c = {!!}
-
-
-
-
-
-
-
-
-module _ where
-
--- cll is the linear logic that is introduced after the last Com.
--- The indoi points us to the last transformation of the LinLogic, the last place we received data.
--- We need to preserve the ∨(or) choices of the previous inputs.
-  mutual
-    data Spec :  {i : Size} → ∀{u ll rll} → LinDepT ll → LFun {i} {u} ll rll → Set where  
-
-
---  canBeCut : ∀{i} → {j : Size< ↑ i} → ∀{u rll ll} → SetLL ll → LFun {u} {i} {j} {rll} {ll} → Bool × LinLogic j {u}
-    data Input {u} : {i : Size} → ∀{rll ll} →  LinDepT ll → LFun {i} {u} ll rll → Set (lsuc u) where
---      I    : {i : Size} {j : Size< ↑ i} → ∀{rll ll ldt lf} → ⦃ prf : nextLFun {i} {j} {u} {rll} {ll} lf ≡ I ⦄ → Input {rll = rll} ldt lf
---      next : {i : Size} {j : Size< ↑ i} → ∀{rll ll ldt lf} → (s : SetLL ll) → let cbc = canBeCut s lf in LinT (proj₂ cbc) → ⦃ prf : nextLFun {i} {j} {u} {rll} {ll} lf ≡ com ⦄ → Input {u} {i} {j} {rll} {ll} ldt lf
---      next : in → Input → Input
---      call : ∞input → Input → Input
-
---    record ∞Input {i u ll ∞rll} ( ldt : LinDepT ll) ( ∞lf : ∞LFun {i} {u} {∞rll} {ll}) : Set (suc u) where
---      coinductive
---      field
---        step : {j : Size< i} → Input {u} {i = i} {j = j} {rll = step ∞rll} {ll} ldt ((step ∞lf) {j = j})
---
-
-
--- As soon as all the inputs of a specific LFun has been received and the resulst is ∅ for all except an embedding, we replace the linear function with that embedding.
+-- nextCom : ∀{i u ll rll} → (lf : LFun {i} {u} ll rll) → SetLFCof lf → IndexLF lf × (Σ (LinLogic i {u}) (λ cll → Σ (LinLogic i {u}) (λ frll → Σ (IndexLL cll ll) (λ ind → IndexLFCo {i} {u} {cll} frll ind lf))))
+-- nextCom I ()
+-- nextCom (lf ⊂ lf₁) (s ←⊂) = {!!}
+-- nextCom (lf ⊂ lf₁) (⊂→ s) = {!!}
+-- nextCom (lf ⊂ lf₁) (s ←⊂→ s₁) = {!!} -- Here We first pick on the lesft side and then we go on the right side, because there might be a com there that shadows further coms.
+-- nextCom (tr ltr lf) (tr s) = {!!}
+-- nextCom (com df lf) ↓ = {!!}
+-- nextCom (call x) ()

@@ -257,24 +257,42 @@ module _ {u} where
 
   pickOne : ∀{i ll} → SetLL {i} {u} ll → Σ (LinLogic i {u}) (λ x → IndexLL x ll)
   pickOne {ll = ll} ↓ = ll , ↓
-  pickOne (s ←∧) with (pickOne s)
-  ... | (rll , ind) = (rll , ind ←∧)
-  pickOne (∧→ s) with (pickOne s)
-  ... | (rll , ind) = (rll , ∧→ ind)
-  pickOne (s ←∧→ s₁) with (pickOne s)
-  ... | (rll , ind) = rll , ind ←∧
-  pickOne (s ←∨) with (pickOne s)
-  ... | (rll , ind) = rll , ind ←∨
-  pickOne (∨→ s) with (pickOne s)
-  ... | (rll , ind) = rll , ∨→ ind
-  pickOne (s ←∨→ s₁) with (pickOne s)
-  ... | (rll , ind) = rll , ind ←∨
-  pickOne (s ←∂) with (pickOne s)
-  ... | (rll , ind) = rll , ind ←∂
-  pickOne (∂→ s) with (pickOne s)
-  ... | (rll , ind) = rll , ∂→ ind
-  pickOne (s ←∂→ s₁) with (pickOne s)
-  ... | (rll , ind) = rll , ind ←∂
+  pickOne (s ←∧) = (rll , ind ←∧) where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (∧→ s) = (rll , ∧→ ind) where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (s ←∧→ s₁) = rll , ind ←∧ where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (s ←∨) = rll , ind ←∨ where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (∨→ s) = rll , ∨→ ind where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (s ←∨→ s₁) = rll , ind ←∨ where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (s ←∂) = rll , ind ←∂ where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (∂→ s) = rll , ∂→ ind where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
+  pickOne (s ←∂→ s₁) = rll , ind ←∂ where
+    n = pickOne s
+    rll = proj₁ n
+    ind = proj₂ n
 
 
 module _ where

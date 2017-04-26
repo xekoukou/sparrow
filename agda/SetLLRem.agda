@@ -35,27 +35,27 @@ data MSetLLRem {i : Size} {u} (pll : LinLogic i {u}) : LinLogic i {u} → Set (l
   ∅   : ∀{ll}            → MSetLLRem pll ll
   ¬∅  : ∀{ll} → SetLLRem pll ll → MSetLLRem pll ll
 
-reConSet : {i : Size} → ∀{u} → {pll : LinLogic i {u}} → {ll : LinLogic i {u}} → SetLLRem {i} pll ll → MSetLL pll
-reConSet {i} {u} {pll} sr = reConSet` sr ∅ where
-  reConSet` : {ll : LinLogic i {u}} → SetLLRem {i} pll ll → MSetLL pll → MSetLL pll
-  reConSet` (↓∅ {rll = rll} x) s with (madd {q = rll} s x rll)
-  ... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
-  reConSet` (↓∅ {rll} x) s | r | m | refl = r
-  reConSet` (↓τ {rll = rll} x) s with (madd {q = rll} s x rll)
-  ... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
-  reConSet` (↓τ {rll} x) s | r | m | refl = r
-  reConSet` (↓c {rll = rll} x) s with (madd {q = rll} s x rll)
-  ... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
-  reConSet` (↓c {rll} x) s | r | m | refl = r
-  reConSet` (sr ←∧) s = reConSet` sr s
-  reConSet` (∧→ sr) s = reConSet` sr s
-  reConSet` (sr ←∧→ sr₁) s = (reConSet` sr s) ∪ₘₛ (reConSet` sr₁ s)
-  reConSet` (sr ←∨) s = reConSet` sr s
-  reConSet` (∨→ sr) s = reConSet` sr s
-  reConSet` (sr ←∨→ sr₁) s = (reConSet` sr s) ∪ₘₛ (reConSet` sr₁ s)
-  reConSet` (sr ←∂) s = reConSet` sr s
-  reConSet` (∂→ sr) s = reConSet` sr s
-  reConSet` (sr ←∂→ sr₁) s =  (reConSet` sr s) ∪ₘₛ (reConSet` sr₁ s)
+
+conSet : {i : Size} → ∀{u} → {pll : LinLogic i {u}} → {ll : LinLogic i {u}} → SetLLRem {i} pll ll → SetLL pll
+conSet {pll = pll} (↓∅ {rll = rll} x) with (∅-add x rll)
+... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
+conSet {_} {_} {.g} (↓∅ {rll} x) | r | g | refl = r
+conSet {pll = pll} (↓τ {rll = rll} x) with (∅-add x rll)
+... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
+conSet {_} {_} {.g} (↓τ {rll} x) | r | g | refl = r
+conSet {pll = pll} (↓c {rll = rll} x) with (∅-add x rll)
+... | r with (replLL pll x rll) | (replLL-id pll x rll refl)
+conSet {_} {_} {.g} (↓c {rll} x) | r | g | refl = r
+conSet (sr ←∧) = conSet sr
+conSet (∧→ sr) = conSet sr
+conSet (sr ←∧→ sr₁) = (conSet sr) ∪ₛ (conSet sr₁)
+conSet (sr ←∨) = conSet sr
+conSet (∨→ sr) = conSet sr
+conSet (sr ←∨→ sr₁) = (conSet sr) ∪ₛ (conSet sr₁)
+conSet (sr ←∂) = conSet sr
+conSet (∂→ sr) = conSet sr
+conSet (sr ←∂→ sr₁) =  (conSet sr) ∪ₛ (conSet sr₁)
+
 
 
 -- It is required to fill all the lower levels with the indexes that we are to truck.
