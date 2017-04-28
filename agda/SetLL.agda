@@ -4,6 +4,7 @@ module SetLL where
 open import Common hiding (_≤_)
 open import LinLogic
 open import LinLogicProp
+open import IndexLLProp hiding (tran)
 import Data.List
 
 
@@ -189,6 +190,17 @@ del (s ←∂→ s₁) (∂→ ind) rll with (del s₁ ind rll)
 del (s ←∂→ s₁) (∂→ ind) rll | ∅ = ¬∅ ((s) ←∂)
 del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((s) ←∂→ x)
 
+extend : ∀{i u ll pll} → IndexLL {i} {u} pll ll → SetLL pll → SetLL ll
+extend ↓ s = s
+extend (ind ←∧) s = (extend ind s) ←∧
+extend (∧→ ind) s = ∧→ (extend ind s) 
+extend (ind ←∨) s = (extend ind s) ←∨
+extend (∨→ ind) s = ∨→ (extend ind s) 
+extend (ind ←∂) s = (extend ind s) ←∂
+extend (∂→ ind) s = ∂→ (extend ind s) 
+
+
+
 
 module _ where
 
@@ -229,6 +241,16 @@ module _ where
   replacePartOf a ←∂ to b at (∂→ ind)     = (a) ←∂→ (hf ind b)  
   replacePartOf ∂→ a to b at (∂→ ind)     = ∂→ (replacePartOf a to b at ind)
   replacePartOf a ←∂→ a₁ to b at (∂→ ind) = (a) ←∂→ (replacePartOf a₁ to b at ind)
+
+
+  mreplacePartOf_to_at_ : ∀{i u ll q} → ∀{rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} q ll)
+            → MSetLL (replLL ll ind rll)
+  mreplacePartOf ∅ to ∅ at ind = ∅
+  mreplacePartOf_to_at_ {q = q} {rll = rll} ∅ (¬∅ x) ind with ( a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind))
+  ... | r with (replLL q ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) | (replLL-↓ {ell = rll} ind)
+  mreplacePartOf_to_at_ {q = q} {rll = rll} ∅ (¬∅ x) ind | r | .rll | refl = ¬∅ (extend r x) 
+  mreplacePartOf_to_at_ {rll = rll} (¬∅ x) ∅ ind = del x ind rll
+  mreplacePartOf ¬∅ x to ¬∅ x₁ at ind = ¬∅ (replacePartOf x to x₁ at ind)
 
 
 module _ {u} where
@@ -323,6 +345,15 @@ module _ where
     hf s ind with (add s (proj₂ x) (proj₁ x))
     ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl)
     hf s ind | r₁ | _ | refl = r₁
+
+
+fillAllLower : ∀{i u} → ∀ ll → SetLL {i} {u} ll
+fillAllLower ∅ = ↓
+fillAllLower (τ x) = ↓
+fillAllLower (ll₁ ∧ ll₂) = (fillAllLower ll₁) ←∧→ (fillAllLower ll₂)
+fillAllLower (ll₁ ∨ ll₂) = (fillAllLower ll₁) ←∨→ (fillAllLower ll₂)
+fillAllLower (ll₁ ∂ ll₂) = (fillAllLower ll₁) ←∂→ (fillAllLower ll₂)
+fillAllLower (call x) =  ↓
 
 -- Decidable Equality
 isEq : {i : Size} → ∀{u} → {ll : LinLogic i {u}} → (a : SetLL ll) → (b : SetLL ll) → Dec (a ≡ b)
@@ -639,17 +670,6 @@ truncSetLL (s ←∂) (∂→ ind) = ∅
 truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
 truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
 
-module _ where
-
-
-extend : ∀{i u ll pll} → IndexLL {i} {u} pll ll → SetLL pll → SetLL ll
-extend ↓ s = s
-extend (ind ←∧) s = (extend ind s) ←∧
-extend (∧→ ind) s = ∧→ (extend ind s) 
-extend (ind ←∨) s = (extend ind s) ←∨
-extend (∨→ ind) s = ∨→ (extend ind s) 
-extend (ind ←∂) s = (extend ind s) ←∂
-extend (∂→ ind) s = ∂→ (extend ind s) 
 
 data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
   ≤id   : ∀{ll s} → _≤s_ {ll = ll} s s

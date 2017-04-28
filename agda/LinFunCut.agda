@@ -17,9 +17,9 @@ open import LinLogicProp
 
 open import Relation.Binary.PropositionalEquality
 open import Data.List
-open import Data.Product
+open import Data.Product hiding (map)
 open import Data.Nat
-open import Data.Maybe
+open import Data.Maybe hiding (map)
 open import Category.Monad
 
 
@@ -56,53 +56,49 @@ module _ {u : Level} where
   open import Data.List
 
   private
-    tranLFMSetLLRem : ∀{i oll ll rll} → (lf : LFun {i} {u} ll rll) → MSetLLRem oll ll → MSetLLRem oll rll
-    tranLFMSetLLRem lf ∅ = ∅
-    tranLFMSetLLRem I (¬∅ x) = ¬∅ x
-    tranLFMSetLLRem (_⊂_ {ind = ind} lf lf₁) (¬∅ x) = tranLFMSetLLRem lf₁ nmx where
-      tlf = tranLFMSetLLRem lf (truncSetLLRem (¬∅ x) ind)
-      nmx = mreplaceRem ind tlf (¬∅ x)
-    tranLFMSetLLRem (tr ltr lf) (¬∅ x) = tranLFMSetLLRem lf (¬∅ (tranRem x ltr))
-    tranLFMSetLLRem (com df lf) (¬∅ x) = IMPOSSIBLE -- ? I doubt that we will ever reach at this point. The set will be empty due to returnNext emptying it.
-    tranLFMSetLLRem (call x) (¬∅ x₁) = IMPOSSIBLE -- We have removed all such coms.
-  
+    tranLFMSetLL : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → MSetLL ll → MSetLL rll
+    tranLFMSetLL lf ∅ = ∅
+    tranLFMSetLL I (¬∅ x) = ¬∅ x
+    tranLFMSetLL (_⊂_ {ind = ind} lf lf₁) (¬∅ x) = tranLFMSetLL lf₁ nmx where
+      tlf = tranLFMSetLL lf (truncSetLL x ind)
+      nmx = mreplacePartOf (¬∅ x) to tlf at ind
+    tranLFMSetLL (tr ltr lf) (¬∅ x) = tranLFMSetLL lf (¬∅ (SetLL.tran x ltr))
+    tranLFMSetLL (com df lf) (¬∅ x) = IMPOSSIBLE -- We should never reach at this point. findComs should have added the com in SetLFCof , and thus we should have already removed the memory.
+    tranLFMSetLL (call x) (¬∅ x₁) = IMPOSSIBLE -- Calls that externally reached have been removed.
+
+
+-- Returns the set of IndexLFCof that is reachable from outside. All inputs are present for each com.
+  comsWithAllInputs : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → MSetLL ll → SetLFCof lf → MSetLFCof lf
+  comsWithAllInputs lf ∅ sc = ∅
+  comsWithAllInputs I (¬∅ s) ()
+  comsWithAllInputs (_⊂_ {ind = ind} lf lf₁) (¬∅ s) (sc ←⊂) = (case n of (λ { ∅ → ∅ ; (¬∅ x) → ¬∅ (x ←⊂) })) where
+    n = comsWithAllInputs lf (truncSetLL s ind) sc
+  comsWithAllInputs (_⊂_ {ind = ind} lf lf₁) (¬∅ s) (⊂→ sc) = (case n of (λ { ∅ → ∅ ; (¬∅ x) → ¬∅ (⊂→ x) })) where
+    ns = mreplacePartOf (¬∅ s) to (tranLFMSetLL lf (truncSetLL s ind)) at ind
+    n = comsWithAllInputs lf₁ ns sc
+  comsWithAllInputs (_⊂_ {ind = ind} lf lf₁) (¬∅ s) (sc ←⊂→ sc₁) = hf fn sn where
+    fn = comsWithAllInputs lf (truncSetLL s ind) sc
+    -- Since SetLFCof only leads us to coms, we remove the part of the SetLL that was in ←⊂. 
+    ns = mreplacePartOf (¬∅ s) to ∅ at ind
+    sn = comsWithAllInputs lf₁ ns sc₁
+    hf : MSetLFCof lf → MSetLFCof lf₁ → MSetLFCof (_⊂_ {ind = ind} lf lf₁)
+    hf ∅ ∅ = ∅
+    hf ∅ (¬∅ x) = ¬∅ (⊂→ x)
+    hf (¬∅ x) ∅ = ¬∅ (x ←⊂)
+    hf (¬∅ x) (¬∅ x₁) = ¬∅ (x ←⊂→ x₁)
+  comsWithAllInputs (tr ltr lf) (¬∅ s) (tr sc) = (case n of (λ { ∅ → ∅ ; (¬∅ x) → ¬∅ (tr x) }) ) where
+    n = comsWithAllInputs lf (¬∅ (SetLL.tran s ltr)) sc
+  comsWithAllInputs (com df lf) (¬∅ s) ↓ with (contruct s)
+  comsWithAllInputs (com df lf) (¬∅ s) ↓ | ↓ = ¬∅ ↓
+  {-# CATCHALL #-}
+  comsWithAllInputs (com df lf) (¬∅ s) ↓ | r = ∅
+  comsWithAllInputs (call x) (¬∅ s) ()
+
+
   open RawMonad {f = lsuc u} (Data.Maybe.monad)
 
-  -- Returns the next IndexLF that is not shadowed by other coms.
-  -- It also returns the IndexLL to the external LinLogic that is the input of that com.
-  -- TODO We have not proved and thus assume that the IndexLFCof we find here can always be proved to be IndexLFCo.
-  -- If that assumption is correct, then the returning LinLogic will be removed from the MSetLLRem.
-  -- It also returns the reduced SetLFCof. (multiple removals could have been made).
-  returnNext : ∀{i oll ll rll} → (lf : LFun {i} {u} ll rll) → MSetLLRem oll ll → SetLFCof lf → Maybe ((Σ (LinLogic i {u}) (λ rll → IndexLL rll oll)) × MSetLFCof lf × IndexLFCof lf)
-  returnNext lf ∅ s = nothing
-  returnNext I (¬∅ sr) ()
-  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂) = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , (¬∅ (ns ←⊂)) , (nic ←⊂))
-                                                           ; (nl , ∅ , nic) → return (nl , ∅ , (nic ←⊂))}                  where
-    n = returnNext lf (truncSetLLRem (¬∅ sr) ind) s
-  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (⊂→ s) = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , ¬∅ (⊂→ ns) , (⊂→ nic))
-                                                           ; (nl , ∅ , nic) → return (nl , ∅ , (⊂→ nic))}                  where
-    ns = mreplaceRem ind (tranLFMSetLLRem lf (truncSetLLRem (¬∅ sr) ind)) (¬∅ sr)
-    n = returnNext lf₁ ns s
-  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) with (returnNext lf (truncSetLLRem (¬∅ sr) ind) s)
-  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) | just (nl , ¬∅ ns , nic) = just ((nl , ¬∅ (ns ←⊂→ s₁) , nic ←⊂))
-  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) | just (nl , ∅ , nic) = just ((nl , ¬∅ (⊂→ s₁) , nic ←⊂))
-  returnNext (_⊂_ {ind = ind} lf lf₁) (¬∅ sr) (s ←⊂→ s₁) | nothing = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , ¬∅ (⊂→ ns) , (⊂→ nic))
-                                                                         ; (nl , ∅ , nic) → return (nl , ∅ , (⊂→ nic))}                  where
-    ns = mreplaceRem ind (tranLFMSetLLRem lf (truncSetLLRem (¬∅ sr) ind)) (¬∅ sr)
-    n = returnNext lf₁ ns s₁
   
-  returnNext (tr ltr lf) (¬∅ x) (tr s) = n >>=  λ { (nl , (¬∅ ns) , nic) → return (nl , ¬∅ (tr ns) , (tr nic))
-                                                  ; (nl , ∅ , nic) → return (nl , ∅ , (tr nic))}                  where
-    n = returnNext lf (¬∅ (tranRem x ltr)) s
-  returnNext (com {ll = _} {frll} df lf) (¬∅ x) ↓ with (contruct (projToSetLL x))
-  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | ↓ with (setToIndex (contruct (conSet x)))
-  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | ↓ | just r = just ( r , (∅ , ↓))
-  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | ↓ | nothing = IMPOSSIBLE -- IMPORTANT conSet x needs to be a single ↓ or our assumptions are wrong. -- setToIndex returns nothing if not.
-  {-# CATCHALL #-}
-  returnNext (com {_} {_} {frll} df lf) (¬∅ x) ↓ | r = nothing
-  returnNext (call x) (¬∅ sr) ()
-  
-  -- We check that the IndexLFCof we found from returnNext is actually an IndexLFCo.
+  -- We check that the IndexLFCofs we found from comsWithAllInputs are actually IndexLFCos
   -- IMPORTANT This should always be as such, thus we put IMPOSSIBLE on the other case.
 
   turnToCo : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → IndexLFCof lf → Maybe (Σ (LinLogic i {u}) (λ cll → Σ (LinLogic i {u}) (λ frll → Σ (IndexLL cll ll) (λ ind → IndexLFCo {i} {u} {cll} frll ind lf))))
@@ -121,11 +117,34 @@ module _ {u : Level} where
   turnToCo (call x) ()
   
 
--- nextCom : ∀{i u ll rll} → (lf : LFun {i} {u} ll rll) → SetLFCof lf → IndexLF lf × (Σ (LinLogic i {u}) (λ cll → Σ (LinLogic i {u}) (λ frll → Σ (IndexLL cll ll) (λ ind → IndexLFCo {i} {u} {cll} frll ind lf))))
--- nextCom I ()
--- nextCom (lf ⊂ lf₁) (s ←⊂) = {!!}
--- nextCom (lf ⊂ lf₁) (⊂→ s) = {!!}
--- nextCom (lf ⊂ lf₁) (s ←⊂→ s₁) = {!!} -- Here We first pick on the lesft side and then we go on the right side, because there might be a com there that shadows further coms.
--- nextCom (tr ltr lf) (tr s) = {!!}
--- nextCom (com df lf) ↓ = {!!}
--- nextCom (call x) ()
+  toListCof : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → SetLFCof lf → List (IndexLFCof lf)
+  toListCof I ()
+  toListCof (lf ⊂ lf₁) (s ←⊂) = map (λ x → x ←⊂) n where
+    n = toListCof lf s
+  toListCof (lf ⊂ lf₁) (⊂→ s) = map (λ x → ⊂→ x) n where
+    n = toListCof lf₁ s 
+  toListCof (lf ⊂ lf₁) (s ←⊂→ s₁) = (map (λ x → x ←⊂) ln) ++ (map (λ x → ⊂→ x) rn) where
+    ln = toListCof lf s
+    rn = toListCof lf₁ s₁
+  toListCof (tr ltr lf) (tr s) = map (λ x → tr x) n where
+    n = toListCof lf s
+  toListCof (com df lf) ↓ =  Data.List.[ ↓ ]
+  toListCof (call x) ()
+
+  turnAllToCo : ∀{i ll rll} → {lf : LFun {i} {u} ll rll} → MSetLFCof lf → MSetLFCoRem lf ll
+  turnAllToCo ∅ = ∅
+  turnAllToCo {i} {ll} {lf = lf} (¬∅ x) = foldl hf ∅ (map (turnToCo lf) (toListCof lf x)) where
+    hf : MSetLFCoRem lf ll → Maybe (Σ (LinLogic i) (λ cll → Σ (LinLogic i)
+         (λ frll → Σ (IndexLL cll ll) (λ ind → IndexLFCo frll ind lf))))
+         → MSetLFCoRem lf ll
+    hf ms (just (cll , frll , ind , ic)) = maddLFCoRem ms ind ic
+    hf ms nothing = IMPOSSIBLE   -- turnToCo should always return just x
+
+
+
+
+nextComs :  ∀{i u ll rll} → (lf : LFun {i} {u} ll rll) → MSetLFCoRem lf ll
+nextComs lf with (findComs lf)
+nextComs lf | ∅ = ∅
+nextComs {ll = ll} lf | ¬∅ sc with (comsWithAllInputs lf (¬∅ (fillAllLower ll)) sc)
+... | g = turnAllToCo g
