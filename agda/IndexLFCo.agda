@@ -16,9 +16,8 @@ module _ where
 
   rvThf : ∀{i u ll pll cll ell} → (ind : IndexLL {i} {u} pll ll)
           → IndexLL cll (replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell) → IndexLL cll ell
-  rvThf {_} {_} {_} {pll} {_} {ell} ind x
-    with (replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell) | (replLL-↓ {ell = ell} ind)
-  rvThf {_} {_} {_} {pll} {_} {ell} ind x | .ell | refl = x
+  rvThf {_} {_} {_} {pll} {cll} {ell} ind x
+    =  subst (λ x → x) (cong (λ x → IndexLL cll x) (replLL-↓ {ell = ell} ind)) x 
 
 
   -- reverseTran returns nothing if during the reversion, it finds a com.

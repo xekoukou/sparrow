@@ -66,22 +66,6 @@ isEqLL (call x) (oll ∨ oll₁) = no (λ ())
 isEqLL (call x) (oll ∂ oll₁) = no (λ ())
 isEqLL (call x) (call x₁) = yes cc
 
--- TODO Maybe we need to use a catchall here?
-replLL-id : ∀{i u q} → (ll : LinLogic i {u}) → (ind : IndexLL q ll) → (s : LinLogic i {u}) → q ≡ s → replLL ll ind s ≡ ll
-replLL-id ll ↓ .ll refl = refl
-replLL-id (li ∧ _) (ind ←∧) s prf with (replLL li ind s) | (replLL-id li ind s prf)
-replLL-id (li ∧ _) (ind ←∧) s prf | .li | refl = refl
-replLL-id (_ ∧ ri) (∧→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
-replLL-id (_ ∧ ri) (∧→ ind) s prf | .ri | refl = refl
-replLL-id (li ∨ _) (ind ←∨) s prf with (replLL li ind s) | (replLL-id li ind s prf)
-replLL-id (li ∨ _) (ind ←∨) s prf | .li | refl = refl
-replLL-id (_ ∨ ri) (∨→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
-replLL-id (_ ∨ ri) (∨→ ind) s prf | .ri | refl = refl
-replLL-id (li ∂ _) (ind ←∂) s prf with (replLL li ind s) | (replLL-id li ind s prf)
-replLL-id (li ∂ _) (ind ←∂) s prf | .li | refl = refl
-replLL-id (_ ∂ ri) (∂→ ind) s prf with (replLL ri ind s) | (replLL-id ri ind s prf)
-replLL-id (_ ∂ ri) (∂→ ind) s prf | .ri | refl = refl
-
 
 module _ where
 

@@ -1,4 +1,6 @@
 {-# OPTIONS --exact-split #-}
+-- {-# OPTIONS --show-implicit #-}
+{-# OPTIONS --show-irrelevant #-}
 
 module LinFunCut where
 
@@ -148,3 +150,72 @@ nextComs lf with (findComs lf)
 nextComs lf | ∅ = ∅
 nextComs {ll = ll} lf | ¬∅ sc with (comsWithAllInputs lf (¬∅ (fillAllLower ll)) sc)
 ... | g = turnAllToCo g
+
+
+
+
+
+
+removeCom : ∀{i u ll rll cll frll} → {ind : IndexLL cll ll} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo frll ind lf) → LFun {i} {u} (replLL ll ind frll) rll
+removeCom I ()
+removeCom {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} lf lf₁) (_←⊂ {lind = lind} ic) with (replLL ll ind ell) | (replLL-a≤b≡a ind ell (ind +ᵢ lind) frll (+ᵢ⇒l≤ᵢ+ᵢ ind lind))
+... | .(replLL (replLL ll (ind +ᵢ lind) frll) (a≤ᵢb-morph ind (ind +ᵢ lind) frll (+ᵢ⇒l≤ᵢ+ᵢ ind lind)) ell) | refl
+        with (a≤ᵢb-morph ind (ind +ᵢ lind) frll (+ᵢ⇒l≤ᵢ+ᵢ ind lind))
+... | r with (((ind +ᵢ lind) -ᵢ ind) (+ᵢ⇒l≤ᵢ+ᵢ ind lind)) | ([a+b]-a=b ind lind)
+... | g | refl = _⊂_ {ind = r} n lf₁ where
+  n = removeCom lf ic
+removeCom {i} {u} {ll} {cll = cll} {frll = frll} (_⊂_ {pll = pll} {ell = ell} {ind = ind} .I lf₁) ((⊂→_ {lind = lind} ic) (c1 ltul cr1)) -- ell = pll here
+    = _⊂_ {pll = replLL pll (rvThf ind x) frll} {ind = hf x uind eq₁ (hf₂ (a≤ᵢb-morph uind lind frll ltul))} I {!uind!} where -- lind
+  n = removeCom lf₁ ic
+  uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind)
+  x = (lind -ᵢ uind) ltul
+  eq₁ = replLL-↓ {ell = ell} ind 
+  t₁ = replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell
+  rvThf` : {t : LinLogic i {u}} → (eq : t ≡ ell) → (x : IndexLL cll t) → IndexLL cll ell
+  rvThf` eq x = subst (λ x → x) (cong (λ x → IndexLL cll x) eq) x
+  hf : {t : LinLogic i {u}} → (x : IndexLL cll t) → (uind : IndexLL t (replLL ll ind pll)) → (eq : t ≡ ell)
+       → IndexLL
+         (replLL t
+           x frll)
+         (replLL (replLL ll ind pll) (uind +ᵢ x) frll)
+       →  IndexLL
+            (replLL pll (rvThf` eq x) frll)
+            (replLL ll (ind +ᵢ (rvThf` eq x)) frll)
+  hf x uind refl = {!!}
+
+  hf₂ : IndexLL
+          (replLL t₁ x frll)
+          (replLL (replLL ll ind pll) lind frll)
+        → IndexLL
+            (replLL t₁ x frll)
+            (replLL (replLL ll ind pll) (uind +ᵢ x) frll)
+  hf₂ w with (uind +ᵢ x) | (a+[b-a]=b uind lind ltul)
+  hf₂ w | g | refl = w
+
+removeCom (_⊂_ {ind = ind} .(elf ⊂ elf₁) lf₁) ((⊂→ ic) (c1 ltul (cr2 {lf₁ = elf₁} {lf = elf} x ltuindx x₁))) = {!!}
+removeCom (_⊂_ {ind = ind} .(elf ⊂ elf₁) lf₁) ((⊂→ ic) (c1 ltul (cr3 {lf₁ = elf₁} {lf = elf} x nord))) = {!!}
+removeCom (_⊂_ {ind = ind} .(tr ltr elf) lf₁) ((⊂→ ic) (c1 ltul (cr4 {lf = elf} {ltr = ltr} x x₁))) = {!!}
+removeCom {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} lf lf₁) ((⊂→_ {lind = lind} ic) (c2 nord)) = _⊂_ {ind = ¬ord-morph ind (lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)) frll (flipNotOrdᵢ (rlemma₁⇒¬ord ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)))} lf hf where
+  n = removeCom lf₁ ic
+  hf : LFun (replLL
+       (replLL ll
+        (lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)) frll)
+       (¬ord-morph ind
+        (lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)) frll (flipNotOrdᵢ (rlemma₁⇒¬ord ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord))))
+       ell) rll
+       -- I am kicking ass, that's what I am doing...
+  hf =  subst (λ x → x)
+         (trans
+           (sym (cong (λ x → LFun (replLL (replLL ll kemi ell) x frll) rll) (¬ord-morph$lemma₁≡I ell ind ind (≤ᵢ-reflexive ind) lind nord)))
+           (sym (cong (λ x → LFun x rll) (replLL-¬ordab≡ba kemi ell kind frll knord)))
+         ) n  where
+    kind = lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)
+    kemi = ind
+    knord = flipNotOrdᵢ (rlemma₁⇒¬ord ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord))
+removeCom (tr ltr lf) (tr ic ut) = tr {!ltr!} n where
+  n = removeCom lf ic
+removeCom (com df lf) ↓ = lf
+removeCom (call x) ()
+
+
+

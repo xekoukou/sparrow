@@ -129,3 +129,15 @@ replLL (l ∨ r) (li ←∨) c = (replLL l li c) ∨ r
 replLL (l ∨ r) (∨→ ri) c = l ∨ (replLL r ri c)
 replLL (l ∂ r) (li ←∂) c = (replLL l li c) ∂ r
 replLL (l ∂ r) (∂→ ri) c = l ∂ (replLL r ri c)
+
+
+-- TODO Maybe we need to use a catchall here?
+replLL-id : ∀{i u q} → (ll : LinLogic i {u}) → (ind : IndexLL q ll) → (s : LinLogic i {u}) → q ≡ s → replLL ll ind s ≡ ll
+replLL-id ll ↓ .ll refl = refl
+replLL-id (li ∧ _) (ind ←∧) s prf = cong (λ x → x ∧ _) (replLL-id li ind s prf)
+replLL-id (_ ∧ ri) (∧→ ind) s prf = cong (λ x → _ ∧ x) (replLL-id ri ind s prf)
+replLL-id (li ∨ _) (ind ←∨) s prf = cong (λ x → x ∨ _) (replLL-id li ind s prf)
+replLL-id (_ ∨ ri) (∨→ ind) s prf = cong (λ x → _ ∨ x) (replLL-id ri ind s prf)
+replLL-id (li ∂ _) (ind ←∂) s prf = cong (λ x → x ∂ _) (replLL-id li ind s prf)
+replLL-id (_ ∂ ri) (∂→ ind) s prf = cong (λ x → _ ∂ x) (replLL-id ri ind s prf)
+
