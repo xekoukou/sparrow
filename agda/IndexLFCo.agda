@@ -14,10 +14,6 @@ module _ where
 --  open  Relation.Binary.PropositionalEquality.Deprecated-inspect
 
 
-  rvThf : ∀{i u ll pll cll ell} → (ind : IndexLL {i} {u} pll ll)
-          → IndexLL cll (replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell) → IndexLL cll ell
-  rvThf {_} {_} {_} {pll} {cll} {ell} ind x
-    =  subst (λ x → x) (cong (λ x → IndexLL cll x) (replLL-↓ {ell = ell} ind)) x 
 
 
   -- reverseTran returns nothing if during the reversion, it finds a com.
@@ -34,7 +30,7 @@ module _ where
             → let x = reverseTran lf₁ iind rvT₁ ; uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind) in
               (ltuindx : uind ≤ᵢ x)
             → let x₁ = ((x -ᵢ uind) ltuindx) in
-              (rvT₂ : ReverseTranT lf (rvThf ind x₁)) 
+              (rvT₂ : ReverseTranT lf (ind-rpl↓ ind x₁)) 
             → ReverseTranT (_⊂_ {pll = pll} {ll = ll} {ell = ell} {rll = rll} {ind = ind} lf lf₁) iind
       cr3 : ∀{ll cll rll ell pll ind lf₁ lf} → {iind : IndexLL {i} {u} cll rll}
             → (rvT₁ : ReverseTranT lf₁ iind)
@@ -54,14 +50,94 @@ module _ where
                   → ReverseTranT lf iind → IndexLL cll ll
     reverseTran .I iind cr1 = iind
     reverseTran (_⊂_ {pll = pll} {ell = ell} {ind = ind} lf lf₁) iind (cr2 rvT₁ ltuindx rvT₂)
-        with (reverseTran lf₁ iind rvT₁) | (a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind))
-    ... | x | uind with ((x -ᵢ uind) ltuindx)
-    ... | x₁ with (replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell) | (replLL-↓ {ell = ell} ind)
-    reverseTran (_⊂_ {pll} {_} {ell} {_} {ind} lf lf₁) iind (cr2 rvT₁ ltuindx rvT₂)
-        | x | uind | x₁ | .ell | refl = ind +ᵢ reverseTran lf x₁ rvT₂ 
+      = ind +ᵢ reverseTran lf (ind-rpl↓ ind x₁) rvT₂ where
+      uind = (a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind))
+      x = reverseTran lf₁ iind rvT₁
+      x₁ = ((x -ᵢ uind) ltuindx)
     reverseTran (_⊂_ {ell = ell} {ind = ind} _ lf₁) iind (cr3 rvT₁ nord)
       =  lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) (reverseTran lf₁ iind rvT₁) (flipNotOrdᵢ nord)
     reverseTran (tr ltr lf) iind (cr4 pr ut) = tran (reverseTran lf iind pr) (revTr ltr) ut
+
+
+
+
+    rT-morph : ∀{i u ll cll rll} → ∀ frll → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll)
+               → (rvT : ReverseTranT lf iind) → LFun (replLL ll (reverseTran lf iind rvT) frll) (replLL rll iind frll)
+    rT-morph frll .I iind cr1 = I
+    rT-morph {ll = ll} {rll = rll} frll (_⊂_ {pll = pll} {ell = ell} {ind = ind} lf lf₁) iind (cr2 rvT₁ ltuindx rvT₂) = res (w hf) where 
+      t = (replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell)
+      eq = (replLL-↓ {ell = ell} ind)
+
+      uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind)
+
+      x = reverseTran lf₁ iind rvT₁
+
+-- eq transforms x₁
+      x₁ = ind-rpl↓ ind ((x -ᵢ uind) ltuindx)
+
+
+      rtm₁ = rT-morph frll lf₁ iind rvT₁
+
+      
+-- eq is needed
+      x₂ = reverseTran lf x₁ rvT₂
+      t₂ = ((ind +ᵢ x₂) -ᵢ ind) (+ᵢ⇒l≤ᵢ+ᵢ ind x₂)
+      eq₂ = [a+b]-a=b ind x₂
+      rind = a≤ᵢb-morph ind (ind +ᵢ x₂) frll (+ᵢ⇒l≤ᵢ+ᵢ ind x₂)
+
+-- eq2 changes rind
+      urind = subst (λ x → IndexLL (replLL pll x frll) (replLL ll (ind +ᵢ x₂) frll)) eq₂ rind
+
+-- Here we need the original rind
+      t₃ = replLL (replLL ll (ind +ᵢ x₂) frll) rind (replLL ell x₁ frll)
+      eq₃ = replLL-a≤b≡a ind (replLL ell x₁ frll) (ind +ᵢ x₂) frll (+ᵢ⇒l≤ᵢ+ᵢ ind x₂)
+      hf : LFun
+             (replLL
+               (replLL ll (ind +ᵢ x₂) frll)
+               rind (replLL ell x₁ frll))
+             (replLL rll iind frll)
+      hf = subst (λ x₃ → x₃)
+             (sym
+              (trans (cong (λ x₃ → LFun x₃ (replLL rll iind frll)) eq₃)
+               (cong (λ x₃ → LFun x₃ (replLL rll iind frll))
+                (repl-r=>l ell ind x ltuindx))))
+             rtm₁
+      rtm₂ = rT-morph frll lf x₁ rvT₂
+
+      res : LFun
+             (replLL
+               (replLL ll (ind +ᵢ x₂) frll)
+               urind (replLL ell x₁ frll))
+             (replLL rll iind frll) → LFun (replLL ll (ind +ᵢ x₂) frll) (replLL rll iind frll) 
+      res x = _⊂_ {ind = urind} rtm₂ x
+      w : LFun
+            (replLL
+              (replLL ll (ind +ᵢ x₂) frll)
+              rind (replLL ell x₁ frll))
+            (replLL rll iind frll) → 
+          LFun
+            (replLL
+              (replLL ll (ind +ᵢ x₂) frll)
+              urind (replLL ell x₁ frll))
+            (replLL rll iind frll) 
+      w x with t₂ | eq₂ | rind where
+      ... | t2 | refl | rind = x
+    rT-morph {ll = ll} {rll = rll} frll (_⊂_ {ell = ell} {ind = ind} lf lf₁) iind (cr3 rvT₁ nord) = _⊂_ {ind = rind} lf nn where
+      n = rT-morph frll lf₁ iind rvT₁
+      x = reverseTran lf₁ iind rvT₁
+      lind = lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) x (flipNotOrdᵢ nord)
+      lnord = rlemma₁⇒¬ord ind ind ell (≤ᵢ-reflexive ind) x (flipNotOrdᵢ nord)
+      rind = ¬ord-morph ind lind frll (flipNotOrdᵢ lnord)
+      b = ¬ord-morph$lemma₁≡I ell ind ind (≤ᵢ-reflexive ind) x nord
+      nn = subst (λ x → LFun x (replLL rll iind frll)) (trans (sym (cong (λ x → replLL (replLL ll ind ell) x frll) b )) (replLL-¬ordab≡ba lind frll ind ell lnord)) n
+    rT-morph frll (tr ltr lf) iind (cr4 rvT x) = tr (revTr (tr-ltr-morph frll lind (revTr ltr) x)) n where
+      lind = reverseTran lf iind rvT
+      n = rT-morph frll lf iind rvT
+
+
+
+
+
 
 
   getReverseTranT : ∀{i u ll cll rll} → (lf : LFun ll rll) → (iind : IndexLL {i} {u} cll rll)
@@ -72,7 +148,7 @@ module _ where
     x = (reverseTran lf₁ iind rvT₁)
     uind = (a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind))
   getReverseTranT {i} {u} {cll = cll} (_⊂_ {pll} {_} {ell} {_} {ind} lf lf₁) iind
-    | just rvT₁ | (yes ltuindx) with (getReverseTranT lf (rvThf ind ((x -ᵢ uind) ltuindx))) where
+    | just rvT₁ | (yes ltuindx) with (getReverseTranT lf (ind-rpl↓ ind ((x -ᵢ uind) ltuindx))) where
       x = (reverseTran lf₁ iind rvT₁)
       uind = (a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind))
   getReverseTranT (_⊂_ {_} {_} {ell} {_} {ind} lf lf₁) iind
@@ -105,7 +181,7 @@ module _ where
   data IndRevNoComsT {i u ll pll ell cll} {ind : IndexLL {i} {u} pll ll}
                      {lind : IndexLL cll (replLL ll ind ell)} {lf : LFun pll ell} : Set (lsuc u) where
     c1 : let uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind) in (ltul : uind ≤ᵢ lind)
-         → let x = (lind -ᵢ uind) ltul in (ReverseTranT lf (rvThf ind x)) → IndRevNoComsT
+         → let x = (lind -ᵢ uind) ltul in (ReverseTranT lf (ind-rpl↓ ind x)) → IndRevNoComsT
     c2 : let uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind) in
          ¬ (Orderedᵢ lind uind) → IndRevNoComsT
 
@@ -114,7 +190,7 @@ module _ where
                  → (lind : IndexLL cll (replLL ll ind ell)) → (lf : LFun pll ell)
                  → IndRevNoComsT {ind = ind} {lind = lind} {lf = lf} → IndexLL cll ll
   indRevNoComs {ell = ell} ind lind lf (c1 ltul rvT₁)
-               = ind +ᵢ (reverseTran lf (rvThf ind x) rvT₁) where
+               = ind +ᵢ (reverseTran lf (ind-rpl↓ ind x) rvT₁) where
                  uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind)
                  x = (lind -ᵢ uind) ltul
   indRevNoComs {ell = ell} ind lind lf (c2 nord)
@@ -127,7 +203,7 @@ module _ where
                      → Maybe $ IndRevNoComsT {ind = ind} {lind = lind} {lf = lf}
   getIndRevNoComsT {ell = ell} ind lind lf with (isLTi uind lind) where
     uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind)
-  getIndRevNoComsT {ell = ell} ind lind lf | yes ltul with (getReverseTranT lf (rvThf ind x)) where
+  getIndRevNoComsT {ell = ell} ind lind lf | yes ltul with (getReverseTranT lf (ind-rpl↓ ind x)) where
     uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind)
     x = (lind -ᵢ uind) ltul
   getIndRevNoComsT {ell = ell} ind lind lf | yes ltul | (just rvT) = just (c1 ltul rvT)

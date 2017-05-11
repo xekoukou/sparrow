@@ -154,8 +154,6 @@ nextComs {ll = ll} lf | ¬∅ sc with (comsWithAllInputs lf (¬∅ (fillAllLower
 
 
 
-
-
 removeCom : ∀{i u ll rll cll frll} → {ind : IndexLL cll ll} → (lf : LFun {i} {u} ll rll) → (ic : IndexLFCo frll ind lf) → LFun {i} {u} (replLL ll ind frll) rll
 removeCom I ()
 removeCom {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} lf lf₁) (_←⊂ {lind = lind} ic) with (replLL ll ind ell) | (replLL-a≤b≡a ind ell (ind +ᵢ lind) frll (+ᵢ⇒l≤ᵢ+ᵢ ind lind))
@@ -164,37 +162,22 @@ removeCom {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} lf 
 ... | r with (((ind +ᵢ lind) -ᵢ ind) (+ᵢ⇒l≤ᵢ+ᵢ ind lind)) | ([a+b]-a=b ind lind)
 ... | g | refl = _⊂_ {ind = r} n lf₁ where
   n = removeCom lf ic
-removeCom {i} {u} {ll} {cll = cll} {frll = frll} (_⊂_ {pll = pll} {ell = ell} {ind = ind} .I lf₁) ((⊂→_ {lind = lind} ic) (c1 ltul cr1)) -- ell = pll here
-    = _⊂_ {pll = replLL pll (rvThf ind x) frll} {ind = hf x uind eq₁ (hf₂ (a≤ᵢb-morph uind lind frll ltul))} I {!uind!} where -- lind
+removeCom {i} {u} {ll} {rll = rll} {cll = cll} {frll = frll} (_⊂_ {pll = pll} {ell = ell} {ind = ind} lf lf₁) ((⊂→_ {lind = lind} ic) (c1 ltul rvT)) = _⊂_ {ind = rind} rtm hf where
   n = removeCom lf₁ ic
   uind = a≤ᵢb-morph ind ind ell (≤ᵢ-reflexive ind)
-  x = (lind -ᵢ uind) ltul
-  eq₁ = replLL-↓ {ell = ell} ind 
-  t₁ = replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell
-  rvThf` : {t : LinLogic i {u}} → (eq : t ≡ ell) → (x : IndexLL cll t) → IndexLL cll ell
-  rvThf` eq x = subst (λ x → x) (cong (λ x → IndexLL cll x) eq) x
-  hf : {t : LinLogic i {u}} → (x : IndexLL cll t) → (uind : IndexLL t (replLL ll ind pll)) → (eq : t ≡ ell)
-       → IndexLL
-         (replLL t
-           x frll)
-         (replLL (replLL ll ind pll) (uind +ᵢ x) frll)
-       →  IndexLL
-            (replLL pll (rvThf` eq x) frll)
-            (replLL ll (ind +ᵢ (rvThf` eq x)) frll)
-  hf x uind refl = {!!}
+  x = ind-rpl↓ ind ((lind -ᵢ uind) ltul)
+  xrT = reverseTran lf x rvT
+  rtm = subst (λ y → LFun (replLL pll y frll) (replLL ell x frll)) (sym ([a+b]-a=b ind xrT)) (rT-morph frll lf x rvT)
+  rind = a≤ᵢb-morph ind (ind +ᵢ xrT) frll (+ᵢ⇒l≤ᵢ+ᵢ ind xrT)
+  eq = replLL-a≤b≡a ind (replLL ell x frll) (ind +ᵢ xrT) frll (+ᵢ⇒l≤ᵢ+ᵢ ind xrT)
+  t = replLL (replLL ll (ind +ᵢ xrT) frll) rind (replLL ell x frll)
+  eq2 = repl-r=>l {frll = frll} ell ind lind ltul
+  t2 = replLL ll ind (replLL ell x frll)
+  hf : LFun (replLL (replLL ll (ind +ᵢ xrT) frll) rind (replLL ell x frll)) rll
+  hf with t | eq
+  hf | t | refl with t2 | eq2
+  ... | t2 | refl = n
 
-  hf₂ : IndexLL
-          (replLL t₁ x frll)
-          (replLL (replLL ll ind pll) lind frll)
-        → IndexLL
-            (replLL t₁ x frll)
-            (replLL (replLL ll ind pll) (uind +ᵢ x) frll)
-  hf₂ w with (uind +ᵢ x) | (a+[b-a]=b uind lind ltul)
-  hf₂ w | g | refl = w
-
-removeCom (_⊂_ {ind = ind} .(elf ⊂ elf₁) lf₁) ((⊂→ ic) (c1 ltul (cr2 {lf₁ = elf₁} {lf = elf} x ltuindx x₁))) = {!!}
-removeCom (_⊂_ {ind = ind} .(elf ⊂ elf₁) lf₁) ((⊂→ ic) (c1 ltul (cr3 {lf₁ = elf₁} {lf = elf} x nord))) = {!!}
-removeCom (_⊂_ {ind = ind} .(tr ltr elf) lf₁) ((⊂→ ic) (c1 ltul (cr4 {lf = elf} {ltr = ltr} x x₁))) = {!!}
 removeCom {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} lf lf₁) ((⊂→_ {lind = lind} ic) (c2 nord)) = _⊂_ {ind = ¬ord-morph ind (lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)) frll (flipNotOrdᵢ (rlemma₁⇒¬ord ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)))} lf hf where
   n = removeCom lf₁ ic
   hf : LFun (replLL
@@ -212,7 +195,7 @@ removeCom {ll = ll} {rll = rll} {frll = frll} (_⊂_ {ell = ell} {ind = ind} lf 
     kind = lemma₁-¬ord-a≤ᵢb ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord)
     kemi = ind
     knord = flipNotOrdᵢ (rlemma₁⇒¬ord ind ind ell (≤ᵢ-reflexive ind) lind (flipNotOrdᵢ nord))
-removeCom (tr ltr lf) (tr ic ut) = tr {!ltr!} n where
+removeCom {frll = frll} (tr ltr lf) (tr {lind = lind} ic ut) = tr (revTr (tr-ltr-morph frll lind (revTr ltr) ut)) n where
   n = removeCom lf ic
 removeCom (com df lf) ↓ = lf
 removeCom (call x) ()
