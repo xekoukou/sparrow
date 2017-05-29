@@ -9,7 +9,6 @@ open import LinDepT
 open import LinT 
 open import SetLL
 open import SetLLRem
-open import SetLLProp
 
 open import Data.Bool
 open import Data.Unit hiding (_≤_ ; _≤?_)

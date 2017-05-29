@@ -65,8 +65,8 @@ module _ {u : Level} where
       tlf = tranLFMSetLL lf (truncSetLL x ind)
       nmx = mreplacePartOf (¬∅ x) to tlf at ind
     tranLFMSetLL (tr ltr lf) (¬∅ x) = tranLFMSetLL lf (¬∅ (SetLL.tran x ltr))
-    tranLFMSetLL (com df lf) (¬∅ x) = IMPOSSIBLE -- We should never reach at this point. findComs should have added the com in SetLFCof , and thus we should have already removed the memory.
-    tranLFMSetLL (call x) (¬∅ x₁) = IMPOSSIBLE -- Calls that externally reached have been removed.
+    tranLFMSetLL (com df lf) (¬∅ x) = ∅ -- We can reach to coms when we have sc ←⊂→ sc₁. (see below) 
+    tranLFMSetLL (call x) (¬∅ x₁) = ∅ -- We need to reuse this when we haven't removed the calls yet. -- IMPOSSIBLE Calls that externally reached have been removed. 
 
 
 -- Returns the set of IndexLFCof that is reachable from outside. All inputs are present for each com.
@@ -80,8 +80,7 @@ module _ {u : Level} where
     n = comsWithAllInputs lf₁ ns sc
   comsWithAllInputs (_⊂_ {ind = ind} lf lf₁) (¬∅ s) (sc ←⊂→ sc₁) = hf fn sn where
     fn = comsWithAllInputs lf (truncSetLL s ind) sc
-    -- Since SetLFCof only leads us to coms, we remove the part of the SetLL that was in ←⊂. 
-    ns = mreplacePartOf (¬∅ s) to ∅ at ind
+    ns = mreplacePartOf (¬∅ s) to (tranLFMSetLL lf (truncSetLL s ind)) at ind
     sn = comsWithAllInputs lf₁ ns sc₁
     hf : MSetLFCof lf → MSetLFCof lf₁ → MSetLFCof (_⊂_ {ind = ind} lf lf₁)
     hf ∅ ∅ = ∅
@@ -202,3 +201,22 @@ removeCom (call x) ()
 
 
 
+-- To remove the tr we need to know which new inputs allow the execution of a new com.
+
+
+-- 1 We remove the IndexLFCo of the com we executed.
+
+-- The type does not guarantee it, we assume that we put IndexLFCo at position defined by ind.
+rmpr : ∀{i u ll rll frll cll} → {ind : IndexLL cll ll} → {lf : LFun {i} {u} ll rll} → MSetLFCoRem lf ll → IndexLFCo frll ind lf → MSetLFCoRem lf (replLL ll ind frll)
+rmpr {frll = frll} {ind = ind} ms ic = mdelLFCoRem ms ind frll
+
+
+-- 2 We use the comsWithAllInputs by putting only the inputs that are not part of previous coms as found in the new MSetLFCoRem
+
+allinput¬pr : ∀{i u ll rll} → {lf : LFun {i} {u} ll rll} → MSetLFCoRem lf ll -> MSetLL ll
+allinput¬pr {ll = ll} ∅ = ∅
+allinput¬pr {ll = ll} (¬∅ s) = complLₛ (projLFCoRemToSetLL s)
+
+
+-- We find the 
+-- comsWithAllInputs : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → MSetLL ll → SetLFCof lf → MSetLFCof lf

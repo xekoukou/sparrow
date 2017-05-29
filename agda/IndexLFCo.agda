@@ -7,6 +7,7 @@ open import LinLogicProp
 open import LinFun
 open import IndexLLProp
 open import Data.Maybe
+import SetLL
 
 module _ where
 
@@ -516,6 +517,29 @@ mreplaceLFCoRem ind ∅ ∅ = ∅
 mreplaceLFCoRem {rll = rll} ind ∅ (¬∅ x) = delLFCoRem x ind rll
 mreplaceLFCoRem {rll = rll} ind (¬∅ x) ∅ = ¬∅ (extendLFCoRem (updInd rll ind) x)
 mreplaceLFCoRem ind (¬∅ x) (¬∅ x₁) = ¬∅ (replaceLFCoRem ind x x₁)
+
+
+module _ where
+
+  open SetLL
+  
+  projLFCoRemToSetLL :  ∀{i u oll orll ll} → {olf : LFun {i} {u} oll orll}
+                        → SetLFCoRem {i} olf ll → SetLL ll
+  projLFCoRemToSetLL (↓ x) = ↓
+  projLFCoRemToSetLL (s ←∧) = (projLFCoRemToSetLL s ←∧)
+  projLFCoRemToSetLL (∧→ s) = (∧→ projLFCoRemToSetLL s)
+  projLFCoRemToSetLL (s ←∧→ s₁) = (projLFCoRemToSetLL s ←∧→ projLFCoRemToSetLL s₁)
+  projLFCoRemToSetLL (s ←∨) = (projLFCoRemToSetLL s ←∨)
+  projLFCoRemToSetLL (∨→ s) = (∨→ projLFCoRemToSetLL s)
+  projLFCoRemToSetLL (s ←∨→ s₁) = (projLFCoRemToSetLL s ←∨→ projLFCoRemToSetLL s₁)
+  projLFCoRemToSetLL (s ←∂) = (projLFCoRemToSetLL s ←∂)
+  projLFCoRemToSetLL (∂→ s) = (∂→ projLFCoRemToSetLL s)
+  projLFCoRemToSetLL (s ←∂→ s₁) = (projLFCoRemToSetLL s ←∂→ projLFCoRemToSetLL s₁)
+
+  projLFCoRemToMSetLL :  ∀{i u oll orll ll} → {olf : LFun {i} {u} oll orll}
+                        → MSetLFCoRem {i} olf ll → MSetLL ll
+  projLFCoRemToMSetLL ∅ = ∅
+  projLFCoRemToMSetLL (¬∅ x) = ¬∅ (projLFCoRemToSetLL x)
 
 
 --------------------------------------

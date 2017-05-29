@@ -1,12 +1,29 @@
 {-# OPTIONS --exact-split #-}
+-- {-# OPTIONS --show-implicit #-}
+
 module IndexLLProp where
 
 open import Common
 open import LinLogic
 open import Data.Maybe
 open import Data.Product
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.HeterogeneousEquality
+open import Relation.Binary.PropositionalEquality using (subst ; cong ; subst₂)
 
+data _≅ᵢ_ {i u gll} : ∀{fll ll} → IndexLL {i} {u} gll ll → IndexLL {i} {u} fll ll → Set where
+  ≅ᵢ↓ :  ↓ ≅ᵢ ↓
+  ≅ᵢ←∧ : ∀{fll li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = li ∧ ri} (sind ←∧) (bind ←∧)
+  ≅ᵢ∧→ : ∀{fll li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = li ∧ ri} (∧→ sind) (∧→ bind)
+  ≅ᵢ←∨ : ∀{fll li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = li ∨ ri} (sind ←∨) (bind ←∨)
+  ≅ᵢ∨→ : ∀{fll li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = li ∨ ri} (∨→ sind) (∨→ bind)
+  ≅ᵢ←∂ : ∀{fll li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = li ∂ ri} (sind ←∂) (bind ←∂)
+  ≅ᵢ∂→ : ∀{fll li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = li ∂ ri} (∂→ sind) (∂→ bind)
 
 
 data _≤ᵢ_ {i u gll fll} : ∀{ll} → IndexLL {i} {u} gll ll → IndexLL {i} {u} fll ll → Set where
@@ -75,6 +92,109 @@ isLTi (∂→ s) (b ←∂) = no (λ ())
 isLTi (∂→ s) (∂→ b) with (isLTi s b)
 isLTi (∂→ s) (∂→ b) | yes p = yes (≤ᵢ∂→ p)
 isLTi (∂→ s) (∂→ b) | no ¬p = no (λ {(≤ᵢ∂→ p) → ¬p p })
+
+isEqᵢ : ∀{u i ll rll} → (a : IndexLL {i} {u} rll ll) → (b : IndexLL rll ll) → Dec (a ≡ b)
+isEqᵢ ↓ ↓ = yes refl
+isEqᵢ ↓ (b ←∧) = no (λ ())
+isEqᵢ ↓ (∧→ b) = no (λ ())
+isEqᵢ ↓ (b ←∨) = no (λ ())
+isEqᵢ ↓ (∨→ b) = no (λ ())
+isEqᵢ ↓ (b ←∂) = no (λ ())
+isEqᵢ ↓ (∂→ b) = no (λ ())
+isEqᵢ (a ←∧) ↓ = no (λ ())
+isEqᵢ (a ←∧) (b ←∧) with isEqᵢ a b
+isEqᵢ (a ←∧) (.a ←∧) | yes refl = yes refl
+isEqᵢ (a ←∧) (b ←∧) | no ¬p = no hf where
+  hf : ¬ ((a ←∧) ≡ (b ←∧))
+  hf refl = ¬p refl
+isEqᵢ (a ←∧) (∧→ b) = no (λ ())
+isEqᵢ (∧→ a) ↓ = no (λ ())
+isEqᵢ (∧→ a) (b ←∧) = no (λ ())
+isEqᵢ (∧→ a) (∧→ b)  with isEqᵢ a b
+isEqᵢ (∧→ a) (∧→ .a) | yes refl = yes refl
+isEqᵢ (∧→ a) (∧→ b) | no ¬p = no hf where
+  hf : ¬ ((∧→ a) ≡ (∧→ b))
+  hf refl = ¬p refl
+isEqᵢ (a ←∨) ↓ = no (λ ())
+isEqᵢ (a ←∨) (b ←∨) with isEqᵢ a b
+isEqᵢ (a ←∨) (.a ←∨) | yes refl = yes refl
+isEqᵢ (a ←∨) (b ←∨) | no ¬p = no hf where
+  hf : ¬ ((a ←∨) ≡ (b ←∨))
+  hf refl = ¬p refl
+isEqᵢ (a ←∨) (∨→ b) = no (λ ())
+isEqᵢ (∨→ a) ↓ = no (λ ())
+isEqᵢ (∨→ a) (b ←∨) = no (λ ())
+isEqᵢ (∨→ a) (∨→ b)  with isEqᵢ a b
+isEqᵢ (∨→ a) (∨→ .a) | yes refl = yes refl
+isEqᵢ (∨→ a) (∨→ b) | no ¬p = no hf where
+  hf : ¬ ((∨→ a) ≡ (∨→ b))
+  hf refl = ¬p refl
+isEqᵢ (a ←∂) ↓ = no (λ ())
+isEqᵢ (a ←∂) (b ←∂) with isEqᵢ a b
+isEqᵢ (a ←∂) (.a ←∂) | yes refl = yes refl
+isEqᵢ (a ←∂) (b ←∂) | no ¬p = no hf where
+  hf : ¬ ((a ←∂) ≡ (b ←∂))
+  hf refl = ¬p refl
+isEqᵢ (a ←∂) (∂→ b) = no (λ ())
+isEqᵢ (∂→ a) ↓ = no (λ ())
+isEqᵢ (∂→ a) (b ←∂) = no (λ ())
+isEqᵢ (∂→ a) (∂→ b)  with isEqᵢ a b
+isEqᵢ (∂→ a) (∂→ .a) | yes refl = yes refl
+isEqᵢ (∂→ a) (∂→ b) | no ¬p = no hf where
+  hf : ¬ ((∂→ a) ≡ (∂→ b))
+  hf refl = ¬p refl
+
+
+
+
+
+module _ where
+
+  open import Data.Vec
+
+
+  indτ⇒¬le : ∀{i u rll ll n dt df} → (ind : IndexLL {i} {u} (τ {i} {u} {n} {dt} df) ll) → (ind2 : IndexLL rll ll) → ¬ (ind2 ≅ᵢ ind) → ¬ (ind ≤ᵢ ind2)
+  indτ⇒¬le ↓ ↓ neq = λ _ → neq ≅ᵢ↓
+  indτ⇒¬le (x ←∧) ↓ neq = λ ()
+  indτ⇒¬le (x ←∧) (y ←∧) neq with indτ⇒¬le x y ineq where
+    ineq : ¬ (y ≅ᵢ x)
+    ineq z = neq (≅ᵢ←∧ z)
+  ... | r = λ { (≤ᵢ←∧ x) → r x}
+  indτ⇒¬le (x ←∧) (∧→ y) neq = λ ()
+  indτ⇒¬le (∧→ x) ↓ neq = λ ()
+  indτ⇒¬le (∧→ x) (y ←∧) neq = λ ()
+  indτ⇒¬le (∧→ x) (∧→ y) neq with indτ⇒¬le x y ineq where
+    ineq : ¬ (y ≅ᵢ x)
+    ineq z = neq (≅ᵢ∧→ z)
+  ... | r = λ { (≤ᵢ∧→ x) → r x}
+  indτ⇒¬le (x ←∨) ↓ neq = λ ()
+  indτ⇒¬le (x ←∨) (y ←∨) neq with indτ⇒¬le x y ineq where
+    ineq : ¬ (y ≅ᵢ x)
+    ineq z = neq (≅ᵢ←∨ z)
+  ... | r = λ { (≤ᵢ←∨ x) → r x}
+  indτ⇒¬le (x ←∨) (∨→ y) neq = λ ()
+  indτ⇒¬le (∨→ x) ↓ neq = λ ()
+  indτ⇒¬le (∨→ x) (y ←∨) neq = λ ()
+  indτ⇒¬le (∨→ x) (∨→ y) neq with indτ⇒¬le x y ineq where
+    ineq : ¬ (y ≅ᵢ x)
+    ineq z = neq (≅ᵢ∨→ z)
+  ... | r = λ { (≤ᵢ∨→ x) → r x}
+  indτ⇒¬le (x ←∂) ↓ neq = λ ()
+  indτ⇒¬le (x ←∂) (y ←∂) neq with indτ⇒¬le x y ineq where
+    ineq : ¬ (y ≅ᵢ x)
+    ineq z = neq (≅ᵢ←∂ z)
+  ... | r = λ { (≤ᵢ←∂ x) → r x}
+  indτ⇒¬le (x ←∂) (∂→ y) neq = λ ()
+  indτ⇒¬le (∂→ x) ↓ neq = λ ()
+  indτ⇒¬le (∂→ x) (y ←∂) neq = λ ()
+  indτ⇒¬le (∂→ x) (∂→ y) neq with indτ⇒¬le x y ineq where
+    ineq : ¬ (y ≅ᵢ x)
+    ineq z = neq (≅ᵢ∂→ z)
+  ... | r = λ { (≤ᵢ∂→ x) → r x}
+  
+
+
+ 
 
 data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {u} fll ll) : Set where
   a≤ᵢb : a ≤ᵢ b → Orderedᵢ a b
@@ -202,7 +322,7 @@ a≤ᵢb-morph-id {i} {u} {_ ∂ ri} {.h} (∂→ ind) | h | refl | .ri | refl |
 
 module _ where
 
-  open import Relation.Binary.HeterogeneousEquality
+  open Relation.Binary.HeterogeneousEquality
 
   a≤ᵢb-morph-hid : ∀{i u ll rll}
                → (ind : IndexLL {i} {u} rll ll)

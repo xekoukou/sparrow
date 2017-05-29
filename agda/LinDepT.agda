@@ -24,6 +24,7 @@ mutual
     ∨→_   : ∀{l r} → (rd : LinDepT r)                    → LinDepT (l ∨ r)
     -- ∂ takes a specific value. Only one of the two possible.
     ∂     : ∀{l r} → LinDepT l ⊎ LinDepT r → LinDepT (l ∂ r)
+    -- Is call needed here?
     call  : ∀{∞ll} → ∞LinDepT ∞ll          → LinDepT (call ∞ll)
 
 

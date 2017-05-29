@@ -5,6 +5,7 @@ open import Common
 open import LinLogic
 open import SetLL
 
+open import Relation.Binary.PropositionalEquality
 
 
 module _ where
@@ -362,31 +363,31 @@ module _ where
   truncOISetLL (s ←∂→ s₁) (∂→ ind) {{()}}
 
 
-≤s-extr : ∀{i u ll pll}→ (ind : IndexLL {i} {u} pll ll) → (s : SetLL ll) → ⦃ prf : onlyInside s ind ⦄ → (extend ind (truncOISetLL s ind) ≤s s)
+≤s-extr : ∀{i u ll pll}→ (ind : IndexLL {i} {u} pll ll) → (s : SetLL ll) → ⦃ prf : onlyInside s ind ⦄ → (subst (λ x → SetLL x) (replLL-id ll ind pll refl) (extend ind (truncOISetLL s ind))) ≤s s
 ≤s-extr ↓ s = ≤id
 ≤s-extr (ind ←∧) ↓ {{()}}
-≤s-extr (ind ←∧) (s ←∧) {{onlyInsideC←∧←∧ prf}} = ≤←∧ (≤s-extr ind s {{prf}})
+≤s-extr (ind ←∧) (s ←∧) {{onlyInsideC←∧←∧ prf}} = ? -- ≤←∧ (≤s-extr ind s {{prf}})
 ≤s-extr (ind ←∧) (∧→ s) {{()}}
 ≤s-extr (ind ←∧) (s ←∧→ s₁) {{()}}
 ≤s-extr (∧→ ind) ↓ {{()}}
 ≤s-extr (∧→ ind) (s ←∧) {{()}}
-≤s-extr (∧→ ind) (∧→ s) {{onlyInsideC∧→∧→ prf}} = ≤∧→ (≤s-extr ind s {{prf}})
+≤s-extr (∧→ ind) (∧→ s) {{onlyInsideC∧→∧→ prf}} = ? -- ≤∧→ (≤s-extr ind s {{prf}})
 ≤s-extr (∧→ ind) (s ←∧→ s₁) {{()}}
 ≤s-extr (ind ←∨) ↓ {{()}}
-≤s-extr (ind ←∨) (s ←∨) {{onlyInsideC←∨←∨ prf}} = ≤←∨ (≤s-extr ind s {{prf}})
+≤s-extr (ind ←∨) (s ←∨) {{onlyInsideC←∨←∨ prf}} = ? -- ≤←∨ (≤s-extr ind s {{prf}})
 ≤s-extr (ind ←∨) (∨→ s) {{()}}
 ≤s-extr (ind ←∨) (s ←∨→ s₁) {{()}}
 ≤s-extr (∨→ ind) ↓ {{()}}
 ≤s-extr (∨→ ind) (s ←∨) {{()}}
-≤s-extr (∨→ ind) (∨→ s) {{onlyInsideC∨→∨→ prf}} = ≤∨→ (≤s-extr ind s {{prf}})
+≤s-extr (∨→ ind) (∨→ s) {{onlyInsideC∨→∨→ prf}} = ? -- ≤∨→ (≤s-extr ind s {{prf}})
 ≤s-extr (∨→ ind) (s ←∨→ s₁) {{()}}
 ≤s-extr (ind ←∂) ↓ {{()}}
-≤s-extr (ind ←∂) (s ←∂) {{onlyInsideC←∂←∂ prf}} = ≤←∂ (≤s-extr ind s {{prf}})
+≤s-extr (ind ←∂) (s ←∂) {{onlyInsideC←∂←∂ prf}} = ? -- ≤←∂ (≤s-extr ind s {{prf}})
 ≤s-extr (ind ←∂) (∂→ s) {{()}}
 ≤s-extr (ind ←∂) (s ←∂→ s₁) {{()}}
 ≤s-extr (∂→ ind) ↓ {{()}}
 ≤s-extr (∂→ ind) (s ←∂) {{()}}
-≤s-extr (∂→ ind) (∂→ s) {{onlyInsideC∂→∂→ prf}} = ≤∂→ (≤s-extr ind s {{prf}})
+≤s-extr (∂→ ind) (∂→ s) {{onlyInsideC∂→∂→ prf}} = ? -- ≤∂→ (≤s-extr ind s {{prf}})
 ≤s-extr (∂→ ind) (s ←∂→ s₁) {{()}}
 
 oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside s ind}} → ss ≤s (truncOISetLL s ind {{prf = oi}}) → onlyInside (extend ind ss) ind
@@ -408,6 +409,7 @@ oi⇒ext-truncoi {s = _ ←∂→ _} (ind ←∂) {{()}} x
 oi⇒ext-truncoi {s = .(∂→ _)} (∂→ ind) {{onlyInsideC∂→∂→ oi}} x = onlyInsideC∂→∂→ (oi⇒ext-truncoi ind {{oi = oi}} x)
 
 
+-- TODO This needs to be improved because it holds for truncSetLL as well.
 tr-ext⇒id : ∀{i u pll ll s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside (extend ind s) ind}} →  truncOISetLL (extend ind s) ind ≡ s
 tr-ext⇒id ↓ {{onlyInsideCs↓}} = refl
 tr-ext⇒id (ind ←∧) {{onlyInsideC←∧←∧ oi}} = tr-ext⇒id ind
@@ -417,6 +419,8 @@ tr-ext⇒id (∨→ ind) {{onlyInsideC∨→∨→ oi}} = tr-ext⇒id ind
 tr-ext⇒id (ind ←∂) {{onlyInsideC←∂←∂ oi}} = tr-ext⇒id ind
 tr-ext⇒id (∂→ ind) {{onlyInsideC∂→∂→ oi}} = tr-ext⇒id ind
 
+
+-- TODO This needs to be improved because it holds for truncSetLL as well.
 ≤⇒tr≤ : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → ss ≤s s → {{ loi : onlyInside ss ind}} → {{oi : onlyInside s ind}} → truncOISetLL ss ind ≤s truncOISetLL s ind
 ≤⇒tr≤ ↓ x = x
 ≤⇒tr≤ (ind ←∧) ≤id {{onlyInsideC←∧←∧ loi}} {{onlyInsideC←∧←∧ oi}} = ≤⇒tr≤ ind ≤id

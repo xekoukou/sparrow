@@ -4,7 +4,7 @@ module Common where
 
 
 open import Data.Empty public hiding (⊥-elim)
-open import Relation.Binary.PropositionalEquality public using (_≡_ ; refl ; cong)
+open import Relation.Binary.PropositionalEquality public using (_≡_ ; refl)
 open import Relation.Binary.HeterogeneousEquality public using (_≅_ ; refl ; ≅-to-≡)
 open import Relation.Nullary public
 open import Size public
