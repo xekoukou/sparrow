@@ -7,9 +7,11 @@ open import LinLogicProp
 open import IndexLLProp hiding (tran)
 import Data.List
 import Relation.Binary.PropositionalEquality
+import Data.Product
 
 
--- TODO ?? We need to remove all nrll like in ∅-add and simply use a special function for that. (indₛ-morph)
+-- TODO ?? We need to remove all nrll like in ∅-add and simply use a special function for that.
+-- (indₛ-morph)
 
 -- A non-empty set of nodes in a Linear Logic tree.
 data SetLL {i : Size} {u} : LinLogic i {u} → Set where
@@ -331,25 +333,20 @@ del (s ←∂→ s₁) (∂→ ind) rll | ¬∅ x = ¬∅ ((s) ←∂→ x)
 
 
 
---extend : ∀{i u ll pll} → IndexLL {i} {u} pll ll → SetLL pll → SetLL ll
---extend ↓ s = s
---extend (ind ←∧) s = (extend ind s) ←∧
---extend (∧→ ind) s = ∧→ (extend ind s) 
---extend (ind ←∨) s = (extend ind s) ←∨
---extend (∨→ ind) s = ∨→ (extend ind s) 
---extend (ind ←∂) s = (extend ind s) ←∂
---extend (∂→ ind) s = ∂→ (extend ind s) 
---
+extendg : ∀{i u ll q} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {i} rll → SetLL (replLL ll ind rll)
+extendg ↓ b = b
+extendg (ind ←∧) b = (extendg ind b) ←∧
+extendg (∧→ ind) b = ∧→ (extendg ind b)
+extendg (ind ←∨) b = (extendg ind b) ←∨
+extendg (∨→ ind) b = ∨→ (extendg ind b)
+extendg (ind ←∂) b = (extendg ind b) ←∂
+extendg (∂→ ind) b = ∂→ (extendg ind b)
 
-extend : ∀{i u ll q} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {i} rll → SetLL (replLL ll ind rll)
-extend ↓ b = b
-extend (ind ←∧) b = (extend ind b) ←∧
-extend (∧→ ind) b = ∧→ (extend ind b)
-extend (ind ←∨) b = (extend ind b) ←∨
-extend (∨→ ind) b = ∨→ (extend ind b)
-extend (ind ←∂) b = (extend ind b) ←∂
-extend (∂→ ind) b = ∂→ (extend ind b)
+module _ where
+  open Relation.Binary.PropositionalEquality
 
+  extend : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → SetLL {i} rll → SetLL ll
+  extend {ll = ll} {rll = rll} ind b = subst (λ x → SetLL x) (replLL-id ll ind rll refl) (extendg ind b)
 
 
 
@@ -361,26 +358,26 @@ module _ where
   replacePartOf a to b at ↓               = b
   replacePartOf ↓ to b at (ind ←∧)        = (replacePartOf ↓ to b at ind) ←∧→ ↓
   replacePartOf a ←∧ to b at (ind ←∧)     = (replacePartOf a to b at ind) ←∧
-  replacePartOf_to_at_ {q = q} {rll = rll} (∧→ a) b (ind ←∧) = (extend ind b) ←∧→ (a)
+  replacePartOf_to_at_ {q = q} {rll = rll} (∧→ a) b (ind ←∧) = (extendg ind b) ←∧→ (a)
   replacePartOf a ←∧→ a₁ to b at (ind ←∧) = (replacePartOf a to b at ind) ←∧→ (a₁)
   replacePartOf ↓ to b at (∧→ ind)        =  ↓ ←∧→ (replacePartOf ↓ to b at ind)
-  replacePartOf a ←∧ to b at (∧→ ind)     = (a) ←∧→ (extend ind b)  
+  replacePartOf a ←∧ to b at (∧→ ind)     = (a) ←∧→ (extendg ind b)  
   replacePartOf ∧→ a to b at (∧→ ind)     = ∧→ (replacePartOf a to b at ind)
   replacePartOf a ←∧→ a₁ to b at (∧→ ind) = (a) ←∧→ (replacePartOf a₁ to b at ind)
   replacePartOf ↓ to b at (ind ←∨)        = (replacePartOf ↓ to b at ind) ←∨→ ↓
   replacePartOf a ←∨ to b at (ind ←∨)     = (replacePartOf a to b at ind) ←∨
-  replacePartOf_to_at_ {q = q} {rll = rll} (∨→ a) b (ind ←∨) = (extend ind b) ←∨→ (a)
+  replacePartOf_to_at_ {q = q} {rll = rll} (∨→ a) b (ind ←∨) = (extendg ind b) ←∨→ (a)
   replacePartOf a ←∨→ a₁ to b at (ind ←∨) = (replacePartOf a to b at ind) ←∨→ (a₁)
   replacePartOf ↓ to b at (∨→ ind)        =  ↓ ←∨→ (replacePartOf ↓ to b at ind)
-  replacePartOf a ←∨ to b at (∨→ ind)     = (a) ←∨→ (extend ind b)  
+  replacePartOf a ←∨ to b at (∨→ ind)     = (a) ←∨→ (extendg ind b)  
   replacePartOf ∨→ a to b at (∨→ ind)     = ∨→ (replacePartOf a to b at ind)
   replacePartOf a ←∨→ a₁ to b at (∨→ ind) = (a) ←∨→ (replacePartOf a₁ to b at ind)
   replacePartOf ↓ to b at (ind ←∂)        = (replacePartOf ↓ to b at ind) ←∂→ ↓
   replacePartOf a ←∂ to b at (ind ←∂)     = (replacePartOf a to b at ind) ←∂
-  replacePartOf_to_at_ {q = q} {rll = rll} (∂→ a) b (ind ←∂) = (extend ind b) ←∂→ (a)
+  replacePartOf_to_at_ {q = q} {rll = rll} (∂→ a) b (ind ←∂) = (extendg ind b) ←∂→ (a)
   replacePartOf a ←∂→ a₁ to b at (ind ←∂) = (replacePartOf a to b at ind) ←∂→ (a₁)
   replacePartOf ↓ to b at (∂→ ind)        =  ↓ ←∂→ (replacePartOf ↓ to b at ind)
-  replacePartOf a ←∂ to b at (∂→ ind)     = (a) ←∂→ (extend ind b)  
+  replacePartOf a ←∂ to b at (∂→ ind)     = (a) ←∂→ (extendg ind b)  
   replacePartOf ∂→ a to b at (∂→ ind)     = ∂→ (replacePartOf a to b at ind)
   replacePartOf a ←∂→ a₁ to b at (∂→ ind) = (a) ←∂→ (replacePartOf a₁ to b at ind)
 
@@ -388,7 +385,7 @@ module _ where
   mreplacePartOf_to_at_ : ∀{i u ll q} → ∀{rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} q ll)
             → MSetLL (replLL ll ind rll)
   mreplacePartOf ∅ to ∅ at ind = ∅
-  mreplacePartOf_to_at_ {q = q} {rll = rll} ∅ (¬∅ x) ind = ¬∅ (extend ind x)
+  mreplacePartOf_to_at_ {q = q} {rll = rll} ∅ (¬∅ x) ind = ¬∅ (extendg ind x)
   mreplacePartOf_to_at_ {rll = rll} (¬∅ x) ∅ ind = del x ind rll
   mreplacePartOf ¬∅ x to ¬∅ x₁ at ind = ¬∅ (replacePartOf x to x₁ at ind)
 
@@ -397,27 +394,28 @@ module _ {u} where
 
   open Relation.Binary.PropositionalEquality
 
-  open import Data.Maybe
-  open import Data.Product
-  open import Category.Monad
-  open RawMonad {f = lsuc u} (monad)
+--  open import Data.Maybe
+  open Data.Product
+--  open import Category.Monad
+--  open RawMonad {f = lsuc u} (monad)
 
- -- This might not be used. 
-  setToIndex : ∀{i ll} → SetLL {i} {u} ll → Maybe $ Σ (LinLogic i {u}) (λ x → IndexLL x ll)
-  setToIndex {ll = ll} ↓ = just (ll , ↓)
-  setToIndex (s ←∧) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∧) })
-  setToIndex (∧→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∧→ ind) })
-  setToIndex (s ←∧→ s₁) = nothing
-  setToIndex (s ←∨) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∨) })
-  setToIndex (∨→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∨→ ind) })
-  setToIndex (s ←∨→ s₁) = nothing
-  setToIndex (s ←∂) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∂) })
-  setToIndex (∂→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∂→ ind) })
-  setToIndex (s ←∂→ s₁) = nothing
-  
-  msetToIndex : ∀{i ll} → MSetLL {i} {u} ll → Maybe $ Σ (LinLogic i {u}) (λ x → IndexLL x ll)
-  msetToIndex ∅ = nothing
-  msetToIndex (¬∅ x) = setToIndex x
+-- -- This might not be used. 
+--  setToIndex : ∀{i ll} → SetLL {i} {u} ll → Maybe $ Σ (LinLogic i {u}) (λ x → IndexLL x ll)
+--  setToIndex {ll = ll} ↓ = just (ll , ↓)
+--  setToIndex (s ←∧) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∧) })
+--  setToIndex (∧→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∧→ ind) })
+--  setToIndex (s ←∧→ s₁) = nothing
+--  setToIndex (s ←∨) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∨) })
+--  setToIndex (∨→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∨→ ind) })
+--  setToIndex (s ←∨→ s₁) = nothing
+--  setToIndex (s ←∂) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ind ←∂) })
+--  setToIndex (∂→ s) = setToIndex s >>= (λ { (pll , ind)  → just (pll , ∂→ ind) })
+--  setToIndex (s ←∂→ s₁) = nothing
+--  
+--  msetToIndex : ∀{i ll} → MSetLL {i} {u} ll → Maybe $ Σ (LinLogic i {u}) (λ x → IndexLL x ll)
+--  msetToIndex ∅ = nothing
+--  msetToIndex (¬∅ x) = setToIndex x
+--
 
 -- This is used.
   pickOne : ∀{i ll} → SetLL {i} {u} ll → Σ (LinLogic i {u}) (λ x → IndexLL x ll)
@@ -481,36 +479,6 @@ module _ {u} where
   pickadd-id {pll = .(proj₁ (pickOne oa))} {li ∂ ri} (∂→ .(proj₂ (pickOne oa))) | .ri | refl | oa | refl = refl
 
 
--- TODO This is used in LinFun.agda Mybe we need to place it there.
-module _ where
-
--- UsesInput tries to find that all inputs have been used. By definition, calls are not to be used unless observed.
--- Thus we need to add them in the set.
--- Since LinLogic calls can only be consumed by LinFun calls, we can add them when we reach the appropriate LinFun call.
-
-  open Data.List
-  open import Data.Product
-
-
-  findCalls : ∀{i u} → (ll : LinLogic i {u}) → List (Σ (LinLogic i {u}) (λ pll → IndexLL pll ll))
-  findCalls ∅ = []
-  findCalls (τ x) = []
-  findCalls (li ∧ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∧)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∧→ (proj₂ x) )) (findCalls ri))
-  findCalls (li ∨ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∨)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∨→ (proj₂ x) )) (findCalls ri))
-  findCalls (li ∂ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∂)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∂→ (proj₂ x) )) (findCalls ri))
-  findCalls ll@(call x) = [(ll , ↓) ]
-
-
-  fillWithCalls : ∀{i u} → (ll : LinLogic i {u}) → MSetLL ll
-  fillWithCalls ll with (findCalls ll)
-  fillWithCalls ll | [] = ∅
-  fillWithCalls ll | x ∷ xs with (∅-add (proj₂ x) (proj₁ x))
-  ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl) 
-  fillWithCalls {i} {u} ll | x ∷ xs | r | .ll | refl = ¬∅ $ foldl hf r xs where
-    hf : SetLL ll → Σ (LinLogic i {u}) (λ pll → IndexLL pll ll) → SetLL ll
-    hf s ind with (add s (proj₂ x) (proj₁ x))
-    ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl)
-    hf s ind | r₁ | _ | refl = r₁
 
 
 
@@ -628,6 +596,8 @@ isEqM (¬∅ x) ∅ = no (λ ())
 isEqM (¬∅ x) (¬∅ x₁) with (isEq x x₁)
 isEqM (¬∅ x) (¬∅ .x) | yes refl = yes refl
 isEqM (¬∅ x) (¬∅ x₁) | no ¬p = no (λ {refl → ¬p refl})
+
+
 
 -- If two adjacent nodes exist in the set, the higher node is in the set.
 -- We contruct the set.
@@ -841,10 +811,32 @@ truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
 truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
 
 
+tr-ext⇒id : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll) →  truncSetLL (extend ind s) ind ≡ ¬∅ s
+tr-ext⇒id s ↓ = refl
+tr-ext⇒id {pll = pll} {ll = li ∧ ri} s (ind ←∧)
+  with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | tr-ext⇒id s ind
+... | .li | refl | q | e = e
+tr-ext⇒id {pll = pll} {ll = li ∧ ri} s (∧→ ind)
+  with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | tr-ext⇒id s ind
+... | .ri | refl | g | e = e
+tr-ext⇒id {pll = pll} {ll = li ∨ ri} s (ind ←∨)
+  with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | tr-ext⇒id s ind
+... | .li | refl | q | e = e
+tr-ext⇒id {pll = pll} {ll = li ∨ ri} s (∨→ ind)
+  with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | tr-ext⇒id s ind
+... | .ri | refl | g | e = e
+tr-ext⇒id {pll = pll} {ll = li ∂ ri} s (ind ←∂)
+  with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | tr-ext⇒id s ind
+... | .li | refl | q | e = e
+tr-ext⇒id {pll = pll} {ll = li ∂ ri} s (∂→ ind)
+  with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | tr-ext⇒id s ind
+... | .ri | refl | g | e = e
+
+
 
 
 data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
-  ≤id   : ∀{ll s} → _≤s_ {ll = ll} s s
+  ≤↓   : ∀{ll s} → _≤s_ {ll = ll} s ↓
   ≤←∧  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧)
   ≤∧→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (∧→ sy)
   ≤←∨  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨)
@@ -865,7 +857,7 @@ data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll →
 
 
 
-≤s-ext : ∀{i u pll ll q ss} → (ind : IndexLL {i} {u} q ll) → {s : SetLL pll} → ss ≤s s → extend ind ss ≤s extend ind s
+≤s-ext : ∀{i u pll ll q ss} → (ind : IndexLL {i} {u} q ll) → {s : SetLL pll} → ss ≤s s → extendg ind ss ≤s extendg ind s
 ≤s-ext ↓ ss≤s = ss≤s
 ≤s-ext (ind ←∧) ss≤s = ≤←∧ (≤s-ext ind ss≤s)
 ≤s-ext (∧→ ind) ss≤s = ≤∧→ (≤s-ext ind ss≤s)
@@ -877,54 +869,59 @@ data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll →
 
 
 
-≤s-trans : ∀{i u ll b c} → {a : SetLL {i} {u} ll} → a ≤s b → b ≤s c → a ≤s c
-≤s-trans {c = ↓} ≤id ≤id                        = ≤id
-≤s-trans {c = c ←∧} x ≤id                       = x
-≤s-trans {c = c ←∧} ≤id (≤←∧ y)                 = ≤←∧ y
-≤s-trans {c = c ←∧} (≤←∧ x) (≤←∧ y)             = ≤←∧ (≤s-trans x y)
-≤s-trans {c = ∧→ c} x ≤id                       = x
-≤s-trans {c = ∧→ c} ≤id (≤∧→ y)                 = ≤∧→ y
-≤s-trans {c = ∧→ c} (≤∧→ x) (≤∧→ y)             = ≤∧→ (≤s-trans x y)
-≤s-trans {c = c ←∧→ c₁} x ≤id                   = x
-≤s-trans {c = c ←∧→ c₁} ≤id (≤←∧→ y y₁)         = ≤←∧→ y y₁
-≤s-trans {c = c ←∧→ c₁} (≤←∧→ x x₁) (≤←∧→ y y₁) = ≤←∧→ (≤s-trans x y) (≤s-trans x₁ y₁)
-≤s-trans {c = c ←∧→ c₁} (≤d←∧ x) (≤←∧→ y y₁)    = ≤d←∧ (≤s-trans x y)
-≤s-trans {c = c ←∧→ c₁} (≤d∧→ x) (≤←∧→ y y₁)    = ≤d∧→ (≤s-trans x y₁)
-≤s-trans {c = c ←∧→ c₁} ≤id (≤d←∧ y)            = ≤d←∧ y
-≤s-trans {c = c ←∧→ c₁} (≤←∧ x) (≤d←∧ y)        = ≤d←∧ (≤s-trans x y)
-≤s-trans {c = c ←∧→ c₁} ≤id (≤d∧→ y)            = ≤d∧→ y
-≤s-trans {c = c ←∧→ c₁} (≤∧→ x) (≤d∧→ y)        = ≤d∧→ (≤s-trans x y)
-≤s-trans {c = c ←∨} x ≤id                       = x
-≤s-trans {c = c ←∨} ≤id (≤←∨ y)                 = ≤←∨ y
-≤s-trans {c = c ←∨} (≤←∨ x) (≤←∨ y)             = ≤←∨ (≤s-trans x y)
-≤s-trans {c = ∨→ c} x ≤id                       = x
-≤s-trans {c = ∨→ c} ≤id (≤∨→ y)                 = ≤∨→ y
-≤s-trans {c = ∨→ c} (≤∨→ x) (≤∨→ y)             = ≤∨→ (≤s-trans x y)
-≤s-trans {c = c ←∨→ c₁} x ≤id                   = x
-≤s-trans {c = c ←∨→ c₁} ≤id (≤←∨→ y y₁)         = ≤←∨→ y y₁
-≤s-trans {c = c ←∨→ c₁} (≤←∨→ x x₁) (≤←∨→ y y₁) = ≤←∨→ (≤s-trans x y) (≤s-trans x₁ y₁)
-≤s-trans {c = c ←∨→ c₁} (≤d←∨ x) (≤←∨→ y y₁)    = ≤d←∨ (≤s-trans x y)
-≤s-trans {c = c ←∨→ c₁} (≤d∨→ x) (≤←∨→ y y₁)    = ≤d∨→ (≤s-trans x y₁)
-≤s-trans {c = c ←∨→ c₁} ≤id (≤d←∨ y)            = ≤d←∨ y
-≤s-trans {c = c ←∨→ c₁} (≤←∨ x) (≤d←∨ y)        = ≤d←∨ (≤s-trans x y)
-≤s-trans {c = c ←∨→ c₁} ≤id (≤d∨→ y)            = ≤d∨→ y
-≤s-trans {c = c ←∨→ c₁} (≤∨→ x) (≤d∨→ y)        = ≤d∨→ (≤s-trans x y)
-≤s-trans {c = c ←∂} x ≤id                       = x
-≤s-trans {c = c ←∂} ≤id (≤←∂ y)                 = ≤←∂ y
-≤s-trans {c = c ←∂} (≤←∂ x) (≤←∂ y)             = ≤←∂ (≤s-trans x y)
-≤s-trans {c = ∂→ c} x ≤id                       = x
-≤s-trans {c = ∂→ c} ≤id (≤∂→ y)                 = ≤∂→ y
-≤s-trans {c = ∂→ c} (≤∂→ x) (≤∂→ y)             = ≤∂→ (≤s-trans x y)
-≤s-trans {c = c ←∂→ c₁} x ≤id                   = x
-≤s-trans {c = c ←∂→ c₁} ≤id (≤←∂→ y y₁)         = ≤←∂→ y y₁
-≤s-trans {c = c ←∂→ c₁} (≤←∂→ x x₁) (≤←∂→ y y₁) = ≤←∂→ (≤s-trans x y) (≤s-trans x₁ y₁)
-≤s-trans {c = c ←∂→ c₁} (≤d←∂ x) (≤←∂→ y y₁)    = ≤d←∂ (≤s-trans x y)
-≤s-trans {c = c ←∂→ c₁} (≤d∂→ x) (≤←∂→ y y₁)    = ≤d∂→ (≤s-trans x y₁)
-≤s-trans {c = c ←∂→ c₁} ≤id (≤d←∂ y)            = ≤d←∂ y
-≤s-trans {c = c ←∂→ c₁} (≤←∂ x) (≤d←∂ y)        = ≤d←∂ (≤s-trans x y)
-≤s-trans {c = c ←∂→ c₁} ≤id (≤d∂→ y)            = ≤d∂→ y
-≤s-trans {c = c ←∂→ c₁} (≤∂→ x) (≤d∂→ y)        = ≤d∂→ (≤s-trans x y)
+≤s-refl : ∀{i u ll} → (s : SetLL {i} {u} ll) → s ≤s s
+≤s-refl ↓ = ≤↓
+≤s-refl (s ←∧) = ≤←∧ (≤s-refl s)
+≤s-refl (∧→ s) = ≤∧→ (≤s-refl s)
+≤s-refl (s ←∧→ s₁) = ≤←∧→ (≤s-refl s) (≤s-refl s₁)
+≤s-refl (s ←∨) = ≤←∨ (≤s-refl s)
+≤s-refl (∨→ s) = ≤∨→ (≤s-refl s)
+≤s-refl (s ←∨→ s₁) = ≤←∨→ (≤s-refl s) (≤s-refl s₁)
+≤s-refl (s ←∂) = ≤←∂ (≤s-refl s)
+≤s-refl (∂→ s) = ≤∂→ (≤s-refl s)
+≤s-refl (s ←∂→ s₁) = ≤←∂→ (≤s-refl s) (≤s-refl s₁)
 
+
+
+
+≤s-trans : ∀{i u ll b c} → {a : SetLL {i} {u} ll} → a ≤s b → b ≤s c → a ≤s c
+≤s-trans ≤↓ ≤↓ = ≤↓
+≤s-trans (≤←∧ x) ≤↓ = ≤↓
+≤s-trans (≤←∧ x) (≤←∧ x₁) = ≤←∧ (≤s-trans x x₁)
+≤s-trans (≤←∧ x) (≤d←∧ x₁) = ≤d←∧ (≤s-trans x x₁)
+≤s-trans (≤∧→ x) ≤↓ = ≤↓
+≤s-trans (≤∧→ x) (≤∧→ x₁) = ≤∧→ (≤s-trans x x₁)
+≤s-trans (≤∧→ x) (≤d∧→ x₁) = ≤d∧→ (≤s-trans x x₁)
+≤s-trans (≤←∨ x) ≤↓ = ≤↓
+≤s-trans (≤←∨ x) (≤←∨ x₁) = ≤←∨ (≤s-trans x x₁)
+≤s-trans (≤←∨ x) (≤d←∨ x₁) = ≤d←∨ (≤s-trans x x₁)
+≤s-trans (≤∨→ x) ≤↓ = ≤↓
+≤s-trans (≤∨→ x) (≤∨→ x₁) = ≤∨→ (≤s-trans x x₁)
+≤s-trans (≤∨→ x) (≤d∨→ x₁) = ≤d∨→ (≤s-trans x x₁)
+≤s-trans (≤←∂ x) ≤↓ = ≤↓
+≤s-trans (≤←∂ x) (≤←∂ x₁) = ≤←∂ (≤s-trans x x₁)
+≤s-trans (≤←∂ x) (≤d←∂ x₁) = ≤d←∂ (≤s-trans x x₁)
+≤s-trans (≤∂→ x) ≤↓ = ≤↓
+≤s-trans (≤∂→ x) (≤∂→ x₁) = ≤∂→ (≤s-trans x x₁)
+≤s-trans (≤∂→ x) (≤d∂→ x₁) = ≤d∂→ (≤s-trans x x₁)
+≤s-trans (≤←∧→ x x₁) ≤↓ = ≤↓
+≤s-trans (≤←∧→ x x₁) (≤←∧→ x₂ x₃) = ≤←∧→ (≤s-trans x x₂) (≤s-trans x₁ x₃)
+≤s-trans (≤←∨→ x x₁) ≤↓ = ≤↓
+≤s-trans (≤←∨→ x x₁) (≤←∨→ x₂ x₃) = ≤←∨→ (≤s-trans x x₂) (≤s-trans x₁ x₃)
+≤s-trans (≤←∂→ x x₁) ≤↓ = ≤↓
+≤s-trans (≤←∂→ x x₁) (≤←∂→ x₂ x₃) = ≤←∂→ (≤s-trans x x₂) (≤s-trans x₁ x₃)
+≤s-trans (≤d←∧ x) ≤↓ = ≤↓
+≤s-trans (≤d←∧ x) (≤←∧→ x₁ x₂) = ≤d←∧ (≤s-trans x x₁)
+≤s-trans (≤d∧→ x) ≤↓ = ≤↓
+≤s-trans (≤d∧→ x) (≤←∧→ x₁ x₂) = ≤d∧→ (≤s-trans x x₂)
+≤s-trans (≤d←∨ x) ≤↓ = ≤↓
+≤s-trans (≤d←∨ x) (≤←∨→ x₁ x₂) = ≤d←∨ (≤s-trans x x₁)
+≤s-trans (≤d∨→ x) ≤↓ = ≤↓
+≤s-trans (≤d∨→ x) (≤←∨→ x₁ x₂) = ≤d∨→ (≤s-trans x x₂)
+≤s-trans (≤d←∂ x) ≤↓ = ≤↓
+≤s-trans (≤d←∂ x) (≤←∂→ x₁ x₂) = ≤d←∂ (≤s-trans x x₁)
+≤s-trans (≤d∂→ x) ≤↓ = ≤↓
+≤s-trans (≤d∂→ x) (≤←∂→ x₁ x₂) = ≤d∂→ (≤s-trans x x₂)
 
 
 
@@ -944,199 +941,5 @@ data _∈ₛ_ {i u rll} : ∀{ll} → IndexLL {i} {u} rll ll → SetLL ll → Se
   inS∂→←∂→ : ∀{li ri ind s s₁} → _∈ₛ_ {ll = ri} ind s₁ → _∈ₛ_ {ll = li ∂ ri} (∂→ ind) (s ←∂→ s₁)
 
 
-¬contruct↓⇒¬compl∅ : ∀{i u ll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → ¬ (complLₛ s ≡ ∅)
-¬contruct↓⇒¬compl∅ ↓ eq = ⊥-elim (eq refl)
-¬contruct↓⇒¬compl∅ (s ←∧) eq with (complLₛ s)
-¬contruct↓⇒¬compl∅ (s ←∧) eq | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∧) eq | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (∧→ s) eq with (complLₛ s)
-¬contruct↓⇒¬compl∅ (∧→ s) eq | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (∧→ s) eq | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | yes g with contruct s | contruct s₁ 
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes refl | yes refl | .↓ | .↓ = ⊥-elim (eq refl)
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g with ¬contruct↓⇒¬compl∅ s₁ ¬g
-... | w with complLₛ s | complLₛ s₁
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | w | r | ∅ = ⊥-elim (w refl) 
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | w | ∅ | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | w | ¬∅ x | ¬∅ x₁ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g with ¬contruct↓⇒¬compl∅ s ¬p
-... | w with complLₛ s | complLₛ s₁
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g | w | ∅ | e = ⊥-elim (w refl)
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g | w | ¬∅ x | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g | w | ¬∅ x | ¬∅ x₁ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∨) eq with (complLₛ s)
-¬contruct↓⇒¬compl∅ (s ←∨) eq | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∨) eq | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (∨→ s) eq with (complLₛ s)
-¬contruct↓⇒¬compl∅ (∨→ s) eq | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (∨→ s) eq | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | yes g with contruct s | contruct s₁ 
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes refl | yes refl | .↓ | .↓ = ⊥-elim (eq refl)
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g with ¬contruct↓⇒¬compl∅ s₁ ¬g
-... | w with complLₛ s | complLₛ s₁
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | w | r | ∅ = ⊥-elim (w refl) 
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | w | ∅ | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | w | ¬∅ x | ¬∅ x₁ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g with ¬contruct↓⇒¬compl∅ s ¬p
-... | w with complLₛ s | complLₛ s₁
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g | w | ∅ | e = ⊥-elim (w refl)
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g | w | ¬∅ x | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g | w | ¬∅ x | ¬∅ x₁ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∂) eq with (complLₛ s)
-¬contruct↓⇒¬compl∅ (s ←∂) eq | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∂) eq | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (∂→ s) eq with (complLₛ s)
-¬contruct↓⇒¬compl∅ (∂→ s) eq | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (∂→ s) eq | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | yes g with contruct s | contruct s₁ 
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes refl | yes refl | .↓ | .↓ = ⊥-elim (eq refl)
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g with ¬contruct↓⇒¬compl∅ s₁ ¬g
-... | w with complLₛ s | complLₛ s₁
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | w | r | ∅ = ⊥-elim (w refl) 
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | w | ∅ | ¬∅ x = λ ()
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | w | ¬∅ x | ¬∅ x₁ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g with ¬contruct↓⇒¬compl∅ s ¬p
-... | w with complLₛ s | complLₛ s₁
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g | w | ∅ | e = ⊥-elim (w refl)
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g | w | ¬∅ x | ∅ = λ ()
-¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g | w | ¬∅ x | ¬∅ x₁ = λ ()
 
 
-module _ where
-
-  open Relation.Binary.PropositionalEquality
-  
-  contruct↓⇒compl∅ : ∀{i u ll} → (s : SetLL {i} {u} ll) → (contruct s ≡ ↓) → (complLₛ s ≡ ∅)
-  contruct↓⇒compl∅ ↓ eq = refl
-  contruct↓⇒compl∅ (s ←∧) ()
-  contruct↓⇒compl∅ (∧→ s) ()
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g with complLₛ s | inspect complLₛ s | complLₛ s₁ |  inspect complLₛ s₁
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ∅ | [ eq2 ] = refl
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ¬∅ x | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s₁ g)) eq2
-  ... | ()
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g | ¬∅ x | [ eq1 ] | r | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s p)) eq1
-  ... | ()
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | no ¬g with contruct s | contruct s₁
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | ↓ | ↓ = ⊥-elim (¬g refl)
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∧
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | ∧→ r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∧→ r₁ 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∨ 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | ∨→ r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∨→ r₁ 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∂ 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | ∂→ r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∂→ r₁ 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∧ | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ∧→ e | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∧→ e₁ | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∨ | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ∨→ e | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∨→ e₁ | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∂ | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ∂→ e | r 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∂→ e₁ | r 
-
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | no ¬p | r with contruct s | contruct s₁
-  contruct↓⇒compl∅ (s ←∧→ s₁) eq | no ¬p | r | ↓ | w = ⊥-elim (¬p refl)
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∧ | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | ∧→ e | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∧→ e₁ | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∨ | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | ∨→ e | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∨→ e₁ | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∂ | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | ∂→ e | w 
-  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∂→ e₁ | w 
-
-
-  contruct↓⇒compl∅ (s ←∨) ()
-  contruct↓⇒compl∅ (∨→ s) ()
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g with complLₛ s | inspect complLₛ s | complLₛ s₁ |  inspect complLₛ s₁
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ∅ | [ eq2 ] = refl
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ¬∅ x | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s₁ g)) eq2
-  ... | ()
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g | ¬∅ x | [ eq1 ] | r | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s p)) eq1
-  ... | ()
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | no ¬g with contruct s | contruct s₁
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | ↓ | ↓ = ⊥-elim (¬g refl)
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∧
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | ∧→ r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∧→ r₁ 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∨ 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | ∨→ r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∨→ r₁ 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∂ 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | ∂→ r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∂→ r₁ 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∧ | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ∧→ e | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∧→ e₁ | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∨ | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ∨→ e | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∨→ e₁ | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∂ | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ∂→ e | r 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∂→ e₁ | r 
-
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | no ¬p | r with contruct s | contruct s₁
-  contruct↓⇒compl∅ (s ←∨→ s₁) eq | no ¬p | r | ↓ | w = ⊥-elim (¬p refl)
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∧ | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | ∧→ e | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∧→ e₁ | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∨ | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | ∨→ e | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∨→ e₁ | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∂ | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | ∂→ e | w 
-  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∂→ e₁ | w 
-
-
-
-
-  contruct↓⇒compl∅ (s ←∂) ()
-  contruct↓⇒compl∅ (∂→ s) ()
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g with complLₛ s | inspect complLₛ s | complLₛ s₁ |  inspect complLₛ s₁
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ∅ | [ eq2 ] = refl
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ¬∅ x | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s₁ g)) eq2
-  ... | ()
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g | ¬∅ x | [ eq1 ] | r | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s p)) eq1
-  ... | ()
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | no ¬g with contruct s | contruct s₁
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | ↓ | ↓ = ⊥-elim (¬g refl)
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∧
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | ∧→ r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∧→ r₁ 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∨ 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | ∨→ r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∨→ r₁ 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∂ 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | ∂→ r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∂→ r₁ 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∧ | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ∧→ e | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∧→ e₁ | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∨ | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ∨→ e | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∨→ e₁ | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∂ | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ∂→ e | r 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∂→ e₁ | r 
-
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | no ¬p | r with contruct s | contruct s₁
-  contruct↓⇒compl∅ (s ←∂→ s₁) eq | no ¬p | r | ↓ | w = ⊥-elim (¬p refl)
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∧ | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | ∧→ e | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∧→ e₁ | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∨ | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | ∨→ e | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∨→ e₁ | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∂ | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | ∂→ e | w 
-  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∂→ e₁ | w 

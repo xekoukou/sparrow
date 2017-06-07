@@ -23,7 +23,43 @@ private
   _c∪ₘₛ_ ∅ (¬∅ s)       = ¬∅ $ contruct s
   _c∪ₘₛ_ (¬∅ fs) ∅      = ¬∅ $ contruct fs
   _c∪ₘₛ_ (¬∅ fs) (¬∅ s) = ¬∅ $ contruct $ fs ∪ₛ s
-        
+
+
+module _ where
+
+-- UsesInput tries to find that all inputs have been used. By definition, calls are not to be used unless observed.
+-- Thus we need to add them in the set.
+-- Since LinLogic calls can only be consumed by LinFun calls, we can add them when we reach the appropriate LinFun call.
+
+  open import Data.List
+  open import Data.Product
+
+
+  findCalls : ∀{i u} → (ll : LinLogic i {u}) → List (Σ (LinLogic i {u}) (λ pll → IndexLL pll ll))
+  findCalls ∅ = []
+  findCalls (τ x) = []
+  findCalls (li ∧ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∧)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∧→ (proj₂ x) )) (findCalls ri))
+  findCalls (li ∨ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∨)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∨→ (proj₂ x) )) (findCalls ri))
+  findCalls (li ∂ ri) = (Data.List.map (λ x → ((proj₁ x) , (proj₂ x) ←∂)) (findCalls li)) ++ (Data.List.map (λ x → ((proj₁ x) , ∂→ (proj₂ x) )) (findCalls ri))
+  findCalls ll@(call x) = [(ll , ↓) ]
+
+
+  fillWithCalls : ∀{i u} → (ll : LinLogic i {u}) → MSetLL ll
+  fillWithCalls ll with (findCalls ll)
+  fillWithCalls ll | [] = ∅
+  fillWithCalls ll | x ∷ xs with (∅-add (proj₂ x) (proj₁ x))
+  ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl) 
+  fillWithCalls {i} {u} ll | x ∷ xs | r | .ll | refl = ¬∅ $ foldl hf r xs where
+    hf : SetLL ll → Σ (LinLogic i {u}) (λ pll → IndexLL pll ll) → SetLL ll
+    hf s ind with (add s (proj₂ x) (proj₁ x))
+    ... | r with (replLL ll (proj₂ x) (proj₁ x)) | (replLL-id ll (proj₂ x) (proj₁ x) refl)
+    hf s ind | r₁ | _ | refl = r₁
+
+
+
+
+
+
 -- We send to the receiver both the values the type depends and the value of the type. This way, we achieve locality in terms of finding the type of the incoming value.
 -- We need to point that the receiver and the sender are the same node.
 
@@ -43,11 +79,16 @@ mutual
    -- TODO ?? I think that prf is usefull but not for the previous argument. Without prf, we can have LFun that have no concrete inputs.
    call : ∀{ll ∞rll prf} → ∞LFun {i} {u} ll ∞rll {{prf}} → LFun {i} {u} ll (call ∞rll)
 
--- We need to create an observe function, that will unfold all first calls. Then when call is unfolded, the remaining calls generate obs.↑
+-- The comment is obsolete, remove : We need to create an observe function, that will unfold all first calls. Then when call is unfolded, the remaining calls generate obs.↑
   record ∞LFun {i u} (ll : LinLogic i {u}) (∞rll : ∞LinLogic i {u}) {{prf : notOnlyCall ll ≡ true}} : Set (lsuc u) where
     coinductive
     field
       step : {j : Size< i} → Σ (LFun {j} {u} (unfold ll) ((step ∞rll))) (λ x → usesInputT x) -- ??
+
+
+
+
+
 
 -- UsesInput checks that the inputs will be used by the current LFun and not by the LFun of a call. This means that the search for the appropriate com is total, it takes a finite amount of time.
 

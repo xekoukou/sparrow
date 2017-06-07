@@ -6,6 +6,206 @@ open import LinLogic
 open import SetLL
 
 open import Relation.Binary.PropositionalEquality
+import Data.Product
+
+
+
+¬contruct↓⇒¬compl∅ : ∀{i u ll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → ¬ (complLₛ s ≡ ∅)
+¬contruct↓⇒¬compl∅ ↓ eq = ⊥-elim (eq refl)
+¬contruct↓⇒¬compl∅ (s ←∧) eq with (complLₛ s)
+¬contruct↓⇒¬compl∅ (s ←∧) eq | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∧) eq | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (∧→ s) eq with (complLₛ s)
+¬contruct↓⇒¬compl∅ (∧→ s) eq | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (∧→ s) eq | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | yes g with contruct s | contruct s₁ 
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes refl | yes refl | .↓ | .↓ = ⊥-elim (eq refl)
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g with ¬contruct↓⇒¬compl∅ s₁ ¬g
+... | w with complLₛ s | complLₛ s₁
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | w | r | ∅ = ⊥-elim (w refl) 
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | w | ∅ | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | w | ¬∅ x | ¬∅ x₁ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g with ¬contruct↓⇒¬compl∅ s ¬p
+... | w with complLₛ s | complLₛ s₁
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g | w | ∅ | e = ⊥-elim (w refl)
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g | w | ¬∅ x | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∧→ s₁) eq | no ¬p | g | w | ¬∅ x | ¬∅ x₁ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∨) eq with (complLₛ s)
+¬contruct↓⇒¬compl∅ (s ←∨) eq | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∨) eq | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (∨→ s) eq with (complLₛ s)
+¬contruct↓⇒¬compl∅ (∨→ s) eq | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (∨→ s) eq | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | yes g with contruct s | contruct s₁ 
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes refl | yes refl | .↓ | .↓ = ⊥-elim (eq refl)
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g with ¬contruct↓⇒¬compl∅ s₁ ¬g
+... | w with complLₛ s | complLₛ s₁
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | w | r | ∅ = ⊥-elim (w refl) 
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | w | ∅ | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | w | ¬∅ x | ¬∅ x₁ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g with ¬contruct↓⇒¬compl∅ s ¬p
+... | w with complLₛ s | complLₛ s₁
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g | w | ∅ | e = ⊥-elim (w refl)
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g | w | ¬∅ x | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∨→ s₁) eq | no ¬p | g | w | ¬∅ x | ¬∅ x₁ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∂) eq with (complLₛ s)
+¬contruct↓⇒¬compl∅ (s ←∂) eq | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∂) eq | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (∂→ s) eq with (complLₛ s)
+¬contruct↓⇒¬compl∅ (∂→ s) eq | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (∂→ s) eq | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | yes g with contruct s | contruct s₁ 
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes refl | yes refl | .↓ | .↓ = ⊥-elim (eq refl)
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g with ¬contruct↓⇒¬compl∅ s₁ ¬g
+... | w with complLₛ s | complLₛ s₁
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | w | r | ∅ = ⊥-elim (w refl) 
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | w | ∅ | ¬∅ x = λ ()
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | w | ¬∅ x | ¬∅ x₁ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g with ¬contruct↓⇒¬compl∅ s ¬p
+... | w with complLₛ s | complLₛ s₁
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g | w | ∅ | e = ⊥-elim (w refl)
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g | w | ¬∅ x | ∅ = λ ()
+¬contruct↓⇒¬compl∅ (s ←∂→ s₁) eq | no ¬p | g | w | ¬∅ x | ¬∅ x₁ = λ ()
+
+
+module _ where
+
+  open Data.Product
+  
+  contruct↓⇒compl∅ : ∀{i u ll} → (s : SetLL {i} {u} ll) → (contruct s ≡ ↓) → (complLₛ s ≡ ∅)
+  contruct↓⇒compl∅ ↓ eq = refl
+  contruct↓⇒compl∅ (s ←∧) ()
+  contruct↓⇒compl∅ (∧→ s) ()
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g with complLₛ s | inspect complLₛ s | complLₛ s₁ |  inspect complLₛ s₁
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ∅ | [ eq2 ] = refl
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ¬∅ x | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s₁ g)) eq2
+  ... | ()
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | yes g | ¬∅ x | [ eq1 ] | r | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s p)) eq1
+  ... | ()
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | no ¬g with contruct s | contruct s₁
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | yes p | no ¬g | ↓ | ↓ = ⊥-elim (¬g refl)
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∧
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | ∧→ r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∧→ r₁ 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∨ 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | ∨→ r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∨→ r₁ 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∂ 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | ∂→ r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ↓ | r ←∂→ r₁ 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∧ | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ∧→ e | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∧→ e₁ | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∨ | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ∨→ e | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∨→ e₁ | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∂ | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | ∂→ e | r 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | yes p | no ¬g | e ←∂→ e₁ | r 
+
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | no ¬p | r with contruct s | contruct s₁
+  contruct↓⇒compl∅ (s ←∧→ s₁) eq | no ¬p | r | ↓ | w = ⊥-elim (¬p refl)
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∧ | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | ∧→ e | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∧→ e₁ | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∨ | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | ∨→ e | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∨→ e₁ | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∂ | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | ∂→ e | w 
+  contruct↓⇒compl∅ (s ←∧→ s₁) () | no ¬p | r | e ←∂→ e₁ | w 
+
+  contruct↓⇒compl∅ (s ←∨) ()
+  contruct↓⇒compl∅ (∨→ s) ()
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g with complLₛ s | inspect complLₛ s | complLₛ s₁ |  inspect complLₛ s₁
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ∅ | [ eq2 ] = refl
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ¬∅ x | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s₁ g)) eq2
+  ... | ()
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | yes g | ¬∅ x | [ eq1 ] | r | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s p)) eq1
+  ... | ()
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | no ¬g with contruct s | contruct s₁
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | yes p | no ¬g | ↓ | ↓ = ⊥-elim (¬g refl)
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∧
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | ∧→ r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∧→ r₁ 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∨ 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | ∨→ r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∨→ r₁ 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∂ 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | ∂→ r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ↓ | r ←∂→ r₁ 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∧ | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ∧→ e | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∧→ e₁ | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∨ | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ∨→ e | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∨→ e₁ | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∂ | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | ∂→ e | r 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | yes p | no ¬g | e ←∂→ e₁ | r 
+
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | no ¬p | r with contruct s | contruct s₁
+  contruct↓⇒compl∅ (s ←∨→ s₁) eq | no ¬p | r | ↓ | w = ⊥-elim (¬p refl)
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∧ | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | ∧→ e | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∧→ e₁ | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∨ | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | ∨→ e | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∨→ e₁ | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∂ | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | ∂→ e | w 
+  contruct↓⇒compl∅ (s ←∨→ s₁) () | no ¬p | r | e ←∂→ e₁ | w 
+
+  contruct↓⇒compl∅ (s ←∂) ()
+  contruct↓⇒compl∅ (∂→ s) ()
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq with isEq (contruct s) ↓ | isEq (contruct s₁) ↓
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g with complLₛ s | inspect complLₛ s | complLₛ s₁ |  inspect complLₛ s₁
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ∅ | [ eq2 ] = refl
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g | ∅ | [ eq1 ] | ¬∅ x | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s₁ g)) eq2
+  ... | ()
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | yes g | ¬∅ x | [ eq1 ] | r | [ eq2 ] with trans (sym (contruct↓⇒compl∅ s p)) eq1
+  ... | ()
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | no ¬g with contruct s | contruct s₁
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | yes p | no ¬g | ↓ | ↓ = ⊥-elim (¬g refl)
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∧
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | ∧→ r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∧→ r₁ 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∨ 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | ∨→ r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∨→ r₁ 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∂ 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | ∂→ r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ↓ | r ←∂→ r₁ 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∧ | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ∧→ e | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∧→ e₁ | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∨ | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ∨→ e | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∨→ e₁ | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∂ | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | ∂→ e | r 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | yes p | no ¬g | e ←∂→ e₁ | r 
+
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | no ¬p | r with contruct s | contruct s₁
+  contruct↓⇒compl∅ (s ←∂→ s₁) eq | no ¬p | r | ↓ | w = ⊥-elim (¬p refl)
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∧ | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | ∧→ e | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∧→ e₁ | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∨ | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | ∨→ e | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∨→ e₁ | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∂ | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | ∂→ e | w 
+  contruct↓⇒compl∅ (s ←∂→ s₁) () | no ¬p | r | e ←∂→ e₁ | w 
+
+
+
+
 
 
 module _ where
@@ -189,49 +389,43 @@ module _ where
   hitsAtLeastOnceUnique (s ←∂→ s₁) (∂→ ind) (hitsAtLeastOnce←∂→∂→ a) (hitsAtLeastOnce←∂→∂→ .a) | refl = refl
 
 
-  onlyInside¬hitsAtLeastOnce→⊥ : ∀{i u ll rll} → (s : SetLL ll) → (ind : IndexLL {i} {u} rll ll) → onlyInside s ind → ¬ (hitsAtLeastOnce s ind) → ⊥
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ ↓ ex ¬ho = ¬ho hitsAtLeastOnce↓
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ (ind ←∧) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ (∧→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ (ind ←∨) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ (∨→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ (ind ←∂) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ ↓ (∂→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧) ↓ ex ¬ho = ¬ho hitsAtLeastOnce←∧↓
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧) (ind ←∧) (onlyInsideC←∧←∧ ex) ¬ho with (onlyInside¬hitsAtLeastOnce→⊥ s ind ex (λ x → ¬ho (hitsAtLeastOnce←∧←∧ x)))
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧) (ind ←∧) (onlyInsideC←∧←∧ ex) ¬ho | ()
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧) (∧→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (∧→ s) ↓ ex ¬ho = ¬ho hitsAtLeastOnce∧→↓
-  onlyInside¬hitsAtLeastOnce→⊥ (∧→ s) (ind ←∧) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (∧→ s) (∧→ ind) (onlyInsideC∧→∧→ ex) ¬ho with (onlyInside¬hitsAtLeastOnce→⊥ s ind ex (λ x → ¬ho (hitsAtLeastOnce∧→∧→ x)))
-  onlyInside¬hitsAtLeastOnce→⊥ (∧→ s) (∧→ ind) (onlyInsideC∧→∧→ ex) ¬ho | ()
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧→ s₁) ↓ ex ¬ho = ¬ho hitsAtLeastOnce←∧→↓
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧→ s₁) (ind ←∧) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∧→ s₁) (∧→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨) ↓ ex ¬ho = ¬ho hitsAtLeastOnce←∨↓
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨) (ind ←∨) (onlyInsideC←∨←∨ ex) ¬ho with (onlyInside¬hitsAtLeastOnce→⊥ s ind ex (λ x → ¬ho (hitsAtLeastOnce←∨←∨ x)))
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨) (ind ←∨) (onlyInsideC←∨←∨ ex) ¬ho | ()
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨) (∨→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (∨→ s) ↓ ex ¬ho = ¬ho hitsAtLeastOnce∨→↓
-  onlyInside¬hitsAtLeastOnce→⊥ (∨→ s) (ind ←∨) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (∨→ s) (∨→ ind) (onlyInsideC∨→∨→ ex) ¬ho with (onlyInside¬hitsAtLeastOnce→⊥ s ind ex (λ x → ¬ho (hitsAtLeastOnce∨→∨→ x)))
-  onlyInside¬hitsAtLeastOnce→⊥ (∨→ s) (∨→ ind) (onlyInsideC∨→∨→ ex) ¬ho | ()
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨→ s₁) ↓ ex ¬ho = ¬ho hitsAtLeastOnce←∨→↓
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨→ s₁) (ind ←∨) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∨→ s₁) (∨→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂) ↓ ex ¬ho = ¬ho hitsAtLeastOnce←∂↓
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂) (ind ←∂) (onlyInsideC←∂←∂ ex) ¬ho with (onlyInside¬hitsAtLeastOnce→⊥ s ind ex (λ x → ¬ho (hitsAtLeastOnce←∂←∂ x)))
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂) (ind ←∂) (onlyInsideC←∂←∂ ex) ¬ho | ()
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂) (∂→ ind) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (∂→ s) ↓ ex ¬ho = ¬ho hitsAtLeastOnce∂→↓
-  onlyInside¬hitsAtLeastOnce→⊥ (∂→ s) (ind ←∂) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (∂→ s) (∂→ ind) (onlyInsideC∂→∂→ ex) ¬ho with (onlyInside¬hitsAtLeastOnce→⊥ s ind ex (λ x → ¬ho (hitsAtLeastOnce∂→∂→ x)))
-  onlyInside¬hitsAtLeastOnce→⊥ (∂→ s) (∂→ ind) (onlyInsideC∂→∂→ ex) ¬ho | ()
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂→ s₁) ↓ ex ¬ho = ¬ho hitsAtLeastOnce←∂→↓
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂→ s₁) (ind ←∂) () ¬ho
-  onlyInside¬hitsAtLeastOnce→⊥ (s ←∂→ s₁) (∂→ ind) () ¬ho
 
 
+  onlyInside⇒hitsAtLeastOnce : ∀{i u ll rll} → (s : SetLL ll) → (ind : IndexLL {i} {u} rll ll) → onlyInside s ind → hitsAtLeastOnce s ind
+  onlyInside⇒hitsAtLeastOnce ↓ ↓ onlyInsideCs↓ = hitsAtLeastOnce↓
+  onlyInside⇒hitsAtLeastOnce ↓ (ind ←∧) ()
+  onlyInside⇒hitsAtLeastOnce ↓ (∧→ ind) ()
+  onlyInside⇒hitsAtLeastOnce ↓ (ind ←∨) ()
+  onlyInside⇒hitsAtLeastOnce ↓ (∨→ ind) ()
+  onlyInside⇒hitsAtLeastOnce ↓ (ind ←∂) ()
+  onlyInside⇒hitsAtLeastOnce ↓ (∂→ ind) ()
+  onlyInside⇒hitsAtLeastOnce (s ←∧) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∧↓
+  onlyInside⇒hitsAtLeastOnce (s ←∧) (ind ←∧) (onlyInsideC←∧←∧ oi) = hitsAtLeastOnce←∧←∧ (onlyInside⇒hitsAtLeastOnce s ind oi)
+  onlyInside⇒hitsAtLeastOnce (s ←∧) (∧→ ind) ()
+  onlyInside⇒hitsAtLeastOnce (∧→ s) ↓ oi = hitsAtLeastOnce∧→↓
+  onlyInside⇒hitsAtLeastOnce (∧→ s) (ind ←∧) ()
+  onlyInside⇒hitsAtLeastOnce (∧→ s) (∧→ ind) (onlyInsideC∧→∧→ x) = hitsAtLeastOnce∧→∧→ (onlyInside⇒hitsAtLeastOnce s ind x)
+  onlyInside⇒hitsAtLeastOnce (s ←∧→ s₁) ↓ oi = hitsAtLeastOnce←∧→↓
+  onlyInside⇒hitsAtLeastOnce (s ←∧→ s₁) (ind ←∧) ()
+  onlyInside⇒hitsAtLeastOnce (s ←∧→ s₁) (∧→ ind) ()
+  onlyInside⇒hitsAtLeastOnce (s ←∨) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∨↓
+  onlyInside⇒hitsAtLeastOnce (s ←∨) (ind ←∨) (onlyInsideC←∨←∨ oi) = hitsAtLeastOnce←∨←∨ (onlyInside⇒hitsAtLeastOnce s ind oi)
+  onlyInside⇒hitsAtLeastOnce (s ←∨) (∨→ ind) ()
+  onlyInside⇒hitsAtLeastOnce (∨→ s) ↓ oi = hitsAtLeastOnce∨→↓
+  onlyInside⇒hitsAtLeastOnce (∨→ s) (ind ←∨) ()
+  onlyInside⇒hitsAtLeastOnce (∨→ s) (∨→ ind) (onlyInsideC∨→∨→ x) = hitsAtLeastOnce∨→∨→ (onlyInside⇒hitsAtLeastOnce s ind x)
+  onlyInside⇒hitsAtLeastOnce (s ←∨→ s₁) ↓ oi = hitsAtLeastOnce←∨→↓
+  onlyInside⇒hitsAtLeastOnce (s ←∨→ s₁) (ind ←∨) ()
+  onlyInside⇒hitsAtLeastOnce (s ←∨→ s₁) (∨→ ind) ()
+  onlyInside⇒hitsAtLeastOnce (s ←∂) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∂↓
+  onlyInside⇒hitsAtLeastOnce (s ←∂) (ind ←∂) (onlyInsideC←∂←∂ oi) = hitsAtLeastOnce←∂←∂ (onlyInside⇒hitsAtLeastOnce s ind oi)
+  onlyInside⇒hitsAtLeastOnce (s ←∂) (∂→ ind) ()
+  onlyInside⇒hitsAtLeastOnce (∂→ s) ↓ oi = hitsAtLeastOnce∂→↓
+  onlyInside⇒hitsAtLeastOnce (∂→ s) (ind ←∂) ()
+  onlyInside⇒hitsAtLeastOnce (∂→ s) (∂→ ind) (onlyInsideC∂→∂→ x) = hitsAtLeastOnce∂→∂→ (onlyInside⇒hitsAtLeastOnce s ind x)
+  onlyInside⇒hitsAtLeastOnce (s ←∂→ s₁) ↓ oi = hitsAtLeastOnce←∂→↓
+  onlyInside⇒hitsAtLeastOnce (s ←∂→ s₁) (ind ←∂) ()
+  onlyInside⇒hitsAtLeastOnce (s ←∂→ s₁) (∂→ ind) ()
 
 
 
@@ -291,159 +485,1224 @@ module _ where
   doesItHitAtLeastOnce (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(hitsAtLeastOnce←∂→∂→ x) → ¬p x})
 
 
+
+
 module _ where
 
+  open Data.Product
 
--- Replace the linear logic sub-tree.
-  replSetLL : ∀{i u ll q} → (s : SetLL ll) → (ind : IndexLL {i} {u} q ll)
-              → .{{ prf : ¬ (hitsAtLeastOnce s ind) }} → (rll : LinLogic i)
-              → (SetLL (replLL ll ind rll))
-  replSetLL ↓ ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL ↓ (ind ←∧) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL ↓ (∧→ ind) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL ↓ (ind ←∨) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL ↓ (∨→ ind) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL ↓ (ind ←∂) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL ↓ (∂→ ind) {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce↓)
-  replSetLL (s ←∧) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∧↓)
-  replSetLL (s ←∧) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∧←∧ x)}} rll) ←∧
-  replSetLL (s ←∧) (∧→ ind) {{prf}} rll = s ←∧
-  replSetLL (∧→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce∧→↓)
-  replSetLL (∧→ s) (ind ←∧) {{prf}} rll = ∧→ s
-  replSetLL (∧→ s) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce∧→∧→ x)}} rll)
-  replSetLL (s ←∧→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∧→↓)
-  replSetLL (s ←∧→ s₁) (ind ←∧) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∧→←∧ x)}} rll) ←∧
-  replSetLL (s ←∧→ s₁) (∧→ ind) {{prf}} rll = ∧→ (replSetLL s₁ ind {{prf = λ x → prf (hitsAtLeastOnce←∧→∧→ x)}} rll)
-  replSetLL (s ←∨) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∨↓)
-  replSetLL (s ←∨) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∨←∨ x)}} rll) ←∨
-  replSetLL (s ←∨) (∨→ ind) {{prf}} rll = s ←∨
-  replSetLL (∨→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce∨→↓)
-  replSetLL (∨→ s) (ind ←∨) {{prf}} rll = ∨→ s
-  replSetLL (∨→ s) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce∨→∨→ x)}} rll)
-  replSetLL (s ←∨→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∨→↓)
-  replSetLL (s ←∨→ s₁) (ind ←∨) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∨→←∨ x)}} rll) ←∨
-  replSetLL (s ←∨→ s₁) (∨→ ind) {{prf}} rll = ∨→ (replSetLL s₁ ind {{prf = λ x → prf (hitsAtLeastOnce←∨→∨→ x)}} rll)
-  replSetLL (s ←∂) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∂↓)
-  replSetLL (s ←∂) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∂←∂ x)}} rll) ←∂
-  replSetLL (s ←∂) (∂→ ind) {{prf}} rll = s ←∂
-  replSetLL (∂→ s) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce∂→↓)
-  replSetLL (∂→ s) (ind ←∂) {{prf}} rll = ∂→ s
-  replSetLL (∂→ s) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce∂→∂→ x)}} rll)
-  replSetLL (s ←∂→ s₁) ↓ {{prf}} rll = ⊥-elim (prf hitsAtLeastOnce←∂→↓)
-  replSetLL (s ←∂→ s₁) (ind ←∂) {{prf}} rll = (replSetLL s ind {{prf = λ x → prf (hitsAtLeastOnce←∂→←∂ x)}} rll) ←∂
-  replSetLL (s ←∂→ s₁) (∂→ ind) {{prf}} rll = ∂→ (replSetLL s₁ ind {{prf = λ x → prf (hitsAtLeastOnce←∂→∂→ x)}} rll)
+  trunc≡∅⇒¬ho : ∀{i u rll ll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → (truncSetLL s ind ≡ ∅) → ¬ (hitsAtLeastOnce s ind)
+  trunc≡∅⇒¬ho s ↓ ()
+  trunc≡∅⇒¬ho ↓ (ind ←∧) ()
+  trunc≡∅⇒¬ho (s ←∧) (ind ←∧) treq = λ {(hitsAtLeastOnce←∧←∧ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho (∧→ s) (ind ←∧) treq = λ ()
+  trunc≡∅⇒¬ho (s ←∧→ s₁) (ind ←∧) treq = λ {(hitsAtLeastOnce←∧→←∧ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho ↓ (∧→ ind) ()
+  trunc≡∅⇒¬ho (s ←∧) (∧→ ind) treq = λ ()
+  trunc≡∅⇒¬ho (∧→ s) (∧→ ind) treq = λ {(hitsAtLeastOnce∧→∧→ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho (s ←∧→ s₁) (∧→ ind) treq  = λ {(hitsAtLeastOnce←∧→∧→ x) → is x} where
+    is = trunc≡∅⇒¬ho s₁ ind treq
+  trunc≡∅⇒¬ho ↓ (ind ←∨) ()
+  trunc≡∅⇒¬ho (s ←∨) (ind ←∨) treq = λ {(hitsAtLeastOnce←∨←∨ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho (∨→ s) (ind ←∨) treq = λ ()
+  trunc≡∅⇒¬ho (s ←∨→ s₁) (ind ←∨) treq = λ {(hitsAtLeastOnce←∨→←∨ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho ↓ (∨→ ind) ()
+  trunc≡∅⇒¬ho (s ←∨) (∨→ ind) treq = λ ()
+  trunc≡∅⇒¬ho (∨→ s) (∨→ ind) treq = λ {(hitsAtLeastOnce∨→∨→ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho (s ←∨→ s₁) (∨→ ind) treq  = λ {(hitsAtLeastOnce←∨→∨→ x) → is x} where
+    is = trunc≡∅⇒¬ho s₁ ind treq
+  trunc≡∅⇒¬ho ↓ (ind ←∂) ()
+  trunc≡∅⇒¬ho (s ←∂) (ind ←∂) treq = λ {(hitsAtLeastOnce←∂←∂ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho (∂→ s) (ind ←∂) treq = λ ()
+  trunc≡∅⇒¬ho (s ←∂→ s₁) (ind ←∂) treq = λ {(hitsAtLeastOnce←∂→←∂ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho ↓ (∂→ ind) ()
+  trunc≡∅⇒¬ho (s ←∂) (∂→ ind) treq = λ ()
+  trunc≡∅⇒¬ho (∂→ s) (∂→ ind) treq = λ {(hitsAtLeastOnce∂→∂→ x) → is x} where
+    is = trunc≡∅⇒¬ho s ind treq
+  trunc≡∅⇒¬ho (s ←∂→ s₁) (∂→ ind) treq  = λ {(hitsAtLeastOnce←∂→∂→ x) → is x} where
+    is = trunc≡∅⇒¬ho s₁ ind treq
 
-
-  truncOISetLL : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
-               → ⦃ prf : onlyInside s ind ⦄ → SetLL pll
-  truncOISetLL s ↓ {{prf}} = s
-  truncOISetLL ↓ (ind ←∧) {{()}}
-  truncOISetLL (s ←∧) (ind ←∧) {{onlyInsideC←∧←∧ prf}} = truncOISetLL s ind {{prf}}
-  truncOISetLL (∧→ s) (ind ←∧) {{()}}
-  truncOISetLL (s ←∧→ s₁) (ind ←∧) {{()}}
-  truncOISetLL ↓ (∧→ ind) {{()}}
-  truncOISetLL (s ←∧) (∧→ ind) {{()}}
-  truncOISetLL (∧→ s) (∧→ ind) {{onlyInsideC∧→∧→ prf}} = truncOISetLL s ind {{prf}}
-  truncOISetLL (s ←∧→ s₁) (∧→ ind) {{()}}
-  truncOISetLL ↓ (ind ←∨) {{()}}
-  truncOISetLL (s ←∨) (ind ←∨) {{onlyInsideC←∨←∨ prf}} = truncOISetLL s ind {{prf}}
-  truncOISetLL (∨→ s) (ind ←∨) {{()}}
-  truncOISetLL (s ←∨→ s₁) (ind ←∨) {{()}}
-  truncOISetLL ↓ (∨→ ind) {{()}}
-  truncOISetLL (s ←∨) (∨→ ind) {{()}}
-  truncOISetLL (∨→ s) (∨→ ind) {{onlyInsideC∨→∨→ prf}} = truncOISetLL s ind {{prf}}
-  truncOISetLL (s ←∨→ s₁) (∨→ ind) {{()}}
-  truncOISetLL ↓ (ind ←∂) {{()}}
-  truncOISetLL (s ←∂) (ind ←∂) {{onlyInsideC←∂←∂ prf}} = truncOISetLL s ind {{prf}}
-  truncOISetLL (∂→ s) (ind ←∂) {{()}}
-  truncOISetLL (s ←∂→ s₁) (ind ←∂) {{()}}
-  truncOISetLL ↓ (∂→ ind) {{()}}
-  truncOISetLL (s ←∂) (∂→ ind) {{()}}
-  truncOISetLL (∂→ s) (∂→ ind) {{onlyInsideC∂→∂→ prf}} = truncOISetLL s ind {{prf}}
-  truncOISetLL (s ←∂→ s₁) (∂→ ind) {{()}}
-
-
-≤s-extr : ∀{i u ll pll}→ (ind : IndexLL {i} {u} pll ll) → (s : SetLL ll) → ⦃ prf : onlyInside s ind ⦄ → (subst (λ x → SetLL x) (replLL-id ll ind pll refl) (extend ind (truncOISetLL s ind))) ≤s s
-≤s-extr ↓ s = ≤id
-≤s-extr (ind ←∧) ↓ {{()}}
-≤s-extr (ind ←∧) (s ←∧) {{onlyInsideC←∧←∧ prf}} = ? -- ≤←∧ (≤s-extr ind s {{prf}})
-≤s-extr (ind ←∧) (∧→ s) {{()}}
-≤s-extr (ind ←∧) (s ←∧→ s₁) {{()}}
-≤s-extr (∧→ ind) ↓ {{()}}
-≤s-extr (∧→ ind) (s ←∧) {{()}}
-≤s-extr (∧→ ind) (∧→ s) {{onlyInsideC∧→∧→ prf}} = ? -- ≤∧→ (≤s-extr ind s {{prf}})
-≤s-extr (∧→ ind) (s ←∧→ s₁) {{()}}
-≤s-extr (ind ←∨) ↓ {{()}}
-≤s-extr (ind ←∨) (s ←∨) {{onlyInsideC←∨←∨ prf}} = ? -- ≤←∨ (≤s-extr ind s {{prf}})
-≤s-extr (ind ←∨) (∨→ s) {{()}}
-≤s-extr (ind ←∨) (s ←∨→ s₁) {{()}}
-≤s-extr (∨→ ind) ↓ {{()}}
-≤s-extr (∨→ ind) (s ←∨) {{()}}
-≤s-extr (∨→ ind) (∨→ s) {{onlyInsideC∨→∨→ prf}} = ? -- ≤∨→ (≤s-extr ind s {{prf}})
-≤s-extr (∨→ ind) (s ←∨→ s₁) {{()}}
-≤s-extr (ind ←∂) ↓ {{()}}
-≤s-extr (ind ←∂) (s ←∂) {{onlyInsideC←∂←∂ prf}} = ? -- ≤←∂ (≤s-extr ind s {{prf}})
-≤s-extr (ind ←∂) (∂→ s) {{()}}
-≤s-extr (ind ←∂) (s ←∂→ s₁) {{()}}
-≤s-extr (∂→ ind) ↓ {{()}}
-≤s-extr (∂→ ind) (s ←∂) {{()}}
-≤s-extr (∂→ ind) (∂→ s) {{onlyInsideC∂→∂→ prf}} = ? -- ≤∂→ (≤s-extr ind s {{prf}})
-≤s-extr (∂→ ind) (s ←∂→ s₁) {{()}}
-
-oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside s ind}} → ss ≤s (truncOISetLL s ind {{prf = oi}}) → onlyInside (extend ind ss) ind
-oi⇒ext-truncoi {s = _} ↓ {{oi}} x = onlyInsideCs↓
-oi⇒ext-truncoi {s = ↓} (ind ←∧) {{()}} x
-oi⇒ext-truncoi {s = _ ←∧} (ind ←∧) {{onlyInsideC←∧←∧ oi}} x = onlyInsideC←∧←∧ (oi⇒ext-truncoi ind {{oi = oi}} x)
-oi⇒ext-truncoi {s = ∧→ _} (ind ←∧) {{()}} x
-oi⇒ext-truncoi {s = _ ←∧→ _} (ind ←∧) {{()}} x
-oi⇒ext-truncoi {s = .(∧→ _)} (∧→ ind) {{onlyInsideC∧→∧→ oi}} x = onlyInsideC∧→∧→ (oi⇒ext-truncoi ind {{oi = oi}} x)
-oi⇒ext-truncoi {s = ↓} (ind ←∨) {{()}} x
-oi⇒ext-truncoi {s = _ ←∨} (ind ←∨) {{onlyInsideC←∨←∨ oi}} x = onlyInsideC←∨←∨ (oi⇒ext-truncoi ind {{oi = oi}} x)
-oi⇒ext-truncoi {s = ∨→ _} (ind ←∨) {{()}} x
-oi⇒ext-truncoi {s = _ ←∨→ _} (ind ←∨) {{()}} x
-oi⇒ext-truncoi {s = .(∨→ _)} (∨→ ind) {{onlyInsideC∨→∨→ oi}} x = onlyInsideC∨→∨→ (oi⇒ext-truncoi ind {{oi = oi}} x)
-oi⇒ext-truncoi {s = ↓} (ind ←∂) {{()}} x
-oi⇒ext-truncoi {s = _ ←∂} (ind ←∂) {{onlyInsideC←∂←∂ oi}} x = onlyInsideC←∂←∂ (oi⇒ext-truncoi ind {{oi = oi}} x)
-oi⇒ext-truncoi {s = ∂→ _} (ind ←∂) {{()}} x
-oi⇒ext-truncoi {s = _ ←∂→ _} (ind ←∂) {{()}} x
-oi⇒ext-truncoi {s = .(∂→ _)} (∂→ ind) {{onlyInsideC∂→∂→ oi}} x = onlyInsideC∂→∂→ (oi⇒ext-truncoi ind {{oi = oi}} x)
+  ¬ho⇒¬del≡∅ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → ¬(hitsAtLeastOnce s ind) → ¬ (del s ind fll ≡ ∅)
+  ¬ho⇒¬del≡∅ ↓ ↓ heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ (x ←∧) ↓ heq = λ _ → heq hitsAtLeastOnce←∧↓
+  ¬ho⇒¬del≡∅ (∧→ x) ↓ heq = λ _ → heq hitsAtLeastOnce∧→↓
+  ¬ho⇒¬del≡∅ (x ←∧→ x₁) ↓ heq = λ _ → heq hitsAtLeastOnce←∧→↓
+  ¬ho⇒¬del≡∅ (x ←∨) ↓ heq = λ _ → heq hitsAtLeastOnce←∨↓
+  ¬ho⇒¬del≡∅ (∨→ x) ↓ heq = λ _ → heq hitsAtLeastOnce∨→↓
+  ¬ho⇒¬del≡∅ (x ←∨→ x₁) ↓ heq = λ _ → heq hitsAtLeastOnce←∨→↓
+  ¬ho⇒¬del≡∅ (x ←∂) ↓ heq = λ _ → heq hitsAtLeastOnce←∂↓
+  ¬ho⇒¬del≡∅ (∂→ x) ↓ heq = λ _ → heq hitsAtLeastOnce∂→↓
+  ¬ho⇒¬del≡∅ (x ←∂→ x₁) ↓ heq = λ _ → heq hitsAtLeastOnce←∂→↓
+  ¬ho⇒¬del≡∅ ↓ (ind ←∧) heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∧) (ind ←∧) heq with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce←∧←∧ x) })
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ (∧→ s) (ind ←∧) heq = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∧→ s₁) (ind ←∧) heq  with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce←∧→←∧ x)})
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ ↓ (∧→ ind) heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ (s ←∧) (∧→ ind) heq = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (∧→ s) (∧→ ind) heq  with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce∧→∧→ x) })
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∧→ s₁) (∧→ ind) heq with del s₁ ind fll | ¬ho⇒¬del≡∅ {fll = fll} s₁ ind (λ {x → heq (hitsAtLeastOnce←∧→∧→ x)})
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ ↓ (ind ←∨) heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∨) (ind ←∨) heq with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce←∨←∨ x) })
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ (∨→ s) (ind ←∨) heq = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∨→ s₁) (ind ←∨) heq  with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce←∨→←∨ x)})
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ ↓ (∨→ ind) heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ (s ←∨) (∨→ ind) heq = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (∨→ s) (∨→ ind) heq  with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce∨→∨→ x) })
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∨→ s₁) (∨→ ind) heq with del s₁ ind fll | ¬ho⇒¬del≡∅ {fll = fll} s₁ ind (λ {x → heq (hitsAtLeastOnce←∨→∨→ x)})
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ ↓ (ind ←∂) heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∂) (ind ←∂) heq with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce←∂←∂ x) })
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ (∂→ s) (ind ←∂) heq = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∂→ s₁) (ind ←∂) heq  with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce←∂→←∂ x)})
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ ↓ (∂→ ind) heq = λ _ → heq hitsAtLeastOnce↓
+  ¬ho⇒¬del≡∅ (s ←∂) (∂→ ind) heq = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (∂→ s) (∂→ ind) heq  with del s ind fll | ¬ho⇒¬del≡∅ {fll = fll} s ind (λ {x → heq (hitsAtLeastOnce∂→∂→ x) })
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
+  ¬ho⇒¬del≡∅ {fll = fll} (s ←∂→ s₁) (∂→ ind) heq with del s₁ ind fll | ¬ho⇒¬del≡∅ {fll = fll} s₁ ind (λ {x → heq (hitsAtLeastOnce←∂→∂→ x)})
+  ... | ∅ | r = λ _ → r refl
+  ... | ¬∅ x | r = λ ()
 
 
--- TODO This needs to be improved because it holds for truncSetLL as well.
-tr-ext⇒id : ∀{i u pll ll s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside (extend ind s) ind}} →  truncOISetLL (extend ind s) ind ≡ s
-tr-ext⇒id ↓ {{onlyInsideCs↓}} = refl
-tr-ext⇒id (ind ←∧) {{onlyInsideC←∧←∧ oi}} = tr-ext⇒id ind
-tr-ext⇒id (∧→ ind) {{onlyInsideC∧→∧→ oi}} = tr-ext⇒id ind
-tr-ext⇒id (ind ←∨) {{onlyInsideC←∨←∨ oi}} = tr-ext⇒id ind
-tr-ext⇒id (∨→ ind) {{onlyInsideC∨→∨→ oi}} = tr-ext⇒id ind
-tr-ext⇒id (ind ←∂) {{onlyInsideC←∂←∂ oi}} = tr-ext⇒id ind
-tr-ext⇒id (∂→ ind) {{onlyInsideC∂→∂→ oi}} = tr-ext⇒id ind
+  trunc≡∅⇒¬mrpls≡∅ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → (truncSetLL s ind ≡ ∅) → ¬ (mreplacePartOf (¬∅ s) to (∅ {ll = fll}) at ind ≡ ∅)
+  trunc≡∅⇒¬mrpls≡∅ s ind treq = ¬ho⇒¬del≡∅ s ind (trunc≡∅⇒¬ho s ind treq)
 
 
--- TODO This needs to be improved because it holds for truncSetLL as well.
-≤⇒tr≤ : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → ss ≤s s → {{ loi : onlyInside ss ind}} → {{oi : onlyInside s ind}} → truncOISetLL ss ind ≤s truncOISetLL s ind
-≤⇒tr≤ ↓ x = x
-≤⇒tr≤ (ind ←∧) ≤id {{onlyInsideC←∧←∧ loi}} {{onlyInsideC←∧←∧ oi}} = ≤⇒tr≤ ind ≤id
-≤⇒tr≤ (ind ←∧) (≤←∧ x) {{onlyInsideC←∧←∧ loi}} {{onlyInsideC←∧←∧ oi}} = ≤⇒tr≤ ind x
-≤⇒tr≤ (∧→ ind) ≤id {{onlyInsideC∧→∧→ loi}} {{onlyInsideC∧→∧→ oi}} = ≤⇒tr≤ ind ≤id
-≤⇒tr≤ (∧→ ind) (≤←∧ x) {{loi}} {{()}}
-≤⇒tr≤ (∧→ ind) (≤∧→ x) {{onlyInsideC∧→∧→ loi}} {{onlyInsideC∧→∧→ oi}} = ≤⇒tr≤ ind x
-≤⇒tr≤ (∧→ ind) (≤←∧→ x x₁) {{loi}} {{()}}
-≤⇒tr≤ (∧→ ind) (≤d←∧ x) {{loi}} {{()}}
-≤⇒tr≤ (∧→ ind) (≤d∧→ x) {{loi}} {{()}}
-≤⇒tr≤ (ind ←∨) ≤id {{onlyInsideC←∨←∨ loi}} {{onlyInsideC←∨←∨ oi}} = ≤⇒tr≤ ind ≤id
-≤⇒tr≤ (ind ←∨) (≤←∨ x) {{onlyInsideC←∨←∨ loi}} {{onlyInsideC←∨←∨ oi}} = ≤⇒tr≤ ind x
-≤⇒tr≤ (∨→ ind) ≤id {{onlyInsideC∨→∨→ loi}} {{onlyInsideC∨→∨→ oi}} = ≤⇒tr≤ ind ≤id
-≤⇒tr≤ (∨→ ind) (≤←∨ x) {{loi}} {{()}}
-≤⇒tr≤ (∨→ ind) (≤∨→ x) {{onlyInsideC∨→∨→ loi}} {{onlyInsideC∨→∨→ oi}} = ≤⇒tr≤ ind x
-≤⇒tr≤ (∨→ ind) (≤←∨→ x x₁) {{loi}} {{()}}
-≤⇒tr≤ (∨→ ind) (≤d←∨ x) {{loi}} {{()}}
-≤⇒tr≤ (∨→ ind) (≤d∨→ x) {{loi}} {{()}}
-≤⇒tr≤ (ind ←∂) ≤id {{onlyInsideC←∂←∂ loi}} {{onlyInsideC←∂←∂ oi}} = ≤⇒tr≤ ind ≤id
-≤⇒tr≤ (ind ←∂) (≤←∂ x) {{onlyInsideC←∂←∂ loi}} {{onlyInsideC←∂←∂ oi}} = ≤⇒tr≤ ind x
-≤⇒tr≤ (∂→ ind) ≤id {{onlyInsideC∂→∂→ loi}} {{onlyInsideC∂→∂→ oi}} = ≤⇒tr≤ ind ≤id
-≤⇒tr≤ (∂→ ind) (≤←∂ x) {{loi}} {{()}}
-≤⇒tr≤ (∂→ ind) (≤∂→ x) {{onlyInsideC∂→∂→ loi}} {{onlyInsideC∂→∂→ oi}} = ≤⇒tr≤ ind x
-≤⇒tr≤ (∂→ ind) (≤←∂→ x x₁) {{loi}} {{()}}
-≤⇒tr≤ (∂→ ind) (≤d←∂ x) {{loi}} {{()}}
-≤⇒tr≤ (∂→ ind) (≤d∂→ x) {{loi}} {{()}}
+  ho⇒¬trunc≡∅ : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                 → (prf : hitsAtLeastOnce s ind) → ¬ (truncSetLL s ind ≡ ∅)
+  ho⇒¬trunc≡∅ s ind prf x = trunc≡∅⇒¬ho s ind x prf
+
+
+
+
+  oi⇒¬trunc≡∅ : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                 → (prf : onlyInside s ind) → ¬ (truncSetLL s ind ≡ ∅)
+  oi⇒¬trunc≡∅ s ind prf = ho⇒¬trunc≡∅ s ind (onlyInside⇒hitsAtLeastOnce s ind prf)
+
+
+
+
+
+-- The ≤s relationship and hitsAtLeastOnce and onlyInside
+
+  oi&ss≤s⇒oiss : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                 → (oi : onlyInside s ind) → ss ≤s s → onlyInside ss ind
+  oi&ss≤s⇒oiss ↓ ss ↓ oi eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss ↓ ss (x ←∧) () eq
+  oi&ss≤s⇒oiss ↓ ss (∧→ x) () eq
+  oi&ss≤s⇒oiss ↓ ss (x ←∨) () eq
+  oi&ss≤s⇒oiss ↓ ss (∨→ x) () eq
+  oi&ss≤s⇒oiss ↓ ss (x ←∂) () eq
+  oi&ss≤s⇒oiss ↓ ss (∂→ x) () eq
+  oi&ss≤s⇒oiss (s ←∧) ss .↓ onlyInsideCs↓ eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (s ←∧) (sx ←∧) (ind ←∧) (onlyInsideC←∧←∧ x) (≤←∧ x₁) = onlyInsideC←∧←∧ (oi&ss≤s⇒oiss s sx ind x x₁)
+  oi&ss≤s⇒oiss (∧→ s) ss .↓ onlyInsideCs↓ eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (∧→ s) (∧→ sx) (∧→ ind) (onlyInsideC∧→∧→ x) (≤∧→ x₁) = onlyInsideC∧→∧→ (oi&ss≤s⇒oiss s sx ind x x₁)
+  oi&ss≤s⇒oiss (s ←∧→ s₁) ss ↓ oi eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (s ←∧→ s₁) ss (x ←∧) () eq
+  oi&ss≤s⇒oiss (s ←∧→ s₁) ss (∧→ x) () eq
+  oi&ss≤s⇒oiss (s ←∨) ss .↓ onlyInsideCs↓ eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (s ←∨) (sx ←∨) (ind ←∨) (onlyInsideC←∨←∨ x) (≤←∨ x₁) = onlyInsideC←∨←∨ (oi&ss≤s⇒oiss s sx ind x x₁)
+  oi&ss≤s⇒oiss (∨→ s) ss .↓ onlyInsideCs↓ eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (∨→ s) (∨→ sx) (∨→ ind) (onlyInsideC∨→∨→ x) (≤∨→ x₁) = onlyInsideC∨→∨→ (oi&ss≤s⇒oiss s sx ind x x₁)
+  oi&ss≤s⇒oiss (s ←∨→ s₁) ss ↓ oi eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (s ←∨→ s₁) ss (x ←∨) () eq
+  oi&ss≤s⇒oiss (s ←∨→ s₁) ss (∨→ x) () eq
+  oi&ss≤s⇒oiss (s ←∂) ss .↓ onlyInsideCs↓ eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (s ←∂) (sx ←∂) (ind ←∂) (onlyInsideC←∂←∂ x) (≤←∂ x₁) = onlyInsideC←∂←∂ (oi&ss≤s⇒oiss s sx ind x x₁)
+  oi&ss≤s⇒oiss (∂→ s) ss .↓ onlyInsideCs↓ eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (∂→ s) (∂→ sx) (∂→ ind) (onlyInsideC∂→∂→ x) (≤∂→ x₁) = onlyInsideC∂→∂→ (oi&ss≤s⇒oiss s sx ind x x₁)
+  oi&ss≤s⇒oiss (s ←∂→ s₁) ss ↓ oi eq = onlyInsideCs↓
+  oi&ss≤s⇒oiss (s ←∂→ s₁) ss (x ←∂) () eq
+  oi&ss≤s⇒oiss (s ←∂→ s₁) ss (∂→ x) () eq
+
+
+  ho&s≤ss⇒hoss : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                 → (ho : hitsAtLeastOnce s ind) → s ≤s ss → hitsAtLeastOnce ss ind
+  ho&s≤ss⇒hoss ↓ ↓ ind ho eq = ho
+  ho&s≤ss⇒hoss ↓ (x ←∧) ind ho ()
+  ho&s≤ss⇒hoss ↓ (∧→ x) ind ho ()
+  ho&s≤ss⇒hoss ↓ (x ←∧→ x₁) ind ho ()
+  ho&s≤ss⇒hoss ↓ (x ←∨) ind ho ()
+  ho&s≤ss⇒hoss ↓ (∨→ x) ind ho ()
+  ho&s≤ss⇒hoss ↓ (x ←∨→ x₁) ind ho ()
+  ho&s≤ss⇒hoss ↓ (x ←∂) ind ho ()
+  ho&s≤ss⇒hoss ↓ (∂→ x) ind ho ()
+  ho&s≤ss⇒hoss ↓ (x ←∂→ x₁) ind ho ()
+  ho&s≤ss⇒hoss (s ←∧) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (s ←∧) (x ←∧) .↓ hitsAtLeastOnce←∧↓ eq = hitsAtLeastOnce←∧↓
+  ho&s≤ss⇒hoss (s ←∧) (x ←∧) (ind ←∧) (hitsAtLeastOnce←∧←∧ x₁) (≤←∧ x₂) = hitsAtLeastOnce←∧←∧ (ho&s≤ss⇒hoss s x ind x₁ x₂)
+  ho&s≤ss⇒hoss (s ←∧) (∧→ ↓) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ ↓) (x ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ ↓) (∧→ x) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∧)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∧)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∧)) (∧→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∧→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∧→ x)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∧→ x)) (∧→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∧→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∧→ x₁)) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∧→ x₁)) (∧→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∨)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∨)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∨)) (∧→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∨→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∨→ x)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∨→ x)) (∧→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∨→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∨→ x₁)) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∨→ x₁)) (∧→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∂)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∂)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∂)) (∧→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∂→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∂→ x)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (∂→ x)) (∧→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∂→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∂→ x₁)) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧) (∧→ (x ←∂→ x₁)) (∧→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∧) (x ←∧→ x₁) .↓ hitsAtLeastOnce←∧↓ eq = hitsAtLeastOnce←∧→↓
+  ho&s≤ss⇒hoss (s ←∧) (x ←∧→ x₁) (ind ←∧) (hitsAtLeastOnce←∧←∧ x₂) (≤d←∧ x₃) = hitsAtLeastOnce←∧→←∧ (ho&s≤ss⇒hoss s x ind x₂ x₃)
+  ho&s≤ss⇒hoss (∧→ s) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (∧→ s) (↓ ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) (↓ ←∧) (x ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) (↓ ←∧) (∧→ x) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∧) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∧) ←∧) (x₁ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∧) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((∧→ x) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((∧→ x) ←∧) (x₁ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((∧→ x) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∧→ x₁) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∧→ x₁) ←∧) (x₂ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∧→ x₁) ←∧) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∨) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∨) ←∧) (x₁ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∨) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((∨→ x) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((∨→ x) ←∧) (x₁ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((∨→ x) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∨→ x₁) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∨→ x₁) ←∧) (x₂ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∨→ x₁) ←∧) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∂) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∂) ←∧) (x₁ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∂) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((∂→ x) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((∂→ x) ←∧) (x₁ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((∂→ x) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∂→ x₁) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∂→ x₁) ←∧) (x₂ ←∧) () eq
+  ho&s≤ss⇒hoss (∧→ s) ((x ←∂→ x₁) ←∧) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (∧→ s) (∧→ x) .↓ hitsAtLeastOnce∧→↓ eq = hitsAtLeastOnce∧→↓
+  ho&s≤ss⇒hoss (∧→ s) (∧→ x) (∧→ ind) (hitsAtLeastOnce∧→∧→ x₁) (≤∧→ x₂) = hitsAtLeastOnce∧→∧→ (ho&s≤ss⇒hoss s x ind x₁ x₂)
+  ho&s≤ss⇒hoss (∧→ s) (x ←∧→ x₁) .↓ hitsAtLeastOnce∧→↓ eq = hitsAtLeastOnce←∧→↓
+  ho&s≤ss⇒hoss (∧→ s) (x ←∧→ x₁) (∧→ ind) (hitsAtLeastOnce∧→∧→ x₂) (≤d∧→ x₃) = hitsAtLeastOnce←∧→∧→ (ho&s≤ss⇒hoss s x₁ ind x₂ x₃)
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (↓ ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (↓ ←∧) (x ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (↓ ←∧) (∧→ x) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∧) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∧) ←∧) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∧) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∧→ x) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∧→ x) ←∧) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∧→ x) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∧→ x₁) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∧→ x₁) ←∧) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∧→ x₁) ←∧) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∨) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∨) ←∧) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∨) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∨→ x) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∨→ x) ←∧) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∨→ x) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∨→ x₁) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∨→ x₁) ←∧) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∨→ x₁) ←∧) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∂) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∂) ←∧) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∂) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∂→ x) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∂→ x) ←∧) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((∂→ x) ←∧) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∂→ x₁) ←∧) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∂→ x₁) ←∧) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) ((x ←∂→ x₁) ←∧) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ ↓) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ ↓) (x ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ ↓) (∧→ x) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∧)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∧)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∧)) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∧→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∧→ x)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∧→ x)) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∧→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∧→ x₁)) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∧→ x₁)) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∨)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∨)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∨)) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∨→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∨→ x)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∨→ x)) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∨→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∨→ x₁)) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∨→ x₁)) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∂)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∂)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∂)) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∂→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∂→ x)) (x₁ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (∂→ x)) (∧→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∂→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∂→ x₁)) (x₂ ←∧) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (∧→ (x ←∂→ x₁)) (∧→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (x ←∧→ x₁) .↓ hitsAtLeastOnce←∧→↓ eq = hitsAtLeastOnce←∧→↓
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (x ←∧→ x₁) (ind ←∧) (hitsAtLeastOnce←∧→←∧ x₂) (≤←∧→ x₃ x₄) = hitsAtLeastOnce←∧→←∧ (ho&s≤ss⇒hoss s x ind x₂ x₃)
+  ho&s≤ss⇒hoss (s ←∧→ s₁) (x ←∧→ x₁) (∧→ ind) (hitsAtLeastOnce←∧→∧→ x₂) (≤←∧→ x₃ x₄) = hitsAtLeastOnce←∧→∧→ (ho&s≤ss⇒hoss s₁ x₁ ind x₂ x₄)
+  ho&s≤ss⇒hoss (s ←∨) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (s ←∨) (x ←∨) .↓ hitsAtLeastOnce←∨↓ eq = hitsAtLeastOnce←∨↓
+  ho&s≤ss⇒hoss (s ←∨) (x ←∨) (ind ←∨) (hitsAtLeastOnce←∨←∨ x₁) (≤←∨ x₂) = hitsAtLeastOnce←∨←∨ (ho&s≤ss⇒hoss s x ind x₁ x₂)
+  ho&s≤ss⇒hoss (s ←∨) (∨→ ↓) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ ↓) (x ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ ↓) (∨→ x) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∨)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∨)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∨)) (∨→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∨→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∨→ x)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∨→ x)) (∨→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∨→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∨→ x₁)) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∨→ x₁)) (∨→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∧)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∧)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∧)) (∨→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∧→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∧→ x)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∧→ x)) (∨→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∧→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∧→ x₁)) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∧→ x₁)) (∨→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∂)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∂)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∂)) (∨→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∂→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∂→ x)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (∂→ x)) (∨→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∂→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∂→ x₁)) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨) (∨→ (x ←∂→ x₁)) (∨→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∨) (x ←∨→ x₁) .↓ hitsAtLeastOnce←∨↓ eq = hitsAtLeastOnce←∨→↓
+  ho&s≤ss⇒hoss (s ←∨) (x ←∨→ x₁) (ind ←∨) (hitsAtLeastOnce←∨←∨ x₂) (≤d←∨ x₃) = hitsAtLeastOnce←∨→←∨ (ho&s≤ss⇒hoss s x ind x₂ x₃)
+  ho&s≤ss⇒hoss (∨→ s) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (∨→ s) (↓ ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) (↓ ←∨) (x ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) (↓ ←∨) (∨→ x) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∨) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∨) ←∨) (x₁ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∨) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((∨→ x) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((∨→ x) ←∨) (x₁ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((∨→ x) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∨→ x₁) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∨→ x₁) ←∨) (x₂ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∨→ x₁) ←∨) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∧) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∧) ←∨) (x₁ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∧) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((∧→ x) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((∧→ x) ←∨) (x₁ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((∧→ x) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∧→ x₁) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∧→ x₁) ←∨) (x₂ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∧→ x₁) ←∨) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∂) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∂) ←∨) (x₁ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∂) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((∂→ x) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((∂→ x) ←∨) (x₁ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((∂→ x) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∂→ x₁) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∂→ x₁) ←∨) (x₂ ←∨) () eq
+  ho&s≤ss⇒hoss (∨→ s) ((x ←∂→ x₁) ←∨) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (∨→ s) (∨→ x) .↓ hitsAtLeastOnce∨→↓ eq = hitsAtLeastOnce∨→↓
+  ho&s≤ss⇒hoss (∨→ s) (∨→ x) (∨→ ind) (hitsAtLeastOnce∨→∨→ x₁) (≤∨→ x₂) = hitsAtLeastOnce∨→∨→ (ho&s≤ss⇒hoss s x ind x₁ x₂)
+  ho&s≤ss⇒hoss (∨→ s) (x ←∨→ x₁) .↓ hitsAtLeastOnce∨→↓ eq = hitsAtLeastOnce←∨→↓
+  ho&s≤ss⇒hoss (∨→ s) (x ←∨→ x₁) (∨→ ind) (hitsAtLeastOnce∨→∨→ x₂) (≤d∨→ x₃) = hitsAtLeastOnce←∨→∨→ (ho&s≤ss⇒hoss s x₁ ind x₂ x₃)
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (↓ ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (↓ ←∨) (x ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (↓ ←∨) (∨→ x) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∨) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∨) ←∨) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∨) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∨→ x) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∨→ x) ←∨) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∨→ x) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∨→ x₁) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∨→ x₁) ←∨) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∨→ x₁) ←∨) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∧) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∧) ←∨) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∧) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∧→ x) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∧→ x) ←∨) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∧→ x) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∧→ x₁) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∧→ x₁) ←∨) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∧→ x₁) ←∨) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∂) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∂) ←∨) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∂) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∂→ x) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∂→ x) ←∨) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((∂→ x) ←∨) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∂→ x₁) ←∨) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∂→ x₁) ←∨) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) ((x ←∂→ x₁) ←∨) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ ↓) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ ↓) (x ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ ↓) (∨→ x) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∨)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∨)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∨)) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∨→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∨→ x)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∨→ x)) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∨→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∨→ x₁)) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∨→ x₁)) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∧)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∧)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∧)) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∧→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∧→ x)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∧→ x)) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∧→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∧→ x₁)) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∧→ x₁)) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∂)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∂)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∂)) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∂→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∂→ x)) (x₁ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (∂→ x)) (∨→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∂→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∂→ x₁)) (x₂ ←∨) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (∨→ (x ←∂→ x₁)) (∨→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (x ←∨→ x₁) .↓ hitsAtLeastOnce←∨→↓ eq = hitsAtLeastOnce←∨→↓
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (x ←∨→ x₁) (ind ←∨) (hitsAtLeastOnce←∨→←∨ x₂) (≤←∨→ x₃ x₄) = hitsAtLeastOnce←∨→←∨ (ho&s≤ss⇒hoss s x ind x₂ x₃)
+  ho&s≤ss⇒hoss (s ←∨→ s₁) (x ←∨→ x₁) (∨→ ind) (hitsAtLeastOnce←∨→∨→ x₂) (≤←∨→ x₃ x₄) = hitsAtLeastOnce←∨→∨→ (ho&s≤ss⇒hoss s₁ x₁ ind x₂ x₄)
+  ho&s≤ss⇒hoss (s ←∂) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (s ←∂) (x ←∂) .↓ hitsAtLeastOnce←∂↓ eq = hitsAtLeastOnce←∂↓
+  ho&s≤ss⇒hoss (s ←∂) (x ←∂) (ind ←∂) (hitsAtLeastOnce←∂←∂ x₁) (≤←∂ x₂) = hitsAtLeastOnce←∂←∂ (ho&s≤ss⇒hoss s x ind x₁ x₂)
+  ho&s≤ss⇒hoss (s ←∂) (∂→ ↓) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ ↓) (x ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ ↓) (∂→ x) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∂)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∂)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∂)) (∂→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∂→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∂→ x)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∂→ x)) (∂→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∂→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∂→ x₁)) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∂→ x₁)) (∂→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∨)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∨)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∨)) (∂→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∨→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∨→ x)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∨→ x)) (∂→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∨→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∨→ x₁)) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∨→ x₁)) (∂→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∧)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∧)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∧)) (∂→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∧→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∧→ x)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (∧→ x)) (∂→ x₁) () eq
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∧→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∧→ x₁)) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂) (∂→ (x ←∧→ x₁)) (∂→ x₂) () eq
+  ho&s≤ss⇒hoss (s ←∂) (x ←∂→ x₁) .↓ hitsAtLeastOnce←∂↓ eq = hitsAtLeastOnce←∂→↓
+  ho&s≤ss⇒hoss (s ←∂) (x ←∂→ x₁) (ind ←∂) (hitsAtLeastOnce←∂←∂ x₂) (≤d←∂ x₃) = hitsAtLeastOnce←∂→←∂ (ho&s≤ss⇒hoss s x ind x₂ x₃)
+  ho&s≤ss⇒hoss (∂→ s) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (∂→ s) (↓ ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) (↓ ←∂) (x ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) (↓ ←∂) (∂→ x) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∂) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∂) ←∂) (x₁ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∂) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((∂→ x) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((∂→ x) ←∂) (x₁ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((∂→ x) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∂→ x₁) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∂→ x₁) ←∂) (x₂ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∂→ x₁) ←∂) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∨) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∨) ←∂) (x₁ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∨) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((∨→ x) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((∨→ x) ←∂) (x₁ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((∨→ x) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∨→ x₁) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∨→ x₁) ←∂) (x₂ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∨→ x₁) ←∂) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∧) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∧) ←∂) (x₁ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∧) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((∧→ x) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((∧→ x) ←∂) (x₁ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((∧→ x) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∧→ x₁) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∧→ x₁) ←∂) (x₂ ←∂) () eq
+  ho&s≤ss⇒hoss (∂→ s) ((x ←∧→ x₁) ←∂) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (∂→ s) (∂→ x) .↓ hitsAtLeastOnce∂→↓ eq = hitsAtLeastOnce∂→↓
+  ho&s≤ss⇒hoss (∂→ s) (∂→ x) (∂→ ind) (hitsAtLeastOnce∂→∂→ x₁) (≤∂→ x₂) = hitsAtLeastOnce∂→∂→ (ho&s≤ss⇒hoss s x ind x₁ x₂)
+  ho&s≤ss⇒hoss (∂→ s) (x ←∂→ x₁) .↓ hitsAtLeastOnce∂→↓ eq = hitsAtLeastOnce←∂→↓
+  ho&s≤ss⇒hoss (∂→ s) (x ←∂→ x₁) (∂→ ind) (hitsAtLeastOnce∂→∂→ x₂) (≤d∂→ x₃) = hitsAtLeastOnce←∂→∂→ (ho&s≤ss⇒hoss s x₁ ind x₂ x₃)
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ↓ ind ho eq = hitsAtLeastOnce↓
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (↓ ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (↓ ←∂) (x ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (↓ ←∂) (∂→ x) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∂) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∂) ←∂) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∂) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∂→ x) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∂→ x) ←∂) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∂→ x) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∂→ x₁) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∂→ x₁) ←∂) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∂→ x₁) ←∂) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∨) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∨) ←∂) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∨) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∨→ x) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∨→ x) ←∂) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∨→ x) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∨→ x₁) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∨→ x₁) ←∂) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∨→ x₁) ←∂) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∧) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∧) ←∂) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∧) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∧→ x) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∧→ x) ←∂) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((∧→ x) ←∂) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∧→ x₁) ←∂) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∧→ x₁) ←∂) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) ((x ←∧→ x₁) ←∂) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ ↓) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ ↓) (x ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ ↓) (∂→ x) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∂)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∂)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∂)) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∂→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∂→ x)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∂→ x)) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∂→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∂→ x₁)) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∂→ x₁)) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∨)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∨)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∨)) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∨→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∨→ x)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∨→ x)) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∨→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∨→ x₁)) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∨→ x₁)) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∧)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∧)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∧)) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∧→ x)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∧→ x)) (x₁ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (∧→ x)) (∂→ x₁) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∧→ x₁)) ↓ ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∧→ x₁)) (x₂ ←∂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (∂→ (x ←∧→ x₁)) (∂→ x₂) ho ()
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (x ←∂→ x₁) .↓ hitsAtLeastOnce←∂→↓ eq = hitsAtLeastOnce←∂→↓
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (x ←∂→ x₁) (ind ←∂) (hitsAtLeastOnce←∂→←∂ x₂) (≤←∂→ x₃ x₄) = hitsAtLeastOnce←∂→←∂ (ho&s≤ss⇒hoss s x ind x₂ x₃)
+  ho&s≤ss⇒hoss (s ←∂→ s₁) (x ←∂→ x₁) (∂→ ind) (hitsAtLeastOnce←∂→∂→ x₂) (≤←∂→ x₃ x₄) = hitsAtLeastOnce←∂→∂→ (ho&s≤ss⇒hoss s₁ x₁ ind x₂ x₄)
+
+
+
+
+
+
+
+
+
+  truncHOSetLL : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                → hitsAtLeastOnce s ind → SetLL pll
+  truncHOSetLL s ind ho with truncSetLL s ind | ho⇒¬trunc≡∅ s ind ho
+  truncHOSetLL s ind ho | ∅ | e = ⊥-elim (e refl)
+  truncHOSetLL s ind ho | ¬∅ x | e = x
+
+
+-- truncHOSetLL preserves the ≤s relationship
+
+  ≤⇒tr≤ : ∀{i u pll ll} → ∀ s ss → (ind : IndexLL {i} {u} pll ll) → s ≤s ss
+          → (lho : hitsAtLeastOnce s ind) → (rho : hitsAtLeastOnce ss ind)
+          → truncHOSetLL s ind lho ≤s truncHOSetLL ss ind rho
+  ≤⇒tr≤ s ss ↓ eq lho rho = eq
+  ≤⇒tr≤ ↓ ↓ (ind ←∧) eq lho rho = ≤↓
+  ≤⇒tr≤ ↓ (ss ←∧) (ind ←∧) () lho rho
+  ≤⇒tr≤ ↓ (∧→ ss) (ind ←∧) () lho rho
+  ≤⇒tr≤ ↓ (ss ←∧→ ss₁) (ind ←∧) () lho rho
+  ≤⇒tr≤ (s ←∧) ↓ (ind ←∧) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∧) (ss ←∧) (ind ←∧) (≤←∧ eq) (hitsAtLeastOnce←∧←∧ lho) (hitsAtLeastOnce←∧←∧ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | e | q | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | q | t = ⊥-elim (q refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | q | t = t
+  ≤⇒tr≤ (s ←∧) (∧→ ss) (ind ←∧) () lho rho
+  ≤⇒tr≤ (s ←∧) (ss ←∧→ ss₁) (ind ←∧) (≤d←∧ eq) (hitsAtLeastOnce←∧←∧ lho) (hitsAtLeastOnce←∧→←∧ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | q | e | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | e | t = ⊥-elim (e refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | e | t = t
+  ≤⇒tr≤ (∧→ s) ss (ind ←∧) eq () rho
+  ≤⇒tr≤ (s ←∧→ s₁) ↓ (ind ←∧) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∧→ s₁) (ss ←∧) (ind ←∧) () lho rho
+  ≤⇒tr≤ (s ←∧→ s₁) (∧→ ss) (ind ←∧) () lho rho
+  ≤⇒tr≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (ind ←∧) (≤←∧→ eq1 eq2) (hitsAtLeastOnce←∧→←∧ lho) (hitsAtLeastOnce←∧→←∧ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq1 lho rho 
+  ... | ∅ | e | r | g | t = ⊥-elim (e refl)
+  ... | ¬∅ x | e | ∅ | g | t = ⊥-elim (g refl)
+  ... | ¬∅ x | e | ¬∅ x₁ | g | t = t
+  ≤⇒tr≤ ↓ ↓ (∧→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ ↓ (ss ←∧) (∧→ ind) () lho rho
+  ≤⇒tr≤ ↓ (∧→ ss) (∧→ ind) () lho rho
+  ≤⇒tr≤ ↓ (ss ←∧→ ss₁) (∧→ ind) () lho rho
+  ≤⇒tr≤ (s ←∧) ss (∧→ ind) eq () rho
+  ≤⇒tr≤ (∧→ s) ↓ (∧→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ (∧→ s) (ss ←∧) (∧→ ind) () lho rho
+  ≤⇒tr≤ (∧→ s) (∧→ ss) (∧→ ind) (≤∧→ eq) (hitsAtLeastOnce∧→∧→ lho) (hitsAtLeastOnce∧→∧→ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | e | q | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | q | t = ⊥-elim (q refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | q | t = t
+  ≤⇒tr≤ (∧→ s) (ss ←∧→ ss₁) (∧→ ind) (≤d∧→ eq) (hitsAtLeastOnce∧→∧→ lho) (hitsAtLeastOnce←∧→∧→ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss₁ ind | ho⇒¬trunc≡∅ ss₁ ind rho | ≤⇒tr≤ s ss₁ ind eq lho rho
+  ... | ∅ | r | q | e | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | e | t = ⊥-elim (e refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | e | t = t
+  ≤⇒tr≤ (s ←∧→ s₁) ↓ (∧→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∧→ s₁) (ss ←∧) (∧→ ind) () lho rho
+  ≤⇒tr≤ (s ←∧→ s₁) (∧→ ss) (∧→ ind) () lho rho
+  ≤⇒tr≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (∧→ ind) (≤←∧→ eq eq₁) (hitsAtLeastOnce←∧→∧→ lho) (hitsAtLeastOnce←∧→∧→ rho)
+    with truncSetLL s₁ ind | ho⇒¬trunc≡∅ s₁ ind lho | truncSetLL ss₁ ind | ho⇒¬trunc≡∅ ss₁ ind rho | ≤⇒tr≤ s₁ ss₁ ind eq₁ lho rho 
+  ... | ∅ | e | r | g | t = ⊥-elim (e refl)
+  ... | ¬∅ x | e | ∅ | g | t = ⊥-elim (g refl)
+  ... | ¬∅ x | e | ¬∅ x₁ | g | t = t
+  ≤⇒tr≤ ↓ ↓ (ind ←∨) eq lho rho = ≤↓
+  ≤⇒tr≤ ↓ (ss ←∨) (ind ←∨) () lho rho
+  ≤⇒tr≤ ↓ (∨→ ss) (ind ←∨) () lho rho
+  ≤⇒tr≤ ↓ (ss ←∨→ ss₁) (ind ←∨) () lho rho
+  ≤⇒tr≤ (s ←∨) ↓ (ind ←∨) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∨) (ss ←∨) (ind ←∨) (≤←∨ eq) (hitsAtLeastOnce←∨←∨ lho) (hitsAtLeastOnce←∨←∨ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | e | q | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | q | t = ⊥-elim (q refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | q | t = t
+  ≤⇒tr≤ (s ←∨) (∨→ ss) (ind ←∨) () lho rho
+  ≤⇒tr≤ (s ←∨) (ss ←∨→ ss₁) (ind ←∨) (≤d←∨ eq) (hitsAtLeastOnce←∨←∨ lho) (hitsAtLeastOnce←∨→←∨ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | q | e | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | e | t = ⊥-elim (e refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | e | t = t
+  ≤⇒tr≤ (∨→ s) ss (ind ←∨) eq () rho
+  ≤⇒tr≤ (s ←∨→ s₁) ↓ (ind ←∨) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∨→ s₁) (ss ←∨) (ind ←∨) () lho rho
+  ≤⇒tr≤ (s ←∨→ s₁) (∨→ ss) (ind ←∨) () lho rho
+  ≤⇒tr≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (ind ←∨) (≤←∨→ eq1 eq2) (hitsAtLeastOnce←∨→←∨ lho) (hitsAtLeastOnce←∨→←∨ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq1 lho rho 
+  ... | ∅ | e | r | g | t = ⊥-elim (e refl)
+  ... | ¬∅ x | e | ∅ | g | t = ⊥-elim (g refl)
+  ... | ¬∅ x | e | ¬∅ x₁ | g | t = t
+  ≤⇒tr≤ ↓ ↓ (∨→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ ↓ (ss ←∨) (∨→ ind) () lho rho
+  ≤⇒tr≤ ↓ (∨→ ss) (∨→ ind) () lho rho
+  ≤⇒tr≤ ↓ (ss ←∨→ ss₁) (∨→ ind) () lho rho
+  ≤⇒tr≤ (s ←∨) ss (∨→ ind) eq () rho
+  ≤⇒tr≤ (∨→ s) ↓ (∨→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ (∨→ s) (ss ←∨) (∨→ ind) () lho rho
+  ≤⇒tr≤ (∨→ s) (∨→ ss) (∨→ ind) (≤∨→ eq) (hitsAtLeastOnce∨→∨→ lho) (hitsAtLeastOnce∨→∨→ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | e | q | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | q | t = ⊥-elim (q refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | q | t = t
+  ≤⇒tr≤ (∨→ s) (ss ←∨→ ss₁) (∨→ ind) (≤d∨→ eq) (hitsAtLeastOnce∨→∨→ lho) (hitsAtLeastOnce←∨→∨→ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss₁ ind | ho⇒¬trunc≡∅ ss₁ ind rho | ≤⇒tr≤ s ss₁ ind eq lho rho
+  ... | ∅ | r | q | e | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | e | t = ⊥-elim (e refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | e | t = t
+  ≤⇒tr≤ (s ←∨→ s₁) ↓ (∨→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∨→ s₁) (ss ←∨) (∨→ ind) () lho rho
+  ≤⇒tr≤ (s ←∨→ s₁) (∨→ ss) (∨→ ind) () lho rho
+  ≤⇒tr≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (∨→ ind) (≤←∨→ eq eq₁) (hitsAtLeastOnce←∨→∨→ lho) (hitsAtLeastOnce←∨→∨→ rho)
+    with truncSetLL s₁ ind | ho⇒¬trunc≡∅ s₁ ind lho | truncSetLL ss₁ ind | ho⇒¬trunc≡∅ ss₁ ind rho | ≤⇒tr≤ s₁ ss₁ ind eq₁ lho rho 
+  ... | ∅ | e | r | g | t = ⊥-elim (e refl)
+  ... | ¬∅ x | e | ∅ | g | t = ⊥-elim (g refl)
+  ... | ¬∅ x | e | ¬∅ x₁ | g | t = t
+  ≤⇒tr≤ ↓ ↓ (ind ←∂) eq lho rho = ≤↓
+  ≤⇒tr≤ ↓ (ss ←∂) (ind ←∂) () lho rho
+  ≤⇒tr≤ ↓ (∂→ ss) (ind ←∂) () lho rho
+  ≤⇒tr≤ ↓ (ss ←∂→ ss₁) (ind ←∂) () lho rho
+  ≤⇒tr≤ (s ←∂) ↓ (ind ←∂) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∂) (ss ←∂) (ind ←∂) (≤←∂ eq) (hitsAtLeastOnce←∂←∂ lho) (hitsAtLeastOnce←∂←∂ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | e | q | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | q | t = ⊥-elim (q refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | q | t = t
+  ≤⇒tr≤ (s ←∂) (∂→ ss) (ind ←∂) () lho rho
+  ≤⇒tr≤ (s ←∂) (ss ←∂→ ss₁) (ind ←∂) (≤d←∂ eq) (hitsAtLeastOnce←∂←∂ lho) (hitsAtLeastOnce←∂→←∂ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | q | e | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | e | t = ⊥-elim (e refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | e | t = t
+  ≤⇒tr≤ (∂→ s) ss (ind ←∂) eq () rho
+  ≤⇒tr≤ (s ←∂→ s₁) ↓ (ind ←∂) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∂→ s₁) (ss ←∂) (ind ←∂) () lho rho
+  ≤⇒tr≤ (s ←∂→ s₁) (∂→ ss) (ind ←∂) () lho rho
+  ≤⇒tr≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (ind ←∂) (≤←∂→ eq1 eq2) (hitsAtLeastOnce←∂→←∂ lho) (hitsAtLeastOnce←∂→←∂ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq1 lho rho 
+  ... | ∅ | e | r | g | t = ⊥-elim (e refl)
+  ... | ¬∅ x | e | ∅ | g | t = ⊥-elim (g refl)
+  ... | ¬∅ x | e | ¬∅ x₁ | g | t = t
+  ≤⇒tr≤ ↓ ↓ (∂→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ ↓ (ss ←∂) (∂→ ind) () lho rho
+  ≤⇒tr≤ ↓ (∂→ ss) (∂→ ind) () lho rho
+  ≤⇒tr≤ ↓ (ss ←∂→ ss₁) (∂→ ind) () lho rho
+  ≤⇒tr≤ (s ←∂) ss (∂→ ind) eq () rho
+  ≤⇒tr≤ (∂→ s) ↓ (∂→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ (∂→ s) (ss ←∂) (∂→ ind) () lho rho
+  ≤⇒tr≤ (∂→ s) (∂→ ss) (∂→ ind) (≤∂→ eq) (hitsAtLeastOnce∂→∂→ lho) (hitsAtLeastOnce∂→∂→ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss ind | ho⇒¬trunc≡∅ ss ind rho | ≤⇒tr≤ s ss ind eq lho rho
+  ... | ∅ | r | e | q | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | q | t = ⊥-elim (q refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | q | t = t
+  ≤⇒tr≤ (∂→ s) (ss ←∂→ ss₁) (∂→ ind) (≤d∂→ eq) (hitsAtLeastOnce∂→∂→ lho) (hitsAtLeastOnce←∂→∂→ rho)
+    with truncSetLL s ind | ho⇒¬trunc≡∅ s ind lho | truncSetLL ss₁ ind | ho⇒¬trunc≡∅ ss₁ ind rho | ≤⇒tr≤ s ss₁ ind eq lho rho
+  ... | ∅ | r | q | e | t = ⊥-elim (r refl)
+  ... | ¬∅ x | r | ∅ | e | t = ⊥-elim (e refl)
+  ... | ¬∅ x | r | ¬∅ x₁ | e | t = t
+  ≤⇒tr≤ (s ←∂→ s₁) ↓ (∂→ ind) eq lho rho = ≤↓
+  ≤⇒tr≤ (s ←∂→ s₁) (ss ←∂) (∂→ ind) () lho rho
+  ≤⇒tr≤ (s ←∂→ s₁) (∂→ ss) (∂→ ind) () lho rho
+  ≤⇒tr≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (∂→ ind) (≤←∂→ eq eq₁) (hitsAtLeastOnce←∂→∂→ lho) (hitsAtLeastOnce←∂→∂→ rho)
+    with truncSetLL s₁ ind | ho⇒¬trunc≡∅ s₁ ind lho | truncSetLL ss₁ ind | ho⇒¬trunc≡∅ ss₁ ind rho | ≤⇒tr≤ s₁ ss₁ ind eq₁ lho rho 
+  ... | ∅ | e | r | g | t = ⊥-elim (e refl)
+  ... | ¬∅ x | e | ∅ | g | t = ⊥-elim (g refl)
+  ... | ¬∅ x | e | ¬∅ x₁ | g | t = t
+
+
+
+-- extend trunc leads to a loss of data, making the result ≤ s.
+
+  ≤s-extr : ∀{i u ll pll}→ (ind : IndexLL {i} {u} pll ll) → (s : SetLL ll) → (prf : hitsAtLeastOnce s ind)
+            → extend ind (truncHOSetLL s ind prf) ≤s s
+  ≤s-extr ↓ s prf = ≤s-refl s
+  ≤s-extr {ll = li ∧ ri} {pll} (ind ←∧) ↓ hitsAtLeastOnce↓ = ≤↓
+  ≤s-extr {ll = li ∧ ri} {pll} (ind ←∧) (s ←∧) (hitsAtLeastOnce←∧←∧ prf) 
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL li ind pll | replLL-id li ind pll refl | extendg ind x
+  ... | .li | refl | w = ≤←∧ e
+  ≤s-extr (ind ←∧) (∧→ s) ()
+  ≤s-extr {ll = li ∧ ri} {pll} (ind ←∧) (s ←∧→ s₁) (hitsAtLeastOnce←∧→←∧ prf) 
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL li ind pll | replLL-id li ind pll refl | extendg ind x
+  ... | .li | refl | w = ≤d←∧ e
+  ≤s-extr (∧→ ind) ↓ ho = ≤↓
+  ≤s-extr (∧→ ind) (s ←∧) ()
+  ≤s-extr {ll = li ∧ ri} {pll} (∧→ ind) (∧→ s) (hitsAtLeastOnce∧→∧→ prf)  
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind x
+  ... | .ri | refl | w = ≤∧→ e
+  ≤s-extr {ll = li ∧ ri} {pll} (∧→ ind) (s₁ ←∧→ s) (hitsAtLeastOnce←∧→∧→ prf)
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind x
+  ... | .ri | refl | w = ≤d∧→ e
+  ≤s-extr (ind ←∨) ↓ ho = ≤↓
+  ≤s-extr {ll = li ∨ ri} {pll} (ind ←∨) (s ←∨) (hitsAtLeastOnce←∨←∨ prf)  
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL li ind pll | replLL-id li ind pll refl | extendg ind x
+  ... | .li | refl | w = ≤←∨ e
+  ≤s-extr (ind ←∨) (∨→ s) ()
+  ≤s-extr {ll = li ∨ ri} {pll} (ind ←∨) (s ←∨→ s₁) (hitsAtLeastOnce←∨→←∨ prf)
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL li ind pll | replLL-id li ind pll refl | extendg ind x
+  ... | .li | refl | w = ≤d←∨ e
+  ≤s-extr (∨→ ind) ↓ ho = ≤↓
+  ≤s-extr (∨→ ind) (s ←∨) ()
+  ≤s-extr {ll = li ∨ ri} {pll} (∨→ ind) (∨→ s) (hitsAtLeastOnce∨→∨→ prf)  
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind x
+  ... | .ri | refl | w = ≤∨→ e
+  ≤s-extr {ll = li ∨ ri} {pll} (∨→ ind) (s₁ ←∨→ s) (hitsAtLeastOnce←∨→∨→ prf)
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind x
+  ... | .ri | refl | w = ≤d∨→ e
+  ≤s-extr (ind ←∂) ↓ ho = ≤↓
+  ≤s-extr {ll = li ∂ ri} {pll} (ind ←∂) (s ←∂) (hitsAtLeastOnce←∂←∂ prf)  
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL li ind pll | replLL-id li ind pll refl | extendg ind x
+  ... | .li | refl | w = ≤←∂ e
+  ≤s-extr (ind ←∂) (∂→ s) ()
+  ≤s-extr {ll = li ∂ ri} {pll} (ind ←∂) (s ←∂→ s₁) (hitsAtLeastOnce←∂→←∂ prf)
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL li ind pll | replLL-id li ind pll refl | extendg ind x
+  ... | .li | refl | w = ≤d←∂ e
+  ≤s-extr (∂→ ind) ↓ ho = ≤↓
+  ≤s-extr (∂→ ind) (s ←∂) ()
+  ≤s-extr {ll = li ∂ ri} {pll} (∂→ ind) (∂→ s) (hitsAtLeastOnce∂→∂→ prf)  
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind x
+  ... | .ri | refl | w = ≤∂→ e
+  ≤s-extr {ll = li ∂ ri} {pll} (∂→ ind) (s₁ ←∂→ s) (hitsAtLeastOnce←∂→∂→ prf)
+    with  truncSetLL s ind | ho⇒¬trunc≡∅ s ind prf | ≤s-extr ind s prf where
+  ... | ∅ | r | e = ⊥-elim (r refl)
+  ... | ¬∅ x | r | e with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind x
+  ... | .ri | refl | w = ≤d∂→ e
+
+
+
+
+-- Extending a set gives us onlyInside and hitsAtLeastOnce immediately because the rest is empty.
+--
+
+  test : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll)
+         → hitsAtLeastOnce (extend ind s) ind
+  test {pll = pll} {.pll} s ↓ = {!!}
+  test {pll = pll} {(li ∧ _)} s (ind ←∧) with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | test s ind 
+  ... | .li | refl | e | q = hitsAtLeastOnce←∧←∧ q
+  test {pll = pll} {(_ ∧ ri)} s (∧→ ind) with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | test s ind 
+  ... | .ri | refl | e | q = hitsAtLeastOnce∧→∧→ q
+  test {pll = pll} {(li ∨ _)} s (ind ←∨) = {!!}
+  test {pll = pll} {(_ ∨ ri)} s (∨→ ind) = {!!}
+  test {pll = pll} {(li ∂ _)} s (ind ←∂) = {!!}
+  test {pll = pll} {(_ ∂ ri)} s (∂→ ind) = {!!}
+  -- with replLL ll ind pll | replLL-id ll ind pll refl | extendg ind s | test s ind 
+--  ... | g | r | e | q | t = {!!}
+
+-- --
+-- --  e : ∀{i u pll ll s} → (ind : IndexLL {i} {u} pll ll)
+-- --                   → onlyInside (extend ind s) ind
+-- --  e ind oi eq = ?
+-- --
+-- --  -- Also prove transitivity of both hitsOnlyInsde and only inside.
+-- -- -- ex:  r : hitsOnlyInside s ind → hitsOnlyInside (truncHOSetLL s ind) ind2 → hitsOnlyInside (ind + ind2)
+-- --
+-- This will probably be provable from the previous lemmas.
+-- --  oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → (oi : onlyInside s ind)
+-- --                   → ss ≤s (truncHOSetLL s ind ho⇒oi) → onlyInside (extend ind ss) ind
+-- --  oi⇒ext-truncoi ind oi eq = ?
+-- --
+-- ---- --------------------
+
+
+
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → (ind : IndexLL rll ll) → ∀{x} → del s ind fll ≡ ¬∅ x → ¬ (contruct x ≡ ↓)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ s eq ↓ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ ↓ eq (ind ←∧) deq = ⊥-elim (eq refl)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧) eq (ind ←∧) deq with del s ind fll 
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧) eq (ind ←∧) () | ∅
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧) eq (ind ←∧) refl | ¬∅ di = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ (∧→ s) eq (ind ←∧) refl = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∧ rs} {fll = fll} (s ←∧→ s₁) eq (ind ←∧) deq with del s ind fll | inspect (λ x → del s x fll) ind
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∧ rs} {fll = fll} (s ←∧→ s₁) eq (ind ←∧) refl | ∅ | [ eq1 ] = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∧ rs} {fll = fll} (s ←∧→ s₁) eq (ind ←∧) refl | ¬∅ di | [ eq1 ] with isEq (contruct s) ↓
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∧ rs} {fll = fll} (s ←∧→ s₁) eq (ind ←∧) refl | ¬∅ di | [ eq1 ] | yes p with contruct s
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {i} {u} {rll = _} {ls ∧ rs} {fll} (s ←∧→ s₁) eq (ind ←∧) refl | ¬∅ di | [ eq1 ] | yes refl | .↓ = hf2 s₁ di hf where
+-- --     hf : ¬ (contruct s₁ ≡ ↓)
+-- --     hf x with contruct s₁
+-- --     hf refl | .↓ = ⊥-elim (eq refl)
+
+-- --     hf2 : ∀{ls rs} → (t : SetLL {i} {u} rs) → (e : SetLL ls) → ¬ (contruct t ≡ ↓) → ¬ ((contruct (e ←∧→ t)) ≡ ↓)
+-- --     hf2 t e eq x with contruct e | contruct t | isEq (contruct t) ↓
+-- --     hf2 t e eq₁ x | ce | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf2 t e eq₁ x | ↓ | ↓ | no ¬p = eq₁ refl
+-- --     hf2 t e eq₁ () | ↓ | g ←∧ | no ¬p
+-- --     hf2 t e eq₁ () | ↓ | ∧→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∧→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∨ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | ∨→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∨→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∂ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | ∂→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∂→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∧ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∧→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∧→ ce₁ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∨ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∨→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∨→ ce₁ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∂ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∂→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∂→ ce₁ | g | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∧ rs} {fll = fll} (s ←∧→ s₁) eq (ind ←∧) refl | ¬∅ di | [ eq1 ] | no ¬p = hf di is where
+-- --     is = ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} s ¬p ind eq1
+-- --     hf : ∀{ll} → ∀ t → ¬ (contruct {ll = ll} t ≡ ↓) → ¬ ((contruct (t ←∧→ s₁)) ≡ ↓)
+-- --     hf t eq x with contruct t | isEq (contruct t) ↓
+-- --     hf t eq₁ x | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf t eq₁ x | ↓ | no ¬p = eq₁ refl
+-- --     hf t eq₁ () | g ←∧ | no ¬p
+-- --     hf t eq₁ () | ∧→ g | no ¬p
+-- --     hf t eq₁ () | g ←∧→ g₁ | no ¬p 
+-- --     hf t eq₁ () | g ←∨ | no ¬p 
+-- --     hf t eq₁ () | ∨→ g | no ¬p 
+-- --     hf t eq₁ () | g ←∨→ g₁ | no ¬p 
+-- --     hf t eq₁ () | g ←∂ | no ¬p 
+-- --     hf t eq₁ () | ∂→ g | no ¬p 
+-- --     hf t eq₁ () | g ←∂→ g₁ | no ¬p 
+-- --   ¬contr≡↓⇒¬contrdel≡↓ ↓ eq (∧→ ind) deq = ⊥-elim (eq refl)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ (s ←∧) eq (∧→ ind) refl = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∧→ s) eq (∧→ ind) deq with del s ind fll
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∧→ s) eq (∧→ ind) () | ∅
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∧→ s) eq (∧→ ind) refl | ¬∅ x = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧→ s₁) eq (∧→ ind) deq with del s₁ ind fll | inspect (λ x → del s₁ x fll) ind
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧→ s₁) eq (∧→ ind) refl | ∅ | r = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧→ s₁) eq (∧→ ind) deq | ¬∅ di | [ eq₁ ] with isEq (contruct s₁) ↓
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧→ s₁) eq (∧→ ind) deq | ¬∅ di | [ eq₁ ] | yes p with contruct s₁
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {i} {u} {fll = fll} (s ←∧→ s₁) eq (∧→ ind) refl | ¬∅ di | [ eq₁ ] | yes refl | .↓ = hf2 di s hf where
+-- --     hf : ¬ (contruct s ≡ ↓)
+-- --     hf x with contruct s
+-- --     hf refl | .↓ = ⊥-elim (eq refl)
+
+-- --     hf2 : ∀{ls rs} → (t : SetLL {i} {u} rs) → (e : SetLL ls) → ¬ (contruct e ≡ ↓) → ¬ ((contruct (e ←∧→ t)) ≡ ↓)
+-- --     hf2 t e eq x with contruct e | isEq (contruct e) ↓
+-- --     hf2 t e eq₁ x | ce | yes p = ⊥-elim (eq₁ p)
+-- --     hf2 t e eq₂ x | ↓ | no ¬p = eq₂ refl
+-- --     hf2 t e eq₂ () | ce ←∧ | no ¬p
+-- --     hf2 t e eq₂ () | ∧→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∧→ ce₁ | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∨ | no ¬p 
+-- --     hf2 t e eq₂ () | ∨→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∨→ ce₁ | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∂ | no ¬p 
+-- --     hf2 t e eq₂ () | ∂→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∂→ ce₁ | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∧→ s₁) eq (∧→ ind) refl | ¬∅ di | [ eq1 ] | no ¬p = hf di is where
+-- --     is = ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} s₁ ¬p ind eq1
+-- --     hf : ∀{ll} → ∀ t → ¬ (contruct {ll = ll} t ≡ ↓) → ¬ ((contruct (s ←∧→ t)) ≡ ↓)
+-- --     hf t eq x with contruct s | contruct t | isEq (contruct t) ↓
+-- --     hf t eq₁ x | r | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf t eq₁ x | ↓ | ↓ | no ¬p = eq₁ refl
+-- --     hf t eq₁ () | ↓ | g ←∧ | no ¬p
+-- --     hf t eq₁ () | ↓ | ∧→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∧→ g₁ | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∨ | no ¬p 
+-- --     hf t eq₁ () | ↓ | ∨→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∨→ g₁ | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∂ | no ¬p 
+-- --     hf t eq₁ () | ↓ | ∂→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∂→ g₁ | no ¬p 
+-- --     hf t eq₁ () | r ←∧ | g | no ¬p 
+-- --     hf t eq₁ () | ∧→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∧→ r₁ | g | no ¬p 
+-- --     hf t eq₁ () | r ←∨ | g | no ¬p 
+-- --     hf t eq₁ () | ∨→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∨→ r₁ | g | no ¬p 
+-- --     hf t eq₁ () | r ←∂ | g | no ¬p 
+-- --     hf t eq₁ () | ∂→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∂→ r₁ | g | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ ↓ eq (ind ←∨) deq = ⊥-elim (eq refl)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨) eq (ind ←∨) deq with del s ind fll 
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨) eq (ind ←∨) () | ∅
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨) eq (ind ←∨) refl | ¬∅ di = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ (∨→ s) eq (ind ←∨) refl = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∨ rs} {fll = fll} (s ←∨→ s₁) eq (ind ←∨) deq with del s ind fll | inspect (λ x → del s x fll) ind
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∨ rs} {fll = fll} (s ←∨→ s₁) eq (ind ←∨) refl | ∅ | [ eq1 ] = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∨ rs} {fll = fll} (s ←∨→ s₁) eq (ind ←∨) refl | ¬∅ di | [ eq1 ] with isEq (contruct s) ↓
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∨ rs} {fll = fll} (s ←∨→ s₁) eq (ind ←∨) refl | ¬∅ di | [ eq1 ] | yes p with contruct s
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {i} {u} {rll = _} {ls ∨ rs} {fll} (s ←∨→ s₁) eq (ind ←∨) refl | ¬∅ di | [ eq1 ] | yes refl | .↓ = hf2 s₁ di hf where
+-- --     hf : ¬ (contruct s₁ ≡ ↓)
+-- --     hf x with contruct s₁
+-- --     hf refl | .↓ = ⊥-elim (eq refl)
+
+-- --     hf2 : ∀{ls rs} → (t : SetLL {i} {u} rs) → (e : SetLL ls) → ¬ (contruct t ≡ ↓) → ¬ ((contruct (e ←∨→ t)) ≡ ↓)
+-- --     hf2 t e eq x with contruct e | contruct t | isEq (contruct t) ↓
+-- --     hf2 t e eq₁ x | ce | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf2 t e eq₁ x | ↓ | ↓ | no ¬p = eq₁ refl
+-- --     hf2 t e eq₁ () | ↓ | g ←∧ | no ¬p
+-- --     hf2 t e eq₁ () | ↓ | ∧→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∧→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∨ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | ∨→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∨→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∂ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | ∂→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∂→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∧ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∧→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∧→ ce₁ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∨ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∨→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∨→ ce₁ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∂ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∂→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∂→ ce₁ | g | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∨ rs} {fll = fll} (s ←∨→ s₁) eq (ind ←∨) refl | ¬∅ di | [ eq1 ] | no ¬p = hf di is where
+-- --     is = ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} s ¬p ind eq1
+-- --     hf : ∀{ll} → ∀ t → ¬ (contruct {ll = ll} t ≡ ↓) → ¬ ((contruct (t ←∨→ s₁)) ≡ ↓)
+-- --     hf t eq x with contruct t | isEq (contruct t) ↓
+-- --     hf t eq₁ x | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf t eq₁ x | ↓ | no ¬p = eq₁ refl
+-- --     hf t eq₁ () | g ←∧ | no ¬p
+-- --     hf t eq₁ () | ∧→ g | no ¬p
+-- --     hf t eq₁ () | g ←∧→ g₁ | no ¬p 
+-- --     hf t eq₁ () | g ←∨ | no ¬p 
+-- --     hf t eq₁ () | ∨→ g | no ¬p 
+-- --     hf t eq₁ () | g ←∨→ g₁ | no ¬p 
+-- --     hf t eq₁ () | g ←∂ | no ¬p 
+-- --     hf t eq₁ () | ∂→ g | no ¬p 
+-- --     hf t eq₁ () | g ←∂→ g₁ | no ¬p 
+-- --   ¬contr≡↓⇒¬contrdel≡↓ ↓ eq (∨→ ind) deq = ⊥-elim (eq refl)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ (s ←∨) eq (∨→ ind) refl = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∨→ s) eq (∨→ ind) deq with del s ind fll
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∨→ s) eq (∨→ ind) () | ∅
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∨→ s) eq (∨→ ind) refl | ¬∅ x = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨→ s₁) eq (∨→ ind) deq with del s₁ ind fll | inspect (λ x → del s₁ x fll) ind
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨→ s₁) eq (∨→ ind) refl | ∅ | r = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨→ s₁) eq (∨→ ind) deq | ¬∅ di | [ eq₁ ] with isEq (contruct s₁) ↓
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨→ s₁) eq (∨→ ind) deq | ¬∅ di | [ eq₁ ] | yes p with contruct s₁
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {i} {u} {fll = fll} (s ←∨→ s₁) eq (∨→ ind) refl | ¬∅ di | [ eq₁ ] | yes refl | .↓ = hf2 di s hf where
+-- --     hf : ¬ (contruct s ≡ ↓)
+-- --     hf x with contruct s
+-- --     hf refl | .↓ = ⊥-elim (eq refl)
+
+-- --     hf2 : ∀{ls rs} → (t : SetLL {i} {u} rs) → (e : SetLL ls) → ¬ (contruct e ≡ ↓) → ¬ ((contruct (e ←∨→ t)) ≡ ↓)
+-- --     hf2 t e eq x with contruct e | isEq (contruct e) ↓
+-- --     hf2 t e eq₁ x | ce | yes p = ⊥-elim (eq₁ p)
+-- --     hf2 t e eq₂ x | ↓ | no ¬p = eq₂ refl
+-- --     hf2 t e eq₂ () | ce ←∧ | no ¬p
+-- --     hf2 t e eq₂ () | ∧→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∧→ ce₁ | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∨ | no ¬p 
+-- --     hf2 t e eq₂ () | ∨→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∨→ ce₁ | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∂ | no ¬p 
+-- --     hf2 t e eq₂ () | ∂→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∂→ ce₁ | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∨→ s₁) eq (∨→ ind) refl | ¬∅ di | [ eq1 ] | no ¬p = hf di is where
+-- --     is = ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} s₁ ¬p ind eq1
+-- --     hf : ∀{ll} → ∀ t → ¬ (contruct {ll = ll} t ≡ ↓) → ¬ ((contruct (s ←∨→ t)) ≡ ↓)
+-- --     hf t eq x with contruct s | contruct t | isEq (contruct t) ↓
+-- --     hf t eq₁ x | r | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf t eq₁ x | ↓ | ↓ | no ¬p = eq₁ refl
+-- --     hf t eq₁ () | ↓ | g ←∧ | no ¬p
+-- --     hf t eq₁ () | ↓ | ∧→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∧→ g₁ | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∨ | no ¬p 
+-- --     hf t eq₁ () | ↓ | ∨→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∨→ g₁ | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∂ | no ¬p 
+-- --     hf t eq₁ () | ↓ | ∂→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∂→ g₁ | no ¬p 
+-- --     hf t eq₁ () | r ←∧ | g | no ¬p 
+-- --     hf t eq₁ () | ∧→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∧→ r₁ | g | no ¬p 
+-- --     hf t eq₁ () | r ←∨ | g | no ¬p 
+-- --     hf t eq₁ () | ∨→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∨→ r₁ | g | no ¬p 
+-- --     hf t eq₁ () | r ←∂ | g | no ¬p 
+-- --     hf t eq₁ () | ∂→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∂→ r₁ | g | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ ↓ eq (ind ←∂) deq = ⊥-elim (eq refl)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂) eq (ind ←∂) deq with del s ind fll 
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂) eq (ind ←∂) () | ∅
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂) eq (ind ←∂) refl | ¬∅ di = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ (∂→ s) eq (ind ←∂) refl = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∂ rs} {fll = fll} (s ←∂→ s₁) eq (ind ←∂) deq with del s ind fll | inspect (λ x → del s x fll) ind
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∂ rs} {fll = fll} (s ←∂→ s₁) eq (ind ←∂) refl | ∅ | [ eq1 ] = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∂ rs} {fll = fll} (s ←∂→ s₁) eq (ind ←∂) refl | ¬∅ di | [ eq1 ] with isEq (contruct s) ↓
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∂ rs} {fll = fll} (s ←∂→ s₁) eq (ind ←∂) refl | ¬∅ di | [ eq1 ] | yes p with contruct s
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {i} {u} {rll = _} {ls ∂ rs} {fll} (s ←∂→ s₁) eq (ind ←∂) refl | ¬∅ di | [ eq1 ] | yes refl | .↓ = hf2 s₁ di hf where
+-- --     hf : ¬ (contruct s₁ ≡ ↓)
+-- --     hf x with contruct s₁
+-- --     hf refl | .↓ = ⊥-elim (eq refl)
+
+-- --     hf2 : ∀{ls rs} → (t : SetLL {i} {u} rs) → (e : SetLL ls) → ¬ (contruct t ≡ ↓) → ¬ ((contruct (e ←∂→ t)) ≡ ↓)
+-- --     hf2 t e eq x with contruct e | contruct t | isEq (contruct t) ↓
+-- --     hf2 t e eq₁ x | ce | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf2 t e eq₁ x | ↓ | ↓ | no ¬p = eq₁ refl
+-- --     hf2 t e eq₁ () | ↓ | g ←∧ | no ¬p
+-- --     hf2 t e eq₁ () | ↓ | ∧→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∧→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∨ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | ∨→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∨→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∂ | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | ∂→ g | no ¬p 
+-- --     hf2 t e eq₁ () | ↓ | g ←∂→ g₁ | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∧ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∧→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∧→ ce₁ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∨ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∨→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∨→ ce₁ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∂ | g | no ¬p 
+-- --     hf2 t e eq₁ () | ∂→ ce | g | no ¬p 
+-- --     hf2 t e eq₁ () | ce ←∂→ ce₁ | g | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {ll = ls ∂ rs} {fll = fll} (s ←∂→ s₁) eq (ind ←∂) refl | ¬∅ di | [ eq1 ] | no ¬p = hf di is where
+-- --     is = ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} s ¬p ind eq1
+-- --     hf : ∀{ll} → ∀ t → ¬ (contruct {ll = ll} t ≡ ↓) → ¬ ((contruct (t ←∂→ s₁)) ≡ ↓)
+-- --     hf t eq x with contruct t | isEq (contruct t) ↓
+-- --     hf t eq₁ x | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf t eq₁ x | ↓ | no ¬p = eq₁ refl
+-- --     hf t eq₁ () | g ←∧ | no ¬p
+-- --     hf t eq₁ () | ∧→ g | no ¬p
+-- --     hf t eq₁ () | g ←∧→ g₁ | no ¬p 
+-- --     hf t eq₁ () | g ←∨ | no ¬p 
+-- --     hf t eq₁ () | ∨→ g | no ¬p 
+-- --     hf t eq₁ () | g ←∨→ g₁ | no ¬p 
+-- --     hf t eq₁ () | g ←∂ | no ¬p 
+-- --     hf t eq₁ () | ∂→ g | no ¬p 
+-- --     hf t eq₁ () | g ←∂→ g₁ | no ¬p 
+-- --   ¬contr≡↓⇒¬contrdel≡↓ ↓ eq (∂→ ind) deq = ⊥-elim (eq refl)
+-- --   ¬contr≡↓⇒¬contrdel≡↓ (s ←∂) eq (∂→ ind) refl = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∂→ s) eq (∂→ ind) deq with del s ind fll
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∂→ s) eq (∂→ ind) () | ∅
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (∂→ s) eq (∂→ ind) refl | ¬∅ x = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂→ s₁) eq (∂→ ind) deq with del s₁ ind fll | inspect (λ x → del s₁ x fll) ind
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂→ s₁) eq (∂→ ind) refl | ∅ | r = λ ()
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂→ s₁) eq (∂→ ind) deq | ¬∅ di | [ eq₁ ] with isEq (contruct s₁) ↓
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂→ s₁) eq (∂→ ind) deq | ¬∅ di | [ eq₁ ] | yes p with contruct s₁
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {i} {u} {fll = fll} (s ←∂→ s₁) eq (∂→ ind) refl | ¬∅ di | [ eq₁ ] | yes refl | .↓ = hf2 di s hf where
+-- --     hf : ¬ (contruct s ≡ ↓)
+-- --     hf x with contruct s
+-- --     hf refl | .↓ = ⊥-elim (eq refl)
+
+-- --     hf2 : ∀{ls rs} → (t : SetLL {i} {u} rs) → (e : SetLL ls) → ¬ (contruct e ≡ ↓) → ¬ ((contruct (e ←∂→ t)) ≡ ↓)
+-- --     hf2 t e eq x with contruct e | isEq (contruct e) ↓
+-- --     hf2 t e eq₁ x | ce | yes p = ⊥-elim (eq₁ p)
+-- --     hf2 t e eq₂ x | ↓ | no ¬p = eq₂ refl
+-- --     hf2 t e eq₂ () | ce ←∧ | no ¬p
+-- --     hf2 t e eq₂ () | ∧→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∧→ ce₁ | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∨ | no ¬p 
+-- --     hf2 t e eq₂ () | ∨→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∨→ ce₁ | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∂ | no ¬p 
+-- --     hf2 t e eq₂ () | ∂→ ce | no ¬p 
+-- --     hf2 t e eq₂ () | ce ←∂→ ce₁ | no ¬p 
+
+-- --   ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} (s ←∂→ s₁) eq (∂→ ind) refl | ¬∅ di | [ eq1 ] | no ¬p = hf di is where
+-- --     is = ¬contr≡↓⇒¬contrdel≡↓ {fll = fll} s₁ ¬p ind eq1
+-- --     hf : ∀{ll} → ∀ t → ¬ (contruct {ll = ll} t ≡ ↓) → ¬ ((contruct (s ←∂→ t)) ≡ ↓)
+-- --     hf t eq x with contruct s | contruct t | isEq (contruct t) ↓
+-- --     hf t eq₁ x | r | g | yes p = ⊥-elim (eq₁ p)
+-- --     hf t eq₁ x | ↓ | ↓ | no ¬p = eq₁ refl
+-- --     hf t eq₁ () | ↓ | g ←∧ | no ¬p
+-- --     hf t eq₁ () | ↓ | ∧→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∧→ g₁ | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∨ | no ¬p 
+-- --     hf t eq₁ () | ↓ | ∨→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∨→ g₁ | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∂ | no ¬p 
+-- --     hf t eq₁ () | ↓ | ∂→ g | no ¬p 
+-- --     hf t eq₁ () | ↓ | g ←∂→ g₁ | no ¬p 
+-- --     hf t eq₁ () | r ←∧ | g | no ¬p 
+-- --     hf t eq₁ () | ∧→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∧→ r₁ | g | no ¬p 
+-- --     hf t eq₁ () | r ←∨ | g | no ¬p 
+-- --     hf t eq₁ () | ∨→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∨→ r₁ | g | no ¬p 
+-- --     hf t eq₁ () | r ←∂ | g | no ¬p 
+-- --     hf t eq₁ () | ∂→ r | g | no ¬p 
+-- --     hf t eq₁ () | r ←∂→ r₁ | g | no ¬p 
+
+
+-- --   ¬contr≡↓&trunc≡∅⇒¬contrdel≡↓ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → (ind : IndexLL rll ll) → (truncSetLL s ind ≡ ∅)
+-- --                                  → Σ (SetLL (replLL ll ind fll)) (λ x → (del s ind fll ≡ ¬∅ x) × (¬ (contruct x ≡ ↓)))
+-- --   ¬contr≡↓&trunc≡∅⇒¬contrdel≡↓ {fll = fll} s ceq ind treq with del s ind fll | inspect (λ x → del s x fll) ind
+-- --   ... | ∅ | [ eq ] = ⊥-elim (d eq) where
+-- --     d = trunc≡∅⇒¬mrpls≡∅ {fll = fll} s ind treq
+-- --   ... | ¬∅ x | [ eq ] = (x , refl , c) where
+-- --     c = ¬contr≡↓⇒¬contrdel≡↓ s ceq ind eq
+
+
+
+
+-- -- -- oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside s ind}} → ss ≤s (truncOISetLL s ind {{prf = oi}}) → onlyInside (extend ind ss) ind
+-- -- -- oi⇒ext-truncoi {s = _} ↓ {{oi}} x = onlyInsideCs↓
+-- -- -- oi⇒ext-truncoi {s = ↓} (ind ←∧) {{()}} x
+-- -- -- oi⇒ext-truncoi {pll = pll} {li ∧ ri} {ss} {s = _ ←∧} (ind ←∧) {{onlyInsideC←∧←∧ oi}} x with replLL li ind pll | (replLL-id li ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
+-- -- -- ... | .li | refl | e | q = onlyInsideC←∧←∧ q 
+-- -- -- oi⇒ext-truncoi {s = ∧→ _} (ind ←∧) {{()}} x
+-- -- -- oi⇒ext-truncoi {s = _ ←∧→ _} (ind ←∧) {{()}} x
+-- -- -- oi⇒ext-truncoi {pll = pll} {li ∧ ri} {ss} {s = .(∧→ _)} (∧→ ind) {{onlyInsideC∧→∧→ oi}} x with replLL ri ind pll | (replLL-id ri ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
+-- -- -- ... | .ri | refl | e | q = onlyInsideC∧→∧→ q
+-- -- -- oi⇒ext-truncoi {s = ↓} (ind ←∨) {{()}} x
+-- -- -- oi⇒ext-truncoi {pll = pll} {li ∨ ri} {ss} {s = _ ←∨} (ind ←∨) {{onlyInsideC←∨←∨ oi}} x with replLL li ind pll | (replLL-id li ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
+-- -- -- ... | .li | refl | e | q = onlyInsideC←∨←∨ q
+-- -- -- oi⇒ext-truncoi {s = ∨→ _} (ind ←∨) {{()}} x
+-- -- -- oi⇒ext-truncoi {s = _ ←∨→ _} (ind ←∨) {{()}} x
+-- -- -- oi⇒ext-truncoi {pll = pll} {li ∨ ri} {ss} {s = .(∨→ _)} (∨→ ind) {{onlyInsideC∨→∨→ oi}} x with replLL ri ind pll | (replLL-id ri ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
+-- -- -- ... | .ri | refl | e | q = onlyInsideC∨→∨→ q
+-- -- -- oi⇒ext-truncoi {s = ↓} (ind ←∂) {{()}} x
+-- -- -- oi⇒ext-truncoi {pll = pll} {li ∂ ri} {ss} {s = _ ←∂} (ind ←∂) {{onlyInsideC←∂←∂ oi}} x with replLL li ind pll | (replLL-id li ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
+-- -- -- ... | .li | refl | e | q = onlyInsideC←∂←∂ q
+-- -- -- oi⇒ext-truncoi {s = ∂→ _} (ind ←∂) {{()}} x
+-- -- -- oi⇒ext-truncoi {s = _ ←∂→ _} (ind ←∂) {{()}} x
+-- -- -- oi⇒ext-truncoi {pll = pll} {li ∂ ri} {ss} {s = .(∂→ _)} (∂→ ind) {{onlyInsideC∂→∂→ oi}} x with replLL ri ind pll | (replLL-id ri ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
+-- -- -- ... | .ri | refl | e | q = onlyInsideC∂→∂→ q
+
+
+
+
+
