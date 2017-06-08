@@ -391,41 +391,41 @@ module _ where
 
 
 
-  onlyInside⇒hitsAtLeastOnce : ∀{i u ll rll} → (s : SetLL ll) → (ind : IndexLL {i} {u} rll ll) → onlyInside s ind → hitsAtLeastOnce s ind
-  onlyInside⇒hitsAtLeastOnce ↓ ↓ onlyInsideCs↓ = hitsAtLeastOnce↓
-  onlyInside⇒hitsAtLeastOnce ↓ (ind ←∧) ()
-  onlyInside⇒hitsAtLeastOnce ↓ (∧→ ind) ()
-  onlyInside⇒hitsAtLeastOnce ↓ (ind ←∨) ()
-  onlyInside⇒hitsAtLeastOnce ↓ (∨→ ind) ()
-  onlyInside⇒hitsAtLeastOnce ↓ (ind ←∂) ()
-  onlyInside⇒hitsAtLeastOnce ↓ (∂→ ind) ()
-  onlyInside⇒hitsAtLeastOnce (s ←∧) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∧↓
-  onlyInside⇒hitsAtLeastOnce (s ←∧) (ind ←∧) (onlyInsideC←∧←∧ oi) = hitsAtLeastOnce←∧←∧ (onlyInside⇒hitsAtLeastOnce s ind oi)
-  onlyInside⇒hitsAtLeastOnce (s ←∧) (∧→ ind) ()
-  onlyInside⇒hitsAtLeastOnce (∧→ s) ↓ oi = hitsAtLeastOnce∧→↓
-  onlyInside⇒hitsAtLeastOnce (∧→ s) (ind ←∧) ()
-  onlyInside⇒hitsAtLeastOnce (∧→ s) (∧→ ind) (onlyInsideC∧→∧→ x) = hitsAtLeastOnce∧→∧→ (onlyInside⇒hitsAtLeastOnce s ind x)
-  onlyInside⇒hitsAtLeastOnce (s ←∧→ s₁) ↓ oi = hitsAtLeastOnce←∧→↓
-  onlyInside⇒hitsAtLeastOnce (s ←∧→ s₁) (ind ←∧) ()
-  onlyInside⇒hitsAtLeastOnce (s ←∧→ s₁) (∧→ ind) ()
-  onlyInside⇒hitsAtLeastOnce (s ←∨) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∨↓
-  onlyInside⇒hitsAtLeastOnce (s ←∨) (ind ←∨) (onlyInsideC←∨←∨ oi) = hitsAtLeastOnce←∨←∨ (onlyInside⇒hitsAtLeastOnce s ind oi)
-  onlyInside⇒hitsAtLeastOnce (s ←∨) (∨→ ind) ()
-  onlyInside⇒hitsAtLeastOnce (∨→ s) ↓ oi = hitsAtLeastOnce∨→↓
-  onlyInside⇒hitsAtLeastOnce (∨→ s) (ind ←∨) ()
-  onlyInside⇒hitsAtLeastOnce (∨→ s) (∨→ ind) (onlyInsideC∨→∨→ x) = hitsAtLeastOnce∨→∨→ (onlyInside⇒hitsAtLeastOnce s ind x)
-  onlyInside⇒hitsAtLeastOnce (s ←∨→ s₁) ↓ oi = hitsAtLeastOnce←∨→↓
-  onlyInside⇒hitsAtLeastOnce (s ←∨→ s₁) (ind ←∨) ()
-  onlyInside⇒hitsAtLeastOnce (s ←∨→ s₁) (∨→ ind) ()
-  onlyInside⇒hitsAtLeastOnce (s ←∂) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∂↓
-  onlyInside⇒hitsAtLeastOnce (s ←∂) (ind ←∂) (onlyInsideC←∂←∂ oi) = hitsAtLeastOnce←∂←∂ (onlyInside⇒hitsAtLeastOnce s ind oi)
-  onlyInside⇒hitsAtLeastOnce (s ←∂) (∂→ ind) ()
-  onlyInside⇒hitsAtLeastOnce (∂→ s) ↓ oi = hitsAtLeastOnce∂→↓
-  onlyInside⇒hitsAtLeastOnce (∂→ s) (ind ←∂) ()
-  onlyInside⇒hitsAtLeastOnce (∂→ s) (∂→ ind) (onlyInsideC∂→∂→ x) = hitsAtLeastOnce∂→∂→ (onlyInside⇒hitsAtLeastOnce s ind x)
-  onlyInside⇒hitsAtLeastOnce (s ←∂→ s₁) ↓ oi = hitsAtLeastOnce←∂→↓
-  onlyInside⇒hitsAtLeastOnce (s ←∂→ s₁) (ind ←∂) ()
-  onlyInside⇒hitsAtLeastOnce (s ←∂→ s₁) (∂→ ind) ()
+  oi⇒ho : ∀{i u ll rll} → (s : SetLL ll) → (ind : IndexLL {i} {u} rll ll) → onlyInside s ind → hitsAtLeastOnce s ind
+  oi⇒ho ↓ ↓ onlyInsideCs↓ = hitsAtLeastOnce↓
+  oi⇒ho ↓ (ind ←∧) ()
+  oi⇒ho ↓ (∧→ ind) ()
+  oi⇒ho ↓ (ind ←∨) ()
+  oi⇒ho ↓ (∨→ ind) ()
+  oi⇒ho ↓ (ind ←∂) ()
+  oi⇒ho ↓ (∂→ ind) ()
+  oi⇒ho (s ←∧) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∧↓
+  oi⇒ho (s ←∧) (ind ←∧) (onlyInsideC←∧←∧ oi) = hitsAtLeastOnce←∧←∧ (oi⇒ho s ind oi)
+  oi⇒ho (s ←∧) (∧→ ind) ()
+  oi⇒ho (∧→ s) ↓ oi = hitsAtLeastOnce∧→↓
+  oi⇒ho (∧→ s) (ind ←∧) ()
+  oi⇒ho (∧→ s) (∧→ ind) (onlyInsideC∧→∧→ x) = hitsAtLeastOnce∧→∧→ (oi⇒ho s ind x)
+  oi⇒ho (s ←∧→ s₁) ↓ oi = hitsAtLeastOnce←∧→↓
+  oi⇒ho (s ←∧→ s₁) (ind ←∧) ()
+  oi⇒ho (s ←∧→ s₁) (∧→ ind) ()
+  oi⇒ho (s ←∨) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∨↓
+  oi⇒ho (s ←∨) (ind ←∨) (onlyInsideC←∨←∨ oi) = hitsAtLeastOnce←∨←∨ (oi⇒ho s ind oi)
+  oi⇒ho (s ←∨) (∨→ ind) ()
+  oi⇒ho (∨→ s) ↓ oi = hitsAtLeastOnce∨→↓
+  oi⇒ho (∨→ s) (ind ←∨) ()
+  oi⇒ho (∨→ s) (∨→ ind) (onlyInsideC∨→∨→ x) = hitsAtLeastOnce∨→∨→ (oi⇒ho s ind x)
+  oi⇒ho (s ←∨→ s₁) ↓ oi = hitsAtLeastOnce←∨→↓
+  oi⇒ho (s ←∨→ s₁) (ind ←∨) ()
+  oi⇒ho (s ←∨→ s₁) (∨→ ind) ()
+  oi⇒ho (s ←∂) ↓ onlyInsideCs↓ = hitsAtLeastOnce←∂↓
+  oi⇒ho (s ←∂) (ind ←∂) (onlyInsideC←∂←∂ oi) = hitsAtLeastOnce←∂←∂ (oi⇒ho s ind oi)
+  oi⇒ho (s ←∂) (∂→ ind) ()
+  oi⇒ho (∂→ s) ↓ oi = hitsAtLeastOnce∂→↓
+  oi⇒ho (∂→ s) (ind ←∂) ()
+  oi⇒ho (∂→ s) (∂→ ind) (onlyInsideC∂→∂→ x) = hitsAtLeastOnce∂→∂→ (oi⇒ho s ind x)
+  oi⇒ho (s ←∂→ s₁) ↓ oi = hitsAtLeastOnce←∂→↓
+  oi⇒ho (s ←∂→ s₁) (ind ←∂) ()
+  oi⇒ho (s ←∂→ s₁) (∂→ ind) ()
 
 
 
@@ -604,7 +604,7 @@ module _ where
 
   oi⇒¬trunc≡∅ : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
                  → (prf : onlyInside s ind) → ¬ (truncSetLL s ind ≡ ∅)
-  oi⇒¬trunc≡∅ s ind prf = ho⇒¬trunc≡∅ s ind (onlyInside⇒hitsAtLeastOnce s ind prf)
+  oi⇒¬trunc≡∅ s ind prf = ho⇒¬trunc≡∅ s ind (oi⇒ho s ind prf)
 
 
 
@@ -1317,36 +1317,751 @@ module _ where
 -- Extending a set gives us onlyInside and hitsAtLeastOnce immediately because the rest is empty.
 --
 
-  test : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll)
+  ext⇒oi : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll)
+         → onlyInside (extend ind s) ind
+  ext⇒oi {pll = pll} {(li ∧ _)} s (ind ←∧)
+    with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | ext⇒oi s ind 
+  ... | .li | refl | e | q = onlyInsideC←∧←∧ q
+  ext⇒oi {pll = pll} {(_ ∧ ri)} s (∧→ ind)
+    with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | ext⇒oi s ind 
+  ... | .ri | refl | e | q = onlyInsideC∧→∧→ q
+  ext⇒oi {pll = pll} {(li ∨ _)} s (ind ←∨)
+    with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | ext⇒oi s ind 
+  ... | .li | refl | e | q = onlyInsideC←∨←∨ q
+  ext⇒oi {pll = pll} {(_ ∨ ri)} s (∨→ ind)
+    with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | ext⇒oi s ind 
+  ... | .ri | refl | e | q = onlyInsideC∨→∨→ q
+  ext⇒oi {pll = pll} {(li ∂ _)} s (ind ←∂)
+    with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | ext⇒oi s ind 
+  ... | .li | refl | e | q = onlyInsideC←∂←∂ q
+  ext⇒oi {pll = pll} {(_ ∂ ri)} s (∂→ ind)
+    with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | ext⇒oi s ind 
+  ... | .ri | refl | e | q = onlyInsideC∂→∂→ q
+  ext⇒oi s ↓ = onlyInsideCs↓
+
+  ext⇒ho : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll)
          → hitsAtLeastOnce (extend ind s) ind
-  test {pll = pll} {.pll} s ↓ = {!!}
-  test {pll = pll} {(li ∧ _)} s (ind ←∧) with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | test s ind 
-  ... | .li | refl | e | q = hitsAtLeastOnce←∧←∧ q
-  test {pll = pll} {(_ ∧ ri)} s (∧→ ind) with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | test s ind 
-  ... | .ri | refl | e | q = hitsAtLeastOnce∧→∧→ q
-  test {pll = pll} {(li ∨ _)} s (ind ←∨) = {!!}
-  test {pll = pll} {(_ ∨ ri)} s (∨→ ind) = {!!}
-  test {pll = pll} {(li ∂ _)} s (ind ←∂) = {!!}
-  test {pll = pll} {(_ ∂ ri)} s (∂→ ind) = {!!}
-  -- with replLL ll ind pll | replLL-id ll ind pll refl | extendg ind s | test s ind 
---  ... | g | r | e | q | t = {!!}
-
--- --
--- --  e : ∀{i u pll ll s} → (ind : IndexLL {i} {u} pll ll)
--- --                   → onlyInside (extend ind s) ind
--- --  e ind oi eq = ?
--- --
--- --  -- Also prove transitivity of both hitsOnlyInsde and only inside.
--- -- -- ex:  r : hitsOnlyInside s ind → hitsOnlyInside (truncHOSetLL s ind) ind2 → hitsOnlyInside (ind + ind2)
--- --
--- This will probably be provable from the previous lemmas.
--- --  oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → (oi : onlyInside s ind)
--- --                   → ss ≤s (truncHOSetLL s ind ho⇒oi) → onlyInside (extend ind ss) ind
--- --  oi⇒ext-truncoi ind oi eq = ?
--- --
--- ---- --------------------
+  ext⇒ho s ind = oi⇒ho (extend ind s) ind (ext⇒oi s ind)
 
 
+module _ where
+
+  open import IndexLLProp
+  
+  ho-trans : ∀{i u pll rll ll} → ∀ s → (ind1 : IndexLL {i} {u} pll ll) → (ind2 : IndexLL rll pll)
+         → (ho1 : hitsAtLeastOnce s ind1) → hitsAtLeastOnce (truncHOSetLL s ind1 ho1) ind2
+         → hitsAtLeastOnce s (ind1 +ᵢ ind2)
+  ho-trans ↓ ind ind2 ho1 ho2 = hitsAtLeastOnce↓
+  ho-trans (s ←∧) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (s ←∧) (ind ←∧) ind2 (hitsAtLeastOnce←∧←∧ ho1) ho2 = hitsAtLeastOnce←∧←∧ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∧) (∧→ ind) ind2 () ho2
+  ho-trans (∧→ s) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (∧→ s) (ind ←∧) ind2 () ho2
+  ho-trans (∧→ s) (∧→ ind) ind2 (hitsAtLeastOnce∧→∧→ ho1) ho2 = hitsAtLeastOnce∧→∧→ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∧→ s₁) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (s ←∧→ s₁) (ind ←∧) ind2 (hitsAtLeastOnce←∧→←∧ ho1) ho2 = hitsAtLeastOnce←∧→←∧ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∧→ s₁) (∧→ ind) ind2 (hitsAtLeastOnce←∧→∧→ ho1) ho2 = hitsAtLeastOnce←∧→∧→ r where
+    r = ho-trans s₁ ind ind2 ho1 ho2
+  ho-trans (s ←∨) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (s ←∨) (ind ←∨) ind2 (hitsAtLeastOnce←∨←∨ ho1) ho2 = hitsAtLeastOnce←∨←∨ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∨) (∨→ ind) ind2 () ho2
+  ho-trans (∨→ s) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (∨→ s) (ind ←∨) ind2 () ho2
+  ho-trans (∨→ s) (∨→ ind) ind2 (hitsAtLeastOnce∨→∨→ ho1) ho2 = hitsAtLeastOnce∨→∨→ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∨→ s₁) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (s ←∨→ s₁) (ind ←∨) ind2 (hitsAtLeastOnce←∨→←∨ ho1) ho2 = hitsAtLeastOnce←∨→←∨ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∨→ s₁) (∨→ ind) ind2 (hitsAtLeastOnce←∨→∨→ ho1) ho2 = hitsAtLeastOnce←∨→∨→ r where
+    r = ho-trans s₁ ind ind2 ho1 ho2
+  ho-trans (s ←∂) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (s ←∂) (ind ←∂) ind2 (hitsAtLeastOnce←∂←∂ ho1) ho2 = hitsAtLeastOnce←∂←∂ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∂) (∂→ ind) ind2 () ho2
+  ho-trans (∂→ s) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (∂→ s) (ind ←∂) ind2 () ho2
+  ho-trans (∂→ s) (∂→ ind) ind2 (hitsAtLeastOnce∂→∂→ ho1) ho2 = hitsAtLeastOnce∂→∂→ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∂→ s₁) ↓ ind2 ho1 ho2 = ho2
+  ho-trans (s ←∂→ s₁) (ind ←∂) ind2 (hitsAtLeastOnce←∂→←∂ ho1) ho2 = hitsAtLeastOnce←∂→←∂ r where
+    r = ho-trans s ind ind2 ho1 ho2
+  ho-trans (s ←∂→ s₁) (∂→ ind) ind2 (hitsAtLeastOnce←∂→∂→ ho1) ho2 = hitsAtLeastOnce←∂→∂→ r where
+    r = ho-trans s₁ ind ind2 ho1 ho2
+
+
+  oi-trans : ∀{i u pll rll ll} → ∀ s → (ind1 : IndexLL {i} {u} pll ll) → (ind2 : IndexLL rll pll)
+         → (oi1 : onlyInside s ind1) → onlyInside (truncHOSetLL s ind1 (oi⇒ho s ind1 oi1)) ind2
+         → onlyInside s (ind1 +ᵢ ind2)
+  oi-trans ↓ ↓ ind2 oi1 oi2 = oi2
+  oi-trans ↓ (x ←∧) ind2 () oi2
+  oi-trans ↓ (∧→ x) ind2 () oi2
+  oi-trans ↓ (x ←∨) ind2 () oi2
+  oi-trans ↓ (∨→ x) ind2 () oi2
+  oi-trans ↓ (x ←∂) ind2 () oi2
+  oi-trans ↓ (∂→ x) ind2 () oi2
+  oi-trans (s ←∧) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (s ←∧) (ind1 ←∧) ind2 (onlyInsideC←∧←∧ oi1) oi2 = onlyInsideC←∧←∧ r where
+    r = oi-trans s ind1 ind2 oi1 oi2
+  oi-trans (s ←∧) (∧→ ind1) ind2 () oi2
+  oi-trans (∧→ s) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (∧→ s) (ind1 ←∧) ind2 () oi2
+  oi-trans (∧→ s) (∧→ ind1) ind2 (onlyInsideC∧→∧→ oi1) oi2 = onlyInsideC∧→∧→ r where
+    r = oi-trans s ind1 ind2 oi1 oi2
+  oi-trans (s ←∧→ s₁) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (s ←∧→ s₁) (ind1 ←∧) ind2 () oi2
+  oi-trans (s ←∧→ s₁) (∧→ ind1) ind2 () oi2
+  oi-trans (s ←∨) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (s ←∨) (ind1 ←∨) ind2 (onlyInsideC←∨←∨ oi1) oi2 = onlyInsideC←∨←∨ r where
+    r = oi-trans s ind1 ind2 oi1 oi2
+  oi-trans (s ←∨) (∨→ ind1) ind2 () oi2
+  oi-trans (∨→ s) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (∨→ s) (ind1 ←∨) ind2 () oi2
+  oi-trans (∨→ s) (∨→ ind1) ind2 (onlyInsideC∨→∨→ oi1) oi2 = onlyInsideC∨→∨→ r where
+    r = oi-trans s ind1 ind2 oi1 oi2
+  oi-trans (s ←∨→ s₁) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (s ←∨→ s₁) (ind1 ←∨) ind2 () oi2
+  oi-trans (s ←∨→ s₁) (∨→ ind1) ind2 () oi2
+  oi-trans (s ←∂) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (s ←∂) (ind1 ←∂) ind2 (onlyInsideC←∂←∂ oi1) oi2 = onlyInsideC←∂←∂ r where
+    r = oi-trans s ind1 ind2 oi1 oi2
+  oi-trans (s ←∂) (∂→ ind1) ind2 () oi2
+  oi-trans (∂→ s) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (∂→ s) (ind1 ←∂) ind2 () oi2
+  oi-trans (∂→ s) (∂→ ind1) ind2 (onlyInsideC∂→∂→ oi1) oi2 = onlyInsideC∂→∂→ r where
+    r = oi-trans s ind1 ind2 oi1 oi2
+  oi-trans (s ←∂→ s₁) ↓ ind2 oi1 oi2 = oi2
+  oi-trans (s ←∂→ s₁) (ind1 ←∂) ind2 () oi2
+  oi-trans (s ←∂→ s₁) (∂→ ind1) ind2 () oi2
+
+
+
+  contr-pres≤ : ∀{i u ll} → (s ss : SetLL {i} {u} ll) → s ≤s ss → contruct s ≤s contruct ss 
+  contr-pres≤ ↓ ↓ eq = eq
+  contr-pres≤ ↓ (x ←∧) ()
+  contr-pres≤ ↓ (∧→ x) ()
+  contr-pres≤ ↓ (x ←∧→ x₁) ()
+  contr-pres≤ ↓ (x ←∨) ()
+  contr-pres≤ ↓ (∨→ x) ()
+  contr-pres≤ ↓ (x ←∨→ x₁) ()
+  contr-pres≤ ↓ (x ←∂) ()
+  contr-pres≤ ↓ (∂→ x) ()
+  contr-pres≤ ↓ (x ←∂→ x₁) ()
+  contr-pres≤ (s ←∧) ↓ eq = ≤↓
+  contr-pres≤ (s ←∧) (ss ←∧) (≤←∧ x) = ≤←∧ (contr-pres≤ s ss x)
+  contr-pres≤ (s ←∧) (∧→ ss) ()
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) with contruct ss | contruct ss₁ | contr-pres≤ s ss eq
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | ↓ | e = ≤↓
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | g ←∧ | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | ∧→ g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | g ←∧→ g₁ | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | g ←∨ | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | ∨→ g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | g ←∨→ g₁ | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | g ←∂ | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | ∂→ g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ↓ | g ←∂→ g₁ | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | r ←∧ | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ∧→ r | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | r ←∧→ r₁ | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | r ←∨ | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ∨→ r | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | r ←∨→ r₁ | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | r ←∂ | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | ∂→ r | g | e = ≤d←∧ e
+  contr-pres≤ (s ←∧) (ss ←∧→ ss₁) (≤d←∧ eq) | r ←∂→ r₁ | g | e = ≤d←∧ e
+  contr-pres≤ (∧→ s) ↓ eq = ≤↓
+  contr-pres≤ (∧→ s) (ss ←∧) ()
+  contr-pres≤ (∧→ s) (∧→ ss) (≤∧→ x) = ≤∧→ (contr-pres≤ s ss x)
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) with contruct ss | contruct ss₁ | contr-pres≤ s ss₁ eq
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | ↓ | e = ≤↓
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | g ←∧ | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | ∧→ g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | g ←∧→ g₁ | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | g ←∨ | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | ∨→ g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | g ←∨→ g₁ | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | g ←∂ | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | ∂→ g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ↓ | g ←∂→ g₁ | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | r ←∧ | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ∧→ r | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | r ←∧→ r₁ | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | r ←∨ | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ∨→ r | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | r ←∨→ r₁ | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | r ←∂ | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | ∂→ r | g | e = ≤d∧→ e
+  contr-pres≤ (∧→ s) (ss ←∧→ ss₁) (≤d∧→ eq) | r ←∂→ r₁ | g | e = ≤d∧→ e
+  contr-pres≤ (s ←∧→ s₁) ↓ eq = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧) ()
+  contr-pres≤ (s ←∧→ s₁) (∧→ ss) ()
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) with contruct s | contruct s₁ | contruct ss | contruct ss₁ | contr-pres≤ s ss eq | contr-pres≤ s₁ ss₁ eq₁
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ↓ | .↓ | .↓ | ≤↓ | ≤↓ = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧ | .↓ | h ←∧ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧ | .↓ | ∧→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧ | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∧→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∧→ g | .↓ | h ←∧ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∧→ g | .↓ | ∧→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∧→ g | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | h ←∧ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | ∧→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨ | .↓ | h ←∨ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨ | .↓ | ∨→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨ | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∨→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∨→ g | .↓ | h ←∨ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∨→ g | .↓ | ∨→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∨→ g | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | h ←∨ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | ∨→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂ | .↓ | h ←∂ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂ | .↓ | ∂→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂ | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∂→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∂→ g | .↓ | h ←∂ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∂→ g | .↓ | ∂→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | ∂→ g | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | h ←∂ | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | ∂→ h | ≤↓ | q = ≤←∧→ ≤↓ q
+  contr-pres≤ (s ←∧→ s₁) (ss ←∧→ ss₁) (≤←∧→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∧→ ≤↓ q
+  ... | r ←∧ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∧ | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | t ←∧ | h | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | ∧→ t | h | e | q = ≤←∧→ e q
+  ... | r ←∧ | g | t ←∧→ t₁ | h | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∧→ r | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | t ←∧ | h | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | ∧→ t | h | e | q = ≤←∧→ e q
+  ... | ∧→ r | g | t ←∧→ t₁ | h | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∧→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | t ←∧ | h | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | ∧→ t | h | e | q = ≤←∧→ e q
+  ... | r ←∧→ r₁ | g | t ←∧→ t₁ | h | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∨ | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | t ←∨ | h | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | ∨→ t | h | e | q = ≤←∧→ e q
+  ... | r ←∨ | g | t ←∨→ t₁ | h | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∨→ r | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | t ←∨ | h | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | ∨→ t | h | e | q = ≤←∧→ e q
+  ... | ∨→ r | g | t ←∨→ t₁ | h | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∨→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | t ←∨ | h | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | ∨→ t | h | e | q = ≤←∧→ e q
+  ... | r ←∨→ r₁ | g | t ←∨→ t₁ | h | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∂ | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | t ←∂ | h | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | ∂→ t | h | e | q = ≤←∧→ e q
+  ... | r ←∂ | g | t ←∂→ t₁ | h | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∂→ r | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | t ←∂ | h | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | ∂→ t | h | e | q = ≤←∧→ e q
+  ... | ∂→ r | g | t ←∂→ t₁ | h | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∂→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | t ←∂ | h | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | ∂→ t | h | e | q = ≤←∧→ e q
+  ... | r ←∂→ r₁ | g | t ←∂→ t₁ | h | e | q = ≤←∧→ e q
+  contr-pres≤ (s ←∨) ↓ eq = ≤↓
+  contr-pres≤ (s ←∨) (ss ←∨) (≤←∨ x) = ≤←∨ (contr-pres≤ s ss x)
+  contr-pres≤ (s ←∨) (∨→ ss) ()
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) with contruct ss | contruct ss₁ | contr-pres≤ s ss eq
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | ↓ | e = ≤↓
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | g ←∧ | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | ∧→ g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | g ←∧→ g₁ | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | g ←∨ | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | ∨→ g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | g ←∨→ g₁ | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | g ←∂ | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | ∂→ g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ↓ | g ←∂→ g₁ | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | r ←∧ | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ∧→ r | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | r ←∧→ r₁ | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | r ←∨ | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ∨→ r | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | r ←∨→ r₁ | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | r ←∂ | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | ∂→ r | g | e = ≤d←∨ e
+  contr-pres≤ (s ←∨) (ss ←∨→ ss₁) (≤d←∨ eq) | r ←∂→ r₁ | g | e = ≤d←∨ e
+  contr-pres≤ (∨→ s) ↓ eq = ≤↓
+  contr-pres≤ (∨→ s) (ss ←∨) ()
+  contr-pres≤ (∨→ s) (∨→ ss) (≤∨→ x) = ≤∨→ (contr-pres≤ s ss x)
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) with contruct ss | contruct ss₁ | contr-pres≤ s ss₁ eq
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | ↓ | e = ≤↓
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | g ←∧ | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | ∧→ g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | g ←∧→ g₁ | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | g ←∨ | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | ∨→ g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | g ←∨→ g₁ | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | g ←∂ | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | ∂→ g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ↓ | g ←∂→ g₁ | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | r ←∧ | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ∧→ r | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | r ←∧→ r₁ | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | r ←∨ | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ∨→ r | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | r ←∨→ r₁ | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | r ←∂ | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | ∂→ r | g | e = ≤d∨→ e
+  contr-pres≤ (∨→ s) (ss ←∨→ ss₁) (≤d∨→ eq) | r ←∂→ r₁ | g | e = ≤d∨→ e
+  contr-pres≤ (s ←∨→ s₁) ↓ eq = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨) ()
+  contr-pres≤ (s ←∨→ s₁) (∨→ ss) ()
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) with contruct s | contruct s₁ | contruct ss | contruct ss₁ | contr-pres≤ s ss eq | contr-pres≤ s₁ ss₁ eq₁
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ↓ | .↓ | .↓ | ≤↓ | ≤↓ = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧ | .↓ | h ←∧ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧ | .↓ | ∧→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧ | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∧→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∧→ g | .↓ | h ←∧ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∧→ g | .↓ | ∧→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∧→ g | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | h ←∧ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | ∧→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨ | .↓ | h ←∨ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨ | .↓ | ∨→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨ | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∨→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∨→ g | .↓ | h ←∨ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∨→ g | .↓ | ∨→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∨→ g | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | h ←∨ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | ∨→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂ | .↓ | h ←∂ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂ | .↓ | ∂→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂ | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∂→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∂→ g | .↓ | h ←∂ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∂→ g | .↓ | ∂→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | ∂→ g | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | h ←∂ | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | ∂→ h | ≤↓ | q = ≤←∨→ ≤↓ q
+  contr-pres≤ (s ←∨→ s₁) (ss ←∨→ ss₁) (≤←∨→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∨→ ≤↓ q
+  ... | r ←∧ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∧ | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | t ←∧ | h | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | ∧→ t | h | e | q = ≤←∨→ e q
+  ... | r ←∧ | g | t ←∧→ t₁ | h | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∧→ r | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | t ←∧ | h | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | ∧→ t | h | e | q = ≤←∨→ e q
+  ... | ∧→ r | g | t ←∧→ t₁ | h | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∧→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | t ←∧ | h | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | ∧→ t | h | e | q = ≤←∨→ e q
+  ... | r ←∧→ r₁ | g | t ←∧→ t₁ | h | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∨ | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | t ←∨ | h | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | ∨→ t | h | e | q = ≤←∨→ e q
+  ... | r ←∨ | g | t ←∨→ t₁ | h | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∨→ r | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | t ←∨ | h | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | ∨→ t | h | e | q = ≤←∨→ e q
+  ... | ∨→ r | g | t ←∨→ t₁ | h | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∨→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | t ←∨ | h | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | ∨→ t | h | e | q = ≤←∨→ e q
+  ... | r ←∨→ r₁ | g | t ←∨→ t₁ | h | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∂ | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | t ←∂ | h | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | ∂→ t | h | e | q = ≤←∨→ e q
+  ... | r ←∂ | g | t ←∂→ t₁ | h | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∂→ r | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | t ←∂ | h | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | ∂→ t | h | e | q = ≤←∨→ e q
+  ... | ∂→ r | g | t ←∂→ t₁ | h | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∂→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | t ←∂ | h | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | ∂→ t | h | e | q = ≤←∨→ e q
+  ... | r ←∂→ r₁ | g | t ←∂→ t₁ | h | e | q = ≤←∨→ e q
+  contr-pres≤ (s ←∂) ↓ eq = ≤↓
+  contr-pres≤ (s ←∂) (ss ←∂) (≤←∂ x) = ≤←∂ (contr-pres≤ s ss x)
+  contr-pres≤ (s ←∂) (∂→ ss) ()
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) with contruct ss | contruct ss₁ | contr-pres≤ s ss eq
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | ↓ | e = ≤↓
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | g ←∧ | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | ∧→ g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | g ←∧→ g₁ | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | g ←∨ | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | ∨→ g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | g ←∨→ g₁ | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | g ←∂ | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | ∂→ g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ↓ | g ←∂→ g₁ | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | r ←∧ | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ∧→ r | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | r ←∧→ r₁ | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | r ←∨ | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ∨→ r | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | r ←∨→ r₁ | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | r ←∂ | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | ∂→ r | g | e = ≤d←∂ e
+  contr-pres≤ (s ←∂) (ss ←∂→ ss₁) (≤d←∂ eq) | r ←∂→ r₁ | g | e = ≤d←∂ e
+  contr-pres≤ (∂→ s) ↓ eq = ≤↓
+  contr-pres≤ (∂→ s) (ss ←∂) ()
+  contr-pres≤ (∂→ s) (∂→ ss) (≤∂→ x) = ≤∂→ (contr-pres≤ s ss x)
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) with contruct ss | contruct ss₁ | contr-pres≤ s ss₁ eq
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | ↓ | e = ≤↓
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | g ←∧ | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | ∧→ g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | g ←∧→ g₁ | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | g ←∨ | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | ∨→ g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | g ←∨→ g₁ | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | g ←∂ | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | ∂→ g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ↓ | g ←∂→ g₁ | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | r ←∧ | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ∧→ r | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | r ←∧→ r₁ | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | r ←∨ | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ∨→ r | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | r ←∨→ r₁ | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | r ←∂ | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | ∂→ r | g | e = ≤d∂→ e
+  contr-pres≤ (∂→ s) (ss ←∂→ ss₁) (≤d∂→ eq) | r ←∂→ r₁ | g | e = ≤d∂→ e
+  contr-pres≤ (s ←∂→ s₁) ↓ eq = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂) ()
+  contr-pres≤ (s ←∂→ s₁) (∂→ ss) ()
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) with contruct s | contruct s₁ | contruct ss | contruct ss₁ | contr-pres≤ s ss eq | contr-pres≤ s₁ ss₁ eq₁
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ↓ | .↓ | .↓ | ≤↓ | ≤↓ = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧ | .↓ | h ←∧ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧ | .↓ | ∧→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧ | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∧→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∧→ g | .↓ | h ←∧ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∧→ g | .↓ | ∧→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∧→ g | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | h ←∧ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | ∧→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∧→ g₁ | .↓ | h ←∧→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨ | .↓ | h ←∨ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨ | .↓ | ∨→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨ | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∨→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∨→ g | .↓ | h ←∨ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∨→ g | .↓ | ∨→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∨→ g | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | h ←∨ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | ∨→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∨→ g₁ | .↓ | h ←∨→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂ | .↓ | h ←∂ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂ | .↓ | ∂→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂ | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∂→ g | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∂→ g | .↓ | h ←∂ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∂→ g | .↓ | ∂→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | ∂→ g | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | ↓ | ≤↓ | q = ≤↓
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | h ←∂ | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | ∂→ h | ≤↓ | q = ≤←∂→ ≤↓ q
+  contr-pres≤ (s ←∂→ s₁) (ss ←∂→ ss₁) (≤←∂→ eq eq₁) | ↓ | g ←∂→ g₁ | .↓ | h ←∂→ h₁ | ≤↓ | q = ≤←∂→ ≤↓ q
+  ... | r ←∧ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∧ | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | t ←∧ | h | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | ∧→ t | h | e | q = ≤←∂→ e q
+  ... | r ←∧ | g | t ←∧→ t₁ | h | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∧→ r | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | t ←∧ | h | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | ∧→ t | h | e | q = ≤←∂→ e q
+  ... | ∧→ r | g | t ←∧→ t₁ | h | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∧→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | t ←∧ | h | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | ∧→ t | h | e | q = ≤←∂→ e q
+  ... | r ←∧→ r₁ | g | t ←∧→ t₁ | h | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∨ | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | t ←∨ | h | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | ∨→ t | h | e | q = ≤←∂→ e q
+  ... | r ←∨ | g | t ←∨→ t₁ | h | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∨→ r | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | t ←∨ | h | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | ∨→ t | h | e | q = ≤←∂→ e q
+  ... | ∨→ r | g | t ←∨→ t₁ | h | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∨→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | t ←∨ | h | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | ∨→ t | h | e | q = ≤←∂→ e q
+  ... | r ←∨→ r₁ | g | t ←∨→ t₁ | h | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∂ | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | t ←∂ | h | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | ∂→ t | h | e | q = ≤←∂→ e q
+  ... | r ←∂ | g | t ←∂→ t₁ | h | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | ↓ | e | q = ≤↓
+  ... | ∂→ r | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | t ←∂ | h | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | ∂→ t | h | e | q = ≤←∂→ e q
+  ... | ∂→ r | g | t ←∂→ t₁ | h | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ↓ | e | q = ≤↓
+  ... | r ←∂→ r₁ | g | ↓ | h ←∧ | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∧→ h | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∧→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∨ | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∨→ h | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∨→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∂ | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | ∂→ h | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ↓ | h ←∂→ h₁ | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | t ←∂ | h | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | ∂→ t | h | e | q = ≤←∂→ e q
+  ... | r ←∂→ r₁ | g | t ←∂→ t₁ | h | e | q = ≤←∂→ e q
 
 
 -- --   ¬contr≡↓⇒¬contrdel≡↓ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → (ind : IndexLL rll ll) → ∀{x} → del s ind fll ≡ ¬∅ x → ¬ (contruct x ≡ ↓)
@@ -1674,35 +2389,6 @@ module _ where
 -- --     d = trunc≡∅⇒¬mrpls≡∅ {fll = fll} s ind treq
 -- --   ... | ¬∅ x | [ eq ] = (x , refl , c) where
 -- --     c = ¬contr≡↓⇒¬contrdel≡↓ s ceq ind eq
-
-
-
-
--- -- -- oi⇒ext-truncoi : ∀{i u pll ll ss s} → (ind : IndexLL {i} {u} pll ll) → {{oi : onlyInside s ind}} → ss ≤s (truncOISetLL s ind {{prf = oi}}) → onlyInside (extend ind ss) ind
--- -- -- oi⇒ext-truncoi {s = _} ↓ {{oi}} x = onlyInsideCs↓
--- -- -- oi⇒ext-truncoi {s = ↓} (ind ←∧) {{()}} x
--- -- -- oi⇒ext-truncoi {pll = pll} {li ∧ ri} {ss} {s = _ ←∧} (ind ←∧) {{onlyInsideC←∧←∧ oi}} x with replLL li ind pll | (replLL-id li ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
--- -- -- ... | .li | refl | e | q = onlyInsideC←∧←∧ q 
--- -- -- oi⇒ext-truncoi {s = ∧→ _} (ind ←∧) {{()}} x
--- -- -- oi⇒ext-truncoi {s = _ ←∧→ _} (ind ←∧) {{()}} x
--- -- -- oi⇒ext-truncoi {pll = pll} {li ∧ ri} {ss} {s = .(∧→ _)} (∧→ ind) {{onlyInsideC∧→∧→ oi}} x with replLL ri ind pll | (replLL-id ri ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
--- -- -- ... | .ri | refl | e | q = onlyInsideC∧→∧→ q
--- -- -- oi⇒ext-truncoi {s = ↓} (ind ←∨) {{()}} x
--- -- -- oi⇒ext-truncoi {pll = pll} {li ∨ ri} {ss} {s = _ ←∨} (ind ←∨) {{onlyInsideC←∨←∨ oi}} x with replLL li ind pll | (replLL-id li ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
--- -- -- ... | .li | refl | e | q = onlyInsideC←∨←∨ q
--- -- -- oi⇒ext-truncoi {s = ∨→ _} (ind ←∨) {{()}} x
--- -- -- oi⇒ext-truncoi {s = _ ←∨→ _} (ind ←∨) {{()}} x
--- -- -- oi⇒ext-truncoi {pll = pll} {li ∨ ri} {ss} {s = .(∨→ _)} (∨→ ind) {{onlyInsideC∨→∨→ oi}} x with replLL ri ind pll | (replLL-id ri ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
--- -- -- ... | .ri | refl | e | q = onlyInsideC∨→∨→ q
--- -- -- oi⇒ext-truncoi {s = ↓} (ind ←∂) {{()}} x
--- -- -- oi⇒ext-truncoi {pll = pll} {li ∂ ri} {ss} {s = _ ←∂} (ind ←∂) {{onlyInsideC←∂←∂ oi}} x with replLL li ind pll | (replLL-id li ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
--- -- -- ... | .li | refl | e | q = onlyInsideC←∂←∂ q
--- -- -- oi⇒ext-truncoi {s = ∂→ _} (ind ←∂) {{()}} x
--- -- -- oi⇒ext-truncoi {s = _ ←∂→ _} (ind ←∂) {{()}} x
--- -- -- oi⇒ext-truncoi {pll = pll} {li ∂ ri} {ss} {s = .(∂→ _)} (∂→ ind) {{onlyInsideC∂→∂→ oi}} x with replLL ri ind pll | (replLL-id ri ind pll refl) | extendg ind ss | oi⇒ext-truncoi ind {{oi = oi}} x
--- -- -- ... | .ri | refl | e | q = onlyInsideC∂→∂→ q
-
-
 
 
 

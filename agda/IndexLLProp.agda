@@ -1346,3 +1346,4 @@ replLL-inv {ll = li ∂ ri} {ell = ell} {pll = pll} (∂→ ind)
            with (replLL (replLL ri ind ell) (updInd ell ind) pll) | (replLL-inv {ell = ell} ind)
 replLL-inv {_} {_} {li ∂ ri} {ell} {pll} (∂→ ind) | .ri | refl = refl
 
+
