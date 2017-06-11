@@ -721,24 +721,9 @@ data UpTran {i u} : ∀ {ll pll rll} → IndexLL pll ll → LLTr {i} {u} rll ll 
   ∧→]←∧∧∧d : ∀{pll lli lri ri rll ltr} → {ind : IndexLL pll lri}
             → UpTran {rll = rll} (∧→ (ind ←∧)) ltr
             → UpTran {ll = (lli ∧ lri) ∧ ri} ((∧→ ind) ←∧) (∧∧d ltr)
-  ∧→[←∧∧∧d : ∀{pll lli lri rri rli rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∧→ (∧→ (ind ←∧))) ltr
-            → UpTran {ll = (lli ∧ lri) ∧ (rli ∧ rri)} (∧→ (ind ←∧)) (∧∧d ltr)
-  ∧→[∧→∧∧d : ∀{pll lli lri rri rli rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∧→ (∧→ (∧→ ind))) ltr
-            → UpTran {ll = (lli ∧ lri) ∧ (rli ∧ rri)} (∧→ (∧→ ind)) (∧∧d ltr)
-  ∧→[←∨∧∧d : ∀{pll lli lri rri rli rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∧→ (∧→ (ind ←∨))) ltr
-            → UpTran {ll = (lli ∧ lri) ∧ (rli ∨ rri)} (∧→ (ind ←∨)) (∧∧d ltr)
-  ∧→[∨→∧∧d : ∀{pll lli lri rri rli rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∧→ (∧→ (∨→ ind))) ltr
-            → UpTran {ll = (lli ∧ lri) ∧ (rli ∨ rri)} (∧→ (∨→ ind)) (∧∧d ltr)
-  ∧→[←∂∧∧d : ∀{pll lli lri rri rli rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∧→ (∧→ (ind ←∂))) ltr
-            → UpTran {ll = (lli ∧ lri) ∧ (rli ∂ rri)} (∧→ (ind ←∂)) (∧∧d ltr)
-  ∧→[∂→∧∧d : ∀{pll lli lri rri rli rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∧→ (∧→ (∂→ ind))) ltr
-            → UpTran {ll = (lli ∧ lri) ∧ (rli ∂ rri)} (∧→ (∂→ ind)) (∧∧d ltr)
+  ∧→∧∧d    : ∀{pll lli lri ri rll ltr} → {ind : IndexLL pll ri}
+            → UpTran {rll = rll} (∧→ (∧→ ind)) ltr
+            → UpTran {ll = ((lli ∧ lri) ∧ ri)} (∧→ ind) (∧∧d ltr)
   ←∧¬∧∧d : ∀{pll li rli rri rll ltr} → {ind : IndexLL pll li}
             → UpTran {rll = rll} ((ind ←∧) ←∧) ltr
             → UpTran {ll = li ∧ (rli ∧ rri)} (ind ←∧) (¬∧∧d ltr)
@@ -753,24 +738,9 @@ data UpTran {i u} : ∀ {ll pll rll} → IndexLL pll ll → LLTr {i} {u} rll ll 
   ∨→]←∨∨∨d : ∀{pll lli lri ri rll ltr} → {ind : IndexLL pll lri}
             → UpTran {rll = rll} (∨→ (ind ←∨)) ltr
             → UpTran {ll = (lli ∨ lri) ∨ ri} ((∨→ ind) ←∨) (∨∨d ltr)
-  ∨→[←∧∨∨d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∨→ (∨→ (ind ←∧))) ltr
-            → UpTran {ll = (lli ∨ lri) ∨ (rli ∧ rri)} (∨→ (ind ←∧)) (∨∨d ltr)
-  ∨→[∧→∨∨d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∨→ (∨→ (∧→ ind))) ltr
-            → UpTran {ll = (lli ∨ lri) ∨ (rli ∧ rri)} (∨→ (∧→ ind)) (∨∨d ltr)
-  ∨→[←∨∨∨d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∨→ (∨→ (ind ←∨))) ltr
-            → UpTran {ll = (lli ∨ lri) ∨ (rli ∨ rri)} (∨→ (ind ←∨)) (∨∨d ltr)
-  ∨→[∨→∨∨d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∨→ (∨→ (∨→ ind))) ltr
-            → UpTran {ll = (lli ∨ lri) ∨ (rli ∨ rri)} (∨→ (∨→ ind)) (∨∨d ltr)
-  ∨→[←∂∨∨d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∨→ (∨→ (ind ←∂))) ltr
-            → UpTran {ll = (lli ∨ lri) ∨ (rli ∂ rri)} (∨→ (ind ←∂)) (∨∨d ltr)
-  ∨→[∂→∨∨d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∨→ (∨→ (∂→ ind))) ltr
-            → UpTran {ll = (lli ∨ lri) ∨ (rli ∂ rri)} (∨→ (∂→ ind)) (∨∨d ltr)
+  ∨→∨∨d    : ∀{pll lli lri ri rll ltr} → {ind : IndexLL pll ri}
+            → UpTran {rll = rll} (∨→ (∨→ ind)) ltr
+            → UpTran {ll = (lli ∨ lri) ∨ ri} (∨→ ind) (∨∨d ltr)
   ←∨¬∨∨d : ∀{pll li rli rri rll ltr} → {ind : IndexLL pll li}
             → UpTran {rll = rll} ((ind ←∨) ←∨) ltr
             → UpTran {ll = li ∨ (rli ∨ rri)} (ind ←∨) (¬∨∨d ltr)
@@ -785,24 +755,9 @@ data UpTran {i u} : ∀ {ll pll rll} → IndexLL pll ll → LLTr {i} {u} rll ll 
   ∂→]←∂∂∂d : ∀{pll lli lri ri rll ltr} → {ind : IndexLL pll lri}
             → UpTran {rll = rll} (∂→ (ind ←∂)) ltr
             → UpTran {ll = (lli ∂ lri) ∂ ri} ((∂→ ind) ←∂) (∂∂d ltr)
-  ∂→[←∧∂∂d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∂→ (∂→ (ind ←∧))) ltr
-            → UpTran {ll = (lli ∂ lri) ∂ (rli ∧ rri)} (∂→ (ind ←∧)) (∂∂d ltr)
-  ∂→[∧→∂∂d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∂→ (∂→ (∧→ ind))) ltr
-            → UpTran {ll = (lli ∂ lri) ∂ (rli ∧ rri)} (∂→ (∧→ ind)) (∂∂d ltr)
-  ∂→[←∨∂∂d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∂→ (∂→ (ind ←∨))) ltr
-            → UpTran {ll = (lli ∂ lri) ∂ (rli ∨ rri)} (∂→ (ind ←∨)) (∂∂d ltr)
-  ∂→[∨→∂∂d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∂→ (∂→ (∨→ ind))) ltr
-            → UpTran {ll = (lli ∂ lri) ∂ (rli ∨ rri)} (∂→ (∨→ ind)) (∂∂d ltr)
-  ∂→[←∂∂∂d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rli}
-            → UpTran {rll = rll} (∂→ (∂→ (ind ←∂))) ltr
-            → UpTran {ll = (lli ∂ lri) ∂ (rli ∂ rri)} (∂→ (ind ←∂)) (∂∂d ltr)
-  ∂→[∂→∂∂d : ∀{pll lli lri rli rri rll ltr} → {ind : IndexLL pll rri}
-            → UpTran {rll = rll} (∂→ (∂→ (∂→ ind))) ltr
-            → UpTran {ll = (lli ∂ lri) ∂ (rli ∂ rri)} (∂→ (∂→ ind)) (∂∂d ltr)
+  ∂→∂∂d    : ∀{pll lli lri ri rll ltr} → {ind : IndexLL pll ri}
+            → UpTran {rll = rll} (∂→ (∂→ ind)) ltr
+            → UpTran {ll = (lli ∂ lri) ∂ ri} (∂→ ind) (∂∂d ltr)
   ←∂¬∂∂d : ∀{pll li rli rri rll ltr} → {ind : IndexLL pll li}
             → UpTran {rll = rll} ((ind ←∂) ←∂) ltr
             → UpTran {ll = li ∂ (rli ∂ rri)} (ind ←∂) (¬∂∂d ltr)
@@ -844,25 +799,9 @@ isUpTran ((ind ←∧) ←∧) (∧∧d ltr) | no ¬p = no (λ {(←∧]←∧�
 isUpTran ((∧→ ind) ←∧) (∧∧d ltr) with (isUpTran (∧→ (ind ←∧)) ltr)
 isUpTran ((∧→ ind) ←∧) (∧∧d ltr) | yes p = yes (∧→]←∧∧∧d p)
 isUpTran ((∧→ ind) ←∧) (∧∧d ltr) | no ¬p = no (λ {(∧→]←∧∧∧d ut) → ¬p ut}) 
-isUpTran (∧→ ↓) (∧∧d ltr) = no (λ ())
-isUpTran (∧→ (ind ←∧)) (∧∧d ltr) with (isUpTran (∧→ (∧→ (ind ←∧))) ltr)
-isUpTran (∧→ (ind ←∧)) (∧∧d ltr) | yes p = yes (∧→[←∧∧∧d p)
-isUpTran (∧→ (ind ←∧)) (∧∧d ltr) | no ¬p =  no (λ {(∧→[←∧∧∧d ut) → ¬p ut})
-isUpTran (∧→ (∧→ ind)) (∧∧d ltr) with (isUpTran (∧→ (∧→ (∧→ ind))) ltr)
-isUpTran (∧→ (∧→ ind)) (∧∧d ltr) | yes p = yes (∧→[∧→∧∧d p)
-isUpTran (∧→ (∧→ ind)) (∧∧d ltr) | no ¬p =  no (λ {(∧→[∧→∧∧d ut) → ¬p ut})
-isUpTran (∧→ (ind ←∨)) (∧∧d ltr) with (isUpTran (∧→ (∧→ (ind ←∨))) ltr)
-isUpTran (∧→ (ind ←∨)) (∧∧d ltr) | yes p = yes (∧→[←∨∧∧d p)
-isUpTran (∧→ (ind ←∨)) (∧∧d ltr) | no ¬p =  no (λ {(∧→[←∨∧∧d ut) → ¬p ut})
-isUpTran (∧→ (∨→ ind)) (∧∧d ltr) with (isUpTran (∧→ (∧→ (∨→ ind))) ltr)
-isUpTran (∧→ (∨→ ind)) (∧∧d ltr) | yes p = yes (∧→[∨→∧∧d p)
-isUpTran (∧→ (∨→ ind)) (∧∧d ltr) | no ¬p =  no (λ {(∧→[∨→∧∧d ut) → ¬p ut})
-isUpTran (∧→ (ind ←∂)) (∧∧d ltr) with (isUpTran (∧→ (∧→ (ind ←∂))) ltr)
-isUpTran (∧→ (ind ←∂)) (∧∧d ltr) | yes p = yes (∧→[←∂∧∧d p)
-isUpTran (∧→ (ind ←∂)) (∧∧d ltr) | no ¬p =  no (λ {(∧→[←∂∧∧d ut) → ¬p ut})
-isUpTran (∧→ (∂→ ind)) (∧∧d ltr) with (isUpTran (∧→ (∧→ (∂→ ind))) ltr)
-isUpTran (∧→ (∂→ ind)) (∧∧d ltr) | yes p = yes (∧→[∂→∧∧d p)
-isUpTran (∧→ (∂→ ind)) (∧∧d ltr) | no ¬p =  no (λ {(∧→[∂→∧∧d ut) → ¬p ut})
+isUpTran (∧→ ind) (∧∧d ltr) with (isUpTran (∧→ (∧→ ind)) ltr)
+isUpTran (∧→ ind) (∧∧d ltr) | yes p = yes (∧→∧∧d p)
+isUpTran (∧→ ind) (∧∧d ltr) | no ¬p = no (λ {(∧→∧∧d ut) → ¬p ut})
 isUpTran ↓ (¬∧∧d ltr) = no (λ ())
 isUpTran (ind ←∧) (¬∧∧d ltr) with (isUpTran ((ind ←∧) ←∧) ltr)
 isUpTran (ind ←∧) (¬∧∧d ltr) | yes p = yes (←∧¬∧∧d p)
@@ -882,25 +821,9 @@ isUpTran ((ind ←∨) ←∨) (∨∨d ltr) | no ¬p = no (λ {(←∨]←∨�
 isUpTran ((∨→ ind) ←∨) (∨∨d ltr) with (isUpTran (∨→ (ind ←∨)) ltr)
 isUpTran ((∨→ ind) ←∨) (∨∨d ltr) | yes p = yes (∨→]←∨∨∨d p)
 isUpTran ((∨→ ind) ←∨) (∨∨d ltr) | no ¬p = no (λ {(∨→]←∨∨∨d ut) → ¬p ut}) 
-isUpTran (∨→ ↓) (∨∨d ltr) = no (λ ())
-isUpTran (∨→ (ind ←∧)) (∨∨d ltr) with (isUpTran (∨→ (∨→ (ind ←∧))) ltr)
-isUpTran (∨→ (ind ←∧)) (∨∨d ltr) | yes p = yes (∨→[←∧∨∨d p)
-isUpTran (∨→ (ind ←∧)) (∨∨d ltr) | no ¬p =  no (λ {(∨→[←∧∨∨d ut) → ¬p ut})
-isUpTran (∨→ (∧→ ind)) (∨∨d ltr) with (isUpTran (∨→ (∨→ (∧→ ind))) ltr)
-isUpTran (∨→ (∧→ ind)) (∨∨d ltr) | yes p = yes (∨→[∧→∨∨d p)
-isUpTran (∨→ (∧→ ind)) (∨∨d ltr) | no ¬p =  no (λ {(∨→[∧→∨∨d ut) → ¬p ut})
-isUpTran (∨→ (ind ←∨)) (∨∨d ltr) with (isUpTran (∨→ (∨→ (ind ←∨))) ltr)
-isUpTran (∨→ (ind ←∨)) (∨∨d ltr) | yes p = yes (∨→[←∨∨∨d p)
-isUpTran (∨→ (ind ←∨)) (∨∨d ltr) | no ¬p =  no (λ {(∨→[←∨∨∨d ut) → ¬p ut})
-isUpTran (∨→ (∨→ ind)) (∨∨d ltr) with (isUpTran (∨→ (∨→ (∨→ ind))) ltr)
-isUpTran (∨→ (∨→ ind)) (∨∨d ltr) | yes p = yes (∨→[∨→∨∨d p)
-isUpTran (∨→ (∨→ ind)) (∨∨d ltr) | no ¬p =  no (λ {(∨→[∨→∨∨d ut) → ¬p ut})
-isUpTran (∨→ (ind ←∂)) (∨∨d ltr) with (isUpTran (∨→ (∨→ (ind ←∂))) ltr)
-isUpTran (∨→ (ind ←∂)) (∨∨d ltr) | yes p = yes (∨→[←∂∨∨d p)
-isUpTran (∨→ (ind ←∂)) (∨∨d ltr) | no ¬p =  no (λ {(∨→[←∂∨∨d ut) → ¬p ut})
-isUpTran (∨→ (∂→ ind)) (∨∨d ltr) with (isUpTran (∨→ (∨→ (∂→ ind))) ltr)
-isUpTran (∨→ (∂→ ind)) (∨∨d ltr) | yes p = yes (∨→[∂→∨∨d p)
-isUpTran (∨→ (∂→ ind)) (∨∨d ltr) | no ¬p =  no (λ {(∨→[∂→∨∨d ut) → ¬p ut})
+isUpTran (∨→ ind) (∨∨d ltr) with (isUpTran (∨→ (∨→ ind)) ltr)
+isUpTran (∨→ ind) (∨∨d ltr) | yes p = yes (∨→∨∨d p)
+isUpTran (∨→ ind) (∨∨d ltr) | no ¬p = no (λ {(∨→∨∨d ut) → ¬p ut})
 isUpTran ↓ (¬∨∨d ltr) = no (λ ())
 isUpTran (ind ←∨) (¬∨∨d ltr) with (isUpTran ((ind ←∨) ←∨) ltr)
 isUpTran (ind ←∨) (¬∨∨d ltr) | yes p = yes (←∨¬∨∨d p)
@@ -920,25 +843,9 @@ isUpTran ((ind ←∂) ←∂) (∂∂d ltr) | no ¬p = no (λ {(←∂]←∂�
 isUpTran ((∂→ ind) ←∂) (∂∂d ltr) with (isUpTran (∂→ (ind ←∂)) ltr)
 isUpTran ((∂→ ind) ←∂) (∂∂d ltr) | yes p = yes (∂→]←∂∂∂d p)
 isUpTran ((∂→ ind) ←∂) (∂∂d ltr) | no ¬p = no (λ {(∂→]←∂∂∂d ut) → ¬p ut})
-isUpTran (∂→ ↓) (∂∂d ltr) = no (λ ())
-isUpTran (∂→ (ind ←∧)) (∂∂d ltr) with (isUpTran (∂→ (∂→ (ind ←∧))) ltr)
-isUpTran (∂→ (ind ←∧)) (∂∂d ltr) | yes p = yes (∂→[←∧∂∂d p)
-isUpTran (∂→ (ind ←∧)) (∂∂d ltr) | no ¬p =  no (λ {(∂→[←∧∂∂d ut) → ¬p ut})
-isUpTran (∂→ (∧→ ind)) (∂∂d ltr) with (isUpTran (∂→ (∂→ (∧→ ind))) ltr)
-isUpTran (∂→ (∧→ ind)) (∂∂d ltr) | yes p = yes (∂→[∧→∂∂d p)
-isUpTran (∂→ (∧→ ind)) (∂∂d ltr) | no ¬p =  no (λ {(∂→[∧→∂∂d ut) → ¬p ut})
-isUpTran (∂→ (ind ←∨)) (∂∂d ltr) with (isUpTran (∂→ (∂→ (ind ←∨))) ltr)
-isUpTran (∂→ (ind ←∨)) (∂∂d ltr) | yes p = yes (∂→[←∨∂∂d p)
-isUpTran (∂→ (ind ←∨)) (∂∂d ltr) | no ¬p =  no (λ {(∂→[←∨∂∂d ut) → ¬p ut})
-isUpTran (∂→ (∨→ ind)) (∂∂d ltr) with (isUpTran (∂→ (∂→ (∨→ ind))) ltr)
-isUpTran (∂→ (∨→ ind)) (∂∂d ltr) | yes p = yes (∂→[∨→∂∂d p)
-isUpTran (∂→ (∨→ ind)) (∂∂d ltr) | no ¬p =  no (λ {(∂→[∨→∂∂d ut) → ¬p ut})
-isUpTran (∂→ (ind ←∂)) (∂∂d ltr) with (isUpTran (∂→ (∂→ (ind ←∂))) ltr)
-isUpTran (∂→ (ind ←∂)) (∂∂d ltr) | yes p = yes (∂→[←∂∂∂d p)
-isUpTran (∂→ (ind ←∂)) (∂∂d ltr) | no ¬p =  no (λ {(∂→[←∂∂∂d ut) → ¬p ut})
-isUpTran (∂→ (∂→ ind)) (∂∂d ltr) with (isUpTran (∂→ (∂→ (∂→ ind))) ltr)
-isUpTran (∂→ (∂→ ind)) (∂∂d ltr) | yes p = yes (∂→[∂→∂∂d p)
-isUpTran (∂→ (∂→ ind)) (∂∂d ltr) | no ¬p =  no (λ {(∂→[∂→∂∂d ut) → ¬p ut})
+isUpTran (∂→ ind) (∂∂d ltr) with (isUpTran (∂→ (∂→ ind)) ltr)
+isUpTran (∂→ ind) (∂∂d ltr) | yes p = yes (∂→∂∂d p)
+isUpTran (∂→ ind) (∂∂d ltr) | no ¬p = no (λ {(∂→∂∂d ut) → ¬p ut})
 isUpTran ↓ (¬∂∂d ltr) = no (λ ())
 isUpTran (ind ←∂) (¬∂∂d ltr) with (isUpTran ((ind ←∂) ←∂) ltr)
 isUpTran (ind ←∂) (¬∂∂d ltr) | yes p = yes (←∂¬∂∂d p)
@@ -969,13 +876,7 @@ tran ↓ (∧∧d ltr) ()
 tran (↓ ←∧) (∧∧d ltr) () 
 tran ((ind ←∧) ←∧) (∧∧d ltr) (←∧]←∧∧∧d ut) = tran (ind ←∧) ltr ut
 tran ((∧→ ind) ←∧) (∧∧d ltr) (∧→]←∧∧∧d ut) = tran (∧→ (ind ←∧)) ltr ut
-tran (∧→ ↓) (∧∧d ltr) ()
-tran (∧→ (ind ←∧)) (∧∧d ltr) (∧→[←∧∧∧d ut) = tran (∧→ (∧→ (ind ←∧))) ltr ut
-tran (∧→ (∧→ ind)) (∧∧d ltr) (∧→[∧→∧∧d ut) = tran (∧→ (∧→ (∧→ ind))) ltr ut
-tran (∧→ (ind ←∨)) (∧∧d ltr) (∧→[←∨∧∧d ut) = tran (∧→ (∧→ (ind ←∨))) ltr ut
-tran (∧→ (∨→ ind)) (∧∧d ltr) (∧→[∨→∧∧d ut) = tran (∧→ (∧→ (∨→ ind))) ltr ut
-tran (∧→ (ind ←∂)) (∧∧d ltr) (∧→[←∂∧∧d ut) = tran (∧→ (∧→ (ind ←∂))) ltr ut
-tran (∧→ (∂→ ind)) (∧∧d ltr) (∧→[∂→∧∧d ut) = tran (∧→ (∧→ (∂→ ind))) ltr ut
+tran (∧→ ind) (∧∧d ltr) (∧→∧∧d ut) = tran (∧→ (∧→ ind)) ltr ut
 tran ↓ (¬∧∧d ltr) () 
 tran (ind ←∧) (¬∧∧d ltr) (←∧¬∧∧d ut) = tran ((ind ←∧) ←∧) ltr ut
 tran (∧→ ↓) (¬∧∧d ltr) () 
@@ -985,13 +886,7 @@ tran ↓ (∨∨d ltr) ()
 tran (↓ ←∨) (∨∨d ltr) () 
 tran ((ind ←∨) ←∨) (∨∨d ltr) (←∨]←∨∨∨d ut) = tran (ind ←∨) ltr ut
 tran ((∨→ ind) ←∨) (∨∨d ltr) (∨→]←∨∨∨d ut) = tran (∨→ (ind ←∨)) ltr ut
-tran (∨→ ↓) (∨∨d ltr) ()
-tran (∨→ (ind ←∧)) (∨∨d ltr) (∨→[←∧∨∨d ut) = tran (∨→ (∨→ (ind ←∧))) ltr ut
-tran (∨→ (∧→ ind)) (∨∨d ltr) (∨→[∧→∨∨d ut) = tran (∨→ (∨→ (∧→ ind))) ltr ut
-tran (∨→ (ind ←∨)) (∨∨d ltr) (∨→[←∨∨∨d ut) = tran (∨→ (∨→ (ind ←∨))) ltr ut
-tran (∨→ (∨→ ind)) (∨∨d ltr) (∨→[∨→∨∨d ut) = tran (∨→ (∨→ (∨→ ind))) ltr ut
-tran (∨→ (ind ←∂)) (∨∨d ltr) (∨→[←∂∨∨d ut) = tran (∨→ (∨→ (ind ←∂))) ltr ut
-tran (∨→ (∂→ ind)) (∨∨d ltr) (∨→[∂→∨∨d ut) = tran (∨→ (∨→ (∂→ ind))) ltr ut
+tran (∨→ ind) (∨∨d ltr) (∨→∨∨d ut) = tran (∨→ (∨→ ind)) ltr ut
 tran ↓ (¬∨∨d ltr) () 
 tran (ind ←∨) (¬∨∨d ltr) (←∨¬∨∨d ut) = tran ((ind ←∨) ←∨) ltr ut
 tran (∨→ ↓) (¬∨∨d ltr) () 
@@ -1001,13 +896,7 @@ tran ↓ (∂∂d ltr) ()
 tran (↓ ←∂) (∂∂d ltr) () 
 tran ((ind ←∂) ←∂) (∂∂d ltr) (←∂]←∂∂∂d ut) = tran (ind ←∂) ltr ut
 tran ((∂→ ind) ←∂) (∂∂d ltr) (∂→]←∂∂∂d ut) = tran (∂→ (ind ←∂)) ltr ut
-tran (∂→ ↓) (∂∂d ltr) ()
-tran (∂→ (ind ←∧)) (∂∂d ltr) (∂→[←∧∂∂d ut) = tran (∂→ (∂→ (ind ←∧))) ltr ut
-tran (∂→ (∧→ ind)) (∂∂d ltr) (∂→[∧→∂∂d ut) = tran (∂→ (∂→ (∧→ ind))) ltr ut
-tran (∂→ (ind ←∨)) (∂∂d ltr) (∂→[←∨∂∂d ut) = tran (∂→ (∂→ (ind ←∨))) ltr ut
-tran (∂→ (∨→ ind)) (∂∂d ltr) (∂→[∨→∂∂d ut) = tran (∂→ (∂→ (∨→ ind))) ltr ut
-tran (∂→ (ind ←∂)) (∂∂d ltr) (∂→[←∂∂∂d ut) = tran (∂→ (∂→ (ind ←∂))) ltr ut
-tran (∂→ (∂→ ind)) (∂∂d ltr) (∂→[∂→∂∂d ut) = tran (∂→ (∂→ (∂→ ind))) ltr ut
+tran (∂→ ind) (∂∂d ltr) (∂→∂∂d ut) = tran (∂→ (∂→ ind)) ltr ut
 tran ↓ (¬∂∂d ltr) () 
 tran (ind ←∂) (¬∂∂d ltr) (←∂¬∂∂d ut) = tran ((ind ←∂) ←∂) ltr ut
 tran (∂→ ↓) (¬∂∂d ltr) () 
@@ -1029,17 +918,7 @@ tr-ltr-morph frll (ind ←∧) (¬∧∧d ltr) (←∧¬∧∧d rvT) with tr-ltr
 tr-ltr-morph frll (∧→ ind) I indI = I
 tr-ltr-morph frll (∧→ ind) (∧c ltr) (∧→∧c rvT) with tr-ltr-morph frll (ind ←∧) ltr rvT
 ... | r = ∧c r
-tr-ltr-morph frll (∧→ (ind ←∧)) (∧∧d ltr) (∧→[←∧∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ (ind ←∧))) ltr rvT
-... | r = ∧∧d r
-tr-ltr-morph frll (∧→ (∧→ ind)) (∧∧d ltr) (∧→[∧→∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ (∧→ ind))) ltr rvT
-... | r = ∧∧d r
-tr-ltr-morph frll (∧→ (ind ←∨)) (∧∧d ltr) (∧→[←∨∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ (ind ←∨))) ltr rvT
-... | r = ∧∧d r
-tr-ltr-morph frll (∧→ (∨→ ind)) (∧∧d ltr) (∧→[∨→∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ (∨→ ind))) ltr rvT
-... | r = ∧∧d r
-tr-ltr-morph frll (∧→ (ind ←∂)) (∧∧d ltr) (∧→[←∂∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ (ind ←∂))) ltr rvT
-... | r = ∧∧d r
-tr-ltr-morph frll (∧→ (∂→ ind)) (∧∧d ltr) (∧→[∂→∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ (∂→ ind))) ltr rvT
+tr-ltr-morph frll (∧→ ind) (∧∧d ltr) (∧→∧∧d rvT) with tr-ltr-morph frll (∧→ (∧→ ind)) ltr rvT
 ... | r = ∧∧d r
 tr-ltr-morph frll (∧→ (ind ←∧)) (¬∧∧d ltr) (∧→[←∧¬∧∧d rvT) with tr-ltr-morph frll ((∧→ ind) ←∧) ltr rvT
 ... | r = ¬∧∧d r
@@ -1057,17 +936,7 @@ tr-ltr-morph frll (ind ←∨) (¬∨∨d ltr) (←∨¬∨∨d rvT) with tr-ltr
 tr-ltr-morph frll (∨→ ind) I indI = I
 tr-ltr-morph frll (∨→ ind) (∨c ltr) (∨→∨c rvT) with tr-ltr-morph frll (ind ←∨) ltr rvT
 ... | r = ∨c r
-tr-ltr-morph frll (∨→ (ind ←∨)) (∨∨d ltr) (∨→[←∨∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ (ind ←∨))) ltr rvT
-... | r = ∨∨d r
-tr-ltr-morph frll (∨→ (∨→ ind)) (∨∨d ltr) (∨→[∨→∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ (∨→ ind))) ltr rvT
-... | r = ∨∨d r
-tr-ltr-morph frll (∨→ (ind ←∧)) (∨∨d ltr) (∨→[←∧∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ (ind ←∧))) ltr rvT
-... | r = ∨∨d r
-tr-ltr-morph frll (∨→ (∧→ ind)) (∨∨d ltr) (∨→[∧→∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ (∧→ ind))) ltr rvT
-... | r = ∨∨d r
-tr-ltr-morph frll (∨→ (ind ←∂)) (∨∨d ltr) (∨→[←∂∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ (ind ←∂))) ltr rvT
-... | r = ∨∨d r
-tr-ltr-morph frll (∨→ (∂→ ind)) (∨∨d ltr) (∨→[∂→∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ (∂→ ind))) ltr rvT
+tr-ltr-morph frll (∨→ ind) (∨∨d ltr) (∨→∨∨d rvT) with tr-ltr-morph frll (∨→ (∨→ ind)) ltr rvT
 ... | r = ∨∨d r
 tr-ltr-morph frll (∨→ (ind ←∨)) (¬∨∨d ltr) (∨→[←∨¬∨∨d rvT) with tr-ltr-morph frll ((∨→ ind) ←∨) ltr rvT
 ... | r = ¬∨∨d r
@@ -1085,17 +954,7 @@ tr-ltr-morph frll (ind ←∂) (¬∂∂d ltr) (←∂¬∂∂d rvT) with tr-ltr
 tr-ltr-morph frll (∂→ ind) I indI = I
 tr-ltr-morph frll (∂→ ind) (∂c ltr) (∂→∂c rvT) with tr-ltr-morph frll (ind ←∂) ltr rvT
 ... | r = ∂c r
-tr-ltr-morph frll (∂→ (ind ←∂)) (∂∂d ltr) (∂→[←∂∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ (ind ←∂))) ltr rvT
-... | r = ∂∂d r
-tr-ltr-morph frll (∂→ (∂→ ind)) (∂∂d ltr) (∂→[∂→∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ (∂→ ind))) ltr rvT
-... | r = ∂∂d r
-tr-ltr-morph frll (∂→ (ind ←∨)) (∂∂d ltr) (∂→[←∨∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ (ind ←∨))) ltr rvT
-... | r = ∂∂d r
-tr-ltr-morph frll (∂→ (∨→ ind)) (∂∂d ltr) (∂→[∨→∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ (∨→ ind))) ltr rvT
-... | r = ∂∂d r
-tr-ltr-morph frll (∂→ (ind ←∧)) (∂∂d ltr) (∂→[←∧∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ (ind ←∧))) ltr rvT
-... | r = ∂∂d r
-tr-ltr-morph frll (∂→ (∧→ ind)) (∂∂d ltr) (∂→[∧→∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ (∧→ ind))) ltr rvT
+tr-ltr-morph frll (∂→ ind) (∂∂d ltr) (∂→∂∂d rvT) with tr-ltr-morph frll (∂→ (∂→ ind)) ltr rvT
 ... | r = ∂∂d r
 tr-ltr-morph frll (∂→ (ind ←∂)) (¬∂∂d ltr) (∂→[←∂¬∂∂d rvT) with tr-ltr-morph frll ((∂→ ind) ←∂) ltr rvT
 ... | r = ¬∂∂d r
