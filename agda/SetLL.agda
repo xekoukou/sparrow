@@ -226,6 +226,8 @@ fillAllLower (ll₁ ∂ ll₂) = (fillAllLower ll₁) ←∂→ (fillAllLower ll
 fillAllLower (call x) =  ↓
 
 
+
+
 complLₛ : ∀{i u ll} → SetLL {i} {u} ll → MSetLL ll
 complLₛ ↓ = ∅
 complLₛ (s ←∧) with complLₛ s
@@ -626,6 +628,19 @@ contruct (x ←∂→ x₁) with contruct x | contruct x₁
 mcontruct : ∀{i u ll} → MSetLL {i} {u} ll → MSetLL ll
 mcontruct ∅ = ∅
 mcontruct (¬∅ x) = ¬∅ $ contruct x
+
+
+
+contr$fillallL≡↓ : ∀{i u} → ∀ ll → contruct (fillAllLower {i} {u} ll) ≡ ↓
+contr$fillallL≡↓ ∅ = refl
+contr$fillallL≡↓ (τ x) = refl
+contr$fillallL≡↓ (ll ∧ ll₁) with contruct (fillAllLower ll) | contr$fillallL≡↓ ll | contruct (fillAllLower ll₁) | contr$fillallL≡↓ ll₁
+contr$fillallL≡↓ (ll ∧ ll₁) | .↓ | refl | .↓ | refl = refl
+contr$fillallL≡↓ (ll ∨ ll₁) with contruct (fillAllLower ll) | contr$fillallL≡↓ ll | contruct (fillAllLower ll₁) | contr$fillallL≡↓ ll₁
+contr$fillallL≡↓ (ll ∨ ll₁) | .↓ | refl | .↓ | refl = refl
+contr$fillallL≡↓ (ll ∂ ll₁) with contruct (fillAllLower ll) | contr$fillallL≡↓ ll | contruct (fillAllLower ll₁) | contr$fillallL≡↓ ll₁
+contr$fillallL≡↓ (ll ∂ ll₁) | .↓ | refl | .↓ | refl = refl
+contr$fillallL≡↓ (call x) = refl
 
 
 

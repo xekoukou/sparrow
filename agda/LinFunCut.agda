@@ -218,5 +218,4 @@ allinput¬pr {ll = ll} ∅ = ∅
 allinput¬pr {ll = ll} (¬∅ s) = complLₛ (projLFCoRemToSetLL s)
 
 
--- We find the 
--- comsWithAllInputs : ∀{i ll rll} → (lf : LFun {i} {u} ll rll) → MSetLL ll → SetLFCof lf → MSetLFCof lf
+-- 3 For each IndexLFCof, we need to shrink LinFun.
