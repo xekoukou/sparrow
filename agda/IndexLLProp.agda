@@ -26,6 +26,20 @@ data _≅ᵢ_ {i u gll} : ∀{fll ll} → IndexLL {i} {u} gll ll → IndexLL {i}
          → _≅ᵢ_ {ll = li ∂ ri} (∂→ sind) (∂→ bind)
 
 
+≅ᵢ-reflexive : ∀{i u rll ll} → (a : IndexLL {i} {u} rll ll) → a ≅ᵢ a
+≅ᵢ-reflexive ↓ = ≅ᵢ↓
+≅ᵢ-reflexive (x ←∧) = ≅ᵢ←∧ (≅ᵢ-reflexive x)
+≅ᵢ-reflexive (∧→ x) = ≅ᵢ∧→ (≅ᵢ-reflexive x)
+≅ᵢ-reflexive (x ←∨) = ≅ᵢ←∨ (≅ᵢ-reflexive x)
+≅ᵢ-reflexive (∨→ x) = ≅ᵢ∨→ (≅ᵢ-reflexive x)
+≅ᵢ-reflexive (x ←∂) = ≅ᵢ←∂ (≅ᵢ-reflexive x)
+≅ᵢ-reflexive (∂→ x) = ≅ᵢ∂→ (≅ᵢ-reflexive x)
+
+≡-to-≅ᵢ : ∀{i u rll ll} → (a b : IndexLL {i} {u} rll ll) → a ≡ b → a ≅ᵢ b
+≡-to-≅ᵢ a .a refl = ≅ᵢ-reflexive a
+
+
+
 data _≤ᵢ_ {i u gll fll} : ∀{ll} → IndexLL {i} {u} gll ll → IndexLL {i} {u} fll ll → Set where
   ≤ᵢ↓ : {ind : IndexLL fll gll} → ↓ ≤ᵢ ind
   ≤ᵢ←∧ : ∀{li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≤ᵢ bind)
@@ -152,7 +166,7 @@ module _ where
 
   open import Data.Vec
 
-
+-- Is there a better way to express that?
   indτ⇒¬le : ∀{i u rll ll n dt df} → (ind : IndexLL {i} {u} (τ {i} {u} {n} {dt} df) ll) → (ind2 : IndexLL rll ll) → ¬ (ind2 ≅ᵢ ind) → ¬ (ind ≤ᵢ ind2)
   indτ⇒¬le ↓ ↓ neq = λ _ → neq ≅ᵢ↓
   indτ⇒¬le (x ←∧) ↓ neq = λ ()
@@ -194,6 +208,34 @@ module _ where
   
 
 
+indτ&¬ge⇒¬≅ : ∀{i u rll ll n dt df} → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll)
+                          (lind : IndexLL rll ll) → ¬ (lind ≤ᵢ ind) → ¬ (lind ≅ᵢ ind)
+indτ&¬ge⇒¬≅ ↓ ↓ neq = λ _ → neq ≤ᵢ↓
+indτ&¬ge⇒¬≅ (ind ←∧) ↓ neq = λ ()
+indτ&¬ge⇒¬≅ (ind ←∧) (lind ←∧) neq = λ {(≅ᵢ←∧ x) → r x} where
+  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ←∧ z))
+indτ&¬ge⇒¬≅ (ind ←∧) (∧→ lind) neq = λ ()
+indτ&¬ge⇒¬≅ (∧→ ind) ↓ neq = λ ()
+indτ&¬ge⇒¬≅ (∧→ ind) (lind ←∧) neq = λ ()
+indτ&¬ge⇒¬≅ (∧→ ind) (∧→ lind) neq  = λ {(≅ᵢ∧→ x) → r x} where
+  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ∧→ z))
+indτ&¬ge⇒¬≅ (ind ←∨) ↓ neq = λ ()
+indτ&¬ge⇒¬≅ (ind ←∨) (lind ←∨) neq = λ {(≅ᵢ←∨ x) → r x} where
+  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ←∨ z))
+indτ&¬ge⇒¬≅ (ind ←∨) (∨→ lind) neq = λ ()
+indτ&¬ge⇒¬≅ (∨→ ind) ↓ neq = λ ()
+indτ&¬ge⇒¬≅ (∨→ ind) (lind ←∨) neq = λ ()
+indτ&¬ge⇒¬≅ (∨→ ind) (∨→ lind) neq  = λ {(≅ᵢ∨→ x) → r x} where
+  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ∨→ z))
+indτ&¬ge⇒¬≅ (ind ←∂) ↓ neq = λ ()
+indτ&¬ge⇒¬≅ (ind ←∂) (lind ←∂) neq = λ {(≅ᵢ←∂ x) → r x} where
+  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ←∂ z))
+indτ&¬ge⇒¬≅ (ind ←∂) (∂→ lind) neq = λ ()
+indτ&¬ge⇒¬≅ (∂→ ind) ↓ neq = λ ()
+indτ&¬ge⇒¬≅ (∂→ ind) (lind ←∂) neq = λ ()
+indτ&¬ge⇒¬≅ (∂→ ind) (∂→ lind) neq  = λ {(≅ᵢ∂→ x) → r x} where
+  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ∂→ z))
+
  
 
 data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {u} fll ll) : Set where
@@ -224,6 +266,12 @@ flipNotOrdᵢ nord = λ x → nord (flipOrdᵢ x)
               → ¬ (a ≤ᵢ b) → ¬ (b ≤ᵢ a) → ¬(Orderedᵢ a b)
 ¬lt¬gt⇒¬Ord nlt ngt (a≤ᵢb x) = nlt x
 ¬lt¬gt⇒¬Ord nlt ngt (b≤ᵢa x) = ngt x
+
+
+indτ&¬ge⇒¬Ord : ∀{i u rll ll n dt df} → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll)
+                          (lind : IndexLL rll ll) → ¬ (lind ≤ᵢ ind) → ¬ Orderedᵢ ind lind
+indτ&¬ge⇒¬Ord ind lind neq (a≤ᵢb x) = indτ⇒¬le ind lind (indτ&¬ge⇒¬≅ ind lind neq) x
+indτ&¬ge⇒¬Ord ind lind neq (b≤ᵢa x) = neq x                        
 
 
 a,c≤ᵢb⇒ordac : ∀{i u gll fll mll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL fll ll} → {c : IndexLL mll ll} → (a ≤ᵢ b) → (c ≤ᵢ b) → Orderedᵢ a c
@@ -857,6 +905,65 @@ isUpTran (∂→ (ind ←∂)) (¬∂∂d ltr) | no ¬p = no (λ {(∂→[←∂
 isUpTran (∂→ (∂→ ind)) (¬∂∂d ltr) with (isUpTran (∂→ ind) ltr)
 isUpTran (∂→ (∂→ ind)) (¬∂∂d ltr) | yes p = yes (∂→[∂→¬∂∂d p)
 isUpTran (∂→ (∂→ ind)) (¬∂∂d ltr) | no ¬p = no (λ {(∂→[∂→¬∂∂d ut) → ¬p ut})
+
+
+indLow⇒UpTran : ∀ {i u rll ll n dt df} → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll)
+                → (ltr : LLTr {i} {u} rll ll) → UpTran ind ltr
+indLow⇒UpTran ↓ I = indI
+indLow⇒UpTran (ind ←∧) I = indI
+indLow⇒UpTran (ind ←∧) (∧c ltr) = ←∧∧c r where
+  r = indLow⇒UpTran (∧→ ind) ltr
+indLow⇒UpTran ((ind ←∧) ←∧) (∧∧d ltr) = ←∧]←∧∧∧d r where
+  r = indLow⇒UpTran (ind ←∧) ltr
+indLow⇒UpTran ((∧→ ind) ←∧) (∧∧d ltr) = ∧→]←∧∧∧d r where
+  r = indLow⇒UpTran (∧→ (ind ←∧)) ltr
+indLow⇒UpTran (ind ←∧) (¬∧∧d ltr) = ←∧¬∧∧d r where
+  r = indLow⇒UpTran ((ind ←∧) ←∧) ltr
+indLow⇒UpTran (∧→ ind) I = indI
+indLow⇒UpTran (∧→ ind) (∧c ltr) = ∧→∧c r where
+  r = indLow⇒UpTran (ind ←∧) ltr
+indLow⇒UpTran (∧→ ind) (∧∧d ltr) = ∧→∧∧d r where
+  r = indLow⇒UpTran (∧→ (∧→ ind)) ltr
+indLow⇒UpTran (∧→ (ind ←∧)) (¬∧∧d ltr) = ∧→[←∧¬∧∧d r where
+  r = indLow⇒UpTran ((∧→ ind) ←∧) ltr
+indLow⇒UpTran (∧→ (∧→ ind)) (¬∧∧d ltr) = ∧→[∧→¬∧∧d r where
+  r = indLow⇒UpTran (∧→ ind) ltr
+indLow⇒UpTran (ind ←∨) I = indI
+indLow⇒UpTran (ind ←∨) (∨c ltr) = ←∨∨c r where
+  r = indLow⇒UpTran (∨→ ind) ltr
+indLow⇒UpTran ((ind ←∨) ←∨) (∨∨d ltr) = ←∨]←∨∨∨d r where
+  r = indLow⇒UpTran (ind ←∨) ltr
+indLow⇒UpTran ((∨→ ind) ←∨) (∨∨d ltr) = ∨→]←∨∨∨d r where
+  r = indLow⇒UpTran (∨→ (ind ←∨)) ltr
+indLow⇒UpTran (ind ←∨) (¬∨∨d ltr) = ←∨¬∨∨d r where
+  r = indLow⇒UpTran ((ind ←∨) ←∨) ltr
+indLow⇒UpTran (∨→ ind) I = indI
+indLow⇒UpTran (∨→ ind) (∨c ltr) = ∨→∨c r where
+  r = indLow⇒UpTran (ind ←∨) ltr
+indLow⇒UpTran (∨→ ind) (∨∨d ltr) = ∨→∨∨d r where
+  r = indLow⇒UpTran (∨→ (∨→ ind)) ltr
+indLow⇒UpTran (∨→ (ind ←∨)) (¬∨∨d ltr) = ∨→[←∨¬∨∨d r where
+  r = indLow⇒UpTran ((∨→ ind) ←∨) ltr
+indLow⇒UpTran (∨→ (∨→ ind)) (¬∨∨d ltr) = ∨→[∨→¬∨∨d r where
+  r = indLow⇒UpTran (∨→ ind) ltr
+indLow⇒UpTran (ind ←∂) I = indI
+indLow⇒UpTran (ind ←∂) (∂c ltr) = ←∂∂c r where
+  r = indLow⇒UpTran (∂→ ind) ltr
+indLow⇒UpTran ((ind ←∂) ←∂) (∂∂d ltr) = ←∂]←∂∂∂d r where
+  r = indLow⇒UpTran (ind ←∂) ltr
+indLow⇒UpTran ((∂→ ind) ←∂) (∂∂d ltr) = ∂→]←∂∂∂d r where
+  r = indLow⇒UpTran (∂→ (ind ←∂)) ltr
+indLow⇒UpTran (ind ←∂) (¬∂∂d ltr) = ←∂¬∂∂d r where
+  r = indLow⇒UpTran ((ind ←∂) ←∂) ltr
+indLow⇒UpTran (∂→ ind) I = indI
+indLow⇒UpTran (∂→ ind) (∂c ltr) = ∂→∂c r where
+  r = indLow⇒UpTran (ind ←∂) ltr
+indLow⇒UpTran (∂→ ind) (∂∂d ltr) = ∂→∂∂d r where
+  r = indLow⇒UpTran (∂→ (∂→ ind)) ltr
+indLow⇒UpTran (∂→ (ind ←∂)) (¬∂∂d ltr) = ∂→[←∂¬∂∂d r where
+  r = indLow⇒UpTran ((∂→ ind) ←∂) ltr
+indLow⇒UpTran (∂→ (∂→ ind)) (¬∂∂d ltr) = ∂→[∂→¬∂∂d r where
+  r = indLow⇒UpTran (∂→ ind) ltr
 
 
 

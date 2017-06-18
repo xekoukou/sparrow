@@ -33,15 +33,226 @@ shrink (call x) cms = call x
 
 
 shrinkcms : ∀{i u} → ∀ ll → (s cms : SetLL {i} {u} ll) → complLₛ s ≡ ¬∅ cms → LinLogic i {u}
-shrinkcms ll s x ceq = shrink ll x
+shrinkcms ll s cms ceq = shrink ll cms
 
 
-mshrink : ∀{i u} → ∀ ll → (cms : MSetLL {i} {u} ll) → LinLogic i {u}
+mshrink : ∀{i u} → ∀ ll → MSetLL {i} {u} ll → LinLogic i {u}
 mshrink ll ∅ = ll
 mshrink ll (¬∅ x) = shrink ll x
 
-mshrinkcms : ∀{i u} → ∀ ll → (s : SetLL {i} {u} ll) → LinLogic i {u}
-mshrinkcms ll s = mshrink ll (complLₛ s)
+
+shr-fAL-id : ∀{i u} → ∀ ll → ll ≡ shrink {i} {u} ll (fillAllLower ll)
+shr-fAL-id ∅ = refl
+shr-fAL-id (τ x) = refl
+shr-fAL-id (ll ∧ lr) = cong₂ (λ x y → x ∧ y) (shr-fAL-id ll) (shr-fAL-id lr)
+shr-fAL-id (ll ∨ lr) = cong₂ (λ x y → x ∨ y) (shr-fAL-id ll) (shr-fAL-id lr)
+shr-fAL-id (ll ∂ lr) = cong₂ (λ x y → x ∂ y) (shr-fAL-id ll) (shr-fAL-id lr)
+shr-fAL-id (call x) = refl
+
+
+-- This is a generalization of ¬ord-morph
+-- TODO Maybe with some small changes, we can reduce the size of the code in this function.
+
+¬ho-shr-morph : ∀{i u rll ll cs} → (s : SetLL {i} {u} ll) → (ceq : complLₛ s ≡ ¬∅ cs)
+                → (ind : IndexLL rll ll) → (¬ho : ¬ (hitsAtLeastOnce s ind))
+                → IndexLL rll (shrinkcms ll s cs ceq)
+¬ho-shr-morph {cs = cs} ↓ () ind ¬ho
+¬ho-shr-morph {cs = cs} (s ←∧) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∧↓)
+¬ho-shr-morph {cs = cs} (s ←∧) ceq (ind ←∧) ¬ho with complLₛ s | inspect complLₛ s
+¬ho-shr-morph {cs = cs} (s ←∧) ceq (ind ←∧) ¬ho | ∅ | [ eq ]
+                                        =  ⊥-elim (¬nho (compl≡∅⇒ho s eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧←∧ x)
+¬ho-shr-morph {cs = cs} (s ←∧) ceq (ind ←∧) ¬ho | ¬∅ x | [ eq ]
+                                           with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧←∧ x)
+¬ho-shr-morph {cs = .(x ←∧→ fillAllLower _)} (s ←∧) refl (ind ←∧) ¬ho | ¬∅ x | [ eq ] | r = r ←∧
+¬ho-shr-morph {rll = rll} {_ ∧ rs} {cs = cs} (s ←∧) ceq (∧→ ind) ¬ho with complLₛ s
+¬ho-shr-morph {rll = rll} {_ ∧ rs} (s ←∧) refl (∧→ ind) ¬ho | ∅
+                         = subst (λ x → IndexLL rll x) (shr-fAL-id rs) ind
+¬ho-shr-morph {rll = rll} {_ ∧ rs} {.(x₁ ←∧→ fillAllLower rs)} (s ←∧) refl (∧→ ind) ¬ho | ¬∅ x₁
+     = ∧→ (subst (λ x → IndexLL rll x) (shr-fAL-id rs) ind)
+¬ho-shr-morph {cs = cs} (∧→ s) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce∧→↓)
+¬ho-shr-morph {rll = rll} {ls ∧ _} {cs = cs} (∧→ s) ceq (ind ←∧) ¬ho with complLₛ s
+¬ho-shr-morph {rll = rll} {ls ∧ _} {.(fillAllLower ls ←∧)} (∧→ s) refl (ind ←∧) ¬ho | ∅
+                         = subst (λ x → IndexLL rll x) (shr-fAL-id ls) ind
+¬ho-shr-morph {rll = rll} {ls ∧ _} {.(fillAllLower ls ←∧→ x₁)} (∧→ s) refl (ind ←∧) ¬ho | ¬∅ x₁
+                         = (subst (λ x → IndexLL rll x) (shr-fAL-id ls) ind) ←∧
+¬ho-shr-morph {cs = cs} (∧→ s) ceq (∧→ ind) ¬ho with complLₛ s | inspect complLₛ s
+¬ho-shr-morph {cs = cs} (∧→ s) ceq (∧→ ind) ¬ho | ∅ | [ eq ]
+                                             = ⊥-elim (¬nho (compl≡∅⇒ho s eq ind)) where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce∧→∧→ x)
+¬ho-shr-morph {cs = cs} (∧→ s) ceq (∧→ ind) ¬ho | ¬∅ x | [ eq ]
+                                             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce∧→∧→ x)
+¬ho-shr-morph {cs = .(fillAllLower _ ←∧→ x)} (∧→ s) refl (∧→ ind) ¬ho | ¬∅ x | [ eq ] | r = ∧→ r
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∧→↓)
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (ind ←∧) ¬ho with complLₛ s | inspect complLₛ s | complLₛ s₁
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (ind ←∧) ¬ho | ∅ | [ eq ] | e
+             =  ⊥-elim (¬nho (compl≡∅⇒ho s eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (ind ←∧) ¬ho | ¬∅ x | [ eq ] | ∅
+             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+¬ho-shr-morph {cs = .(x ←∧)} (s ←∧→ s₁) refl (ind ←∧) ¬ho | ¬∅ x | [ eq ] | ∅ | r
+             = r
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (ind ←∧) ¬ho | ¬∅ x | [ eq ] | ¬∅ x₁
+             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+¬ho-shr-morph {cs = .(x ←∧→ x₁)} (s ←∧→ s₁) refl (ind ←∧) ¬ho | ¬∅ x | [ eq ] | ¬∅ x₁ | r
+             = r ←∧
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (∧→ ind) ¬ho with complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (∧→ ind) ¬ho | r | ∅ | [ eq ]  
+             =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (∧→ ind) ¬ho | ∅ | ¬∅ x | [ eq ]
+             with ¬ho-shr-morph s₁ eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+¬ho-shr-morph {cs = .(∧→ x)} (s ←∧→ s₁) refl (∧→ ind) ¬ho | ∅ | ¬∅ x | [ eq ] | r = r
+¬ho-shr-morph {cs = cs} (s ←∧→ s₁) ceq (∧→ ind) ¬ho | ¬∅ x | ¬∅ x₁ | [ eq ]
+             with ¬ho-shr-morph s₁ eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+¬ho-shr-morph {cs = .(x ←∧→ x₁)} (s ←∧→ s₁) refl (∧→ ind) ¬ho | ¬∅ x | ¬∅ x₁ | [ eq ] | r = ∧→ r
+¬ho-shr-morph {cs = cs} (s ←∨) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∨↓)
+¬ho-shr-morph {cs = cs} (s ←∨) ceq (ind ←∨) ¬ho with complLₛ s | inspect complLₛ s
+¬ho-shr-morph {cs = cs} (s ←∨) ceq (ind ←∨) ¬ho | ∅ | [ eq ]
+                                        =  ⊥-elim (¬nho (compl≡∅⇒ho s eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨←∨ x)
+¬ho-shr-morph {cs = cs} (s ←∨) ceq (ind ←∨) ¬ho | ¬∅ x | [ eq ]
+                                           with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨←∨ x)
+¬ho-shr-morph {cs = .(x ←∨→ fillAllLower _)} (s ←∨) refl (ind ←∨) ¬ho | ¬∅ x | [ eq ] | r = r ←∨
+¬ho-shr-morph {rll = rll} {_ ∨ rs} {cs = cs} (s ←∨) ceq (∨→ ind) ¬ho with complLₛ s
+¬ho-shr-morph {rll = rll} {_ ∨ rs} (s ←∨) refl (∨→ ind) ¬ho | ∅
+                         = subst (λ x → IndexLL rll x) (shr-fAL-id rs) ind
+¬ho-shr-morph {rll = rll} {_ ∨ rs} {.(x₁ ←∨→ fillAllLower rs)} (s ←∨) refl (∨→ ind) ¬ho | ¬∅ x₁
+     = ∨→ (subst (λ x → IndexLL rll x) (shr-fAL-id rs) ind)
+¬ho-shr-morph {cs = cs} (∨→ s) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce∨→↓)
+¬ho-shr-morph {rll = rll} {ls ∨ _} {cs = cs} (∨→ s) ceq (ind ←∨) ¬ho with complLₛ s
+¬ho-shr-morph {rll = rll} {ls ∨ _} {.(fillAllLower ls ←∨)} (∨→ s) refl (ind ←∨) ¬ho | ∅
+                         = subst (λ x → IndexLL rll x) (shr-fAL-id ls) ind
+¬ho-shr-morph {rll = rll} {ls ∨ _} {.(fillAllLower ls ←∨→ x₁)} (∨→ s) refl (ind ←∨) ¬ho | ¬∅ x₁
+                         = (subst (λ x → IndexLL rll x) (shr-fAL-id ls) ind) ←∨
+¬ho-shr-morph {cs = cs} (∨→ s) ceq (∨→ ind) ¬ho with complLₛ s | inspect complLₛ s
+¬ho-shr-morph {cs = cs} (∨→ s) ceq (∨→ ind) ¬ho | ∅ | [ eq ]
+                                             = ⊥-elim (¬nho (compl≡∅⇒ho s eq ind)) where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce∨→∨→ x)
+¬ho-shr-morph {cs = cs} (∨→ s) ceq (∨→ ind) ¬ho | ¬∅ x | [ eq ]
+                                             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce∨→∨→ x)
+¬ho-shr-morph {cs = .(fillAllLower _ ←∨→ x)} (∨→ s) refl (∨→ ind) ¬ho | ¬∅ x | [ eq ] | r = ∨→ r
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∨→↓)
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (ind ←∨) ¬ho with complLₛ s | inspect complLₛ s | complLₛ s₁
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (ind ←∨) ¬ho | ∅ | [ eq ] | e
+             =  ⊥-elim (¬nho (compl≡∅⇒ho s eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (ind ←∨) ¬ho | ¬∅ x | [ eq ] | ∅
+             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+¬ho-shr-morph {cs = .(x ←∨)} (s ←∨→ s₁) refl (ind ←∨) ¬ho | ¬∅ x | [ eq ] | ∅ | r
+             = r
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (ind ←∨) ¬ho | ¬∅ x | [ eq ] | ¬∅ x₁
+             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+¬ho-shr-morph {cs = .(x ←∨→ x₁)} (s ←∨→ s₁) refl (ind ←∨) ¬ho | ¬∅ x | [ eq ] | ¬∅ x₁ | r
+             = r ←∨
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (∨→ ind) ¬ho with complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (∨→ ind) ¬ho | r | ∅ | [ eq ]  
+             =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (∨→ ind) ¬ho | ∅ | ¬∅ x | [ eq ]
+             with ¬ho-shr-morph s₁ eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+¬ho-shr-morph {cs = .(∨→ x)} (s ←∨→ s₁) refl (∨→ ind) ¬ho | ∅ | ¬∅ x | [ eq ] | r = r
+¬ho-shr-morph {cs = cs} (s ←∨→ s₁) ceq (∨→ ind) ¬ho | ¬∅ x | ¬∅ x₁ | [ eq ]
+             with ¬ho-shr-morph s₁ eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+¬ho-shr-morph {cs = .(x ←∨→ x₁)} (s ←∨→ s₁) refl (∨→ ind) ¬ho | ¬∅ x | ¬∅ x₁ | [ eq ] | r = ∨→ r
+¬ho-shr-morph {cs = cs} (s ←∂) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∂↓)
+¬ho-shr-morph {cs = cs} (s ←∂) ceq (ind ←∂) ¬ho with complLₛ s | inspect complLₛ s
+¬ho-shr-morph {cs = cs} (s ←∂) ceq (ind ←∂) ¬ho | ∅ | [ eq ]
+                                        =  ⊥-elim (¬nho (compl≡∅⇒ho s eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂←∂ x)
+¬ho-shr-morph {cs = cs} (s ←∂) ceq (ind ←∂) ¬ho | ¬∅ x | [ eq ]
+                                           with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂←∂ x)
+¬ho-shr-morph {cs = .(x ←∂→ fillAllLower _)} (s ←∂) refl (ind ←∂) ¬ho | ¬∅ x | [ eq ] | r = r ←∂
+¬ho-shr-morph {rll = rll} {_ ∂ rs} {cs = cs} (s ←∂) ceq (∂→ ind) ¬ho with complLₛ s
+¬ho-shr-morph {rll = rll} {_ ∂ rs} (s ←∂) refl (∂→ ind) ¬ho | ∅
+                         = subst (λ x → IndexLL rll x) (shr-fAL-id rs) ind
+¬ho-shr-morph {rll = rll} {_ ∂ rs} {.(x₁ ←∂→ fillAllLower rs)} (s ←∂) refl (∂→ ind) ¬ho | ¬∅ x₁
+     = ∂→ (subst (λ x → IndexLL rll x) (shr-fAL-id rs) ind)
+¬ho-shr-morph {cs = cs} (∂→ s) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce∂→↓)
+¬ho-shr-morph {rll = rll} {ls ∂ _} {cs = cs} (∂→ s) ceq (ind ←∂) ¬ho with complLₛ s
+¬ho-shr-morph {rll = rll} {ls ∂ _} {.(fillAllLower ls ←∂)} (∂→ s) refl (ind ←∂) ¬ho | ∅
+                         = subst (λ x → IndexLL rll x) (shr-fAL-id ls) ind
+¬ho-shr-morph {rll = rll} {ls ∂ _} {.(fillAllLower ls ←∂→ x₁)} (∂→ s) refl (ind ←∂) ¬ho | ¬∅ x₁
+                         = (subst (λ x → IndexLL rll x) (shr-fAL-id ls) ind) ←∂
+¬ho-shr-morph {cs = cs} (∂→ s) ceq (∂→ ind) ¬ho with complLₛ s | inspect complLₛ s
+¬ho-shr-morph {cs = cs} (∂→ s) ceq (∂→ ind) ¬ho | ∅ | [ eq ]
+                                             = ⊥-elim (¬nho (compl≡∅⇒ho s eq ind)) where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce∂→∂→ x)
+¬ho-shr-morph {cs = cs} (∂→ s) ceq (∂→ ind) ¬ho | ¬∅ x | [ eq ]
+                                             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce∂→∂→ x)
+¬ho-shr-morph {cs = .(fillAllLower _ ←∂→ x)} (∂→ s) refl (∂→ ind) ¬ho | ¬∅ x | [ eq ] | r = ∂→ r
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∂→↓)
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (ind ←∂) ¬ho with complLₛ s | inspect complLₛ s | complLₛ s₁
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (ind ←∂) ¬ho | ∅ | [ eq ] | e
+             =  ⊥-elim (¬nho (compl≡∅⇒ho s eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (ind ←∂) ¬ho | ¬∅ x | [ eq ] | ∅
+             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+¬ho-shr-morph {cs = .(x ←∂)} (s ←∂→ s₁) refl (ind ←∂) ¬ho | ¬∅ x | [ eq ] | ∅ | r
+             = r
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (ind ←∂) ¬ho | ¬∅ x | [ eq ] | ¬∅ x₁
+             with ¬ho-shr-morph s eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+¬ho-shr-morph {cs = .(x ←∂→ x₁)} (s ←∂→ s₁) refl (ind ←∂) ¬ho | ¬∅ x | [ eq ] | ¬∅ x₁ | r
+             = r ←∂
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (∂→ ind) ¬ho with complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (∂→ ind) ¬ho | r | ∅ | [ eq ]  
+             =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ eq ind))  where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (∂→ ind) ¬ho | ∅ | ¬∅ x | [ eq ]
+             with ¬ho-shr-morph s₁ eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+¬ho-shr-morph {cs = .(∂→ x)} (s ←∂→ s₁) refl (∂→ ind) ¬ho | ∅ | ¬∅ x | [ eq ] | r = r
+¬ho-shr-morph {cs = cs} (s ←∂→ s₁) ceq (∂→ ind) ¬ho | ¬∅ x | ¬∅ x₁ | [ eq ]
+             with ¬ho-shr-morph s₁ eq ind ¬nho where
+  ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
+  ¬nho x = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+¬ho-shr-morph {cs = .(x ←∂→ x₁)} (s ←∂→ s₁) refl (∂→ ind) ¬ho | ¬∅ x | ¬∅ x₁ | [ eq ] | r = ∂→ r
+
 
 
 --shrink : ∀{i u} → ∀ ll → (s : SetLL {i} {u} ll) → ¬ ((contruct s) ≡ ↓) → LinLogic i {u}
@@ -65,6 +276,37 @@ mshrinkcms ll s = mshrink ll (complLₛ s)
 --  shrink` (li ∂ ri) (s ←∂→ s₁) = (shrink` li s) ∂ (shrink` ri s₁)
 --  shrink` (call x) ↓ = call x
 --
+
+
+-- TODO IMPORTANT tranlFMSetLL is also used in LinFunCut as a private function. Maybe we need a separate file to add all the transformation by lf of IndexLL and SetLL.
+
+data MIndexLL {i u} (rll ll : LinLogic i {u}) : Set u where
+  ∅ : MIndexLL rll ll
+  ¬∅ : IndexLL rll ll → MIndexLL rll ll
+
+
+tranLFMIndexLL : ∀{i u rll ll n dt df} → (lf : LFun ll rll)
+                 → (ind : MIndexLL (τ {i} {u} {n} {dt} df) ll) → MIndexLL (τ {i} {u} {n} {dt} df) rll
+tranLFMIndexLL lf ∅ = ∅
+tranLFMIndexLL I (¬∅ ind) = ¬∅ ind
+tranLFMIndexLL {ll = ll} {df = df} (_⊂_ {pll = pll} {ell = ell} {ind = lind} lf lf₁) (¬∅ ind) with isLTi lind ind
+... | no ¬p =  tranLFMIndexLL lf₁ (¬∅ (¬ord-morph ind lind ell (flipNotOrdᵢ (indτ&¬ge⇒¬Ord ind lind ¬p))))
+... | yes p = tranLFMIndexLL lf₁ (hf2 r) where
+  hf : MIndexLL (τ df) pll
+  hf = ¬∅ ((ind -ᵢ lind) p)
+
+  r = tranLFMIndexLL lf hf
+  rind = subst (λ x → IndexLL x (replLL ll lind ell)) (replLL-↓ {ell = ell} lind) (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))
+  hf2 : MIndexLL (τ df) ell → MIndexLL (τ df) (replLL ll lind ell)
+  hf2 ∅ = ∅
+  hf2 (¬∅ x) = ¬∅ (rind +ᵢ x)
+  
+tranLFMIndexLL (tr ltr lf) (¬∅ ind) = r where
+  ut = indLow⇒UpTran ind ltr
+  tind = IndexLLProp.tran ind ltr ut
+  r = tranLFMIndexLL lf (¬∅ tind)
+tranLFMIndexLL (com df₁ lf) (¬∅ ind) = ∅
+tranLFMIndexLL (call x) (¬∅ ind) = ∅
 
 
 

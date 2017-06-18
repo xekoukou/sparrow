@@ -4,6 +4,7 @@ module SetLLProp where
 open import Common
 open import LinLogic
 open import SetLL
+open import IndexLLProp
 
 open import Relation.Binary.PropositionalEquality
 import Data.Product
@@ -499,6 +500,54 @@ module _ where
   doesItHitAtLeastOnce (s ←∂→ s₁) (∂→ ind) | no ¬p = no (λ {(hitsAtLeastOnce←∂→∂→ x) → ¬p x})
 
 
+compl≡∅⇒ho : ∀{i u rll ll} → (s : SetLL {i} {u} ll) → complLₛ s ≡ ∅
+                → (ind : IndexLL rll ll) → (hitsAtLeastOnce s ind)
+compl≡∅⇒ho ↓ ceq ind = hitsAtLeastOnce↓
+compl≡∅⇒ho (s ←∧) ceq ind with complLₛ s
+compl≡∅⇒ho (s ←∧) () ind | ∅
+compl≡∅⇒ho (s ←∧) () ind | ¬∅ x
+compl≡∅⇒ho (∧→ s) ceq ind with complLₛ s
+compl≡∅⇒ho (∧→ s) () ind | ∅
+compl≡∅⇒ho (∧→ s) () ind | ¬∅ x
+compl≡∅⇒ho (s ←∧→ s₁) ceq ind with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+compl≡∅⇒ho (s ←∧→ s₁) ceq ↓ | ∅ | [ eq ] | ∅ | [ eq₁ ] = hitsAtLeastOnce←∧→↓
+compl≡∅⇒ho (s ←∧→ s₁) ceq (ind ←∧) | ∅ | [ eq ] | ∅ | [ eq₁ ] with compl≡∅⇒ho s eq ind
+... | r = hitsAtLeastOnce←∧→←∧ r
+compl≡∅⇒ho (s ←∧→ s₁) ceq (∧→ ind) | ∅ | [ eq ] | ∅ | [ eq₁ ] with compl≡∅⇒ho s₁ eq₁ ind
+... | r = hitsAtLeastOnce←∧→∧→ r
+compl≡∅⇒ho (s ←∧→ s₁) () ind | ∅ | [ eq ] | ¬∅ x | [ eq₁ ]
+compl≡∅⇒ho (s ←∧→ s₁) () ind | ¬∅ x | [ eq ] | ∅ | [ eq₁ ]
+compl≡∅⇒ho (s ←∧→ s₁) () ind | ¬∅ x | [ eq ] | ¬∅ x₁ | [ eq₁ ]
+compl≡∅⇒ho (s ←∨) ceq ind with complLₛ s
+compl≡∅⇒ho (s ←∨) () ind | ∅
+compl≡∅⇒ho (s ←∨) () ind | ¬∅ x
+compl≡∅⇒ho (∨→ s) ceq ind with complLₛ s
+compl≡∅⇒ho (∨→ s) () ind | ∅
+compl≡∅⇒ho (∨→ s) () ind | ¬∅ x
+compl≡∅⇒ho (s ←∨→ s₁) ceq ind with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+compl≡∅⇒ho (s ←∨→ s₁) ceq ↓ | ∅ | [ eq ] | ∅ | [ eq₁ ] = hitsAtLeastOnce←∨→↓
+compl≡∅⇒ho (s ←∨→ s₁) ceq (ind ←∨) | ∅ | [ eq ] | ∅ | [ eq₁ ] with compl≡∅⇒ho s eq ind
+... | r = hitsAtLeastOnce←∨→←∨ r
+compl≡∅⇒ho (s ←∨→ s₁) ceq (∨→ ind) | ∅ | [ eq ] | ∅ | [ eq₁ ] with compl≡∅⇒ho s₁ eq₁ ind
+... | r = hitsAtLeastOnce←∨→∨→ r
+compl≡∅⇒ho (s ←∨→ s₁) () ind | ∅ | [ eq ] | ¬∅ x | [ eq₁ ]
+compl≡∅⇒ho (s ←∨→ s₁) () ind | ¬∅ x | [ eq ] | ∅ | [ eq₁ ]
+compl≡∅⇒ho (s ←∨→ s₁) () ind | ¬∅ x | [ eq ] | ¬∅ x₁ | [ eq₁ ]
+compl≡∅⇒ho (s ←∂) ceq ind with complLₛ s
+compl≡∅⇒ho (s ←∂) () ind | ∅
+compl≡∅⇒ho (s ←∂) () ind | ¬∅ x
+compl≡∅⇒ho (∂→ s) ceq ind with complLₛ s
+compl≡∅⇒ho (∂→ s) () ind | ∅
+compl≡∅⇒ho (∂→ s) () ind | ¬∅ x
+compl≡∅⇒ho (s ←∂→ s₁) ceq ind with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+compl≡∅⇒ho (s ←∂→ s₁) ceq ↓ | ∅ | [ eq ] | ∅ | [ eq₁ ] = hitsAtLeastOnce←∂→↓
+compl≡∅⇒ho (s ←∂→ s₁) ceq (ind ←∂) | ∅ | [ eq ] | ∅ | [ eq₁ ] with compl≡∅⇒ho s eq ind
+... | r = hitsAtLeastOnce←∂→←∂ r
+compl≡∅⇒ho (s ←∂→ s₁) ceq (∂→ ind) | ∅ | [ eq ] | ∅ | [ eq₁ ] with compl≡∅⇒ho s₁ eq₁ ind
+... | r = hitsAtLeastOnce←∂→∂→ r
+compl≡∅⇒ho (s ←∂→ s₁) () ind | ∅ | [ eq ] | ¬∅ x | [ eq₁ ]
+compl≡∅⇒ho (s ←∂→ s₁) () ind | ¬∅ x | [ eq ] | ∅ | [ eq₁ ]
+compl≡∅⇒ho (s ←∂→ s₁) () ind | ¬∅ x | [ eq ] | ¬∅ x₁ | [ eq₁ ]
 
 
 module _ where
@@ -1075,10 +1124,743 @@ module _ where
 
 
 
+  ¬ho&s≤ss⇒hos : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                 → ¬ (hitsAtLeastOnce ss ind) → s ≤s ss → ¬ (hitsAtLeastOnce s ind)
+  ¬ho&s≤ss⇒hos s ss ind ¬ho rl x = ¬ho (ho&s≤ss⇒hoss s ss ind x rl)
 
 
-
-
+  
+  ¬trho : ∀{i u ll pll rll} →  ∀ ltr → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+          → ¬ (hitsAtLeastOnce s ind) → (ut : UpTran {rll = rll} ind ltr)
+          → ¬ (hitsAtLeastOnce (SetLL.tran s ltr) (IndexLLProp.tran ind ltr ut))
+  ¬trho I s ind ¬ho indI = ¬ho
+  ¬trho (∂c ltr) ↓ .(_ ←∂) ¬ho (←∂∂c ut) = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∂c ltr) ↓ .(∂→ _) ¬ho (∂→∂c ut) = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∂c ltr) (s ←∂) (ind ←∂) ¬ho (←∂∂c ut) = ¬trho ltr (∂→ s) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ s) (∂→ ind))
+    ¬nho (hitsAtLeastOnce∂→∂→ x) = ¬ho (hitsAtLeastOnce←∂←∂ x)
+  ¬trho (∂c ltr) (s ←∂) (∂→ ind) ¬ho (∂→∂c ut) = ¬trho ltr (∂→ s) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ s) (ind ←∂))
+    ¬nho ()
+  ¬trho (∂c ltr) (∂→ s) ↓ ¬ho ut = λ _ → ¬ho hitsAtLeastOnce∂→↓
+  ¬trho (∂c ltr) (∂→ s) (ind ←∂) ¬ho (←∂∂c ut) = ¬trho ltr (s ←∂) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂) (∂→ ind))
+    ¬nho ()
+  ¬trho (∂c ltr) (∂→ s) (∂→ ind) ¬ho (∂→∂c ut) = ¬trho ltr (s ←∂) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ x) = ¬ho (hitsAtLeastOnce∂→∂→ x)
+  ¬trho (∂c ltr) (s ←∂→ s₁) (ind ←∂) ¬ho (←∂∂c ut) = ¬trho ltr (s₁ ←∂→ s) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s₁ ←∂→ s) (∂→ ind))
+    ¬nho (hitsAtLeastOnce←∂→∂→ x) = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+  ¬trho (∂c ltr) (s ←∂→ s₁) (∂→ ind) ¬ho (∂→∂c ut)  = ¬trho ltr (s₁ ←∂→ s) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s₁ ←∂→ s) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ x) = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+  ¬trho (∧c ltr) ↓ .(_ ←∧) ¬ho (←∧∧c ut) = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∧c ltr) ↓ .(∧→ _) ¬ho (∧→∧c ut) = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∧c ltr) (s ←∧) (ind ←∧) ¬ho (←∧∧c ut) = ¬trho ltr (∧→ s) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ s) (∧→ ind))
+    ¬nho (hitsAtLeastOnce∧→∧→ x) = ¬ho (hitsAtLeastOnce←∧←∧ x)
+  ¬trho (∧c ltr) (s ←∧) (∧→ ind) ¬ho (∧→∧c ut) = ¬trho ltr (∧→ s) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ s) (ind ←∧))
+    ¬nho ()
+  ¬trho (∧c ltr) (∧→ s) ↓ ¬ho ut = λ _ → ¬ho hitsAtLeastOnce∧→↓
+  ¬trho (∧c ltr) (∧→ s) (ind ←∧) ¬ho (←∧∧c ut) = ¬trho ltr (s ←∧) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧) (∧→ ind))
+    ¬nho ()
+  ¬trho (∧c ltr) (∧→ s) (∧→ ind) ¬ho (∧→∧c ut) = ¬trho ltr (s ←∧) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ x) = ¬ho (hitsAtLeastOnce∧→∧→ x)
+  ¬trho (∧c ltr) (s ←∧→ s₁) (ind ←∧) ¬ho (←∧∧c ut) = ¬trho ltr (s₁ ←∧→ s) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s₁ ←∧→ s) (∧→ ind))
+    ¬nho (hitsAtLeastOnce←∧→∧→ x) = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+  ¬trho (∧c ltr) (s ←∧→ s₁) (∧→ ind) ¬ho (∧→∧c ut)  = ¬trho ltr (s₁ ←∧→ s) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s₁ ←∧→ s) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ x) = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+  ¬trho (∨c ltr) ↓ .(_ ←∨) ¬ho (←∨∨c ut) = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∨c ltr) ↓ .(∨→ _) ¬ho (∨→∨c ut) = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∨c ltr) (s ←∨) (ind ←∨) ¬ho (←∨∨c ut) = ¬trho ltr (∨→ s) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ s) (∨→ ind))
+    ¬nho (hitsAtLeastOnce∨→∨→ x) = ¬ho (hitsAtLeastOnce←∨←∨ x)
+  ¬trho (∨c ltr) (s ←∨) (∨→ ind) ¬ho (∨→∨c ut) = ¬trho ltr (∨→ s) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ s) (ind ←∨))
+    ¬nho ()
+  ¬trho (∨c ltr) (∨→ s) ↓ ¬ho ut = λ _ → ¬ho hitsAtLeastOnce∨→↓
+  ¬trho (∨c ltr) (∨→ s) (ind ←∨) ¬ho (←∨∨c ut) = ¬trho ltr (s ←∨) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨) (∨→ ind))
+    ¬nho ()
+  ¬trho (∨c ltr) (∨→ s) (∨→ ind) ¬ho (∨→∨c ut) = ¬trho ltr (s ←∨) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ x) = ¬ho (hitsAtLeastOnce∨→∨→ x)
+  ¬trho (∨c ltr) (s ←∨→ s₁) (ind ←∨) ¬ho (←∨∨c ut) = ¬trho ltr (s₁ ←∨→ s) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s₁ ←∨→ s) (∨→ ind))
+    ¬nho (hitsAtLeastOnce←∨→∨→ x) = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+  ¬trho (∨c ltr) (s ←∨→ s₁) (∨→ ind) ¬ho (∨→∨c ut)  = ¬trho ltr (s₁ ←∨→ s) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s₁ ←∨→ s) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ x) = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+  ¬trho (∧∧d ltr) ↓ ind ¬ho ut = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∧∧d ltr) (↓ ←∧) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut)
+                                      = λ _ → ¬ho (hitsAtLeastOnce←∧←∧ hitsAtLeastOnce↓)
+  ¬trho (∧∧d ltr) ((s ←∧) ←∧) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut) = ¬trho ltr (s ←∧) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ x) = ¬ho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce←∧←∧ x))
+  
+  ¬trho (∧∧d ltr) ((∧→ s) ←∧) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut)  = ¬trho ltr (∧→ (s ←∧)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (s ←∧)) (ind ←∧))
+    ¬nho ()
+  
+  ¬trho (∧∧d ltr) ((s ←∧→ s₁) ←∧) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut) = ¬trho ltr (s ←∧→ (s₁ ←∧)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (s₁ ←∧)) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ x) = ¬ho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce←∧→←∧ x))
+  
+  ¬trho (∧∧d ltr) (↓ ←∧) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = λ _ → ¬ho (hitsAtLeastOnce←∧←∧ hitsAtLeastOnce↓)
+  ¬trho (∧∧d ltr) ((s ←∧) ←∧) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (s ←∧) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧) (∧→ (ind ←∧)))
+    ¬nho ()
+  
+  ¬trho (∧∧d ltr) ((∧→ s) ←∧) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (∧→ (s ←∧)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (s ←∧)) (∧→ (ind ←∧)))
+    ¬nho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce←∧←∧ x)) = ¬ho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce∧→∧→ x))
+  
+  ¬trho (∧∧d ltr) ((s ←∧→ s₁) ←∧) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (s ←∧→ (s₁ ←∧)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (s₁ ←∧)) (∧→ (ind ←∧)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧←∧ x)) = ¬ho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce←∧→∧→ x))
+  
+  ¬trho (∧∧d ltr) (↓ ←∧) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (↓ ←∧→ (↓ ←∧)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∧→ (↓ ←∧)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ ())
+  
+  ¬trho (∧∧d ltr) ((s ←∧) ←∧) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (s ←∧) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧) (∧→ (∧→ ind)))
+    ¬nho ()
+  
+  ¬trho (∧∧d ltr) ((∧→ s) ←∧) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (∧→ (s ←∧)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (s ←∧)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce∧→∧→ ())
+  
+  ¬trho (∧∧d ltr) ((s ←∧→ s₁) ←∧) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (s ←∧→ (s₁ ←∧)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (s₁ ←∧)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ ())
+  
+  ¬trho (∧∧d ltr) (∧→ s) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut) = ¬trho ltr (∧→ (∧→ s)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (∧→ s)) (ind ←∧))
+    ¬nho ()
+  
+  ¬trho (∧∧d ltr) (∧→ s) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (∧→ (∧→ s)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (∧→ s)) (∧→ (ind ←∧)))
+    ¬nho (hitsAtLeastOnce∧→∧→ ())
+  
+  ¬trho (∧∧d ltr) (∧→ s) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (∧→ (∧→ s)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (∧→ s)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce∧→∧→ x)) = ¬ho (hitsAtLeastOnce∧→∧→ x)
+  
+  
+  
+  ¬trho (∧∧d ltr) (↓ ←∧→ s₁) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut) = ¬trho ltr (↓ ←∧→ (↓ ←∧→ s₁)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∧→ (↓ ←∧→ s₁)) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ x) = ¬ho (hitsAtLeastOnce←∧→←∧ hitsAtLeastOnce↓)
+   
+  ¬trho (∧∧d ltr) ((s ←∧) ←∧→ s₁) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut) = ¬trho ltr (s ←∧→ (∧→ s₁)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (∧→ s₁)) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ x) = ¬ho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧←∧ x))
+  
+  ¬trho (∧∧d ltr) ((∧→ s) ←∧→ s₁) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut) = ¬trho ltr (∧→ (s ←∧→ s₁)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (s ←∧→ s₁)) (ind ←∧))
+    ¬nho ()
+  
+  ¬trho (∧∧d ltr) ((s ←∧→ s₁) ←∧→ s₂) ((ind ←∧) ←∧) ¬ho (←∧]←∧∧∧d ut)  = ¬trho ltr (s ←∧→ (s₁ ←∧→ s₂)) (ind ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (s₁ ←∧→ s₂)) (ind ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ x) = ¬ho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧→←∧ x))
+  
+  
+  ¬trho (∧∧d ltr) (↓ ←∧→ s₁) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (↓ ←∧→ (↓ ←∧→ s₁)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∧→ (↓ ←∧→ s₁)) (∧→ (ind ←∧)))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∧→←∧ hitsAtLeastOnce↓)
+   
+  ¬trho (∧∧d ltr) ((s ←∧) ←∧→ s₁) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (s ←∧→ (∧→ s₁)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (∧→ s₁)) (∧→ (ind ←∧)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ ())
+  
+  ¬trho (∧∧d ltr) ((∧→ s) ←∧→ s₁) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (∧→ (s ←∧→ s₁)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (s ←∧→ s₁)) (∧→ (ind ←∧)))
+    ¬nho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce←∧→←∧ x)) = ¬ho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce∧→∧→ x))
+  
+  ¬trho (∧∧d ltr) ((s ←∧→ s₁) ←∧→ s₂) ((∧→ ind) ←∧) ¬ho (∧→]←∧∧∧d ut) = ¬trho ltr (s ←∧→ (s₁ ←∧→ s₂)) (∧→ (ind ←∧)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (s₁ ←∧→ s₂)) (∧→ (ind ←∧)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧→←∧ x)) = ¬ho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧→∧→ x))
+  
+  ¬trho (∧∧d ltr) (↓ ←∧→ s₁) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (↓ ←∧→ (↓ ←∧→ s₁)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∧→ (↓ ←∧→ s₁)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧→∧→ x)) = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+   
+  ¬trho (∧∧d ltr) ((s ←∧) ←∧→ s₁) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (s ←∧→ (∧→ s₁)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (∧→ s₁)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce∧→∧→ x)) = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+  
+  ¬trho (∧∧d ltr) ((∧→ s) ←∧→ s₁) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (∧→ (s ←∧→ s₁)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ (s ←∧→ s₁)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce←∧→∧→ x)) = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+  
+  ¬trho (∧∧d ltr) ((s ←∧→ s₁) ←∧→ s₂) (∧→ ind) ¬ho (∧→∧∧d ut) = ¬trho ltr (s ←∧→ (s₁ ←∧→ s₂)) (∧→ (∧→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∧→ (s₁ ←∧→ s₂)) (∧→ (∧→ ind)))
+    ¬nho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧→∧→ x)) = ¬ho (hitsAtLeastOnce←∧→∧→ x)
+  
+  ¬trho (¬∧∧d ltr) ↓ ind ¬ho ut = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (¬∧∧d ltr) (s ←∧) ↓ ¬ho ut = λ _ → ¬ho hitsAtLeastOnce←∧↓
+  ¬trho (¬∧∧d ltr) (s ←∧) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((s ←∧) ←∧) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∧) ←∧) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce←∧←∧ x)) = ¬ho (hitsAtLeastOnce←∧←∧ x)
+  
+  ¬trho (¬∧∧d ltr) (s ←∧) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut) = ¬trho ltr ((s ←∧) ←∧) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∧) ←∧) ((∧→ ind) ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ ())
+  
+  ¬trho (¬∧∧d ltr) (s ←∧) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut) = ¬trho ltr ((s ←∧) ←∧) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∧) ←∧) (∧→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∧∧d ltr) (∧→ ↓) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((∧→ ↓) ←∧→ ↓) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ ↓) ←∧→ ↓) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ ())
+  
+  ¬trho (¬∧∧d ltr) (∧→ (s ←∧)) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((∧→ s) ←∧) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ s) ←∧) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ ())
+  
+  ¬trho (¬∧∧d ltr) (∧→ (∧→ s)) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr (∧→ s) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ s) ((ind ←∧) ←∧))
+    ¬nho ()
+  
+  ¬trho (¬∧∧d ltr) (∧→ (s ←∧→ s₁)) (ind ←∧) ¬ho (←∧¬∧∧d ut)  = ¬trho ltr ((∧→ s) ←∧→ s₁) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ s) ←∧→ s₁) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ ())
+  
+  
+  ¬trho (¬∧∧d ltr) (∧→ ↓) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut)  = ¬trho ltr ((∧→ ↓) ←∧→ ↓) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ ↓) ←∧→ ↓) ((∧→ ind) ←∧))
+    ¬nho x = ¬ho (hitsAtLeastOnce∧→∧→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∧∧d ltr) (∧→ (s ←∧)) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut)  = ¬trho ltr ((∧→ s) ←∧) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ s) ←∧) ((∧→ ind) ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce∧→∧→ x)) = ¬ho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce←∧←∧ x))
+  
+  ¬trho (¬∧∧d ltr) (∧→ (∧→ s)) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut)  = ¬trho ltr (∧→ s) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ s) ((∧→ ind) ←∧))
+    ¬nho ()
+  
+  ¬trho (¬∧∧d ltr) (∧→ (s ←∧→ s₁)) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut)  = ¬trho ltr ((∧→ s) ←∧→ s₁) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ s) ←∧→ s₁) ((∧→ ind) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce∧→∧→ x)) = ¬ho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce←∧→←∧ x))
+  
+  
+  ¬trho (¬∧∧d ltr) (∧→ ↓) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut)   = ¬trho ltr ((∧→ ↓) ←∧→ ↓) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ ↓) ←∧→ ↓) (∧→ ind))
+    ¬nho x = ¬ho (hitsAtLeastOnce∧→∧→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∧∧d ltr) (∧→ (s ←∧)) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut)  = ¬trho ltr ((∧→ s) ←∧) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ s) ←∧) (∧→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∧∧d ltr) (∧→ (∧→ s)) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut) = ¬trho ltr (∧→ s) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∧→ s) (∧→ ind))
+    ¬nho (hitsAtLeastOnce∧→∧→ x) = ¬ho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce∧→∧→ x))
+  
+  ¬trho (¬∧∧d ltr) (∧→ (s ←∧→ s₁)) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut)  = ¬trho ltr ((∧→ s) ←∧→ s₁) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∧→ s) ←∧→ s₁) (∧→ ind))
+    ¬nho (hitsAtLeastOnce←∧→∧→ x) = ¬ho (hitsAtLeastOnce∧→∧→ (hitsAtLeastOnce←∧→∧→ x))
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ ↓) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ ↓) ←∧→ ↓) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ ↓) ←∧→ ↓) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧→←∧ x)) = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (s ←∧)) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ s) ←∧) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ s) ←∧) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce←∧→←∧ x)) = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (∧→ s)) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧) ←∧→ s) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧) ←∧→ s) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧←∧ x)) = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (s ←∧→ s₂)) (ind ←∧) ¬ho (←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ s) ←∧→ s₂) ((ind ←∧) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ s) ←∧→ s₂) ((ind ←∧) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧→←∧ x)) = ¬ho (hitsAtLeastOnce←∧→←∧ x)
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ ↓) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ ↓) ←∧→ ↓) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ ↓) ←∧→ ↓) ((∧→ ind) ←∧))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∧→∧→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (s ←∧)) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ s) ←∧) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ s) ←∧) ((∧→ ind) ←∧))
+    ¬nho (hitsAtLeastOnce←∧←∧ (hitsAtLeastOnce←∧→∧→ x)) = ¬ho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧←∧ x))
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (∧→ s)) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧) ←∧→ s) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧) ←∧→ s) ((∧→ ind) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ ())
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (s ←∧→ s₂)) (∧→ (ind ←∧)) ¬ho (∧→[←∧¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ s) ←∧→ s₂) ((∧→ ind) ←∧) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ s) ←∧→ s₂) ((∧→ ind) ←∧))
+    ¬nho (hitsAtLeastOnce←∧→←∧ (hitsAtLeastOnce←∧→∧→ x)) = ¬ho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧→←∧ x))
+  
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ ↓) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ ↓) ←∧→ ↓) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ ↓) ←∧→ ↓) (∧→ ind))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∧→∧→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (s ←∧)) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ s) ←∧) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ s) ←∧) (∧→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (∧→ s)) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut) = ¬trho ltr ((s₁ ←∧) ←∧→ s) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧) ←∧→ s) (∧→ ind))
+    ¬nho (hitsAtLeastOnce←∧→∧→ x) = ¬ho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce∧→∧→ x))
+  
+  ¬trho (¬∧∧d ltr) (s₁ ←∧→ (s ←∧→ s₂)) (∧→ (∧→ ind)) ¬ho (∧→[∧→¬∧∧d ut) = ¬trho ltr ((s₁ ←∧→ s) ←∧→ s₂) (∧→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∧→ s) ←∧→ s₂) (∧→ ind))
+    ¬nho (hitsAtLeastOnce←∧→∧→ x) = ¬ho (hitsAtLeastOnce←∧→∧→ (hitsAtLeastOnce←∧→∧→ x))
+  
+  
+  ¬trho (∨∨d ltr) ↓ ind ¬ho ut = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∨∨d ltr) (↓ ←∨) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut)
+                                      = λ _ → ¬ho (hitsAtLeastOnce←∨←∨ hitsAtLeastOnce↓)
+  ¬trho (∨∨d ltr) ((s ←∨) ←∨) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut) = ¬trho ltr (s ←∨) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ x) = ¬ho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce←∨←∨ x))
+  
+  ¬trho (∨∨d ltr) ((∨→ s) ←∨) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut)  = ¬trho ltr (∨→ (s ←∨)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (s ←∨)) (ind ←∨))
+    ¬nho ()
+  
+  ¬trho (∨∨d ltr) ((s ←∨→ s₁) ←∨) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut) = ¬trho ltr (s ←∨→ (s₁ ←∨)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (s₁ ←∨)) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ x) = ¬ho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce←∨→←∨ x))
+  
+  ¬trho (∨∨d ltr) (↓ ←∨) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = λ _ → ¬ho (hitsAtLeastOnce←∨←∨ hitsAtLeastOnce↓)
+  ¬trho (∨∨d ltr) ((s ←∨) ←∨) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (s ←∨) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨) (∨→ (ind ←∨)))
+    ¬nho ()
+  
+  ¬trho (∨∨d ltr) ((∨→ s) ←∨) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (∨→ (s ←∨)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (s ←∨)) (∨→ (ind ←∨)))
+    ¬nho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce←∨←∨ x)) = ¬ho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce∨→∨→ x))
+  
+  ¬trho (∨∨d ltr) ((s ←∨→ s₁) ←∨) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (s ←∨→ (s₁ ←∨)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (s₁ ←∨)) (∨→ (ind ←∨)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨←∨ x)) = ¬ho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce←∨→∨→ x))
+  
+  ¬trho (∨∨d ltr) (↓ ←∨) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (↓ ←∨→ (↓ ←∨)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∨→ (↓ ←∨)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ ())
+  
+  ¬trho (∨∨d ltr) ((s ←∨) ←∨) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (s ←∨) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨) (∨→ (∨→ ind)))
+    ¬nho ()
+  
+  ¬trho (∨∨d ltr) ((∨→ s) ←∨) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (∨→ (s ←∨)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (s ←∨)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce∨→∨→ ())
+  
+  ¬trho (∨∨d ltr) ((s ←∨→ s₁) ←∨) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (s ←∨→ (s₁ ←∨)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (s₁ ←∨)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ ())
+  
+  ¬trho (∨∨d ltr) (∨→ s) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut) = ¬trho ltr (∨→ (∨→ s)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (∨→ s)) (ind ←∨))
+    ¬nho ()
+  
+  ¬trho (∨∨d ltr) (∨→ s) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (∨→ (∨→ s)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (∨→ s)) (∨→ (ind ←∨)))
+    ¬nho (hitsAtLeastOnce∨→∨→ ())
+  
+  ¬trho (∨∨d ltr) (∨→ s) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (∨→ (∨→ s)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (∨→ s)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce∨→∨→ x)) = ¬ho (hitsAtLeastOnce∨→∨→ x)
+  
+  
+  
+  ¬trho (∨∨d ltr) (↓ ←∨→ s₁) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut) = ¬trho ltr (↓ ←∨→ (↓ ←∨→ s₁)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∨→ (↓ ←∨→ s₁)) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ x) = ¬ho (hitsAtLeastOnce←∨→←∨ hitsAtLeastOnce↓)
+   
+  ¬trho (∨∨d ltr) ((s ←∨) ←∨→ s₁) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut) = ¬trho ltr (s ←∨→ (∨→ s₁)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (∨→ s₁)) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ x) = ¬ho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨←∨ x))
+  
+  ¬trho (∨∨d ltr) ((∨→ s) ←∨→ s₁) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut) = ¬trho ltr (∨→ (s ←∨→ s₁)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (s ←∨→ s₁)) (ind ←∨))
+    ¬nho ()
+  
+  ¬trho (∨∨d ltr) ((s ←∨→ s₁) ←∨→ s₂) ((ind ←∨) ←∨) ¬ho (←∨]←∨∨∨d ut)  = ¬trho ltr (s ←∨→ (s₁ ←∨→ s₂)) (ind ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (s₁ ←∨→ s₂)) (ind ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ x) = ¬ho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨→←∨ x))
+  
+  
+  ¬trho (∨∨d ltr) (↓ ←∨→ s₁) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (↓ ←∨→ (↓ ←∨→ s₁)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∨→ (↓ ←∨→ s₁)) (∨→ (ind ←∨)))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∨→←∨ hitsAtLeastOnce↓)
+   
+  ¬trho (∨∨d ltr) ((s ←∨) ←∨→ s₁) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (s ←∨→ (∨→ s₁)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (∨→ s₁)) (∨→ (ind ←∨)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ ())
+  
+  ¬trho (∨∨d ltr) ((∨→ s) ←∨→ s₁) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (∨→ (s ←∨→ s₁)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (s ←∨→ s₁)) (∨→ (ind ←∨)))
+    ¬nho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce←∨→←∨ x)) = ¬ho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce∨→∨→ x))
+  
+  ¬trho (∨∨d ltr) ((s ←∨→ s₁) ←∨→ s₂) ((∨→ ind) ←∨) ¬ho (∨→]←∨∨∨d ut) = ¬trho ltr (s ←∨→ (s₁ ←∨→ s₂)) (∨→ (ind ←∨)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (s₁ ←∨→ s₂)) (∨→ (ind ←∨)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨→←∨ x)) = ¬ho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨→∨→ x))
+  
+  ¬trho (∨∨d ltr) (↓ ←∨→ s₁) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (↓ ←∨→ (↓ ←∨→ s₁)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∨→ (↓ ←∨→ s₁)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨→∨→ x)) = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+   
+  ¬trho (∨∨d ltr) ((s ←∨) ←∨→ s₁) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (s ←∨→ (∨→ s₁)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (∨→ s₁)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce∨→∨→ x)) = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+  
+  ¬trho (∨∨d ltr) ((∨→ s) ←∨→ s₁) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (∨→ (s ←∨→ s₁)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ (s ←∨→ s₁)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce←∨→∨→ x)) = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+  
+  ¬trho (∨∨d ltr) ((s ←∨→ s₁) ←∨→ s₂) (∨→ ind) ¬ho (∨→∨∨d ut) = ¬trho ltr (s ←∨→ (s₁ ←∨→ s₂)) (∨→ (∨→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∨→ (s₁ ←∨→ s₂)) (∨→ (∨→ ind)))
+    ¬nho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨→∨→ x)) = ¬ho (hitsAtLeastOnce←∨→∨→ x)
+  
+  ¬trho (¬∨∨d ltr) ↓ ind ¬ho ut = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (¬∨∨d ltr) (s ←∨) ↓ ¬ho ut = λ _ → ¬ho hitsAtLeastOnce←∨↓
+  ¬trho (¬∨∨d ltr) (s ←∨) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((s ←∨) ←∨) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∨) ←∨) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce←∨←∨ x)) = ¬ho (hitsAtLeastOnce←∨←∨ x)
+  
+  ¬trho (¬∨∨d ltr) (s ←∨) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut) = ¬trho ltr ((s ←∨) ←∨) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∨) ←∨) ((∨→ ind) ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ ())
+  
+  ¬trho (¬∨∨d ltr) (s ←∨) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut) = ¬trho ltr ((s ←∨) ←∨) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∨) ←∨) (∨→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∨∨d ltr) (∨→ ↓) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((∨→ ↓) ←∨→ ↓) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ ↓) ←∨→ ↓) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ ())
+  
+  ¬trho (¬∨∨d ltr) (∨→ (s ←∨)) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((∨→ s) ←∨) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ s) ←∨) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ ())
+  
+  ¬trho (¬∨∨d ltr) (∨→ (∨→ s)) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr (∨→ s) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ s) ((ind ←∨) ←∨))
+    ¬nho ()
+  
+  ¬trho (¬∨∨d ltr) (∨→ (s ←∨→ s₁)) (ind ←∨) ¬ho (←∨¬∨∨d ut)  = ¬trho ltr ((∨→ s) ←∨→ s₁) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ s) ←∨→ s₁) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ ())
+  
+  
+  ¬trho (¬∨∨d ltr) (∨→ ↓) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut)  = ¬trho ltr ((∨→ ↓) ←∨→ ↓) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ ↓) ←∨→ ↓) ((∨→ ind) ←∨))
+    ¬nho x = ¬ho (hitsAtLeastOnce∨→∨→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∨∨d ltr) (∨→ (s ←∨)) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut)  = ¬trho ltr ((∨→ s) ←∨) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ s) ←∨) ((∨→ ind) ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce∨→∨→ x)) = ¬ho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce←∨←∨ x))
+  
+  ¬trho (¬∨∨d ltr) (∨→ (∨→ s)) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut)  = ¬trho ltr (∨→ s) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ s) ((∨→ ind) ←∨))
+    ¬nho ()
+  
+  ¬trho (¬∨∨d ltr) (∨→ (s ←∨→ s₁)) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut)  = ¬trho ltr ((∨→ s) ←∨→ s₁) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ s) ←∨→ s₁) ((∨→ ind) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce∨→∨→ x)) = ¬ho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce←∨→←∨ x))
+  
+  
+  ¬trho (¬∨∨d ltr) (∨→ ↓) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut)   = ¬trho ltr ((∨→ ↓) ←∨→ ↓) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ ↓) ←∨→ ↓) (∨→ ind))
+    ¬nho x = ¬ho (hitsAtLeastOnce∨→∨→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∨∨d ltr) (∨→ (s ←∨)) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut)  = ¬trho ltr ((∨→ s) ←∨) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ s) ←∨) (∨→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∨∨d ltr) (∨→ (∨→ s)) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut) = ¬trho ltr (∨→ s) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∨→ s) (∨→ ind))
+    ¬nho (hitsAtLeastOnce∨→∨→ x) = ¬ho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce∨→∨→ x))
+  
+  ¬trho (¬∨∨d ltr) (∨→ (s ←∨→ s₁)) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut)  = ¬trho ltr ((∨→ s) ←∨→ s₁) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∨→ s) ←∨→ s₁) (∨→ ind))
+    ¬nho (hitsAtLeastOnce←∨→∨→ x) = ¬ho (hitsAtLeastOnce∨→∨→ (hitsAtLeastOnce←∨→∨→ x))
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ ↓) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ ↓) ←∨→ ↓) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ ↓) ←∨→ ↓) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨→←∨ x)) = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (s ←∨)) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ s) ←∨) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ s) ←∨) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce←∨→←∨ x)) = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (∨→ s)) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨) ←∨→ s) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨) ←∨→ s) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨←∨ x)) = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (s ←∨→ s₂)) (ind ←∨) ¬ho (←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ s) ←∨→ s₂) ((ind ←∨) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ s) ←∨→ s₂) ((ind ←∨) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨→←∨ x)) = ¬ho (hitsAtLeastOnce←∨→←∨ x)
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ ↓) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ ↓) ←∨→ ↓) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ ↓) ←∨→ ↓) ((∨→ ind) ←∨))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∨→∨→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (s ←∨)) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ s) ←∨) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ s) ←∨) ((∨→ ind) ←∨))
+    ¬nho (hitsAtLeastOnce←∨←∨ (hitsAtLeastOnce←∨→∨→ x)) = ¬ho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨←∨ x))
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (∨→ s)) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨) ←∨→ s) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨) ←∨→ s) ((∨→ ind) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ ())
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (s ←∨→ s₂)) (∨→ (ind ←∨)) ¬ho (∨→[←∨¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ s) ←∨→ s₂) ((∨→ ind) ←∨) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ s) ←∨→ s₂) ((∨→ ind) ←∨))
+    ¬nho (hitsAtLeastOnce←∨→←∨ (hitsAtLeastOnce←∨→∨→ x)) = ¬ho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨→←∨ x))
+  
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ ↓) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ ↓) ←∨→ ↓) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ ↓) ←∨→ ↓) (∨→ ind))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∨→∨→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (s ←∨)) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ s) ←∨) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ s) ←∨) (∨→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (∨→ s)) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut) = ¬trho ltr ((s₁ ←∨) ←∨→ s) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨) ←∨→ s) (∨→ ind))
+    ¬nho (hitsAtLeastOnce←∨→∨→ x) = ¬ho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce∨→∨→ x))
+  
+  ¬trho (¬∨∨d ltr) (s₁ ←∨→ (s ←∨→ s₂)) (∨→ (∨→ ind)) ¬ho (∨→[∨→¬∨∨d ut) = ¬trho ltr ((s₁ ←∨→ s) ←∨→ s₂) (∨→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∨→ s) ←∨→ s₂) (∨→ ind))
+    ¬nho (hitsAtLeastOnce←∨→∨→ x) = ¬ho (hitsAtLeastOnce←∨→∨→ (hitsAtLeastOnce←∨→∨→ x))
+  
+  
+  ¬trho (∂∂d ltr) ↓ ind ¬ho ut = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (∂∂d ltr) (↓ ←∂) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut)
+                                      = λ _ → ¬ho (hitsAtLeastOnce←∂←∂ hitsAtLeastOnce↓)
+  ¬trho (∂∂d ltr) ((s ←∂) ←∂) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut) = ¬trho ltr (s ←∂) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ x) = ¬ho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce←∂←∂ x))
+  
+  ¬trho (∂∂d ltr) ((∂→ s) ←∂) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut)  = ¬trho ltr (∂→ (s ←∂)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (s ←∂)) (ind ←∂))
+    ¬nho ()
+  
+  ¬trho (∂∂d ltr) ((s ←∂→ s₁) ←∂) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut) = ¬trho ltr (s ←∂→ (s₁ ←∂)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (s₁ ←∂)) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ x) = ¬ho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce←∂→←∂ x))
+  
+  ¬trho (∂∂d ltr) (↓ ←∂) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = λ _ → ¬ho (hitsAtLeastOnce←∂←∂ hitsAtLeastOnce↓)
+  ¬trho (∂∂d ltr) ((s ←∂) ←∂) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (s ←∂) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂) (∂→ (ind ←∂)))
+    ¬nho ()
+  
+  ¬trho (∂∂d ltr) ((∂→ s) ←∂) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (∂→ (s ←∂)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (s ←∂)) (∂→ (ind ←∂)))
+    ¬nho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce←∂←∂ x)) = ¬ho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce∂→∂→ x))
+  
+  ¬trho (∂∂d ltr) ((s ←∂→ s₁) ←∂) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (s ←∂→ (s₁ ←∂)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (s₁ ←∂)) (∂→ (ind ←∂)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂←∂ x)) = ¬ho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce←∂→∂→ x))
+  
+  ¬trho (∂∂d ltr) (↓ ←∂) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (↓ ←∂→ (↓ ←∂)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∂→ (↓ ←∂)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ ())
+  
+  ¬trho (∂∂d ltr) ((s ←∂) ←∂) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (s ←∂) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂) (∂→ (∂→ ind)))
+    ¬nho ()
+  
+  ¬trho (∂∂d ltr) ((∂→ s) ←∂) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (∂→ (s ←∂)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (s ←∂)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce∂→∂→ ())
+  
+  ¬trho (∂∂d ltr) ((s ←∂→ s₁) ←∂) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (s ←∂→ (s₁ ←∂)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (s₁ ←∂)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ ())
+  
+  ¬trho (∂∂d ltr) (∂→ s) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut) = ¬trho ltr (∂→ (∂→ s)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (∂→ s)) (ind ←∂))
+    ¬nho ()
+  
+  ¬trho (∂∂d ltr) (∂→ s) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (∂→ (∂→ s)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (∂→ s)) (∂→ (ind ←∂)))
+    ¬nho (hitsAtLeastOnce∂→∂→ ())
+  
+  ¬trho (∂∂d ltr) (∂→ s) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (∂→ (∂→ s)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (∂→ s)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce∂→∂→ x)) = ¬ho (hitsAtLeastOnce∂→∂→ x)
+  
+  
+  
+  ¬trho (∂∂d ltr) (↓ ←∂→ s₁) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut) = ¬trho ltr (↓ ←∂→ (↓ ←∂→ s₁)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∂→ (↓ ←∂→ s₁)) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ x) = ¬ho (hitsAtLeastOnce←∂→←∂ hitsAtLeastOnce↓)
+   
+  ¬trho (∂∂d ltr) ((s ←∂) ←∂→ s₁) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut) = ¬trho ltr (s ←∂→ (∂→ s₁)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (∂→ s₁)) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ x) = ¬ho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂←∂ x))
+  
+  ¬trho (∂∂d ltr) ((∂→ s) ←∂→ s₁) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut) = ¬trho ltr (∂→ (s ←∂→ s₁)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (s ←∂→ s₁)) (ind ←∂))
+    ¬nho ()
+  
+  ¬trho (∂∂d ltr) ((s ←∂→ s₁) ←∂→ s₂) ((ind ←∂) ←∂) ¬ho (←∂]←∂∂∂d ut)  = ¬trho ltr (s ←∂→ (s₁ ←∂→ s₂)) (ind ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (s₁ ←∂→ s₂)) (ind ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ x) = ¬ho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂→←∂ x))
+  
+  
+  ¬trho (∂∂d ltr) (↓ ←∂→ s₁) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (↓ ←∂→ (↓ ←∂→ s₁)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∂→ (↓ ←∂→ s₁)) (∂→ (ind ←∂)))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∂→←∂ hitsAtLeastOnce↓)
+   
+  ¬trho (∂∂d ltr) ((s ←∂) ←∂→ s₁) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (s ←∂→ (∂→ s₁)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (∂→ s₁)) (∂→ (ind ←∂)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ ())
+  
+  ¬trho (∂∂d ltr) ((∂→ s) ←∂→ s₁) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (∂→ (s ←∂→ s₁)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (s ←∂→ s₁)) (∂→ (ind ←∂)))
+    ¬nho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce←∂→←∂ x)) = ¬ho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce∂→∂→ x))
+  
+  ¬trho (∂∂d ltr) ((s ←∂→ s₁) ←∂→ s₂) ((∂→ ind) ←∂) ¬ho (∂→]←∂∂∂d ut) = ¬trho ltr (s ←∂→ (s₁ ←∂→ s₂)) (∂→ (ind ←∂)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (s₁ ←∂→ s₂)) (∂→ (ind ←∂)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂→←∂ x)) = ¬ho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂→∂→ x))
+  
+  ¬trho (∂∂d ltr) (↓ ←∂→ s₁) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (↓ ←∂→ (↓ ←∂→ s₁)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (↓ ←∂→ (↓ ←∂→ s₁)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂→∂→ x)) = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+   
+  ¬trho (∂∂d ltr) ((s ←∂) ←∂→ s₁) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (s ←∂→ (∂→ s₁)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (∂→ s₁)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce∂→∂→ x)) = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+  
+  ¬trho (∂∂d ltr) ((∂→ s) ←∂→ s₁) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (∂→ (s ←∂→ s₁)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ (s ←∂→ s₁)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce←∂→∂→ x)) = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+  
+  ¬trho (∂∂d ltr) ((s ←∂→ s₁) ←∂→ s₂) (∂→ ind) ¬ho (∂→∂∂d ut) = ¬trho ltr (s ←∂→ (s₁ ←∂→ s₂)) (∂→ (∂→ ind)) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (s ←∂→ (s₁ ←∂→ s₂)) (∂→ (∂→ ind)))
+    ¬nho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂→∂→ x)) = ¬ho (hitsAtLeastOnce←∂→∂→ x)
+  
+  ¬trho (¬∂∂d ltr) ↓ ind ¬ho ut = λ _ → ¬ho hitsAtLeastOnce↓
+  ¬trho (¬∂∂d ltr) (s ←∂) ↓ ¬ho ut = λ _ → ¬ho hitsAtLeastOnce←∂↓
+  ¬trho (¬∂∂d ltr) (s ←∂) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((s ←∂) ←∂) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∂) ←∂) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce←∂←∂ x)) = ¬ho (hitsAtLeastOnce←∂←∂ x)
+  
+  ¬trho (¬∂∂d ltr) (s ←∂) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut) = ¬trho ltr ((s ←∂) ←∂) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∂) ←∂) ((∂→ ind) ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ ())
+  
+  ¬trho (¬∂∂d ltr) (s ←∂) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut) = ¬trho ltr ((s ←∂) ←∂) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s ←∂) ←∂) (∂→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∂∂d ltr) (∂→ ↓) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((∂→ ↓) ←∂→ ↓) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ ↓) ←∂→ ↓) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ ())
+  
+  ¬trho (¬∂∂d ltr) (∂→ (s ←∂)) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((∂→ s) ←∂) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ s) ←∂) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ ())
+  
+  ¬trho (¬∂∂d ltr) (∂→ (∂→ s)) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr (∂→ s) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ s) ((ind ←∂) ←∂))
+    ¬nho ()
+  
+  ¬trho (¬∂∂d ltr) (∂→ (s ←∂→ s₁)) (ind ←∂) ¬ho (←∂¬∂∂d ut)  = ¬trho ltr ((∂→ s) ←∂→ s₁) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ s) ←∂→ s₁) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ ())
+  
+  
+  ¬trho (¬∂∂d ltr) (∂→ ↓) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut)  = ¬trho ltr ((∂→ ↓) ←∂→ ↓) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ ↓) ←∂→ ↓) ((∂→ ind) ←∂))
+    ¬nho x = ¬ho (hitsAtLeastOnce∂→∂→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∂∂d ltr) (∂→ (s ←∂)) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut)  = ¬trho ltr ((∂→ s) ←∂) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ s) ←∂) ((∂→ ind) ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce∂→∂→ x)) = ¬ho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce←∂←∂ x))
+  
+  ¬trho (¬∂∂d ltr) (∂→ (∂→ s)) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut)  = ¬trho ltr (∂→ s) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ s) ((∂→ ind) ←∂))
+    ¬nho ()
+  
+  ¬trho (¬∂∂d ltr) (∂→ (s ←∂→ s₁)) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut)  = ¬trho ltr ((∂→ s) ←∂→ s₁) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ s) ←∂→ s₁) ((∂→ ind) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce∂→∂→ x)) = ¬ho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce←∂→←∂ x))
+  
+  
+  ¬trho (¬∂∂d ltr) (∂→ ↓) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut)   = ¬trho ltr ((∂→ ↓) ←∂→ ↓) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ ↓) ←∂→ ↓) (∂→ ind))
+    ¬nho x = ¬ho (hitsAtLeastOnce∂→∂→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∂∂d ltr) (∂→ (s ←∂)) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut)  = ¬trho ltr ((∂→ s) ←∂) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ s) ←∂) (∂→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∂∂d ltr) (∂→ (∂→ s)) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut) = ¬trho ltr (∂→ s) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce (∂→ s) (∂→ ind))
+    ¬nho (hitsAtLeastOnce∂→∂→ x) = ¬ho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce∂→∂→ x))
+  
+  ¬trho (¬∂∂d ltr) (∂→ (s ←∂→ s₁)) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut)  = ¬trho ltr ((∂→ s) ←∂→ s₁) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((∂→ s) ←∂→ s₁) (∂→ ind))
+    ¬nho (hitsAtLeastOnce←∂→∂→ x) = ¬ho (hitsAtLeastOnce∂→∂→ (hitsAtLeastOnce←∂→∂→ x))
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ ↓) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ ↓) ←∂→ ↓) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ ↓) ←∂→ ↓) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂→←∂ x)) = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (s ←∂)) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ s) ←∂) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ s) ←∂) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce←∂→←∂ x)) = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (∂→ s)) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂) ←∂→ s) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂) ←∂→ s) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂←∂ x)) = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (s ←∂→ s₂)) (ind ←∂) ¬ho (←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ s) ←∂→ s₂) ((ind ←∂) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ s) ←∂→ s₂) ((ind ←∂) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂→←∂ x)) = ¬ho (hitsAtLeastOnce←∂→←∂ x)
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ ↓) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ ↓) ←∂→ ↓) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ ↓) ←∂→ ↓) ((∂→ ind) ←∂))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∂→∂→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (s ←∂)) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ s) ←∂) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ s) ←∂) ((∂→ ind) ←∂))
+    ¬nho (hitsAtLeastOnce←∂←∂ (hitsAtLeastOnce←∂→∂→ x)) = ¬ho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂←∂ x))
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (∂→ s)) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂) ←∂→ s) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂) ←∂→ s) ((∂→ ind) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ ())
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (s ←∂→ s₂)) (∂→ (ind ←∂)) ¬ho (∂→[←∂¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ s) ←∂→ s₂) ((∂→ ind) ←∂) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ s) ←∂→ s₂) ((∂→ ind) ←∂))
+    ¬nho (hitsAtLeastOnce←∂→←∂ (hitsAtLeastOnce←∂→∂→ x)) = ¬ho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂→←∂ x))
+  
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ ↓) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ ↓) ←∂→ ↓) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ ↓) ←∂→ ↓) (∂→ ind))
+    ¬nho x = ¬ho (hitsAtLeastOnce←∂→∂→ hitsAtLeastOnce↓)
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (s ←∂)) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ s) ←∂) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ s) ←∂) (∂→ ind))
+    ¬nho ()
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (∂→ s)) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut) = ¬trho ltr ((s₁ ←∂) ←∂→ s) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂) ←∂→ s) (∂→ ind))
+    ¬nho (hitsAtLeastOnce←∂→∂→ x) = ¬ho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce∂→∂→ x))
+  
+  ¬trho (¬∂∂d ltr) (s₁ ←∂→ (s ←∂→ s₂)) (∂→ (∂→ ind)) ¬ho (∂→[∂→¬∂∂d ut) = ¬trho ltr ((s₁ ←∂→ s) ←∂→ s₂) (∂→ ind) ¬nho ut where
+    ¬nho : ¬ (hitsAtLeastOnce ((s₁ ←∂→ s) ←∂→ s₂) (∂→ ind))
+    ¬nho (hitsAtLeastOnce←∂→∂→ x) = ¬ho (hitsAtLeastOnce←∂→∂→ (hitsAtLeastOnce←∂→∂→ x))
+  
+  
+  
 
 
   truncHOSetLL : ∀ {i u ll pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
@@ -1329,7 +2111,6 @@ module _ where
 
 
 -- Extending a set gives us onlyInside and hitsAtLeastOnce immediately because the rest is empty.
---
 
   ext⇒oi : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll)
          → onlyInside (extend ind s) ind
