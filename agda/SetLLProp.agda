@@ -1124,9 +1124,9 @@ module _ where
 
 
 
-  ¬ho&s≤ss⇒hos : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+  ¬ho&s≤ss⇒¬hos : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
                  → ¬ (hitsAtLeastOnce ss ind) → s ≤s ss → ¬ (hitsAtLeastOnce s ind)
-  ¬ho&s≤ss⇒hos s ss ind ¬ho rl x = ¬ho (ho&s≤ss⇒hoss s ss ind x rl)
+  ¬ho&s≤ss⇒¬hos s ss ind ¬ho rl x = ¬ho (ho&s≤ss⇒hoss s ss ind x rl)
 
 
   
