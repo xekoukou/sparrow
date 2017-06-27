@@ -16,12 +16,14 @@ ext⇒¬ho : ∀{i u pll rll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll) �
           → ¬ Orderedᵢ lind ind → ¬ hitsAtLeastOnce (extend ind s) lind
 ext⇒¬ho s ↓ lind ¬ord x = ¬ord (b≤ᵢa ≤ᵢ↓)
 ext⇒¬ho s (ind ←∧) ↓ ¬ord x = ¬ord (a≤ᵢb ≤ᵢ↓)
-ext⇒¬ho {pll = pll} {_} {ll = li ∧ _} s (ind ←∧) (lind ←∧) ¬ord x
+ext⇒¬ho {pll = pll} {_} {ll = li ∧ _} s (ind ←∧) (lind ←∧) ¬ord
       with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | ext⇒¬ho s ind lind hf where
   hf : ¬ Orderedᵢ lind ind
   hf (a≤ᵢb x₁) = ¬ord (a≤ᵢb (≤ᵢ←∧ x₁))
   hf (b≤ᵢa x₁) = ¬ord (b≤ᵢa (≤ᵢ←∧ x₁))
-ext⇒¬ho {pll = pll} {_} {li ∧ _} s (ind ←∧) (lind ←∧) ¬ord x | .li | refl | t | e = {!!}
+ext⇒¬ho {pll = pll} {_} {li ∧ _} s (ind ←∧) (lind ←∧) ¬ord | .li | refl | t | e = {!!} where
+  hf : ¬ hitsAtLeastOnce (t ←∧) (lind ←∧)
+  hf (hitsAtLeastOnce←∧←∧ x) = {!!}
 ext⇒¬ho {pll = pll} {_} {ll = li ∧ _} s (ind ←∧) (∧→ lind) ¬ord x with replLL li ind pll | replLL-id li ind pll refl | extendg ind s
 ext⇒¬ho {_} {_} {pll} {_} {li ∧ _} s (ind ←∧) (∧→ lind) ¬ord () | .li | refl | t
 ext⇒¬ho s (∧→ ind) ↓ ¬ord x = ¬ord (a≤ᵢb ≤ᵢ↓)
