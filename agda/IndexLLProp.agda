@@ -415,53 +415,47 @@ replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂�
              → IndexLL fll (replLL ll ind frll)
 ¬ord-morph ↓ ind frll nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
 ¬ord-morph (emi ←∧) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓)) 
-¬ord-morph (emi ←∧) (ind ←∧) frll nord
-           with (¬ord-morph emi ind frll
+¬ord-morph (emi ←∧) (ind ←∧) frll nord =
+            (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ←∧ lt))
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ←∧ lt))
-                }))
-... | r = r ←∧
+                })) ←∧
 ¬ord-morph (emi ←∧) (∧→ ind) frll nord = emi ←∧
 ¬ord-morph (∧→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
 ¬ord-morph (∧→ emi) (ind ←∧) frll nord = ∧→ emi
-¬ord-morph (∧→ emi) (∧→ ind) frll nord
-           with (¬ord-morph emi ind frll
+¬ord-morph (∧→ emi) (∧→ ind) frll nord = 
+           ∧→ (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ∧→ lt))
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ∧→ lt))
                 }))
-... | r = ∧→ r
 ¬ord-morph (emi ←∨) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓)) 
-¬ord-morph (emi ←∨) (ind ←∨) frll nord
-           with (¬ord-morph emi ind frll
+¬ord-morph (emi ←∨) (ind ←∨) frll nord = 
+           (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ←∨ lt))
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ←∨ lt))
-                }))
-... | r = r ←∨
+                })) ←∨
 ¬ord-morph (emi ←∨) (∨→ ind) frll nord = emi ←∨
 ¬ord-morph (∨→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
 ¬ord-morph (∨→ emi) (ind ←∨) frll nord = ∨→ emi
-¬ord-morph (∨→ emi) (∨→ ind) frll nord
-           with (¬ord-morph emi ind frll
+¬ord-morph (∨→ emi) (∨→ ind) frll nord = 
+           ∨→ (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ∨→ lt))
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ∨→ lt))
                 }))
-... | r = ∨→ r
 ¬ord-morph (emi ←∂) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓) )
-¬ord-morph (emi ←∂) (ind ←∂) frll nord
-           with (¬ord-morph emi ind frll
+¬ord-morph (emi ←∂) (ind ←∂) frll nord =
+           (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ←∂ lt))
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ←∂ lt))
-                }))
-... | r = r ←∂
+                })) ←∂
 ¬ord-morph (emi ←∂) (∂→ ind) frll nord = emi ←∂
 ¬ord-morph (∂→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
 ¬ord-morph (∂→ emi) (ind ←∂) frll nord = ∂→ emi
-¬ord-morph (∂→ emi) (∂→ ind) frll nord
-           with (¬ord-morph emi ind frll
+¬ord-morph (∂→ emi) (∂→ ind) frll nord = 
+           ∂→ (¬ord-morph emi ind frll
              (λ { (a≤ᵢb lt) → nord (a≤ᵢb (≤ᵢ∂→ lt))
                 ; (b≤ᵢa lt) → nord (b≤ᵢa (≤ᵢ∂→ lt))
                 }))
-... | r = ∂→ r
 
 
 replLL-¬ordab≡ba : ∀{i u rll ll fll}
@@ -558,6 +552,66 @@ lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (∂→ 
      = ∂→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (λ { (a≤ᵢb x) → nord (a≤ᵢb (≤ᵢ∂→ x))
                                      ; (b≤ᵢa x) → nord (b≤ᵢa (≤ᵢ∂→ x)) })) 
 
+
+
+¬ord-morph⇒¬ord : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
+      → (ind : IndexLL rll ll) → ∀ frll → (nord : ¬ Orderedᵢ ind emi)
+      → ¬ Orderedᵢ (a≤ᵢb-morph ind ind frll (≤ᵢ-reflexive ind)) (¬ord-morph emi ind frll nord)
+¬ord-morph⇒¬ord ↓ ind frll nord = λ _ → nord (b≤ᵢa ≤ᵢ↓)
+¬ord-morph⇒¬ord (emi ←∧) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph⇒¬ord (emi ←∧) (ind ←∧) frll nord x with ¬ord-morph⇒¬ord emi ind frll hf where
+  hf :  ¬ Orderedᵢ ind emi
+  hf (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ←∧ x))
+  hf (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ←∧ x))
+¬ord-morph⇒¬ord (emi ←∧) (ind ←∧) frll nord (a≤ᵢb (≤ᵢ←∧ x)) | r = r (a≤ᵢb x)
+¬ord-morph⇒¬ord (emi ←∧) (ind ←∧) frll nord (b≤ᵢa (≤ᵢ←∧ x)) | r = r (b≤ᵢa x)
+¬ord-morph⇒¬ord (emi ←∧) (∧→ ind) frll nord (a≤ᵢb ())
+¬ord-morph⇒¬ord (emi ←∧) (∧→ ind) frll nord (b≤ᵢa ())
+¬ord-morph⇒¬ord (∧→ emi) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph⇒¬ord (∧→ emi) (ind ←∧) frll nord (a≤ᵢb ())
+¬ord-morph⇒¬ord (∧→ emi) (ind ←∧) frll nord (b≤ᵢa ())
+¬ord-morph⇒¬ord (∧→ emi) (∧→ ind) frll nord x with ¬ord-morph⇒¬ord emi ind frll hf where
+  hf :  ¬ Orderedᵢ ind emi
+  hf (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ∧→ x))
+  hf (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ∧→ x))
+¬ord-morph⇒¬ord (∧→ emi) (∧→ ind) frll nord (a≤ᵢb (≤ᵢ∧→ x)) | r = r (a≤ᵢb x)
+¬ord-morph⇒¬ord (∧→ emi) (∧→ ind) frll nord (b≤ᵢa (≤ᵢ∧→ x)) | r = r (b≤ᵢa x)
+¬ord-morph⇒¬ord (emi ←∨) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph⇒¬ord (emi ←∨) (ind ←∨) frll nord x with ¬ord-morph⇒¬ord emi ind frll hf where
+  hf :  ¬ Orderedᵢ ind emi
+  hf (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ←∨ x))
+  hf (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ←∨ x))
+¬ord-morph⇒¬ord (emi ←∨) (ind ←∨) frll nord (a≤ᵢb (≤ᵢ←∨ x)) | r = r (a≤ᵢb x)
+¬ord-morph⇒¬ord (emi ←∨) (ind ←∨) frll nord (b≤ᵢa (≤ᵢ←∨ x)) | r = r (b≤ᵢa x)
+¬ord-morph⇒¬ord (emi ←∨) (∨→ ind) frll nord (a≤ᵢb ())
+¬ord-morph⇒¬ord (emi ←∨) (∨→ ind) frll nord (b≤ᵢa ())
+¬ord-morph⇒¬ord (∨→ emi) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph⇒¬ord (∨→ emi) (ind ←∨) frll nord (a≤ᵢb ())
+¬ord-morph⇒¬ord (∨→ emi) (ind ←∨) frll nord (b≤ᵢa ())
+¬ord-morph⇒¬ord (∨→ emi) (∨→ ind) frll nord x with ¬ord-morph⇒¬ord emi ind frll hf where
+  hf :  ¬ Orderedᵢ ind emi
+  hf (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ∨→ x))
+  hf (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ∨→ x))
+¬ord-morph⇒¬ord (∨→ emi) (∨→ ind) frll nord (a≤ᵢb (≤ᵢ∨→ x)) | r = r (a≤ᵢb x)
+¬ord-morph⇒¬ord (∨→ emi) (∨→ ind) frll nord (b≤ᵢa (≤ᵢ∨→ x)) | r = r (b≤ᵢa x)
+¬ord-morph⇒¬ord (emi ←∂) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph⇒¬ord (emi ←∂) (ind ←∂) frll nord x with ¬ord-morph⇒¬ord emi ind frll hf where
+  hf :  ¬ Orderedᵢ ind emi
+  hf (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ←∂ x))
+  hf (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ←∂ x))
+¬ord-morph⇒¬ord (emi ←∂) (ind ←∂) frll nord (a≤ᵢb (≤ᵢ←∂ x)) | r = r (a≤ᵢb x)
+¬ord-morph⇒¬ord (emi ←∂) (ind ←∂) frll nord (b≤ᵢa (≤ᵢ←∂ x)) | r = r (b≤ᵢa x)
+¬ord-morph⇒¬ord (emi ←∂) (∂→ ind) frll nord (a≤ᵢb ())
+¬ord-morph⇒¬ord (emi ←∂) (∂→ ind) frll nord (b≤ᵢa ())
+¬ord-morph⇒¬ord (∂→ emi) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+¬ord-morph⇒¬ord (∂→ emi) (ind ←∂) frll nord (a≤ᵢb ())
+¬ord-morph⇒¬ord (∂→ emi) (ind ←∂) frll nord (b≤ᵢa ())
+¬ord-morph⇒¬ord (∂→ emi) (∂→ ind) frll nord x with ¬ord-morph⇒¬ord emi ind frll hf where
+  hf :  ¬ Orderedᵢ ind emi
+  hf (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ∂→ x))
+  hf (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ∂→ x))
+¬ord-morph⇒¬ord (∂→ emi) (∂→ ind) frll nord (a≤ᵢb (≤ᵢ∂→ x)) | r = r (a≤ᵢb x)
+¬ord-morph⇒¬ord (∂→ emi) (∂→ ind) frll nord (b≤ᵢa (≤ᵢ∂→ x)) | r = r (b≤ᵢa x)
 
 
 

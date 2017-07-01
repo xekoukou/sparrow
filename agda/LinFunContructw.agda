@@ -12,53 +12,16 @@ open import Data.Product
 
 open import LinFunContruct
 
-ext⇒¬ho : ∀{i u pll rll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL rll ll)
-          → ¬ Orderedᵢ lind ind → ¬ hitsAtLeastOnce (extend ind s) lind
-ext⇒¬ho s ↓ lind ¬ord x = ¬ord (b≤ᵢa ≤ᵢ↓)
-ext⇒¬ho s (ind ←∧) ↓ ¬ord x = ¬ord (a≤ᵢb ≤ᵢ↓)
-ext⇒¬ho {pll = pll} {_} {ll = li ∧ _} s (ind ←∧) (lind ←∧) ¬ord
-      with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | ext⇒¬ho s ind lind hf where
-  hf : ¬ Orderedᵢ lind ind
-  hf (a≤ᵢb x₁) = ¬ord (a≤ᵢb (≤ᵢ←∧ x₁))
-  hf (b≤ᵢa x₁) = ¬ord (b≤ᵢa (≤ᵢ←∧ x₁))
-ext⇒¬ho {pll = pll} {_} {li ∧ _} s (ind ←∧) (lind ←∧) ¬ord | .li | refl | t | e = {!!} where
-  hf : ¬ hitsAtLeastOnce (t ←∧) (lind ←∧)
-  hf (hitsAtLeastOnce←∧←∧ x) = {!!}
-ext⇒¬ho {pll = pll} {_} {ll = li ∧ _} s (ind ←∧) (∧→ lind) ¬ord x with replLL li ind pll | replLL-id li ind pll refl | extendg ind s
-ext⇒¬ho {_} {_} {pll} {_} {li ∧ _} s (ind ←∧) (∧→ lind) ¬ord () | .li | refl | t
-ext⇒¬ho s (∧→ ind) ↓ ¬ord x = ¬ord (a≤ᵢb ≤ᵢ↓)
-ext⇒¬ho s (∧→ ind) (lind ←∧) ¬ord x = {!!}
-ext⇒¬ho s (∧→ ind) (∧→ lind) ¬ord x = {!!}
-ext⇒¬ho s (ind ←∨) lind ¬ord x = {!!}
-ext⇒¬ho s (∨→ ind) lind ¬ord x = {!!}
-ext⇒¬ho s (ind ←∂) lind ¬ord x = {!!}
-ext⇒¬ho s (∂→ ind) lind ¬ord x = {!!}
 
-goo : ∀{i u rll pll ll tll} → (lind : IndexLL {i} {u} rll ll) → (s : SetLL ll) → ∀{rs : SetLL tll}
-      → ¬ (hitsAtLeastOnce s lind) → (ind : IndexLL pll ll)
-      → (nord : ¬ Orderedᵢ lind ind)
-      → ¬ (hitsAtLeastOnce (replacePartOf s to rs at ind) (¬ord-morph lind ind tll (flipNotOrdᵢ nord)))
-goo ↓ s ¬ho ind ¬ord = λ _ → ¬ord (a≤ᵢb ≤ᵢ↓)
-goo (lind ←∧) ↓ ¬ho ind ¬ord = λ _ → ¬ho hitsAtLeastOnce↓
-goo (lind ←∧) (s ←∧) ¬ho ↓ ¬ord = λ _ → ¬ord (b≤ᵢa ≤ᵢ↓)
-goo (lind ←∧) (s ←∧) {rs} ¬ho (ind ←∧) ¬ord x
-                                 with goo lind s {rs} (λ z → ¬ho (hitsAtLeastOnce←∧←∧ z)) ind hf where
-  hf : ¬ Orderedᵢ lind ind
-  hf (a≤ᵢb x) = ¬ord (a≤ᵢb (≤ᵢ←∧ x))
-  hf (b≤ᵢa x) = ¬ord (b≤ᵢa (≤ᵢ←∧ x))
-goo (lind ←∧) (s ←∧) {rs} ¬ho (ind ←∧) ¬ord (hitsAtLeastOnce←∧←∧ x) | r = ⊥-elim (r x)
-goo (lind ←∧) (s ←∧) ¬ho (∧→ ind) ¬ord (hitsAtLeastOnce←∧→←∧ x) = ¬ho (hitsAtLeastOnce←∧←∧ x)
-goo (lind ←∧) (∧→ s) ¬ho ↓ ¬ord = λ _ → ¬ord (b≤ᵢa ≤ᵢ↓)
-goo (lind ←∧) (∧→ s) ¬ho (ind ←∧) ¬ord = {!!}
-goo (lind ←∧) (∧→ s) ¬ho (∧→ ind) ¬ord = λ ()
-goo (lind ←∧) (s ←∧→ s₁) ¬ho ind ¬ord = {!!}
-goo (∧→ lind) s ¬ho ind ¬ord = {!!}
-goo (lind ←∨) s ¬ho ind ¬ord = {!!}
-goo (∨→ lind) s ¬ho ind ¬ord = {!!}
-goo (lind ←∂) s ¬ho ind ¬ord = {!!}
-goo (∂→ lind) s ¬ho ind ¬ord = {!!}
+-- goo : 
 
-
+-- Not being Ordered is only necessary to morph the type of the index. but this statement is true in general.
+foo : ∀{i u rll pll ll tll} → (ind : IndexLL {i} {u} rll ll) → (s : SetLL ll)
+    → ¬ (hitsAtLeastOnce s ind) → (lind : IndexLL pll ll) → ∀{ds}
+    → (rl : lind ≤ᵢ ind)
+    → ¬∅ ds ≡ del s ind tll
+    → ¬ (hitsAtLeastOnce ds (a≤ᵢb-morph lind ind tll rl))
+foo lind ¬ho ind rl eq = {!!}
 
 
 gest : ∀{i u rll ll n dt df tind ts} → (lf : LFun ll rll)
@@ -66,10 +29,28 @@ gest : ∀{i u rll ll n dt df tind ts} → (lf : LFun ll rll)
        → ¬∅ tind ≡ tranLFMIndexLL lf (¬∅ ind) → ¬∅ ts ≡ tranLFMSetLL lf (¬∅ s)
        → ¬ (hitsAtLeastOnce ts tind) 
 gest I ind s ¬ho refl refl = ¬ho
-gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs with isOrdᵢ lind ind
-... | no ¬p = {!!} where
-  is = gest lf {!!} {!!} -- (¬∅ (truncSetLL s ind))
-... | yes p = {!!}
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs with truncSetLL s lind | isLTi lind ind
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | yes p = {!!}
+gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | no ¬p
+                                                        with del s lind ell | inspect (del s lind) ell
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ∅ | no ¬p | ∅ | r
+gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | no ¬p | ¬∅ x | [ eq ] = is where
+  n¬ord = indτ&¬ge⇒¬Ord ind lind ¬p
+  hf = ¬ord&¬ho-del⇒¬ho ind s ¬ho lind {x} n¬ord (sym eq)
+  is = gest lf₁ (¬ord-morph ind lind ell (flipNotOrdᵢ n¬ord)) x hf eqi eqs
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | yes p = {!!}
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | no ¬p with tranLFMSetLL lf (¬∅ x)
+gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | no ¬p | ∅
+                                                     with del s lind ell | inspect (del s lind) ell
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ¬∅ x | no ¬p | ∅ | ∅ | r
+gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x₁ | no ¬p | ∅ | ¬∅ x | [ eq ] = is where
+  n¬ord = indτ&¬ge⇒¬Ord ind lind ¬p
+  hf = ¬ord&¬ho-del⇒¬ho ind s ¬ho lind {x} n¬ord (sym eq)
+  is = gest lf₁ (¬ord-morph ind lind ell (flipNotOrdᵢ n¬ord)) x hf eqi eqs
+gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ _ | no ¬p | ¬∅ x = gest lf₁ nind (replacePartOf s to x at lind) hf eqi eqs where
+  n¬ord = indτ&¬ge⇒¬Ord ind lind ¬p
+  nind = ¬ord-morph ind lind ell (flipNotOrdᵢ n¬ord)
+  hf = ¬ord&¬ho-repl⇒¬ho ind s {x} ¬ho lind n¬ord
 gest {tind = tind} {ts} (tr ltr lf) ind s ¬ho eqi eqs = gest lf (IndexLLProp.tran ind ltr ut) (SetLL.tran s ltr) ¬tho eqi eqs  where
   ut = indLow⇒UpTran ind ltr 
   ¬tho = ¬trho ltr s ind ¬ho ut
