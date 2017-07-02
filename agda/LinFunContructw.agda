@@ -1,3 +1,5 @@
+-- {-# OPTIONS --show-implicit #-}
+
 module LinFunContructw where
 
 open import Common
@@ -12,16 +14,41 @@ open import Data.Product
 
 open import LinFunContruct
 
+too : {i : Size} {u : Level} (li : LinLogic i) {pll tll : LinLogic i} (lind : IndexLL {i} {u} pll li) (w : LinLogic i) (w₁ : IndexLL (replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll) w) (ri : LinLogic i) (r : Reveal del ↓ lind · tll is ∅) (y : hitsAtLeastOnce ((SetLL (w ∧ ri)) ∋ (∧→ ↓)) (w₁ ←∧)) → ⊥
+too = {!!}
 
--- goo : 
+foo : ∀{i u pll ll tll} → (s : SetLL ll)
+    → (lind : IndexLL {i} {u} pll ll) → ∀{ds}
+    → ¬∅ ds ≡ del s lind tll
+    → ¬ (hitsAtLeastOnce ds (a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)))
+foo {tll = tll} s ↓ {ds} ()
+foo {ll = li ∧ ri} {tll} ↓ (lind ←∧) {↓} eq with del ↓ lind tll
+foo {pll = _} {li ∧ ri} {tll} ↓ (lind ←∧) {↓} () | ∅
+foo {pll = _} {li ∧ ri} {tll} ↓ (lind ←∧) {↓} () | ¬∅ x
+foo {ll = li ∧ ri} {tll} (s ←∧) (lind ←∧) {↓} eq with del s lind tll
+foo {pll = _} {li ∧ ri} {tll} (s ←∧) (lind ←∧) {↓} () | ∅
+foo {pll = _} {li ∧ ri} {tll} (s ←∧) (lind ←∧) {↓} () | ¬∅ x
+foo {ll = li ∧ ri} {tll} (∧→ s) (lind ←∧) {↓} ()
+foo {ll = li ∧ ri} {tll} (s ←∧→ s₁) (lind ←∧) {↓} eq with del s lind tll
+foo {pll = _} {li ∧ ri} {tll} (s ←∧→ s₁) (lind ←∧) {↓} () | ∅
+foo {pll = _} {li ∧ ri} {tll} (s ←∧→ s₁) (lind ←∧) {↓} () | ¬∅ x
+foo {ll = li ∧ ri} {tll} ↓ (lind ←∧) {ds ←∧} eq with del ↓ lind tll
+foo {pll = _} {li ∧ ri} {tll} ↓ (lind ←∧) {ds ←∧} () | ∅
+foo {pll = _} {li ∧ ri} {tll} ↓ (lind ←∧) {ds ←∧} () | ¬∅ x
+foo {ll = li ∧ ri} {tll} (s ←∧) (lind ←∧) {ds ←∧} eq y with del s lind tll | inspect (del s lind) tll
+foo {pll = _} {li ∧ ri} {tll} (s ←∧) (lind ←∧) {ds ←∧} () y | ∅ | r 
+foo {pll = pll} {li ∧ ri} {tll} (s ←∧) (lind ←∧) {.x ←∧} refl y | ¬∅ x | [ eq ] = {!!} -- with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | foo s lind {x} (sym eq)
+-- foo {pll = _} {li ∧ ri} {tll} (s ←∧) (lind ←∧) {.x ←∧} refl (hitsAtLeastOnce←∧←∧ y) | ¬∅ x | [ eq ] | g | r | e = e y
+foo {ll = li ∧ ri} {tll} (∧→ s) (lind ←∧) {ds ←∧} eq = {!!}
+foo {ll = li ∧ ri} {tll} (s ←∧→ s₁) (lind ←∧) {ds ←∧} eq = {!!}
+foo {ll = li ∧ ri} {tll} s (lind ←∧) {∧→ ds} eq = {!!}
+foo {ll = li ∧ ri} {tll} s (lind ←∧) {ds ←∧→ ds₁} eq = {!!}
+foo {ll = (li ∧ ri)} {tll} s (∧→ lind) {ds} eq = {!!}
+foo {ll = (li ∨ ri)} {tll} s (lind ←∨) {ds} eq = {!!}
+foo {ll = (li ∨ ri)} {tll} s (∨→ lind) {ds} eq = {!!}
+foo {ll = (li ∂ ri)} {tll} s (lind ←∂) {ds} eq = {!!}
+foo {ll = (li ∂ ri)} {tll} s (∂→ lind) {ds} eq = {!!}
 
--- Not being Ordered is only necessary to morph the type of the index. but this statement is true in general.
-foo : ∀{i u rll pll ll tll} → (ind : IndexLL {i} {u} rll ll) → (s : SetLL ll)
-    → ¬ (hitsAtLeastOnce s ind) → (lind : IndexLL pll ll) → ∀{ds}
-    → (rl : lind ≤ᵢ ind)
-    → ¬∅ ds ≡ del s ind tll
-    → ¬ (hitsAtLeastOnce ds (a≤ᵢb-morph lind ind tll rl))
-foo lind ¬ho ind rl eq = {!!}
 
 
 gest : ∀{i u rll ll n dt df tind ts} → (lf : LFun ll rll)
@@ -30,7 +57,9 @@ gest : ∀{i u rll ll n dt df tind ts} → (lf : LFun ll rll)
        → ¬ (hitsAtLeastOnce ts tind) 
 gest I ind s ¬ho refl refl = ¬ho
 gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs with truncSetLL s lind | isLTi lind ind
-gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | yes p = {!!}
+gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | yes p with del s lind ell | inspect (del s ind) ell
+gest (_⊂_ {ind = ind} lf lf₁) ind₁ s ¬ho eqi () | ∅ | yes p | ∅ | [ eq ]
+gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | yes p | ¬∅ x | [ eq ] = {!!} 
 gest (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | no ¬p
                                                         with del s lind ell | inspect (del s lind) ell
 gest (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ∅ | no ¬p | ∅ | r

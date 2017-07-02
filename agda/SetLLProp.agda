@@ -2140,6 +2140,48 @@ module _ where
 
 
 
+  ¬ho⇒ind+¬ho : ∀{i u pll rll ll} → (s : SetLL {i} {u} ll) → (ind : IndexLL pll ll)
+              → ¬ (hitsAtLeastOnce s ind) → (lind : IndexLL rll pll)
+              → ¬ (hitsAtLeastOnce s (ind +ᵢ lind))
+  ¬ho⇒ind+¬ho ↓ (ind ←∧) ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (s ←∧) (ind ←∧) ¬ho lind (hitsAtLeastOnce←∧←∧ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∧←∧ z)) lind x
+  ¬ho⇒ind+¬ho (∧→ s) (ind ←∧) ¬ho lind ()
+  ¬ho⇒ind+¬ho (s ←∧→ s₁) (ind ←∧) ¬ho lind (hitsAtLeastOnce←∧→←∧ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∧→←∧ z)) lind x
+  ¬ho⇒ind+¬ho ↓ (∧→ ind) ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (s ←∧) (∧→ ind) ¬ho lind ()
+  ¬ho⇒ind+¬ho (∧→ s) (∧→ ind) ¬ho lind (hitsAtLeastOnce∧→∧→ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce∧→∧→ z)) lind x
+  ¬ho⇒ind+¬ho (s ←∧→ s₁) (∧→ ind) ¬ho lind (hitsAtLeastOnce←∧→∧→ x) = ¬ho⇒ind+¬ho s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∧→∧→ z)) lind x
+  ¬ho⇒ind+¬ho ↓ (ind ←∨) ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (s ←∨) (ind ←∨) ¬ho lind (hitsAtLeastOnce←∨←∨ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∨←∨ z)) lind x
+  ¬ho⇒ind+¬ho (∨→ s) (ind ←∨) ¬ho lind ()
+  ¬ho⇒ind+¬ho (s ←∨→ s₁) (ind ←∨) ¬ho lind (hitsAtLeastOnce←∨→←∨ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∨→←∨ z)) lind x
+  ¬ho⇒ind+¬ho ↓ (∨→ ind) ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (s ←∨) (∨→ ind) ¬ho lind ()
+  ¬ho⇒ind+¬ho (∨→ s) (∨→ ind) ¬ho lind (hitsAtLeastOnce∨→∨→ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce∨→∨→ z)) lind x
+  ¬ho⇒ind+¬ho (s ←∨→ s₁) (∨→ ind) ¬ho lind (hitsAtLeastOnce←∨→∨→ x) = ¬ho⇒ind+¬ho s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∨→∨→ z)) lind x
+  ¬ho⇒ind+¬ho ↓ (ind ←∂) ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (s ←∂) (ind ←∂) ¬ho lind (hitsAtLeastOnce←∂←∂ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∂←∂ z)) lind x
+  ¬ho⇒ind+¬ho (∂→ s) (ind ←∂) ¬ho lind ()
+  ¬ho⇒ind+¬ho (s ←∂→ s₁) (ind ←∂) ¬ho lind (hitsAtLeastOnce←∂→←∂ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∂→←∂ z)) lind x
+  ¬ho⇒ind+¬ho ↓ (∂→ ind) ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (s ←∂) (∂→ ind) ¬ho lind ()
+  ¬ho⇒ind+¬ho (∂→ s) (∂→ ind) ¬ho lind (hitsAtLeastOnce∂→∂→ x) = ¬ho⇒ind+¬ho s ind (λ z → ¬ho (hitsAtLeastOnce∂→∂→ z)) lind x
+  ¬ho⇒ind+¬ho (s ←∂→ s₁) (∂→ ind) ¬ho lind (hitsAtLeastOnce←∂→∂→ x) = ¬ho⇒ind+¬ho s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∂→∂→ z)) lind x
+  ¬ho⇒ind+¬ho ↓ ↓ ¬ho lind x = ¬ho hitsAtLeastOnce↓
+  ¬ho⇒ind+¬ho (x ←∧) ↓ ¬ho lind x₁ = ¬ho hitsAtLeastOnce←∧↓
+  ¬ho⇒ind+¬ho (∧→ x) ↓ ¬ho lind x₁ = ¬ho hitsAtLeastOnce∧→↓
+  ¬ho⇒ind+¬ho (x ←∧→ x₁) ↓ ¬ho lind x₂ = ¬ho hitsAtLeastOnce←∧→↓
+  ¬ho⇒ind+¬ho (x ←∨) ↓ ¬ho lind x₁ = ¬ho hitsAtLeastOnce←∨↓
+  ¬ho⇒ind+¬ho (∨→ x) ↓ ¬ho lind x₁ = ¬ho hitsAtLeastOnce∨→↓
+  ¬ho⇒ind+¬ho (x ←∨→ x₁) ↓ ¬ho lind x₂ = ¬ho hitsAtLeastOnce←∨→↓
+  ¬ho⇒ind+¬ho (x ←∂) ↓ ¬ho lind x₁ = ¬ho hitsAtLeastOnce←∂↓
+  ¬ho⇒ind+¬ho (∂→ x) ↓ ¬ho lind x₁ = ¬ho hitsAtLeastOnce∂→↓
+  ¬ho⇒ind+¬ho (x ←∂→ x₁) ↓ ¬ho lind x₂ = ¬ho hitsAtLeastOnce←∂→↓
+  
+  
+
+
+
   ¬ord&ext⇒¬ho : ∀{i u pll rll ll tll} → ∀ (s : SetLL tll) → (ind : IndexLL {i} {u} pll ll)
         → (lind : IndexLL rll ll) → (nord : ¬ Orderedᵢ lind ind)
         → ¬ hitsAtLeastOnce (extendg ind s) (¬ord-morph lind ind tll (flipNotOrdᵢ nord))
