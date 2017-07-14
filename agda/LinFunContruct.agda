@@ -321,6 +321,77 @@ tranLFMSetLL (com df lf) (¬∅ x) = ∅
 tranLFMSetLL (call x) (¬∅ x₁) = ∅
 
 
+
+
+
+
+tranLF-preserves-¬ho : ∀{i u rll ll n dt df tind ts} → (lf : LFun ll rll)
+       → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll) → (s : SetLL ll) → ¬ (hitsAtLeastOnce s ind)
+       → ¬∅ tind ≡ tranLFMIndexLL lf (¬∅ ind) → ¬∅ ts ≡ tranLFMSetLL lf (¬∅ s)
+       → ¬ (hitsAtLeastOnce ts tind) 
+tranLF-preserves-¬ho I ind s ¬ho refl refl = ¬ho
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs with truncSetLL s lind | inspect (truncSetLL s) lind | isLTi lind ind
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | _ | yes p with del s lind ell | inspect (del s lind) ell
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ∅ | _ | yes p | ∅ | [ eq ]
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | _ | yes p | ¬∅ x | [ eq ] with (tranLFMIndexLL lf (¬∅ ((ind -ᵢ lind) p)))
+tranLF-preserves-¬ho (_⊂_ {ind = ind} lf lf₁) ind₁ s ¬ho () eqs | ∅ | _ | yes p | ¬∅ x | [ eq ] | ∅
+tranLF-preserves-¬ho {ll = ll} (_⊂_ {pll = pll} {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | _ | yes p | ¬∅ x | [ eq ] | ¬∅ y = tranLF-preserves-¬ho lf₁ (o +ᵢ y) x hf2 eqi eqs where
+  r = (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))
+  hf = del⇒¬ho s lind (sym eq)
+  o = subst (λ x → IndexLL x (replLL ll lind ell)) (replLL-↓ {ell = ell} lind) r
+  hf2 : ¬ (hitsAtLeastOnce x (o +ᵢ y))
+  hf2 with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | r | hf
+  hf2 | g | refl | w | q = ¬ho⇒ind+¬ho x w q y
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | _ | no ¬p
+                                                        with del s lind ell | inspect (del s lind) ell
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ∅ | _ | no ¬p | ∅ | r
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ∅ | _ | no ¬p | ¬∅ x | [ eq ] = is where
+  n¬ord = indτ&¬ge⇒¬Ord ind lind ¬p
+  hf = ¬ord&¬ho-del⇒¬ho ind s ¬ho lind {x} n¬ord (sym eq)
+  is = tranLF-preserves-¬ho lf₁ (¬ord-morph ind lind ell (flipNotOrdᵢ n¬ord)) x hf eqi eqs
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | _ | yes p with tranLFMSetLL lf (¬∅ x) | inspect (tranLFMSetLL lf) (¬∅ x)
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | _ | yes p | ∅ | _ with del s lind ell | inspect (del s lind) ell | (tranLFMIndexLL lf (¬∅ ((ind -ᵢ lind) p)))
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ¬∅ x | _ | yes p | ∅ | _ | ∅ | q | g
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho () eqs | ¬∅ x₁ | _ | yes p | ∅ | _ | ¬∅ x | q | ∅
+tranLF-preserves-¬ho {ll = ll} (_⊂_ {pll = pll} {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x₂ | _ | yes p | ∅ | _ | ¬∅ x | [ eq ] | ¬∅ y =  tranLF-preserves-¬ho lf₁ (o +ᵢ y) x hf2 eqi eqs where
+  r = (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))
+  hf = del⇒¬ho s lind (sym eq)
+  o = subst (λ x → IndexLL x (replLL ll lind ell)) (replLL-↓ {ell = ell} lind) r
+  hf2 : ¬ (hitsAtLeastOnce x (o +ᵢ y))
+  hf2 with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | r | hf
+  hf2 | g | refl | w | q = ¬ho⇒ind+¬ho x w q y
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | [ eqt ] | yes p | ¬∅ y | [ eq ]
+    with tranLFMIndexLL lf (¬∅ ((ind -ᵢ lind) p)) | inspect (λ z → tranLFMIndexLL lf (¬∅ ((ind -ᵢ lind) z))) p
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho () eqs | ¬∅ x | [ eqt ] | yes p | ¬∅ y | [ eq ] | ∅ | g
+tranLF-preserves-¬ho {ll = ll} (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | [ eqt ] | yes p | ¬∅ y | [ eq ] | ¬∅ t | [ eq₁ ] = tranLF-preserves-¬ho lf₁ (subst (λ z → IndexLL z (replLL ll lind ell)) (replLL-↓ lind)
+                                                                                                                         (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))
+                                                                                                                         +ᵢ t) (replacePartOf s to y at lind) a eqi eqs where
+  w = tranLF-preserves-¬ho lf ((ind -ᵢ lind) p) x (rl&¬ho-trunc⇒¬ho s ind ¬ho lind p (sym eqt)) (sym eq₁) (sym eq)
+  a = a≤b&¬ho-repl⇒¬ho s y t lind w
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | _ | no ¬p with tranLFMSetLL lf (¬∅ x)
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x | _ | no ¬p | ∅
+                                                     with del s lind ell | inspect (del s lind) ell
+tranLF-preserves-¬ho (_⊂_ {ind = lind} lf lf₁) ind s ¬ho eqi () | ¬∅ x | _ | no ¬p | ∅ | ∅ | r
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ x₁ | _ | no ¬p | ∅ | ¬∅ x | [ eq ] = is where
+  n¬ord = indτ&¬ge⇒¬Ord ind lind ¬p
+  hf = ¬ord&¬ho-del⇒¬ho ind s ¬ho lind {x} n¬ord (sym eq)
+  is = tranLF-preserves-¬ho lf₁ (¬ord-morph ind lind ell (flipNotOrdᵢ n¬ord)) x hf eqi eqs
+tranLF-preserves-¬ho (_⊂_ {ell = ell} {ind = lind} lf lf₁) ind s ¬ho eqi eqs | ¬∅ _ | _ | no ¬p | ¬∅ x = tranLF-preserves-¬ho lf₁ nind (replacePartOf s to x at lind) hf eqi eqs where
+  n¬ord = indτ&¬ge⇒¬Ord ind lind ¬p
+  nind = ¬ord-morph ind lind ell (flipNotOrdᵢ n¬ord)
+  hf = ¬ord&¬ho-repl⇒¬ho ind s {x} ¬ho lind n¬ord
+tranLF-preserves-¬ho {tind = tind} {ts} (tr ltr lf) ind s ¬ho eqi eqs = tranLF-preserves-¬ho lf (IndexLLProp.tran ind ltr ut) (SetLL.tran s ltr) ¬tho eqi eqs  where
+  ut = indLow⇒UpTran ind ltr 
+  ¬tho = ¬trho ltr s ind ¬ho ut
+tranLF-preserves-¬ho (com df₁ lf) ind s ¬ho () eqs
+tranLF-preserves-¬ho (call x) ind s ¬ho () eqs
+
+
+
+
+
+
+
 -- trunc≡∅-shrmorph : ∀{i u rll ll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll)
 --                   → (ceq : ¬ ((contruct s) ≡ ↓)) → (truncSetLL s ind ≡ ∅)
 --                   → IndexLL rll (shrink ll s ceq)

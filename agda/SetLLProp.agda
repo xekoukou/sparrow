@@ -654,6 +654,113 @@ module _ where
   ... | ¬∅ x | r = λ ()
 
 
+
+  
+  del⇒¬ho : ∀{i u pll ll tll} → (s : SetLL ll)
+      → (lind : IndexLL {i} {u} pll ll) → ∀{ds}
+      → ¬∅ ds ≡ del s lind tll
+      → ¬ (hitsAtLeastOnce ds (a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)))
+  del⇒¬ho {tll = tll} s ↓ ()
+  del⇒¬ho {tll = tll} ↓ (lind ←∧) eqd y with del ↓ lind tll | inspect (del ↓ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (lind ←∧) refl y | ∅ | r with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {tll = tll} ↓ (lind ←∧) refl () | ∅ | r | g | e
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (lind ←∧) refl y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho ↓ lind {x} (sym eq)
+  del⇒¬ho {tll = tll} ↓ (lind ←∧) refl (hitsAtLeastOnce←∧→←∧ y) | ¬∅ x | [ eq ] | g | t | e = e y
+  del⇒¬ho {tll = tll} (s ←∧) (lind ←∧) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {tll = tll} (s ←∧) (lind ←∧) () y | ∅ | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧) (lind ←∧) refl y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {tll = tll} (s ←∧) (lind ←∧) refl (hitsAtLeastOnce←∧←∧ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (∧→ s) (lind ←∧) refl y with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (∧→ s) (lind ←∧) refl () | r | g 
+  del⇒¬ho {tll = tll} (s ←∧→ s₁) (lind ←∧) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (lind ←∧) eqd y | ∅ | e  with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {tll = tll} (s ←∧→ s₁) (lind ←∧) refl () | ∅ | e | g | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (lind ←∧) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {tll = tll} (s ←∧→ s₁) (lind ←∧) refl (hitsAtLeastOnce←∧→←∧ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∧→ lind) eqd y with del ↓ lind tll | inspect (del ↓ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∧→ lind) eqd y | ∅ | r with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∧→ lind) refl () | ∅ | r | e | t
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∧→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho ↓ lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∧→ lind) refl (hitsAtLeastOnce←∧→∧→ y) | ¬∅ x | [ eq ] | e | g | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧) (∧→ lind) refl y with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧) (∧→ lind) refl () | g | e
+  del⇒¬ho {pll = pll} {tll = tll} (∧→ s) (∧→ lind) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (∧→ s) (∧→ lind) () y | ∅ | e
+  del⇒¬ho {pll = pll} {tll = tll} (∧→ s) (∧→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} (∧→ s) (∧→ lind) refl (hitsAtLeastOnce∧→∧→ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (∧→ lind) eqd y with del s₁ lind tll | inspect (del s₁ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (∧→ lind) eqd y | ∅ | e with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (∧→ lind) refl () | ∅ | e | g | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (∧→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s₁ lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∧→ s₁) (∧→ lind) refl (hitsAtLeastOnce←∧→∧→ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {tll = tll} ↓ (lind ←∨) eqd y with del ↓ lind tll | inspect (del ↓ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (lind ←∨) refl y | ∅ | r with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {tll = tll} ↓ (lind ←∨) refl () | ∅ | r | g | e
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (lind ←∨) refl y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho ↓ lind {x} (sym eq)
+  del⇒¬ho {tll = tll} ↓ (lind ←∨) refl (hitsAtLeastOnce←∨→←∨ y) | ¬∅ x | [ eq ] | g | t | e = e y
+  del⇒¬ho {tll = tll} (s ←∨) (lind ←∨) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {tll = tll} (s ←∨) (lind ←∨) () y | ∅ | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨) (lind ←∨) refl y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {tll = tll} (s ←∨) (lind ←∨) refl (hitsAtLeastOnce←∨←∨ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (∨→ s) (lind ←∨) refl y with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (∨→ s) (lind ←∨) refl () | r | g 
+  del⇒¬ho {tll = tll} (s ←∨→ s₁) (lind ←∨) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (lind ←∨) eqd y | ∅ | e  with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {tll = tll} (s ←∨→ s₁) (lind ←∨) refl () | ∅ | e | g | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (lind ←∨) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {tll = tll} (s ←∨→ s₁) (lind ←∨) refl (hitsAtLeastOnce←∨→←∨ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∨→ lind) eqd y with del ↓ lind tll | inspect (del ↓ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∨→ lind) eqd y | ∅ | r with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∨→ lind) refl () | ∅ | r | e | t
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∨→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho ↓ lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∨→ lind) refl (hitsAtLeastOnce←∨→∨→ y) | ¬∅ x | [ eq ] | e | g | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨) (∨→ lind) refl y with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨) (∨→ lind) refl () | g | e
+  del⇒¬ho {pll = pll} {tll = tll} (∨→ s) (∨→ lind) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (∨→ s) (∨→ lind) () y | ∅ | e
+  del⇒¬ho {pll = pll} {tll = tll} (∨→ s) (∨→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} (∨→ s) (∨→ lind) refl (hitsAtLeastOnce∨→∨→ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (∨→ lind) eqd y with del s₁ lind tll | inspect (del s₁ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (∨→ lind) eqd y | ∅ | e with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (∨→ lind) refl () | ∅ | e | g | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (∨→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s₁ lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∨→ s₁) (∨→ lind) refl (hitsAtLeastOnce←∨→∨→ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {tll = tll} ↓ (lind ←∂) eqd y with del ↓ lind tll | inspect (del ↓ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (lind ←∂) refl y | ∅ | r with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {tll = tll} ↓ (lind ←∂) refl () | ∅ | r | g | e
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (lind ←∂) refl y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho ↓ lind {x} (sym eq)
+  del⇒¬ho {tll = tll} ↓ (lind ←∂) refl (hitsAtLeastOnce←∂→←∂ y) | ¬∅ x | [ eq ] | g | t | e = e y
+  del⇒¬ho {tll = tll} (s ←∂) (lind ←∂) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {tll = tll} (s ←∂) (lind ←∂) () y | ∅ | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂) (lind ←∂) refl y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {tll = tll} (s ←∂) (lind ←∂) refl (hitsAtLeastOnce←∂←∂ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (∂→ s) (lind ←∂) refl y with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (∂→ s) (lind ←∂) refl () | r | g 
+  del⇒¬ho {tll = tll} (s ←∂→ s₁) (lind ←∂) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (lind ←∂) eqd y | ∅ | e  with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {tll = tll} (s ←∂→ s₁) (lind ←∂) refl () | ∅ | e | g | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (lind ←∂) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {tll = tll} (s ←∂→ s₁) (lind ←∂) refl (hitsAtLeastOnce←∂→←∂ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∂→ lind) eqd y with del ↓ lind tll | inspect (del ↓ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∂→ lind) eqd y | ∅ | r with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∂→ lind) refl () | ∅ | r | e | t
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∂→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho ↓ lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} ↓ (∂→ lind) refl (hitsAtLeastOnce←∂→∂→ y) | ¬∅ x | [ eq ] | e | g | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂) (∂→ lind) refl y with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂) (∂→ lind) refl () | g | e
+  del⇒¬ho {pll = pll} {tll = tll} (∂→ s) (∂→ lind) eqd y with del s lind tll | inspect (del s lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (∂→ s) (∂→ lind) () y | ∅ | e
+  del⇒¬ho {pll = pll} {tll = tll} (∂→ s) (∂→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} (∂→ s) (∂→ lind) refl (hitsAtLeastOnce∂→∂→ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (∂→ lind) eqd y with del s₁ lind tll | inspect (del s₁ lind) tll
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (∂→ lind) eqd y | ∅ | e with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (∂→ lind) refl () | ∅ | e | g | r
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (∂→ lind) eqd y | ¬∅ x | [ eq ] with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) tll | a≤ᵢb-morph lind lind tll (≤ᵢ-reflexive lind) | del⇒¬ho s₁ lind {x} (sym eq)
+  del⇒¬ho {pll = pll} {tll = tll} (s ←∂→ s₁) (∂→ lind) refl (hitsAtLeastOnce←∂→∂→ y) | ¬∅ x | [ eq ] | g | e | t = t y
+  
+  
+
+
   trunc≡∅⇒¬mrpls≡∅ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → (truncSetLL s ind ≡ ∅) → ¬ (mreplacePartOf (¬∅ s) to (∅ {ll = fll}) at ind ≡ ∅)
   trunc≡∅⇒¬mrpls≡∅ s ind treq = ¬ho⇒¬del≡∅ s ind (trunc≡∅⇒¬ho s ind treq)
 
@@ -2667,6 +2774,149 @@ module _ where
 
 
  
+rl&¬ho-trunc⇒¬ho : ∀{i u pll rll ll x} → ∀ (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+      → ¬ hitsAtLeastOnce s ind
+      → (lind : IndexLL rll ll) → (rl : lind ≤ᵢ ind)
+      → ¬∅ x ≡ truncSetLL s lind
+      → ¬ hitsAtLeastOnce x ((ind -ᵢ lind) rl)
+rl&¬ho-trunc⇒¬ho s ind ¬ho ↓ ≤ᵢ↓ refl = ¬ho
+rl&¬ho-trunc⇒¬ho ↓ ind ¬ho (lind ←∧) rl tc = ⊥-elim (¬ho hitsAtLeastOnce↓)
+rl&¬ho-trunc⇒¬ho (s ←∧) ↓ ¬ho (lind ←∧) rl tc = λ _ → ¬ho hitsAtLeastOnce←∧↓
+rl&¬ho-trunc⇒¬ho (s ←∧) (ind ←∧) ¬ho (lind ←∧) (≤ᵢ←∧ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∧←∧ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∧) (∧→ ind) ¬ho (lind ←∧) () tc
+rl&¬ho-trunc⇒¬ho (∧→ s) ind ¬ho (lind ←∧) rl ()
+rl&¬ho-trunc⇒¬ho (s ←∧→ s₁) ↓ ¬ho (lind ←∧) rl tc = λ _ → ¬ho hitsAtLeastOnce←∧→↓
+rl&¬ho-trunc⇒¬ho (s ←∧→ s₁) (ind ←∧) ¬ho (lind ←∧) (≤ᵢ←∧ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∧→←∧ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∧→ s₁) (∧→ ind) ¬ho (lind ←∧) () tc
+rl&¬ho-trunc⇒¬ho ↓ ind ¬ho (∧→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce↓
+rl&¬ho-trunc⇒¬ho (s ←∧) ind ¬ho (∧→ lind) rl ()
+rl&¬ho-trunc⇒¬ho (∧→ s) ↓ ¬ho (∧→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce∧→↓
+rl&¬ho-trunc⇒¬ho (∧→ s) (ind ←∧) ¬ho (∧→ lind) () tc
+rl&¬ho-trunc⇒¬ho (∧→ s) (∧→ ind) ¬ho (∧→ lind) (≤ᵢ∧→ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce∧→∧→ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∧→ s₁) ↓ ¬ho (∧→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce←∧→↓
+rl&¬ho-trunc⇒¬ho (s ←∧→ s₁) (ind ←∧) ¬ho (∧→ lind) () tc
+rl&¬ho-trunc⇒¬ho (s ←∧→ s₁) (∧→ ind) ¬ho (∧→ lind) (≤ᵢ∧→ rl) tc = rl&¬ho-trunc⇒¬ho s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∧→∧→ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho ↓ ind ¬ho (lind ←∨) rl tc = ⊥-elim (¬ho hitsAtLeastOnce↓)
+rl&¬ho-trunc⇒¬ho (s ←∨) ↓ ¬ho (lind ←∨) rl tc = λ _ → ¬ho hitsAtLeastOnce←∨↓
+rl&¬ho-trunc⇒¬ho (s ←∨) (ind ←∨) ¬ho (lind ←∨) (≤ᵢ←∨ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∨←∨ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∨) (∨→ ind) ¬ho (lind ←∨) () tc
+rl&¬ho-trunc⇒¬ho (∨→ s) ind ¬ho (lind ←∨) rl ()
+rl&¬ho-trunc⇒¬ho (s ←∨→ s₁) ↓ ¬ho (lind ←∨) rl tc = λ _ → ¬ho hitsAtLeastOnce←∨→↓
+rl&¬ho-trunc⇒¬ho (s ←∨→ s₁) (ind ←∨) ¬ho (lind ←∨) (≤ᵢ←∨ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∨→←∨ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∨→ s₁) (∨→ ind) ¬ho (lind ←∨) () tc
+rl&¬ho-trunc⇒¬ho ↓ ind ¬ho (∨→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce↓
+rl&¬ho-trunc⇒¬ho (s ←∨) ind ¬ho (∨→ lind) rl ()
+rl&¬ho-trunc⇒¬ho (∨→ s) ↓ ¬ho (∨→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce∨→↓
+rl&¬ho-trunc⇒¬ho (∨→ s) (ind ←∨) ¬ho (∨→ lind) () tc
+rl&¬ho-trunc⇒¬ho (∨→ s) (∨→ ind) ¬ho (∨→ lind) (≤ᵢ∨→ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce∨→∨→ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∨→ s₁) ↓ ¬ho (∨→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce←∨→↓
+rl&¬ho-trunc⇒¬ho (s ←∨→ s₁) (ind ←∨) ¬ho (∨→ lind) () tc
+rl&¬ho-trunc⇒¬ho (s ←∨→ s₁) (∨→ ind) ¬ho (∨→ lind) (≤ᵢ∨→ rl) tc = rl&¬ho-trunc⇒¬ho s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∨→∨→ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho ↓ ind ¬ho (lind ←∂) rl tc = ⊥-elim (¬ho hitsAtLeastOnce↓)
+rl&¬ho-trunc⇒¬ho (s ←∂) ↓ ¬ho (lind ←∂) rl tc = λ _ → ¬ho hitsAtLeastOnce←∂↓
+rl&¬ho-trunc⇒¬ho (s ←∂) (ind ←∂) ¬ho (lind ←∂) (≤ᵢ←∂ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∂←∂ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∂) (∂→ ind) ¬ho (lind ←∂) () tc
+rl&¬ho-trunc⇒¬ho (∂→ s) ind ¬ho (lind ←∂) rl ()
+rl&¬ho-trunc⇒¬ho (s ←∂→ s₁) ↓ ¬ho (lind ←∂) rl tc = λ _ → ¬ho hitsAtLeastOnce←∂→↓
+rl&¬ho-trunc⇒¬ho (s ←∂→ s₁) (ind ←∂) ¬ho (lind ←∂) (≤ᵢ←∂ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce←∂→←∂ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∂→ s₁) (∂→ ind) ¬ho (lind ←∂) () tc
+rl&¬ho-trunc⇒¬ho ↓ ind ¬ho (∂→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce↓
+rl&¬ho-trunc⇒¬ho (s ←∂) ind ¬ho (∂→ lind) rl ()
+rl&¬ho-trunc⇒¬ho (∂→ s) ↓ ¬ho (∂→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce∂→↓
+rl&¬ho-trunc⇒¬ho (∂→ s) (ind ←∂) ¬ho (∂→ lind) () tc
+rl&¬ho-trunc⇒¬ho (∂→ s) (∂→ ind) ¬ho (∂→ lind) (≤ᵢ∂→ rl) tc = rl&¬ho-trunc⇒¬ho s ind (λ z → ¬ho (hitsAtLeastOnce∂→∂→ z)) lind rl tc
+rl&¬ho-trunc⇒¬ho (s ←∂→ s₁) ↓ ¬ho (∂→ lind) rl tc = λ _ → ¬ho hitsAtLeastOnce←∂→↓
+rl&¬ho-trunc⇒¬ho (s ←∂→ s₁) (ind ←∂) ¬ho (∂→ lind) () tc
+rl&¬ho-trunc⇒¬ho (s ←∂→ s₁) (∂→ ind) ¬ho (∂→ lind) (≤ᵢ∂→ rl) tc = rl&¬ho-trunc⇒¬ho s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∂→∂→ z)) lind rl tc
+
+
+
+
+
+¬ho⇒+ind¬ho : ∀{i u pll ll ell rll} → (s : SetLL ell) → (t : IndexLL {i} {u} rll ell)
+      → (lind : IndexLL pll ll)
+      → ¬ (hitsAtLeastOnce s t)
+      → ¬ (hitsAtLeastOnce (extendg lind s) (subst (λ x → IndexLL x (replLL ll lind ell)) (replLL-↓ {ell = ell} lind) (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) +ᵢ t))
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t ↓ ¬ho = ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t (lind ←∧) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho s t lind ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = .g} s t (lind ←∧) ¬ho (hitsAtLeastOnce←∧←∧ x) | g | refl | e | q = q x
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t (∧→ lind) ¬ho  x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho s t lind ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = .g} s t (∧→ lind) ¬ho (hitsAtLeastOnce∧→∧→ x) | g | refl | e | q = q x
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t (lind ←∨) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho s t lind ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = .g} s t (lind ←∨) ¬ho (hitsAtLeastOnce←∨←∨ x) | g | refl | e | q = q x
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t (∨→ lind) ¬ho  x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho s t lind ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = .g} s t (∨→ lind) ¬ho (hitsAtLeastOnce∨→∨→ x) | g | refl | e | q = q x
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t (lind ←∂) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho s t lind ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = .g} s t (lind ←∂) ¬ho (hitsAtLeastOnce←∂←∂ x) | g | refl | e | q = q x
+¬ho⇒+ind¬ho {pll = pll} {ell = ell} s t (∂→ lind) ¬ho  x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho s t lind ¬ho
+¬ho⇒+ind¬ho {pll = pll} {ell = .g} s t (∂→ lind) ¬ho (hitsAtLeastOnce∂→∂→ x) | g | refl | e | q = q x
+
+
+
+a≤b&¬ho-repl⇒¬ho : ∀{i u pll ll ell rll} → ∀ (s : SetLL ll) → (y : SetLL ell) → (t : IndexLL {i} {u} rll ell)
+      → (lind : IndexLL pll ll)
+      → ¬ (hitsAtLeastOnce y t)
+      → ¬ (hitsAtLeastOnce (replacePartOf s to y at lind) (subst (λ x → IndexLL x (replLL ll lind ell)) (replLL-↓ {ell = ell} lind) (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) +ᵢ t))
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} s y t ↓ ¬ho = ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} ↓ y t (lind ←∧) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho ↓ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} ↓ y t (lind ←∧) ¬ho (hitsAtLeastOnce←∧→←∧ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∧) y t (lind ←∧) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∧) y t (lind ←∧) ¬ho (hitsAtLeastOnce←∧←∧ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (∧→ s) y t (lind ←∧) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (∧→ s) y t (lind ←∧) ¬ho (hitsAtLeastOnce←∧→←∧ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∧→ s₁) y t (lind ←∧) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∧→ s₁) y t (lind ←∧) ¬ho (hitsAtLeastOnce←∧→←∧ x) | g | refl | e | q = q x
+
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} ↓ y t (∧→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho ↓ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} ↓ y t (∧→ lind) ¬ho (hitsAtLeastOnce←∧→∧→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∧) y t (∧→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∧) y t (∧→ lind) ¬ho (hitsAtLeastOnce←∧→∧→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (∧→ s) y t (∧→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (∧→ s) y t (∧→ lind) ¬ho (hitsAtLeastOnce∧→∧→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∧→ s₁) y t (∧→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s₁ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∧→ s₁) y t (∧→ lind) ¬ho (hitsAtLeastOnce←∧→∧→ x) | g | refl | e | q = q x
+
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} ↓ y t (lind ←∨) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho ↓ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} ↓ y t (lind ←∨) ¬ho (hitsAtLeastOnce←∨→←∨ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∨) y t (lind ←∨) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∨) y t (lind ←∨) ¬ho (hitsAtLeastOnce←∨←∨ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (∨→ s) y t (lind ←∨) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (∨→ s) y t (lind ←∨) ¬ho (hitsAtLeastOnce←∨→←∨ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∨→ s₁) y t (lind ←∨) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∨→ s₁) y t (lind ←∨) ¬ho (hitsAtLeastOnce←∨→←∨ x) | g | refl | e | q = q x
+
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} ↓ y t (∨→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho ↓ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} ↓ y t (∨→ lind) ¬ho (hitsAtLeastOnce←∨→∨→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∨) y t (∨→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∨) y t (∨→ lind) ¬ho (hitsAtLeastOnce←∨→∨→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (∨→ s) y t (∨→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (∨→ s) y t (∨→ lind) ¬ho (hitsAtLeastOnce∨→∨→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∨→ s₁) y t (∨→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s₁ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∨→ s₁) y t (∨→ lind) ¬ho (hitsAtLeastOnce←∨→∨→ x) | g | refl | e | q = q x
+
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} ↓ y t (lind ←∂) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho ↓ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} ↓ y t (lind ←∂) ¬ho (hitsAtLeastOnce←∂→←∂ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∂) y t (lind ←∂) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∂) y t (lind ←∂) ¬ho (hitsAtLeastOnce←∂←∂ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (∂→ s) y t (lind ←∂) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (∂→ s) y t (lind ←∂) ¬ho (hitsAtLeastOnce←∂→←∂ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∂→ s₁) y t (lind ←∂) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∂→ s₁) y t (lind ←∂) ¬ho (hitsAtLeastOnce←∂→←∂ x) | g | refl | e | q = q x
+
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} ↓ y t (∂→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho ↓ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} ↓ y t (∂→ lind) ¬ho (hitsAtLeastOnce←∂→∂→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∂) y t (∂→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | ¬ho⇒+ind¬ho y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∂) y t (∂→ lind) ¬ho (hitsAtLeastOnce←∂→∂→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (∂→ s) y t (∂→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (∂→ s) y t (∂→ lind) ¬ho (hitsAtLeastOnce∂→∂→ x) | g | refl | e | q = q x
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = ell} (s ←∂→ s₁) y t (∂→ lind) ¬ho x with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | a≤b&¬ho-repl⇒¬ho s₁ y t lind ¬ho
+a≤b&¬ho-repl⇒¬ho {pll = pll} {ell = .g} (s ←∂→ s₁) y t (∂→ lind) ¬ho (hitsAtLeastOnce←∂→∂→ x) | g | refl | e | q = q x
+
+
+
+
+
+
   
   
 module _ where
