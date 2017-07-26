@@ -45,11 +45,8 @@ module _ where
       
   data MLFun {i u ll rll n dt df} (ind : MIndexLL (τ {i} {u} {n} {dt} df) ll)
              (s : SetLL ll) (m¬ho : M¬ho s ind) (lf : LFun {i} {u} ll rll) : Set (lsuc u) where
-    I : (complLₛ s ≡ ∅) →  MLFun ind s m¬ho lf
-    -- ∀{ts} → 
-    --  → (eqs : ¬∅ ts ≡ tranLFMSetLL lf (¬∅ s)) → (ceqo : complLₛ ts ≡ ∅)
-    -- The above cannot be proved because we haven't told the function that s is special, its transformation will eventually go into a specific com except one input.
-    -- thus for the I constructor to be, lf should not contain com or calls.
+    I : ∀{ts} → (complLₛ s ≡ ∅) 
+        → (eqs : ¬∅ ts ≡ tranLFMSetLL lf (¬∅ s)) → (ceqo : complLₛ ts ≡ ∅) → MLFun ind s m¬ho lf
     ¬I∅ : ∀ {cs} → (ceqi : complLₛ s ≡ ¬∅ cs)
           → let tind = tranLFMIndexLL lf ind in
           (eqs : ∅ ≡ tranLFMSetLL lf (¬∅ s))
@@ -60,22 +57,31 @@ module _ where
            (eqs : ¬∅ ts ≡ tranLFMSetLL lf (¬∅ s)) → (ceqo : complLₛ ts ≡ ¬∅ cts)
            → ((cll : LinLogic i {u}) → LFun (hf ll ind s ceqi m¬ho cll) (hf rll tind ts ceqo (hf2 ind s m¬ho lf eqs) cll))
            → MLFun ind s m¬ho lf 
-           -- We will never reach to a point where complLₛ ts ≡ ∅ because
+           --???  We will never reach to a point where complLₛ ts ≡ ∅ because
            -- the input would have the same fate. ( s becomes smaller as we go forward, thus complLₛ increases. Here we take the case where s is not ∅.
            -- Correction : In fact , the ordinal remains the same since all the points of the set need to to end at the same com by design. (but we might not be able to prove this now and thus need to go with the weaker argument.)
   
-  
+
+
+
+-- s is special, all of the input points eventually will be consumed by a single com + the point from the index. Thus if complLₛ s ≡ ∅, this means that lf does not contain coms or calls.
+-- Maybe one day, we will provide a datatype that contains that information, for the time being, we use IMPOSSIBLE where necessary.
+
     -- s here does contain the ind.
   test : ∀{i u rll ll n dt df} → (ind : MIndexLL (τ {i} {u} {n} {dt} df) ll) → (s : SetLL ll)
          → ∀ m¬ho → (lf : LFun ll rll) → MLFun ind s m¬ho lf
   test ∅ s ∅ lf with complLₛ s | inspect complLₛ s
-  test ∅ s ∅ lf | ∅ | [ eq ] = I eq
+  test ∅ s ∅ lf | ∅ | [ eq ] with tranLFMSetLL lf (¬∅ s) | inspect (λ z → tranLFMSetLL lf (¬∅ z)) s
+  test ∅ s ∅ lf | ∅ | [ eq ] | ∅ | e = IMPOSSIBLE
+  test ∅ s ∅ lf | ∅ | [ eq ] | ¬∅ x | e with complLₛ x | inspect complLₛ x
+  test ∅ s ∅ lf | ∅ | [ eq ] | ¬∅ x | [ e ] | ∅ | [ t ] = I eq (sym e) t
+  test ∅ s ∅ lf | ∅ | [ eq ] | ¬∅ x | e | ¬∅ x₁ | t = IMPOSSIBLE
   test ∅ s ∅ I | ¬∅ x | [ eq ] = ¬I¬∅ eq refl eq (λ cll → I)
   test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] with truncSetLL s lind | inspect (truncSetLL s) lind
   ... | ∅ | [ teq ] with (mreplacePartOf (¬∅ s) to (∅ {ll = ell}) at lind) | inspect (λ z → mreplacePartOf (¬∅ s) to (∅ {ll = ell}) at z) lind
   ... | ∅ | [ meq ] = ⊥-elim ((trunc≡∅⇒¬mrpls≡∅ s lind teq) meq)
   ... | ¬∅ mx | [ meq ] with tranLFMSetLL lf₁ (¬∅ mx) | inspect (λ z → tranLFMSetLL lf₁ (¬∅ z)) mx | test {n = n} {dt} {df} ∅ mx ∅ lf₁
-  ... | ¬∅ ts1 | [ ts1eq ] | I ceq = ⊥-elim ((del⇒¬ho s lind (sym meq)) (compl≡∅⇒ho mx ceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  ... | ¬∅ ts1 | [ ts1eq ] | I ceq eqs ceqo = ⊥-elim ((del⇒¬ho s lind (sym meq)) (compl≡∅⇒ho mx ceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
   ... | ¬∅ ts1 | [ ts1eq ] | ¬I∅ ceqi eqs t = ⊥-elim (r (trans eqs ts1eq)) where
     r : ¬ (∅ ≡ ((MSetLL rll) ∋ (¬∅ ts1)))
     r ()
@@ -85,7 +91,7 @@ module _ where
     r | refl = refl
     tseq =  sym (trans (cong (λ z → tranLFMSetLL lf₁ z) (trans (cong (λ z → mreplacePartOf ¬∅ s to tranLFMSetLL lf z at lind) teq) meq)) ts1eq)
     g = subst (λ a → LFun a (shrink rll cts)) (shrink-repl-comm s lind eq teq meq ceqi)
-  ... | ∅ | [ ts1eq ] | I ceq = ⊥-elim ((del⇒¬ho s lind (sym meq)) (compl≡∅⇒ho mx ceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  ... | ∅ | [ ts1eq ] | I ceq eqs ceqo = ⊥-elim ((del⇒¬ho s lind (sym meq)) (compl≡∅⇒ho mx ceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
   ... | ∅ | [ ts1eq ] | ¬I∅ ceqi eqs t = ¬I∅ eq tseq (λ z → _⊂_ {ind = ¬ho-shr-morph s eq lind (trunc≡∅⇒¬ho s lind teq)} lf (subst (λ a → LFun a rll) (shrink-repl-comm s lind eq teq meq ceqi) (t z))) where 
     tseq =  sym (trans (cong (λ z → tranLFMSetLL lf₁ z) (trans (cong (λ z → mreplacePartOf ¬∅ s to tranLFMSetLL lf z at lind) teq) meq)) ts1eq)
   ... | ∅ | [ ts1eq ] | ¬I¬∅ ceqi eqs ceqo t with tranLFMSetLL lf₁ (¬∅ mx)
@@ -94,8 +100,15 @@ module _ where
 
 
   test {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] with tranLFMSetLL lf (¬∅ trs) | inspect (λ z → tranLFMSetLL lf (¬∅ z)) trs | test {n = n} {dt} {df} ∅ trs ∅ lf
-  ... | ∅ | tseq = {!!}
-  ... | ¬∅ ts | tseq = {!!}
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ | [ tseq ] | I x eqs ceqo with tranLFMSetLL lf (¬∅ trs)
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ | [ refl ] | I x () ceqo | .∅
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ | tseq | ¬I∅ ceqi eqs x = {!!}
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ | [ tseq ] | ¬I¬∅ ceqi eqs ceqo x with tranLFMSetLL lf (¬∅ trs)
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ | [ () ] | ¬I¬∅ ceqi refl ceqo x | .(¬∅ _)
+
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ¬∅ ts | tseq | I x eqs ceqo = {!!}
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ¬∅ ts | tseq | ¬I∅ ceqi eqs x = {!!}
+  test ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ¬∅ ts | tseq | ¬I¬∅ ceqi eqs ceqo x = {!!}
 
 
 -- with test {n = n} {dt} {df} ∅ trs ∅ lf
