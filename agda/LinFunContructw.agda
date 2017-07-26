@@ -4,7 +4,7 @@ module LinFunContructw where
 
 open import Common
 open import LinLogic
-open import IndexLLProp
+import IndexLLProp 
 open import LinFun
 open import SetLL
 open import SetLLProp
@@ -15,8 +15,12 @@ open import Data.Product
 open import LinFunContruct
 
 
+
+
+
 module _ where
 
+  open IndexLLProp 
 
   private
     data M¬ho {i u ll n dt df} (s : SetLL ll) : MIndexLL (τ {i} {u} {n} {dt} df) ll → Set where
@@ -41,7 +45,11 @@ module _ where
       
   data MLFun {i u ll rll n dt df} (ind : MIndexLL (τ {i} {u} {n} {dt} df) ll)
              (s : SetLL ll) (m¬ho : M¬ho s ind) (lf : LFun {i} {u} ll rll) : Set (lsuc u) where
-    I : (complLₛ s ≡ ∅) → MLFun ind s m¬ho lf
+    I : (complLₛ s ≡ ∅) →  MLFun ind s m¬ho lf
+    -- ∀{ts} → 
+    --  → (eqs : ¬∅ ts ≡ tranLFMSetLL lf (¬∅ s)) → (ceqo : complLₛ ts ≡ ∅)
+    -- The above cannot be proved because we haven't told the function that s is special, its transformation will eventually go into a specific com except one input.
+    -- thus for the I constructor to be, lf should not contain com or calls.
     ¬I∅ : ∀ {cs} → (ceqi : complLₛ s ≡ ¬∅ cs)
           → let tind = tranLFMIndexLL lf ind in
           (eqs : ∅ ≡ tranLFMSetLL lf (¬∅ s))
@@ -85,10 +93,24 @@ module _ where
 
 
 
-  test {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | w with test {n = n} {dt} {df} ∅ trs ∅ lf
-  ... | I ceq = {!!}
-  ... | ¬I∅ ceqi eqs q = {!!}
-  ... | ¬I¬∅ ceqi eqs ceqo q = {!!} where
+  test {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] with tranLFMSetLL lf (¬∅ trs) | inspect (λ z → tranLFMSetLL lf (¬∅ z)) trs | test {n = n} {dt} {df} ∅ trs ∅ lf
+  ... | ∅ | tseq = {!!}
+  ... | ¬∅ ts | tseq = {!!}
+
+
+-- with test {n = n} {dt} {df} ∅ trs ∅ lf
+--   ... | I ceq with mreplacePartOf (¬∅ s) to tlf at lind | inspect (λ z → mreplacePartOf (¬∅ s) to tlf at z) lind where -- tranLFMSetLL lf₁ nmx | inspect (tranLFMSetLL lf₁) nmx | test ∅ {!nmx!} ∅ lf₁ where
+--     tlf = tranLFMSetLL lf (¬∅ trs)
+-- --    is = test ∅ {!!} ∅ lf₁
+--   ... | ∅ | [ meq ] = IMPOSSIBLE -- Since we have I, lf cannot contain com or call, thus tlf is not ∅.
+--   ... | ¬∅ mx | [ meq ] with test {n = n} {dt} {df} ∅ mx ∅ lf₁
+--   ... | I ceq1 = IMPOSSIBLE -- TODO This is impossible because eq assures us that complLₛ s ≡ ¬∅ x but complLₛ of both ceq and ceq1 are ∅.
+--   ... | ¬I∅ ceqi1 eqs1 t1 = ¬I∅ eq tseq {!!} where
+--     meeq = subst (λ z → (mreplacePartOf ¬∅ s to tranLFMSetLL lf z at lind) ≡ ¬∅ mx) (sym teq) meq
+--     tseq = subst (λ z → ∅ ≡ tranLFMSetLL lf₁ z) (sym meeq) eqs1
+--   ... | ¬I¬∅ ceqi1 eqs1 ceqo1 t1 = {!!} 
+--   test {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ¬I∅ ceqi eqs q = {!!}
+--   test {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ¬I¬∅ ceqi eqs ceqo q = {!!} where
   test ∅ s ∅ (tr ltr lf) | ¬∅ x | [ eq ] = {!!}
   test ∅ s ∅ (com df₁ lf) | ¬∅ x | [ eq ] = IMPOSSIBLE -- Since ind is ∅, this is impossible.
   test ∅ s ∅ (call x₁) | ¬∅ x | [ eq ] = IMPOSSIBLE
