@@ -11,6 +11,87 @@ import Data.Product
 
 
 
+
+
+compl≡∅⇒compltr≡∅ : ∀{i u rll ll trs} → (s : SetLL {i} {u} ll) → (eq : complLₛ s ≡ ∅)
+                    → (ind : IndexLL rll ll)
+                    → ¬∅ trs ≡ truncSetLL s ind
+                    → complLₛ trs ≡ ∅
+compl≡∅⇒compltr≡∅ s eq ↓ refl = eq
+compl≡∅⇒compltr≡∅ ↓ eq (ind ←∧) refl = refl
+compl≡∅⇒compltr≡∅ (s ←∧) eq (ind ←∧) teq with complLₛ s | inspect complLₛ s
+compl≡∅⇒compltr≡∅ (s ←∧) eq (ind ←∧) teq | ∅ | [ iseq ] = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∧) () (ind ←∧) teq | ¬∅ x | [ iseq ]
+compl≡∅⇒compltr≡∅ (∧→ s) eq (ind ←∧) ()
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) eq (ind ←∧) teq with complLₛ s | inspect complLₛ s | complLₛ s₁
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) eq (ind ←∧) teq | ∅ | [ iseq ] | ∅ = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) () (ind ←∧) teq | ∅ | [ iseq ] | ¬∅ x
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) () (ind ←∧) teq | ¬∅ x | [ iseq ] | ∅
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) () (ind ←∧) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
+compl≡∅⇒compltr≡∅ ↓ eq (∧→ ind) refl = refl
+compl≡∅⇒compltr≡∅ (s ←∧) eq (∧→ ind) ()
+compl≡∅⇒compltr≡∅ (∧→ s) eq (∧→ ind) teq with complLₛ s | inspect complLₛ s
+compl≡∅⇒compltr≡∅ (∧→ s) eq (∧→ ind) teq | ∅ | [ iseq ] = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (∧→ s) () (∧→ ind) teq | ¬∅ x | [ iseq ]
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) eq (∧→ ind) teq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) eq (∧→ ind) teq | ∅ | [ iseq ] | ∅ = r where
+  r = compl≡∅⇒compltr≡∅ s₁ iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) () (∧→ ind) teq | ∅ | [ iseq ] | ¬∅ x
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) () (∧→ ind) teq | ¬∅ x | [ iseq ] | ∅
+compl≡∅⇒compltr≡∅ (s ←∧→ s₁) () (∧→ ind) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
+compl≡∅⇒compltr≡∅ ↓ eq (ind ←∨) refl = refl
+compl≡∅⇒compltr≡∅ (s ←∨) eq (ind ←∨) teq with complLₛ s | inspect complLₛ s
+compl≡∅⇒compltr≡∅ (s ←∨) eq (ind ←∨) teq | ∅ | [ iseq ] = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∨) () (ind ←∨) teq | ¬∅ x | [ iseq ]
+compl≡∅⇒compltr≡∅ (∨→ s) eq (ind ←∨) ()
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) eq (ind ←∨) teq with complLₛ s | inspect complLₛ s | complLₛ s₁
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) eq (ind ←∨) teq | ∅ | [ iseq ] | ∅ = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) () (ind ←∨) teq | ∅ | [ iseq ] | ¬∅ x
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) () (ind ←∨) teq | ¬∅ x | [ iseq ] | ∅
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) () (ind ←∨) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
+compl≡∅⇒compltr≡∅ ↓ eq (∨→ ind) refl = refl
+compl≡∅⇒compltr≡∅ (s ←∨) eq (∨→ ind) ()
+compl≡∅⇒compltr≡∅ (∨→ s) eq (∨→ ind) teq with complLₛ s | inspect complLₛ s
+compl≡∅⇒compltr≡∅ (∨→ s) eq (∨→ ind) teq | ∅ | [ iseq ] = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (∨→ s) () (∨→ ind) teq | ¬∅ x | [ iseq ]
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) eq (∨→ ind) teq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) eq (∨→ ind) teq | ∅ | [ iseq ] | ∅ = r where
+  r = compl≡∅⇒compltr≡∅ s₁ iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) () (∨→ ind) teq | ∅ | [ iseq ] | ¬∅ x
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) () (∨→ ind) teq | ¬∅ x | [ iseq ] | ∅
+compl≡∅⇒compltr≡∅ (s ←∨→ s₁) () (∨→ ind) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
+compl≡∅⇒compltr≡∅ ↓ eq (ind ←∂) refl = refl
+compl≡∅⇒compltr≡∅ (s ←∂) eq (ind ←∂) teq with complLₛ s | inspect complLₛ s
+compl≡∅⇒compltr≡∅ (s ←∂) eq (ind ←∂) teq | ∅ | [ iseq ] = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∂) () (ind ←∂) teq | ¬∅ x | [ iseq ]
+compl≡∅⇒compltr≡∅ (∂→ s) eq (ind ←∂) ()
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) eq (ind ←∂) teq with complLₛ s | inspect complLₛ s | complLₛ s₁
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) eq (ind ←∂) teq | ∅ | [ iseq ] | ∅ = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (ind ←∂) teq | ∅ | [ iseq ] | ¬∅ x
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (ind ←∂) teq | ¬∅ x | [ iseq ] | ∅
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (ind ←∂) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
+compl≡∅⇒compltr≡∅ ↓ eq (∂→ ind) refl = refl
+compl≡∅⇒compltr≡∅ (s ←∂) eq (∂→ ind) ()
+compl≡∅⇒compltr≡∅ (∂→ s) eq (∂→ ind) teq with complLₛ s | inspect complLₛ s
+compl≡∅⇒compltr≡∅ (∂→ s) eq (∂→ ind) teq | ∅ | [ iseq ] = r where
+  r = compl≡∅⇒compltr≡∅ s iseq ind teq
+compl≡∅⇒compltr≡∅ (∂→ s) () (∂→ ind) teq | ¬∅ x | [ iseq ]
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) eq (∂→ ind) teq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) eq (∂→ ind) teq | ∅ | [ iseq ] | ∅ = r where
+  r = compl≡∅⇒compltr≡∅ s₁ iseq ind teq
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (∂→ ind) teq | ∅ | [ iseq ] | ¬∅ x
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (∂→ ind) teq | ¬∅ x | [ iseq ] | ∅
+compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (∂→ ind) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
+
+
 ¬contruct↓⇒¬compl∅ : ∀{i u ll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → ¬ (complLₛ s ≡ ∅)
 ¬contruct↓⇒¬compl∅ ↓ eq = ⊥-elim (eq refl)
 ¬contruct↓⇒¬compl∅ (s ←∧) eq with (complLₛ s)
@@ -548,6 +629,11 @@ compl≡∅⇒ho (s ←∂→ s₁) ceq (∂→ ind) | ∅ | [ eq ] | ∅ | [ eq
 compl≡∅⇒ho (s ←∂→ s₁) () ind | ∅ | [ eq ] | ¬∅ x | [ eq₁ ]
 compl≡∅⇒ho (s ←∂→ s₁) () ind | ¬∅ x | [ eq ] | ∅ | [ eq₁ ]
 compl≡∅⇒ho (s ←∂→ s₁) () ind | ¬∅ x | [ eq ] | ¬∅ x₁ | [ eq₁ ]
+
+
+
+
+
 
 
 module _ where

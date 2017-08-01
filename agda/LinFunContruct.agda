@@ -13,9 +13,6 @@ open import SetLLProp
 open import Relation.Binary.PropositionalEquality
 open import Data.Product
 
-
-
-
 module _ where
 
   open IndexLLProp hiding (tran)
@@ -248,9 +245,131 @@ module _ where
     r = ¬ho-shr-morph s₁ eq ind ¬nho
   
   
+    
+   
+  ho-shr-morph : ∀{i u rll ll cs trs ctrs} → (s : SetLL {i} {u} ll) → (ceq : complLₛ s ≡ ¬∅ cs)
+                 → (ind : IndexLL rll ll)
+                 → ¬∅ trs ≡ truncSetLL s ind
+                 → (ceqt : complLₛ trs ≡ ¬∅ ctrs)
+                 → IndexLL (shrinkcms rll trs ctrs ceqt) (shrinkcms ll s cs ceq)
+  ho-shr-morph ↓ () ind teq ceqt
+  ho-shr-morph q@(s ←∧) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (s ←∧) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph {trs = trs} (s ←∧) ceq (ind ←∧) teq ceqt with complLₛ s | inspect complLₛ s
+  ... | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (s ←∧) ceq (ind ←∧) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∧) refl (ind ←∧) teq ceqt | ¬∅ x | [ eq ] = is ←∧ where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∧) ceq (∧→ ind) () ceqt
+  ho-shr-morph q@(∧→ s) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (∧→ s) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph (∧→ s) ceq (ind ←∧) () ceqt
+  ho-shr-morph (∧→ s) ceq (∧→ ind) teq ceqt with complLₛ s | inspect complLₛ s
+  ho-shr-morph {trs = trs} (∧→ s) ceq (∧→ ind) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (∧→ s) ceq (∧→ ind) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (∧→ s) refl (∧→ ind) teq ceqt | ¬∅ x | [ eq ] = ∧→ is where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph q@(s ←∧→ s₁) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (s ←∧→ s₁) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph (s ←∧→ s₁) ceq (ind ←∧) teq ceqt with complLₛ s | inspect complLₛ s
+  ho-shr-morph {trs = trs} (s ←∧→ s₁) ceq (ind ←∧) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (s ←∧→ s₁) ceq (ind ←∧) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∧→ s₁) ceq (ind ←∧) teq ceqt | ¬∅ x | e with complLₛ s₁
+  ho-shr-morph (s ←∧→ s₁) refl (ind ←∧) teq ceqt | ¬∅ x | [ eq ] | ∅ = is where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∧→ s₁) refl (ind ←∧) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = is ←∧ where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∧→ s₁) ceq (∧→ ind) teq ceqt with complLₛ s₁ | inspect complLₛ s₁
+  ho-shr-morph {trs = trs} (s ←∧→ s₁) ceq (∧→ ind) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s₁ eq ind teq
+  ho-shr-morph {trs = trs} (s ←∧→ s₁) ceq (∧→ ind) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∧→ s₁) ceq (∧→ ind) teq ceqt | ¬∅ x | [ eq ] with complLₛ s
+  ho-shr-morph (s ←∧→ s₁) refl (∧→ ind) teq ceqt | ¬∅ x | [ eq ] | ∅ = is where
+    is = ho-shr-morph s₁ eq ind teq ceqt
+  ho-shr-morph (s ←∧→ s₁) refl (∧→ ind) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = ∧→ is where
+    is = ho-shr-morph s₁ eq ind teq ceqt
+  ho-shr-morph q@(s ←∨) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (s ←∨) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph {trs = trs} (s ←∨) ceq (ind ←∨) teq ceqt with complLₛ s | inspect complLₛ s
+  ... | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (s ←∨) ceq (ind ←∨) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∨) refl (ind ←∨) teq ceqt | ¬∅ x | [ eq ] = is ←∨ where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∨) ceq (∨→ ind) () ceqt
+  ho-shr-morph q@(∨→ s) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (∨→ s) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph (∨→ s) ceq (ind ←∨) () ceqt
+  ho-shr-morph (∨→ s) ceq (∨→ ind) teq ceqt with complLₛ s | inspect complLₛ s
+  ho-shr-morph {trs = trs} (∨→ s) ceq (∨→ ind) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (∨→ s) ceq (∨→ ind) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (∨→ s) refl (∨→ ind) teq ceqt | ¬∅ x | [ eq ] = ∨→ is where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph q@(s ←∨→ s₁) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (s ←∨→ s₁) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph (s ←∨→ s₁) ceq (ind ←∨) teq ceqt with complLₛ s | inspect complLₛ s
+  ho-shr-morph {trs = trs} (s ←∨→ s₁) ceq (ind ←∨) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (s ←∨→ s₁) ceq (ind ←∨) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∨→ s₁) ceq (ind ←∨) teq ceqt | ¬∅ x | e with complLₛ s₁
+  ho-shr-morph (s ←∨→ s₁) refl (ind ←∨) teq ceqt | ¬∅ x | [ eq ] | ∅ = is where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∨→ s₁) refl (ind ←∨) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = is ←∨ where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∨→ s₁) ceq (∨→ ind) teq ceqt with complLₛ s₁ | inspect complLₛ s₁
+  ho-shr-morph {trs = trs} (s ←∨→ s₁) ceq (∨→ ind) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s₁ eq ind teq
+  ho-shr-morph {trs = trs} (s ←∨→ s₁) ceq (∨→ ind) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∨→ s₁) ceq (∨→ ind) teq ceqt | ¬∅ x | [ eq ] with complLₛ s
+  ho-shr-morph (s ←∨→ s₁) refl (∨→ ind) teq ceqt | ¬∅ x | [ eq ] | ∅ = is where
+    is = ho-shr-morph s₁ eq ind teq ceqt
+  ho-shr-morph (s ←∨→ s₁) refl (∨→ ind) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = ∨→ is where
+    is = ho-shr-morph s₁ eq ind teq ceqt
+  ho-shr-morph q@(s ←∂) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (s ←∂) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph {trs = trs} (s ←∂) ceq (ind ←∂) teq ceqt with complLₛ s | inspect complLₛ s
+  ... | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (s ←∂) ceq (ind ←∂) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∂) refl (ind ←∂) teq ceqt | ¬∅ x | [ eq ] = is ←∂ where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∂) ceq (∂→ ind) () ceqt
+  ho-shr-morph q@(∂→ s) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (∂→ s) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph (∂→ s) ceq (ind ←∂) () ceqt
+  ho-shr-morph (∂→ s) ceq (∂→ ind) teq ceqt with complLₛ s | inspect complLₛ s
+  ho-shr-morph {trs = trs} (∂→ s) ceq (∂→ ind) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (∂→ s) ceq (∂→ ind) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (∂→ s) refl (∂→ ind) teq ceqt | ¬∅ x | [ eq ] = ∂→ is where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph q@(s ←∂→ s₁) ceq ↓ refl ceqt with complLₛ q
+  ho-shr-morph (s ←∂→ s₁) refl ↓ refl refl | .(¬∅ _) = ↓
+  ho-shr-morph (s ←∂→ s₁) ceq (ind ←∂) teq ceqt with complLₛ s | inspect complLₛ s
+  ho-shr-morph {trs = trs} (s ←∂→ s₁) ceq (ind ←∂) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eq ind teq
+  ho-shr-morph {trs = trs} (s ←∂→ s₁) ceq (ind ←∂) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∂→ s₁) ceq (ind ←∂) teq ceqt | ¬∅ x | e with complLₛ s₁
+  ho-shr-morph (s ←∂→ s₁) refl (ind ←∂) teq ceqt | ¬∅ x | [ eq ] | ∅ = is where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∂→ s₁) refl (ind ←∂) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = is ←∂ where
+    is = ho-shr-morph s eq ind teq ceqt
+  ho-shr-morph (s ←∂→ s₁) ceq (∂→ ind) teq ceqt with complLₛ s₁ | inspect complLₛ s₁
+  ho-shr-morph {trs = trs} (s ←∂→ s₁) ceq (∂→ ind) teq ceqt | ∅ | [ eq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s₁ eq ind teq
+  ho-shr-morph {trs = trs} (s ←∂→ s₁) ceq (∂→ ind) teq () | ∅ | [ eq ] | .∅ | refl
+  ho-shr-morph (s ←∂→ s₁) ceq (∂→ ind) teq ceqt | ¬∅ x | [ eq ] with complLₛ s
+  ho-shr-morph (s ←∂→ s₁) refl (∂→ ind) teq ceqt | ¬∅ x | [ eq ] | ∅ = is where
+    is = ho-shr-morph s₁ eq ind teq ceqt
+  ho-shr-morph (s ←∂→ s₁) refl (∂→ ind) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = ∂→ is where
+    is = ho-shr-morph s₁ eq ind teq ceqt
   
-  
-  
+   
+    
   
   
   shrink-repl-comm : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
