@@ -14,11 +14,36 @@ open import Data.Product
 
 open import LinFunContruct
 
+
+poo : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+        → (eq : complLₛ s ≡ ¬∅ x)
+        → (teq : truncSetLL s lind ≡ ¬∅ trs)
+        → complLₛ trs ≡ ∅
+        → (vs : SetLL ell) 
+        → let mx = replacePartOf s to vs at lind in
+        Σ (SetLL (replLL ll lind ell)) (λ cs → complLₛ mx ≡ ¬∅ cs)
+poo s ↓ eq refl ceq vs with complLₛ s
+poo s ↓ () refl refl vs | .∅
+poo ↓ (lind ←∧) () teq ceq vs
+poo (s ←∧) (lind ←∧) eq teq ceq vs with complLₛ mx where
+  mx = replacePartOf s to vs at lind 
+poo {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs | ∅ = (∧→ fillAllLower rll) , refl
+poo {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs | ¬∅ x = (x ←∧→ fillAllLower rll) , refl
+poo (∧→ s) (lind ←∧) eq () ceq vs
+poo (s ←∧→ s₁) (lind ←∧) eq teq ceq vs with complLₛ s₁
+... | g = ?
+poo s (∧→ lind) eq teq ceq vs = {!!}
+poo s (lind ←∨) eq teq ceq vs = {!!}
+poo s (∨→ lind) eq teq ceq vs = {!!}
+poo s (lind ←∂) eq teq ceq vs = {!!}
+poo s (∂→ lind) eq teq ceq vs = {!!}
+
+
 boo : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
         → (eq : complLₛ s ≡ ¬∅ x)
         → (teq : truncSetLL s lind ≡ ¬∅ trs)
         → complLₛ trs ≡ ∅
-        → ∀ vs → complLₛ vs ≡ ∅
+        → ∀ vs → complLₛ vs ≡ ∅      -- contruct trs ≡ contruct vs ≡ ↓
         → ∀{cs}
         → let mx = replacePartOf s to vs at lind in
         complLₛ mx ≡ ¬∅ cs
@@ -29,8 +54,8 @@ boo (s ←∧) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
 boo (s ←∧) ↓ eq teq cteq vs refl () | .∅
 boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
   mx = replacePartOf s to vs at lind
-boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | e | t = {!!}
-boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ x | [ icmeq ] | e | t = {!!}
+boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | t | [ ieq ] = {!!}
+boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ x | [ icmeq ] | t | [ ieq ] = {!!}
 boo (s ←∧) (∧→ lind) eq teq cteq vs cveq cmeq = {!!}
 boo (∧→ s) lind eq teq cteq vs cveq cmeq = {!!}
 boo (s ←∧→ s₁) lind eq teq cteq vs cveq cmeq = {!!}
