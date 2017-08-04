@@ -91,6 +91,294 @@ compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (∂→ ind) teq | ∅ | [ ise
 compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (∂→ ind) teq | ¬∅ x | [ iseq ] | ∅
 compl≡∅⇒compltr≡∅ (s ←∂→ s₁) () (∂→ ind) teq | ¬∅ x | [ iseq ] | ¬∅ x₁
 
+module _ where
+
+  open import Data.Product
+
+  compl≡¬∅⇒replace-compl≡¬∅ : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+          → (eq : complLₛ s ≡ ¬∅ x)
+          → (teq : truncSetLL s lind ≡ ¬∅ trs)
+          → complLₛ trs ≡ ∅
+          → (vs : SetLL ell) 
+          → let mx = replacePartOf s to vs at lind in
+          Σ (SetLL (replLL ll lind ell)) (λ cs → complLₛ mx ≡ ¬∅ cs)
+  compl≡¬∅⇒replace-compl≡¬∅ s ↓ eq refl ceq vs with complLₛ s
+  compl≡¬∅⇒replace-compl≡¬∅ s ↓ () refl refl vs | .∅
+  compl≡¬∅⇒replace-compl≡¬∅ ↓ (lind ←∧) () teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs with complLₛ mx where
+    mx = replacePartOf s to vs at lind 
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs | ∅ = (∧→ fillAllLower rll) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs | ¬∅ x = (x ←∧→ fillAllLower rll) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (∧→ s) (lind ←∧) eq () ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs with complLₛ s₁
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ∅ with complLₛ s | inspect complLₛ s 
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) () teq ceq vs | ∅ | ∅ | [ e ]
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ∅ | ¬∅ x | [ e ] with is where
+    is = compl≡¬∅⇒replace-compl≡¬∅ s lind e teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , iseq with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , () | ∅
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ∅ | ¬∅ x₁ | [ e ] | iscs , iseq | ¬∅ x = (x ←∧) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ¬∅ x with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ¬∅ x | ∅ = (∧→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (lind ←∧) eq teq ceq vs | ¬∅ x₁ | ¬∅ x = (x ←∧→ x₁) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ ↓ (∧→ lind) () teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧) (∧→ lind) eq () ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∧ rrl} (∧→ s) (∧→ lind) eq teq ceq vs with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∧ rrl} (∧→ s) (∧→ lind) eq teq ceq vs | ∅ = (fillAllLower lll ←∧) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∧ rrl} (∧→ s) (∧→ lind) eq teq ceq vs | ¬∅ x = (fillAllLower lll ←∧→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs with complLₛ s
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ∅ with complLₛ s₁ | inspect complLₛ s₁
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) () teq ceq vs | ∅ | ∅ | e
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] with is where
+    is = compl≡¬∅⇒replace-compl≡¬∅ s₁ lind e teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , iseq with complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , () | ∅
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ∅ | ¬∅ x₁ | [ e ] | iscs , iseq | ¬∅ x = (∧→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ¬∅ x with complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ¬∅ x | ∅ = (x ←∧) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∧→ s₁) (∧→ lind) eq teq ceq vs | ¬∅ x₁ | ¬∅ x = (x₁ ←∧→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ ↓ (lind ←∨) () teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq ceq vs with complLₛ mx where
+    mx = replacePartOf s to vs at lind 
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq ceq vs | ∅ = (∨→ fillAllLower rll) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq ceq vs | ¬∅ x = (x ←∨→ fillAllLower rll) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (∨→ s) (lind ←∨) eq () ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs with complLₛ s₁
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ∅ with complLₛ s | inspect complLₛ s 
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) () teq ceq vs | ∅ | ∅ | [ e ]
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ∅ | ¬∅ x | [ e ] with is where
+    is = compl≡¬∅⇒replace-compl≡¬∅ s lind e teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , iseq with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , () | ∅
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ∅ | ¬∅ x₁ | [ e ] | iscs , iseq | ¬∅ x = (x ←∨) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ¬∅ x with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ¬∅ x | ∅ = (∨→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (lind ←∨) eq teq ceq vs | ¬∅ x₁ | ¬∅ x = (x ←∨→ x₁) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ ↓ (∨→ lind) () teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨) (∨→ lind) eq () ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∨ rrl} (∨→ s) (∨→ lind) eq teq ceq vs with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∨ rrl} (∨→ s) (∨→ lind) eq teq ceq vs | ∅ = (fillAllLower lll ←∨) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∨ rrl} (∨→ s) (∨→ lind) eq teq ceq vs | ¬∅ x = (fillAllLower lll ←∨→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs with complLₛ s
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ∅ with complLₛ s₁ | inspect complLₛ s₁
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) () teq ceq vs | ∅ | ∅ | e
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] with is where
+    is = compl≡¬∅⇒replace-compl≡¬∅ s₁ lind e teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , iseq with complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , () | ∅
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ∅ | ¬∅ x₁ | [ e ] | iscs , iseq | ¬∅ x = (∨→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ¬∅ x with complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ¬∅ x | ∅ = (x ←∨) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∨→ s₁) (∨→ lind) eq teq ceq vs | ¬∅ x₁ | ¬∅ x = (x₁ ←∨→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ ↓ (lind ←∂) () teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq ceq vs with complLₛ mx where
+    mx = replacePartOf s to vs at lind 
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq ceq vs | ∅ = (∂→ fillAllLower rll) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq ceq vs | ¬∅ x = (x ←∂→ fillAllLower rll) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (∂→ s) (lind ←∂) eq () ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs with complLₛ s₁
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ∅ with complLₛ s | inspect complLₛ s 
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) () teq ceq vs | ∅ | ∅ | [ e ]
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ∅ | ¬∅ x | [ e ] with is where
+    is = compl≡¬∅⇒replace-compl≡¬∅ s lind e teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , iseq with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , () | ∅
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ∅ | ¬∅ x₁ | [ e ] | iscs , iseq | ¬∅ x = (x ←∂) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ¬∅ x with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ¬∅ x | ∅ = (∂→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (lind ←∂) eq teq ceq vs | ¬∅ x₁ | ¬∅ x = (x ←∂→ x₁) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ ↓ (∂→ lind) () teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂) (∂→ lind) eq () ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∂ rrl} (∂→ s) (∂→ lind) eq teq ceq vs with complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∂ rrl} (∂→ s) (∂→ lind) eq teq ceq vs | ∅ = (fillAllLower lll ←∂) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ {ll = lll ∂ rrl} (∂→ s) (∂→ lind) eq teq ceq vs | ¬∅ x = (fillAllLower lll ←∂→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs with complLₛ s
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ∅ with complLₛ s₁ | inspect complLₛ s₁
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) () teq ceq vs | ∅ | ∅ | e
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] with is where
+    is = compl≡¬∅⇒replace-compl≡¬∅ s₁ lind e teq ceq vs
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , iseq with complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ∅ | ¬∅ x | [ e ] | iscs , () | ∅
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ∅ | ¬∅ x₁ | [ e ] | iscs , iseq | ¬∅ x = (∂→ x) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ¬∅ x with complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ¬∅ x | ∅ = (x ←∂) , refl
+  compl≡¬∅⇒replace-compl≡¬∅ (s ←∂→ s₁) (∂→ lind) eq teq ceq vs | ¬∅ x₁ | ¬∅ x = (x₁ ←∂→ x) , refl
+  
+  
+    
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ : ∀{i u ll ell pll} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+          → (vs : SetLL ell) 
+          → complLₛ vs ≡ ∅
+          → let mx = replacePartOf s to vs at lind in
+          ∀{cs} → 
+          (cmeq : complLₛ mx ≡ ¬∅ cs) →
+          Σ (SetLL ll) (λ x → complLₛ s ≡ ¬∅ x)
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s ↓ vs cv cmeq with complLₛ vs
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s ↓ vs refl () | .∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∧) vs cv cmeq with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf ↓ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∧) vs cv () | ∅ | [ e ]
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∧) vs cv cmeq | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∧) vs cv cmeq | ¬∅ x | [ e ] | proj3 , ()
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) vs cv cmeq  with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) vs cv cmeq | ∅ = (∧→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) vs cv cmeq | ¬∅ x = (x ←∧→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (∧→ s) (lind ←∧) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∧ rll} (∧→ s) (lind ←∧) vs cv cmeq | ∅ = (fillAllLower lll ←∧) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∧ rll} (∧→ s) (lind ←∧) vs cv cmeq | ¬∅ x = (fillAllLower lll ←∧→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ∅ with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv () | ∅ | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ∅ | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , proj4 with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , () | ∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ∅ | ¬∅ x₁ | [ e ] | proj₃ , proj4 | ¬∅ x = (x ←∧) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ¬∅ x with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ¬∅ x | ∅ = (∧→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (lind ←∧) vs cv cmeq | ¬∅ x₁ | ¬∅ x = (x ←∧→ x₁) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∧→ lind) vs cv cmeq with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf ↓ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∧→ lind) vs cv () | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∧→ lind) vs cv cmeq | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∧→ lind) vs cv cmeq | ¬∅ x | [ e ] | proj₃ , ()
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (∧→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (∧→ lind) vs cv cmeq | ∅ = (∧→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (s ←∧) (∧→ lind) vs cv cmeq | ¬∅ x = (x ←∧→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∧ rll} (∧→ s) (∧→ lind) vs cv cmeq | ∅ = (fillAllLower lll ←∧) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∧ rll} (∧→ s) (∧→ lind) vs cv cmeq | ¬∅ x = (fillAllLower lll ←∧→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ∅ with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv () | ∅ | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s₁ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , proj4 with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , () | ∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ∅ | ¬∅ x₁ | [ e ] | proj₃ , proj4 | ¬∅ x = (∧→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ¬∅ x with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ¬∅ x | ∅ = (x ←∧) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∧→ s₁) (∧→ lind) vs cv cmeq | ¬∅ x₁ | ¬∅ x = (x₁ ←∧→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∨) vs cv cmeq with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf ↓ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∨) vs cv () | ∅ | [ e ]
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∨) vs cv cmeq | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∨) vs cv cmeq | ¬∅ x | [ e ] | proj3 , ()
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) vs cv cmeq  with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) vs cv cmeq | ∅ = (∨→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) vs cv cmeq | ¬∅ x = (x ←∨→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (∨→ s) (lind ←∨) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∨ rll} (∨→ s) (lind ←∨) vs cv cmeq | ∅ = (fillAllLower lll ←∨) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∨ rll} (∨→ s) (lind ←∨) vs cv cmeq | ¬∅ x = (fillAllLower lll ←∨→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ∅ with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv () | ∅ | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ∅ | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , proj4 with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , () | ∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ∅ | ¬∅ x₁ | [ e ] | proj₃ , proj4 | ¬∅ x = (x ←∨) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ¬∅ x with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ¬∅ x | ∅ = (∨→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (lind ←∨) vs cv cmeq | ¬∅ x₁ | ¬∅ x = (x ←∨→ x₁) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∨→ lind) vs cv cmeq with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf ↓ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∨→ lind) vs cv () | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∨→ lind) vs cv cmeq | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∨→ lind) vs cv cmeq | ¬∅ x | [ e ] | proj₃ , ()
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (∨→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (∨→ lind) vs cv cmeq | ∅ = (∨→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (s ←∨) (∨→ lind) vs cv cmeq | ¬∅ x = (x ←∨→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∨ rll} (∨→ s) (∨→ lind) vs cv cmeq | ∅ = (fillAllLower lll ←∨) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∨ rll} (∨→ s) (∨→ lind) vs cv cmeq | ¬∅ x = (fillAllLower lll ←∨→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ∅ with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv () | ∅ | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s₁ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , proj4 with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , () | ∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ∅ | ¬∅ x₁ | [ e ] | proj₃ , proj4 | ¬∅ x = (∨→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ¬∅ x with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ¬∅ x | ∅ = (x ←∨) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∨→ s₁) (∨→ lind) vs cv cmeq | ¬∅ x₁ | ¬∅ x = (x₁ ←∨→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∂) vs cv cmeq with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf ↓ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∂) vs cv () | ∅ | [ e ]
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∂) vs cv cmeq | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (lind ←∂) vs cv cmeq | ¬∅ x | [ e ] | proj3 , ()
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) vs cv cmeq  with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) vs cv cmeq | ∅ = (∂→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) vs cv cmeq | ¬∅ x = (x ←∂→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (∂→ s) (lind ←∂) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∂ rll} (∂→ s) (lind ←∂) vs cv cmeq | ∅ = (fillAllLower lll ←∂) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∂ rll} (∂→ s) (lind ←∂) vs cv cmeq | ¬∅ x = (fillAllLower lll ←∂→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ∅ with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf s to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv () | ∅ | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ∅ | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , proj4 with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , () | ∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ∅ | ¬∅ x₁ | [ e ] | proj₃ , proj4 | ¬∅ x = (x ←∂) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ¬∅ x with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ¬∅ x | ∅ = (∂→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (lind ←∂) vs cv cmeq | ¬∅ x₁ | ¬∅ x = (x ←∂→ x₁) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∂→ lind) vs cv cmeq with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf ↓ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∂→ lind) vs cv () | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∂→ lind) vs cv cmeq | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ ↓ (∂→ lind) vs cv cmeq | ¬∅ x | [ e ] | proj₃ , ()
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (∂→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (∂→ lind) vs cv cmeq | ∅ = (∂→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (s ←∂) (∂→ lind) vs cv cmeq | ¬∅ x = (x ←∂→ fillAllLower rll) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∂ rll} (∂→ s) (∂→ lind) vs cv cmeq | ∅ = (fillAllLower lll ←∂) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ {u = _} {lll ∂ rll} (∂→ s) (∂→ lind) vs cv cmeq | ¬∅ x = (fillAllLower lll ←∂→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq with complLₛ s
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ∅ with complLₛ mx | inspect complLₛ mx where
+    mx = replacePartOf s₁ to vs at lind
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv () | ∅ | ∅ | e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] with is where
+    is = vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s₁ lind vs cv e
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , proj4 with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ∅ | ¬∅ x | [ e ] | proj₃ , () | ∅
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ∅ | ¬∅ x₁ | [ e ] | proj₃ , proj4 | ¬∅ x = (∂→ x) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ¬∅ x with complLₛ s₁
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ¬∅ x | ∅ = (x ←∂) , refl
+  vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ (s ←∂→ s₁) (∂→ lind) vs cv cmeq | ¬∅ x₁ | ¬∅ x = (x₁ ←∂→ x) , refl
+  
+  
+  
+  
+
 
 ¬contruct↓⇒¬compl∅ : ∀{i u ll} → (s : SetLL {i} {u} ll) → ¬ (contruct s ≡ ↓) → ¬ (complLₛ s ≡ ∅)
 ¬contruct↓⇒¬compl∅ ↓ eq = ⊥-elim (eq refl)

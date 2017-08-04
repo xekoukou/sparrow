@@ -369,7 +369,225 @@ module _ where
     is = ho-shr-morph s₁ eq ind teq ceqt
   
    
-    
+  
+  
+  shrink-repl≡∅ : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+          → (eq : complLₛ s ≡ ¬∅ x)
+          → (teq : truncSetLL s lind ≡ ¬∅ trs)
+          → complLₛ trs ≡ ∅
+          → ∀ vs → complLₛ vs ≡ ∅      -- contruct trs ≡ contruct vs ≡ ↓
+          → ∀{cs}
+          → let mx = replacePartOf s to vs at lind in
+          complLₛ mx ≡ ¬∅ cs
+          → (shrink (replLL ll lind ell) cs) ≡ shrink ll x
+  shrink-repl≡∅ ↓ lind () teq cteq vs cveq cmeq
+  shrink-repl≡∅ (s ←∧) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
+    mx = replacePartOf s to vs at ↓
+  shrink-repl≡∅ (s ←∧) ↓ eq teq cteq vs refl () | .∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ (s ←∧) (lind ←∧) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] = refl
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj3 , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj3 , () | .∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ refl ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧) (lind ←∧) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ ics | [ ieq ] = cong (λ z → z ∧  shrink rll (fillAllLower rll)) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∧) (∧→ lind) eq () cteq vs cveq cmeq
+  shrink-repl≡∅ (∧→ s) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
+    mx = replacePartOf s to vs at ↓
+  shrink-repl≡∅ (∧→ s) ↓ eq teq cteq vs () refl | .(¬∅ _)
+  shrink-repl≡∅ (∧→ s) (lind ←∧) eq () cteq vs cveq cmeq
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) refl teq cteq vs cveq refl | ∅ | e | ∅ | w = refl
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq refl | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq refl | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq refl | ∅ | [ () ] | ¬∅ x | [ ieq ] | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∧ rll} (∧→ s) (∧→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] = cong (λ z → (shrink lll (fillAllLower lll)) ∧ z) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∧→ s₁) ↓ eq teq cteq vs cveq cmeq with complLₛ vs
+  shrink-repl≡∅ (s ←∧→ s₁) ↓ eq teq cteq vs () refl | .(¬∅ _)
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ∅ | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq () | ∅ | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x = refl
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) () teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | ¬∅ x | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] | ∅ = is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {u = _} {lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → z ∧  shrink rll x) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s₁ | inspect complLₛ s₁ where
+    mx = replacePartOf s₁ to vs at lind
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ∅ | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq () | ∅ | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x = refl
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s₁ lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s₁ to vs at lind)
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) () teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s₁ lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x | proj₃ , proj4 with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | ¬∅ x | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] | ∅ = is where
+    is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {u = _} {lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → (shrink lll x) ∧ z) is where
+    is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∨) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
+    mx = replacePartOf s to vs at ↓
+  shrink-repl≡∅ (s ←∨) ↓ eq teq cteq vs refl () | .∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ (s ←∨) (lind ←∨) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] = refl
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj3 , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj3 , () | .∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ (s ←∨) (lind ←∨) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ refl ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨) (lind ←∨) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ ics | [ ieq ] = cong (λ z → z ∨  shrink rll (fillAllLower rll)) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∨) (∨→ lind) eq () cteq vs cveq cmeq
+  shrink-repl≡∅ (∨→ s) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
+    mx = replacePartOf s to vs at ↓
+  shrink-repl≡∅ (∨→ s) ↓ eq teq cteq vs () refl | .(¬∅ _)
+  shrink-repl≡∅ (∨→ s) (lind ←∨) eq () cteq vs cveq cmeq
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) refl teq cteq vs cveq refl | ∅ | e | ∅ | w = refl
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq refl | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq refl | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq refl | ∅ | [ () ] | ¬∅ x | [ ieq ] | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∨ rll} (∨→ s) (∨→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] = cong (λ z → (shrink lll (fillAllLower lll)) ∨ z) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∨→ s₁) ↓ eq teq cteq vs cveq cmeq with complLₛ vs
+  shrink-repl≡∅ (s ←∨→ s₁) ↓ eq teq cteq vs () refl | .(¬∅ _)
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ∅ | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq () | ∅ | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x = refl
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) () teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | ¬∅ x | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] | ∅ = is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {u = _} {lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → z ∨  shrink rll x) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s₁ | inspect complLₛ s₁ where
+    mx = replacePartOf s₁ to vs at lind
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ∅ | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq () | ∅ | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x = refl
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s₁ lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s₁ to vs at lind)
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) () teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s₁ lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x | proj₃ , proj4 with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | ¬∅ x | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] | ∅ = is where
+    is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {u = _} {lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → (shrink lll x) ∨ z) is where
+    is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∂) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
+    mx = replacePartOf s to vs at ↓
+  shrink-repl≡∅ (s ←∂) ↓ eq teq cteq vs refl () | .∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ (s ←∂) (lind ←∂) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] = refl
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj3 , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj3 , () | .∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ (s ←∂) (lind ←∂) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ refl ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂) (lind ←∂) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ ics | [ ieq ] = cong (λ z → z ∂  shrink rll (fillAllLower rll)) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∂) (∂→ lind) eq () cteq vs cveq cmeq
+  shrink-repl≡∅ (∂→ s) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
+    mx = replacePartOf s to vs at ↓
+  shrink-repl≡∅ (∂→ s) ↓ eq teq cteq vs () refl | .(¬∅ _)
+  shrink-repl≡∅ (∂→ s) (lind ←∂) eq () cteq vs cveq cmeq
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) refl teq cteq vs cveq refl | ∅ | e | ∅ | w = refl
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq refl | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq refl | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq refl | ∅ | [ () ] | ¬∅ x | [ ieq ] | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∂ rll} (∂→ s) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] = cong (λ z → (shrink lll (fillAllLower lll)) ∂ z) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ (s ←∂→ s₁) ↓ eq teq cteq vs cveq cmeq with complLₛ vs
+  shrink-repl≡∅ (s ←∂→ s₁) ↓ eq teq cteq vs () refl | .(¬∅ _)
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
+    mx = replacePartOf s to vs at lind
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ∅ | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq () | ∅ | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x = refl
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s to vs at lind)
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) () teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x | proj₃ , proj4 with complLₛ s
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | ¬∅ x | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] | ∅ = is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {u = _} {lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → z ∂  shrink rll x) is where
+    is = shrink-repl≡∅ s lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s₁ | inspect complLₛ s₁ where
+    mx = replacePartOf s₁ to vs at lind
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ∅ | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq () | ∅ | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ∅ | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x = refl
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] with compl≡¬∅⇒replace-compl≡¬∅ s₁ lind ieq teq cteq vs
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | ¬∅ x | [ ieq ] | proj₃ , proj4 with complLₛ (replacePartOf s₁ to vs at lind)
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq | ∅ | [ refl ] | ¬∅ x | [ ieq ] | proj₃ , () | .∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) () teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ∅
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x with vcompl≡∅&repl-compl≡¬∅⇒compl≡¬∅ s₁ lind vs cveq icmeq
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ ieq ] | ¬∅ x | proj₃ , proj4 with complLₛ s₁
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ∅ | [ () ] | ¬∅ x | proj₃ , refl | .(¬∅ proj₃)
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq cteq vs cveq cmeq | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] with complLₛ s
+  shrink-repl≡∅ {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x | [ ieq ] | ∅ = is where
+    is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
+  shrink-repl≡∅ {u = _} {lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → (shrink lll x) ∂ z) is where
+    is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
+  
+  
+  
   
   
   shrink-repl-comm : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)

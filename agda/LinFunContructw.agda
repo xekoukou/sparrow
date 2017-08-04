@@ -15,65 +15,6 @@ open import Data.Product
 open import LinFunContruct
 
 
-poo : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-        → (eq : complLₛ s ≡ ¬∅ x)
-        → (teq : truncSetLL s lind ≡ ¬∅ trs)
-        → complLₛ trs ≡ ∅
-        → (vs : SetLL ell) 
-        → let mx = replacePartOf s to vs at lind in
-        Σ (SetLL (replLL ll lind ell)) (λ cs → complLₛ mx ≡ ¬∅ cs)
-poo s ↓ eq refl ceq vs with complLₛ s
-poo s ↓ () refl refl vs | .∅
-poo ↓ (lind ←∧) () teq ceq vs
-poo (s ←∧) (lind ←∧) eq teq ceq vs with complLₛ mx where
-  mx = replacePartOf s to vs at lind 
-poo {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs | ∅ = (∧→ fillAllLower rll) , refl
-poo {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceq vs | ¬∅ x = (x ←∧→ fillAllLower rll) , refl
-poo (∧→ s) (lind ←∧) eq () ceq vs
-poo (s ←∧→ s₁) (lind ←∧) eq teq ceq vs with complLₛ s₁
-... | g = ?
-poo s (∧→ lind) eq teq ceq vs = {!!}
-poo s (lind ←∨) eq teq ceq vs = {!!}
-poo s (∨→ lind) eq teq ceq vs = {!!}
-poo s (lind ←∂) eq teq ceq vs = {!!}
-poo s (∂→ lind) eq teq ceq vs = {!!}
-
-
-boo : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-        → (eq : complLₛ s ≡ ¬∅ x)
-        → (teq : truncSetLL s lind ≡ ¬∅ trs)
-        → complLₛ trs ≡ ∅
-        → ∀ vs → complLₛ vs ≡ ∅      -- contruct trs ≡ contruct vs ≡ ↓
-        → ∀{cs}
-        → let mx = replacePartOf s to vs at lind in
-        complLₛ mx ≡ ¬∅ cs
-        → (shrink (replLL ll lind ell) cs) ≡ shrink ll x
-boo ↓ lind () teq cteq vs cveq cmeq
-boo (s ←∧) ↓ eq teq cteq vs cveq cmeq with complLₛ mx where
-  mx = replacePartOf s to vs at ↓
-boo (s ←∧) ↓ eq teq cteq vs refl () | .∅
-boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq with complLₛ mx | inspect complLₛ mx | complLₛ s | inspect complLₛ s where
-  mx = replacePartOf s to vs at lind
-boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ∅ | [ icmeq ] | t | [ ieq ] = {!!}
-boo (s ←∧) (lind ←∧) eq teq cteq vs cveq cmeq | ¬∅ x | [ icmeq ] | t | [ ieq ] = {!!}
-boo (s ←∧) (∧→ lind) eq teq cteq vs cveq cmeq = {!!}
-boo (∧→ s) lind eq teq cteq vs cveq cmeq = {!!}
-boo (s ←∧→ s₁) lind eq teq cteq vs cveq cmeq = {!!}
-boo (s ←∨) lind eq teq cteq vs cveq cmeq = {!!}
-boo (∨→ s) lind eq teq cteq vs cveq cmeq = {!!}
-boo (s ←∨→ s₁) lind eq teq cteq vs cveq cmeq = {!!}
-boo (s ←∂) lind eq teq cteq vs cveq cmeq = {!!}
-boo (∂→ s) lind eq teq cteq vs cveq cmeq = {!!}
-boo (s ←∂→ s₁) lind eq teq cteq vs cveq cmeq = {!!}
-
--- boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} () cmeq | ∅ | e
--- boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} meq cmeq | ¬∅ dx | [ ismeq ] = {!!}
---boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} refl cmeq | ¬∅ dx | [ ismeq ] with complLₛ dx | inspect complLₛ dx
---boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} refl cmeq | ¬∅ dx | [ ismeq ] | ∅ | [ e ] = ⊥-elim (del⇒¬ho s lind (sym ismeq) (compl≡∅⇒ho dx e (IndexLLProp.a≤ᵢb-morph lind lind ell
---                                                                                                                                                        (IndexLLProp.≤ᵢ-reflexive lind))))
---boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} refl refl | ¬∅ dx | [ ismeq ] | ¬∅ iscs | e with complLₛ s | inspect complLₛ s
---boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} refl refl | ¬∅ dx | [ ismeq ] | ¬∅ iscs | [ e ] | ∅ | [ r ] = {!!}
---boo {ell = ell} (s ←∧) (lind ←∧) eq teq cteq {_} {∅} refl refl | ¬∅ dx | [ ismeq ] | ¬∅ iscs | [ e ] | ¬∅ isx | [ r ] = {!!}
 
 
 module _ where
@@ -132,10 +73,10 @@ module _ where
          → ∀ m¬ho → (lf : LFun ll rll) → MLFun ind s m¬ho lf
   test ind s m¬ho lf with complLₛ s | inspect complLₛ s
   test ind s m¬ho lf | ∅ | eq with tranLFMSetLL lf (¬∅ s) | inspect (λ z → tranLFMSetLL lf (¬∅ z)) s
-  test ind s m¬ho lf | ∅ | eq | ∅ | [ e ] = IMPOSSIBLE
+  test ind s m¬ho lf | ∅ | eq | ∅ | [ e ] = IMPOSSIBLE           -- ?FIX
   test ind s m¬ho lf | ∅ | eq | ¬∅ x | [ e ] with complLₛ x | inspect complLₛ x
   test ind s m¬ho lf | ∅ | [ eq ] | ¬∅ x | [ e ] | ∅ | [ t ] = ∅ eq (sym e) t
-  test ind s m¬ho lf | ∅ | eq | ¬∅ x | [ e ] | ¬∅ x₁ | [ t ] = IMPOSSIBLE
+  test ind s m¬ho lf | ∅ | eq | ¬∅ x | [ e ] | ¬∅ x₁ | [ t ] = IMPOSSIBLE          -- ?FIX
   test ∅ s m¬ho I | ¬∅ x | [ eq ] = ¬∅¬∅ eq refl eq (λ cll → I)
   test (¬∅ x₁) s (¬∅ ¬ho) I | ¬∅ x | [ eq ] = ¬∅¬∅ eq refl eq (λ cll → I)
   test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] with truncSetLL s lind | inspect (truncSetLL s) lind
@@ -153,13 +94,20 @@ module _ where
   test {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] with test {n = n} {dt} {df} ∅ trs ∅ lf
   ... | ∅ ceq eqs ceqo with (mreplacePartOf (¬∅ s) to (tranLFMSetLL lf (¬∅ trs)) at lind) | inspect (λ z → mreplacePartOf (¬∅ s) to (tranLFMSetLL lf (¬∅ trs)) at z) lind
   ... | ¬∅ mx | r with test {n = n} {dt} {df} ∅ mx ∅ lf₁
-  -- One needs to show that complLₛ s ≡ ¬∅ x contradicts the fact that the other complLₛ are ∅.
-  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ mx | [ meq ] | ∅ ceq1 eqs1 ceqo1 = {!!} -- TODO IMPOSSIBLE needs proof
+  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ mx | [ meq ] | ∅ ceq1 eqs1 ceqo1 with tranLFMSetLL lf (¬∅ trs)
+  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ mx | [ meq ] | ∅ ceq1 eqs1 ceqo1 | ∅ = IMPOSSIBLE -- IMPOSSIBLE and not provable with the current information we have.
+  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ mx | [ meq ] | ∅ ceq1 eqs1 ceqo1 | ¬∅ x with compl≡¬∅⇒replace-compl≡¬∅ s lind eq teq ceq x
+  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ .(replacePartOf s to x at ind) | [ refl ] | ∅ ceq1 eqs1 ceqo1 | ¬∅ x | proj₃ , proj₄ with complLₛ (replacePartOf s to x at ind)
+  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ .(replacePartOf s to x at ind) | [ refl ] | ∅ refl eqs1 ceqo1 | ¬∅ x | proj₃ , () | .∅
   -- This is impossible since ind is ∅ and all inputs needs to end to a specific com.
   test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = ind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ mx | [ meq ] | ¬∅∅ () ceqi1 eqs1 t1
-  test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ¬∅ mx | [ meq ] | ¬∅¬∅ ceqi1 eqs1 ceqo1 t1
-       = ¬∅¬∅ eq tseq ceqo1 {!!} where
+  test {rll = rll} {ll = ll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ {ts = ts} ceq eqs ceqo | ¬∅ mx | [ meq ] | ¬∅¬∅ {cs} ceqi1 eqs1 ceqo1 t1
+    = ¬∅¬∅ eq tseq ceqo1 ((λ cll → subst (λ z → LFun z (shrink rll _)) (shrink-repl≡∅ s lind eq teq ceq _ ceqo t) (t1 cll))) where
     tseq =  sym (trans (cong (λ z → tranLFMSetLL lf₁ z) (trans (cong (λ z → mreplacePartOf ¬∅ s to tranLFMSetLL lf z at lind) teq) meq)) (sym eqs1))
+    t : complLₛ (replacePartOf s to ts at lind) ≡ ¬∅ cs
+    t with trans (cong (λ z → mreplacePartOf ¬∅ s to z at lind) eqs) meq
+    ... | g with replacePartOf s to ts at lind
+    t | refl | e = ceqi1
   test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq eqs ceqo | ∅ | [ meq ] with tranLFMSetLL lf (¬∅ trs)
   test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ∅ ceq refl ceqo | ∅ | [ () ] | .(¬∅ _)
   test {rll = rll} {n = n} {dt} {df} ∅ s ∅ (_⊂_ {ell = ell} {ind = ind₁} lf lf₁) | ¬∅ x | [ eq ] | ¬∅ trs | [ teq ] | ¬∅∅ () ceqi eqs t
