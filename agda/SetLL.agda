@@ -848,6 +848,89 @@ tr-ext⇒id {pll = pll} {ll = li ∂ ri} s (∂→ ind)
 ... | .ri | refl | g | e = e
 
 
+module _ where
+
+  open Relation.Binary.PropositionalEquality
+-- TODO Check if we could use tr-ext⇒id to prove this.
+  tr-extg⇒id : ∀{i u pll ll rll} → ∀ (s : SetLL rll) → (ind : IndexLL {i} {u} pll ll)
+        → let tlind = subst (λ z → IndexLL z (replLL ll ind rll)) (replLL-↓ ind) ((a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)))
+          in truncSetLL (extendg ind s) tlind ≡ ¬∅ s
+  tr-extg⇒id s ↓ = refl
+  tr-extg⇒id {pll = pll} {rll = rll} s (ind ←∧) with replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | tr-extg⇒id s ind
+  tr-extg⇒id {pll = pll} {rll = .g} s (ind ←∧) | g | refl | t | is = is
+  tr-extg⇒id {pll = pll} {rll = rll} s (∧→ ind) with replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | tr-extg⇒id s ind
+  tr-extg⇒id {pll = pll} {rll = .g} s (∧→ ind) | g | refl | e | is = is
+  tr-extg⇒id {pll = pll} {rll = rll} s (ind ←∨) with replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | tr-extg⇒id s ind
+  tr-extg⇒id {pll = pll} {rll = .g} s (ind ←∨) | g | refl | t | is = is
+  tr-extg⇒id {pll = pll} {rll = rll} s (∨→ ind) with replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | tr-extg⇒id s ind
+  tr-extg⇒id {pll = pll} {rll = .g} s (∨→ ind) | g | refl | e | is = is
+  tr-extg⇒id {pll = pll} {rll = rll} s (ind ←∂) with replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | tr-extg⇒id s ind
+  tr-extg⇒id {pll = pll} {rll = .g} s (ind ←∂) | g | refl | t | is = is
+  tr-extg⇒id {pll = pll} {rll = rll} s (∂→ ind) with replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | tr-extg⇒id s ind
+  tr-extg⇒id {pll = pll} {rll = .g} s (∂→ ind) | g | refl | e | is = is
+
+
+
+  tr-repl⇒id : ∀{i u ll ell pll} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+          → (vs : SetLL ell) 
+          → let mx = replacePartOf s to vs at lind in
+            let tlind = subst (λ z → IndexLL z (replLL ll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))) in
+          truncSetLL mx tlind ≡ ¬∅ vs
+  tr-repl⇒id s ↓ vs = refl
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} ↓ (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} ↓ (lind ←∧) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧) (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧) (lind ←∧) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (∧→ s) (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (∧→ s) (lind ←∧) vs | g | refl | t | m = m
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧→ s₁) (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧→ s₁) (lind ←∧) vs | g | refl | e | is = is
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} ↓ (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} ↓ (∧→ lind) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧) (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧) (∧→ lind) vs | g | refl | t | m = m
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (∧→ s) (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (∧→ s) (∧→ lind) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧→ s₁) (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s₁ lind vs
+  tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧→ s₁) (∧→ lind) vs | g | refl | e | is = is
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} ↓ (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} ↓ (lind ←∨) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨) (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨) (lind ←∨) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (∨→ s) (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (∨→ s) (lind ←∨) vs | g | refl | t | m = m
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨→ s₁) (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨→ s₁) (lind ←∨) vs | g | refl | e | is = is
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} ↓ (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} ↓ (∨→ lind) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨) (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨) (∨→ lind) vs | g | refl | t | m = m
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (∨→ s) (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (∨→ s) (∨→ lind) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨→ s₁) (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s₁ lind vs
+  tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨→ s₁) (∨→ lind) vs | g | refl | e | is = is
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} ↓ (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} ↓ (lind ←∂) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂) (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂) (lind ←∂) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (∂→ s) (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (∂→ s) (lind ←∂) vs | g | refl | t | m = m
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂→ s₁) (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂→ s₁) (lind ←∂) vs | g | refl | e | is = is
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} ↓ (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} ↓ (∂→ lind) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂) (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂) (∂→ lind) vs | g | refl | t | m = m
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (∂→ s) (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (∂→ s) (∂→ lind) vs | g | refl | t | r = r
+  tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂→ s₁) (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s₁ lind vs
+  tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂→ s₁) (∂→ lind) vs | g | refl | e | is = is
+
+
+
+
+
+
 
 
 data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where

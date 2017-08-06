@@ -848,7 +848,228 @@ module _ where
    
   
   
-  
+   
+  ho-shrink-repl-comm : ∀{i u ll ell pll x trs cs1 cts1} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+        → (eq : complLₛ s ≡ ¬∅ x)
+        → (teq : truncSetLL s lind ≡ ¬∅ trs)
+        → (ceqi : complLₛ trs ≡ ¬∅ cs1)
+        → ∀{ts1}
+        → (ceqo  : complLₛ ts1 ≡ ¬∅ cts1)
+        → ∀{mx cs}
+        → (mreplacePartOf ¬∅ s to (¬∅ ts1) at lind) ≡ ¬∅ mx
+        → (ceqi1 : complLₛ mx ≡ ¬∅ cs)
+        → (replLL (shrink ll x) (ho-shr-morph s eq lind (sym teq) ceqi) (shrink ell cts1)) ≡ (shrink (replLL ll lind ell) cs)
+  ho-shrink-repl-comm ↓ lind () teq ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm q@(s ←∧) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ q
+  ho-shrink-repl-comm (s ←∧) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (s ←∧) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm {ll = lll ∧ rll} (s ←∧) (lind ←∧) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∧ rll} {trs = trs} (s ←∧) (lind ←∧) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {trs = trs} (s ←∧) (lind ←∧) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∧ rll} (s ←∧) (lind ←∧) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {ll = lll ∧ rll} {ell} (s ←∧) (lind ←∧) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL lll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell} (s ←∧) (lind ←∧) refl teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧) (lind ←∧) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] = cong (λ z → z ∧ _) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm (s ←∧) (∧→ lind) eq () ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm q@(∧→ s) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ q
+  ho-shrink-repl-comm (∧→ s) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (∧→ s) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm (∧→ s) (lind ←∧) eq () ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm {ll = lll ∧ rll} (∧→ s) (∧→ lind) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∧ rll} {trs = trs} (∧→ s) (∧→ lind) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {trs = trs} (∧→ s) (∧→ lind) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∧ rll} (∧→ s) (∧→ lind) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell} (∧→ s) (∧→ lind) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL rll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell} (∧→ s) (∧→ lind) refl teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (∧→ s) (∧→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] = cong (λ z → _ ∧ z) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm (s ←∧→ s₁) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ (s ←∧→ s₁)
+  ho-shrink-repl-comm (s ←∧→ s₁) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (s ←∧→ s₁) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∧ rll} {trs = trs} (s ←∧→ s₁) (lind ←∧) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {trs = trs} (s ←∧→ s₁) (lind ←∧) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell = ell} (s ←∧→ s₁) (lind ←∧) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL lll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell} (s ←∧→ s₁) (lind ←∧) eq teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧→ s₁) (lind ←∧) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] with complLₛ s₁
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] | ∅ = is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧→ s₁) (lind ←∧) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₂ | [ eqq ] | ¬∅ x₁ | [ nmeq ] | ¬∅ x = cong (λ z → z ∧ _) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq ceqi ceqo meq ceqi1 with complLₛ s₁ | inspect complLₛ s₁
+  ho-shrink-repl-comm {ll = lll ∧ rll} {trs = trs} (s ←∧→ s₁) (∧→ lind) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s₁ eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {trs = trs} (s ←∧→ s₁) (∧→ lind) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s₁ to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell = ell} (s ←∧→ s₁) (∧→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s₁ to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL rll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s₁ lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} {ell} (s ←∧→ s₁) (∧→ lind) eq teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧→ s₁) (∧→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] with complLₛ s
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] | ∅ = is where
+    is = ho-shrink-repl-comm s₁ lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {u = _} {lll ∧ rll} (s ←∧→ s₁) (∧→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₂ | [ eqq ] | ¬∅ x₁ | [ nmeq ] | ¬∅ x = cong (λ z → _ ∧ z) is where
+    is = ho-shrink-repl-comm s₁ lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm q@(s ←∨) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ q
+  ho-shrink-repl-comm (s ←∨) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (s ←∨) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm {ll = lll ∨ rll} (s ←∨) (lind ←∨) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∨ rll} {trs = trs} (s ←∨) (lind ←∨) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {trs = trs} (s ←∨) (lind ←∨) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∨ rll} (s ←∨) (lind ←∨) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {ll = lll ∨ rll} {ell} (s ←∨) (lind ←∨) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL lll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell} (s ←∨) (lind ←∨) refl teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨) (lind ←∨) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] = cong (λ z → z ∨ _) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm (s ←∨) (∨→ lind) eq () ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm q@(∨→ s) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ q
+  ho-shrink-repl-comm (∨→ s) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (∨→ s) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm (∨→ s) (lind ←∨) eq () ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm {ll = lll ∨ rll} (∨→ s) (∨→ lind) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∨ rll} {trs = trs} (∨→ s) (∨→ lind) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {trs = trs} (∨→ s) (∨→ lind) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∨ rll} (∨→ s) (∨→ lind) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell} (∨→ s) (∨→ lind) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL rll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell} (∨→ s) (∨→ lind) refl teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (∨→ s) (∨→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] = cong (λ z → _ ∨ z) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm (s ←∨→ s₁) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ (s ←∨→ s₁)
+  ho-shrink-repl-comm (s ←∨→ s₁) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (s ←∨→ s₁) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∨ rll} {trs = trs} (s ←∨→ s₁) (lind ←∨) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {trs = trs} (s ←∨→ s₁) (lind ←∨) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell = ell} (s ←∨→ s₁) (lind ←∨) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL lll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell} (s ←∨→ s₁) (lind ←∨) eq teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨→ s₁) (lind ←∨) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] with complLₛ s₁
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] | ∅ = is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨→ s₁) (lind ←∨) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₂ | [ eqq ] | ¬∅ x₁ | [ nmeq ] | ¬∅ x = cong (λ z → z ∨ _) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq ceqi ceqo meq ceqi1 with complLₛ s₁ | inspect complLₛ s₁
+  ho-shrink-repl-comm {ll = lll ∨ rll} {trs = trs} (s ←∨→ s₁) (∨→ lind) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s₁ eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {trs = trs} (s ←∨→ s₁) (∨→ lind) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s₁ to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell = ell} (s ←∨→ s₁) (∨→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s₁ to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL rll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s₁ lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} {ell} (s ←∨→ s₁) (∨→ lind) eq teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨→ s₁) (∨→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] with complLₛ s
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] | ∅ = is where
+    is = ho-shrink-repl-comm s₁ lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {u = _} {lll ∨ rll} (s ←∨→ s₁) (∨→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₂ | [ eqq ] | ¬∅ x₁ | [ nmeq ] | ¬∅ x = cong (λ z → _ ∨ z) is where
+    is = ho-shrink-repl-comm s₁ lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm q@(s ←∂) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ q
+  ho-shrink-repl-comm (s ←∂) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (s ←∂) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm {ll = lll ∂ rll} (s ←∂) (lind ←∂) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∂ rll} {trs = trs} (s ←∂) (lind ←∂) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {trs = trs} (s ←∂) (lind ←∂) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∂ rll} (s ←∂) (lind ←∂) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {ll = lll ∂ rll} {ell} (s ←∂) (lind ←∂) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL lll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell} (s ←∂) (lind ←∂) refl teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂) (lind ←∂) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] = cong (λ z → z ∂ _) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm (s ←∂) (∂→ lind) eq () ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm q@(∂→ s) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ q
+  ho-shrink-repl-comm (∂→ s) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (∂→ s) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm (∂→ s) (lind ←∂) eq () ceqi ceqo meq ceqi1
+  ho-shrink-repl-comm {ll = lll ∂ rll} (∂→ s) (∂→ lind) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∂ rll} {trs = trs} (∂→ s) (∂→ lind) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {trs = trs} (∂→ s) (∂→ lind) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∂ rll} (∂→ s) (∂→ lind) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell} (∂→ s) (∂→ lind) refl teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL rll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell} (∂→ s) (∂→ lind) refl teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (∂→ s) (∂→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] = cong (λ z → _ ∂ z) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm (s ←∂→ s₁) ↓ eq refl ceqi ceqo refl ceqi1 with complLₛ (s ←∂→ s₁)
+  ho-shrink-repl-comm (s ←∂→ s₁) ↓ refl refl refl {ts1} ceqo refl ceqi1 | .(¬∅ _) with complLₛ ts1
+  ho-shrink-repl-comm (s ←∂→ s₁) ↓ refl refl refl {ts1} refl refl refl | .(¬∅ _) | .(¬∅ _) = refl
+  ho-shrink-repl-comm {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq ceqi ceqo meq ceqi1 with complLₛ s | inspect complLₛ s
+  ho-shrink-repl-comm {ll = lll ∂ rll} {trs = trs} (s ←∂→ s₁) (lind ←∂) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {trs = trs} (s ←∂→ s₁) (lind ←∂) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell = ell} (s ←∂→ s₁) (lind ←∂) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL lll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell} (s ←∂→ s₁) (lind ←∂) eq teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂→ s₁) (lind ←∂) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] with complLₛ s₁
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] | ∅ = is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂→ s₁) (lind ←∂) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₂ | [ eqq ] | ¬∅ x₁ | [ nmeq ] | ¬∅ x = cong (λ z → z ∂ _) is where
+    is = ho-shrink-repl-comm s lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq ceqi ceqo meq ceqi1 with complLₛ s₁ | inspect complLₛ s₁
+  ho-shrink-repl-comm {ll = lll ∂ rll} {trs = trs} (s ←∂→ s₁) (∂→ lind) eq teq ceqi ceqo meq ceqi1 | ∅ | [ eqq ] with complLₛ trs | r where
+    r = compl≡∅⇒compltr≡∅ s₁ eqq lind (sym teq)
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {trs = trs} (s ←∂→ s₁) (∂→ lind) eq teq () ceqo meq ceqi1 | ∅ | [ eqq ] | .∅ | refl
+  ho-shrink-repl-comm {ll = lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] with complLₛ nmx | inspect complLₛ nmx where
+    nmx = replacePartOf s₁ to ts1 at lind
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell = ell} (s ←∂→ s₁) (∂→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] with complLₛ ts1 | ct where
+      m = replacePartOf s₁ to ts1 at lind
+      mind = subst (λ z → IndexLL z (replLL rll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))
+      ct = compl≡∅⇒compltr≡∅ m nmeq mind (sym (tr-repl⇒id s₁ lind ts1))
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} {ell} (s ←∂→ s₁) (∂→ lind) eq teq ceqi {ts1} () refl ceqi1 | ¬∅ x | [ eqq ] | ∅ | [ nmeq ] | .∅ | refl
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂→ s₁) (∂→ lind) eq teq ceqi {ts1} ceqo refl ceqi1 | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] with complLₛ s
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₁ | [ eqq ] | ¬∅ x | [ nmeq ] | ∅ = is where
+    is = ho-shrink-repl-comm s₁ lind eqq teq ceqi ceqo refl nmeq
+  ho-shrink-repl-comm {u = _} {lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq ceqi {ts1} ceqo refl refl | ¬∅ x₂ | [ eqq ] | ¬∅ x₁ | [ nmeq ] | ¬∅ x = cong (λ z → _ ∂ z) is where
+    is = ho-shrink-repl-comm s₁ lind eqq teq ceqi ceqo refl nmeq
+
+
+ 
   
   
   
