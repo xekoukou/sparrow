@@ -103,10 +103,17 @@ module _ where
   boo (s ←∧→ s₁) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∧→←∧ x)
-  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with boo s ieq ind lind {!!} {!!} ord
-  ... | g = {!!}
-  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = {!!}
-  boo (s ←∧→ s₁) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ord = {!!}
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with boo s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) ord
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ←∧ y)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ←∧ y)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with boo s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) (a≤ᵢb y)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∧ z)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∧ z)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with boo s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) (b≤ᵢa y)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∧ z)
+  boo (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∧ z)
+  boo (s ←∧→ s₁) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s | complLₛ s₁
+  ... | g | t | e = ?
   boo (s ←∧→ s₁) eq (∧→ ind) lind ¬hob ¬hoh ord = {!!}
 
   boo (s ←∨) eq ind lind ¬hob ¬hoh ord = {!!}
