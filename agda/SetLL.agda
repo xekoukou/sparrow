@@ -230,35 +230,35 @@ fillAllLower (call x) =  ↓
 
 complLₛ : ∀{i u ll} → SetLL {i} {u} ll → MSetLL ll
 complLₛ ↓ = ∅
-complLₛ (s ←∧) with complLₛ s
-... | ∅ = ¬∅ (∧→ (fillAllLower _))
-... | ¬∅ r = ¬∅ (r ←∧→ (fillAllLower _))
-complLₛ (∧→ s) with complLₛ s 
-... | ∅ = ¬∅ ((fillAllLower _) ←∧)
-... | ¬∅ r = ¬∅ ((fillAllLower _) ←∧→ r)
-complLₛ (s ←∧→ s₁) with complLₛ s | complLₛ s₁
+complLₛ {ll = lll ∧ rll} (s ←∧) with complLₛ s
+... | ∅ = ¬∅ (∧→ (fillAllLower rll))
+... | ¬∅ r = ¬∅ (r ←∧→ (fillAllLower rll))
+complLₛ {ll = lll ∧ rll} (∧→ s) with complLₛ s 
+... | ∅ = ¬∅ ((fillAllLower lll) ←∧)
+... | ¬∅ r = ¬∅ ((fillAllLower lll) ←∧→ r)
+complLₛ {ll = lll ∧ rll} (s ←∧→ s₁) with complLₛ s | complLₛ s₁
 ... | ∅ | ∅ = ∅
 ... | ∅ | ¬∅ r = ¬∅ (∧→ r)
 ... | ¬∅ l | ∅ = ¬∅ (l ←∧)
 ... | ¬∅ l | ¬∅ r = ¬∅ (l ←∧→ r)
-complLₛ (s ←∨) with complLₛ s
-... | ∅ = ¬∅ (∨→ (fillAllLower _))
-... | ¬∅ r = ¬∅ (r ←∨→ (fillAllLower _))
-complLₛ (∨→ s) with complLₛ s 
-... | ∅ = ¬∅ ((fillAllLower _) ←∨)
-... | ¬∅ r = ¬∅ ((fillAllLower _) ←∨→ r)
-complLₛ (s ←∨→ s₁) with complLₛ s | complLₛ s₁
+complLₛ {ll = lll ∨ rll} (s ←∨) with complLₛ s
+... | ∅ = ¬∅ (∨→ (fillAllLower rll))
+... | ¬∅ r = ¬∅ (r ←∨→ (fillAllLower rll))
+complLₛ {ll = lll ∨ rll} (∨→ s) with complLₛ s 
+... | ∅ = ¬∅ ((fillAllLower lll) ←∨)
+... | ¬∅ r = ¬∅ ((fillAllLower lll) ←∨→ r)
+complLₛ {ll = lll ∨ rll} (s ←∨→ s₁) with complLₛ s | complLₛ s₁
 ... | ∅ | ∅ = ∅
 ... | ∅ | ¬∅ r = ¬∅ (∨→ r)
 ... | ¬∅ l | ∅ = ¬∅ (l ←∨)
 ... | ¬∅ l | ¬∅ r = ¬∅ (l ←∨→ r)
-complLₛ (s ←∂) with complLₛ s
-... | ∅ = ¬∅ (∂→ (fillAllLower _))
-... | ¬∅ r = ¬∅ (r ←∂→ (fillAllLower _))
-complLₛ (∂→ s) with complLₛ s 
-... | ∅ = ¬∅ ((fillAllLower _) ←∂)
-... | ¬∅ r = ¬∅ ((fillAllLower _) ←∂→ r)
-complLₛ (s ←∂→ s₁) with complLₛ s | complLₛ s₁
+complLₛ {ll = lll ∂ rll} (s ←∂) with complLₛ s
+... | ∅ = ¬∅ (∂→ (fillAllLower rll))
+... | ¬∅ r = ¬∅ (r ←∂→ (fillAllLower rll))
+complLₛ {ll = lll ∂ rll} (∂→ s) with complLₛ s 
+... | ∅ = ¬∅ ((fillAllLower lll) ←∂)
+... | ¬∅ r = ¬∅ ((fillAllLower lll) ←∂→ r)
+complLₛ {ll = lll ∂ rll} (s ←∂→ s₁) with complLₛ s | complLₛ s₁
 ... | ∅ | ∅ = ∅
 ... | ∅ | ¬∅ r = ¬∅ (∂→ r)
 ... | ¬∅ l | ∅ = ¬∅ (l ←∂)

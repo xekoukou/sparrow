@@ -967,6 +967,51 @@ module _ where
   trunc≡∅⇒¬ho (s ←∂→ s₁) (∂→ ind) treq  = λ {(hitsAtLeastOnce←∂→∂→ x) → is x} where
     is = trunc≡∅⇒¬ho s₁ ind treq
 
+
+
+
+  ¬ho⇒trunc≡∅ : ∀{i u rll ll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → ¬ (hitsAtLeastOnce s ind) → (truncSetLL s ind ≡ ∅)
+  ¬ho⇒trunc≡∅ ↓ ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∧) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∧↓)
+  ¬ho⇒trunc≡∅ (∧→ s) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce∧→↓)
+  ¬ho⇒trunc≡∅ (s ←∧→ s₁) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∧→↓)
+  ¬ho⇒trunc≡∅ (s ←∨) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∨↓)
+  ¬ho⇒trunc≡∅ (∨→ s) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce∨→↓)
+  ¬ho⇒trunc≡∅ (s ←∨→ s₁) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∨→↓)
+  ¬ho⇒trunc≡∅ (s ←∂) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∂↓)
+  ¬ho⇒trunc≡∅ (∂→ s) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce∂→↓)
+  ¬ho⇒trunc≡∅ (s ←∂→ s₁) ↓ ¬ho = ⊥-elim (¬ho hitsAtLeastOnce←∂→↓) --  ⊥-elim (¬ho {!!})
+  ¬ho⇒trunc≡∅ ↓ (ind ←∧) ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∧) (ind ←∧) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce←∧←∧ z))
+  ¬ho⇒trunc≡∅ (∧→ s) (ind ←∧) ¬ho = refl
+  ¬ho⇒trunc≡∅ (s ←∧→ s₁) (ind ←∧) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce←∧→←∧ z))
+  ¬ho⇒trunc≡∅ ↓ (∧→ ind) ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∧) (∧→ ind) ¬ho = refl
+  ¬ho⇒trunc≡∅ (∧→ s) (∧→ ind) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce∧→∧→ z))
+  ¬ho⇒trunc≡∅ (s ←∧→ s₁) (∧→ ind) ¬ho = ¬ho⇒trunc≡∅ s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∧→∧→ z))
+  ¬ho⇒trunc≡∅ ↓ (ind ←∨) ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∨) (ind ←∨) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce←∨←∨ z))
+  ¬ho⇒trunc≡∅ (∨→ s) (ind ←∨) ¬ho = refl
+  ¬ho⇒trunc≡∅ (s ←∨→ s₁) (ind ←∨) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce←∨→←∨ z))
+  ¬ho⇒trunc≡∅ ↓ (∨→ ind) ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∨) (∨→ ind) ¬ho = refl
+  ¬ho⇒trunc≡∅ (∨→ s) (∨→ ind) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce∨→∨→ z))
+  ¬ho⇒trunc≡∅ (s ←∨→ s₁) (∨→ ind) ¬ho = ¬ho⇒trunc≡∅ s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∨→∨→ z))
+  ¬ho⇒trunc≡∅ ↓ (ind ←∂) ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∂) (ind ←∂) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce←∂←∂ z))
+  ¬ho⇒trunc≡∅ (∂→ s) (ind ←∂) ¬ho = refl
+  ¬ho⇒trunc≡∅ (s ←∂→ s₁) (ind ←∂) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce←∂→←∂ z))
+  ¬ho⇒trunc≡∅ ↓ (∂→ ind) ¬ho = ⊥-elim (¬ho hitsAtLeastOnce↓)
+  ¬ho⇒trunc≡∅ (s ←∂) (∂→ ind) ¬ho = refl
+  ¬ho⇒trunc≡∅ (∂→ s) (∂→ ind) ¬ho = ¬ho⇒trunc≡∅ s ind (λ z → ¬ho (hitsAtLeastOnce∂→∂→ z))
+  ¬ho⇒trunc≡∅ (s ←∂→ s₁) (∂→ ind) ¬ho = ¬ho⇒trunc≡∅ s₁ ind (λ z → ¬ho (hitsAtLeastOnce←∂→∂→ z))
+
+
+
+
+
+
+
   ¬ho⇒¬del≡∅ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → ¬(hitsAtLeastOnce s ind) → ¬ (del s ind fll ≡ ∅)
   ¬ho⇒¬del≡∅ ↓ ↓ heq = λ _ → heq hitsAtLeastOnce↓
   ¬ho⇒¬del≡∅ (x ←∧) ↓ heq = λ _ → heq hitsAtLeastOnce←∧↓
@@ -1026,6 +1071,13 @@ module _ where
   ¬ho⇒¬del≡∅ {fll = fll} (s ←∂→ s₁) (∂→ ind) heq with del s₁ ind fll | ¬ho⇒¬del≡∅ {fll = fll} s₁ ind (λ {x → heq (hitsAtLeastOnce←∂→∂→ x)})
   ... | ∅ | r = λ _ → r refl
   ... | ¬∅ x | r = λ ()
+
+
+
+  ¬ho⇒del≡¬∅ : ∀{i u rll ll fll} → (s : SetLL {i} {u} ll) → (ind : IndexLL rll ll) → ¬(hitsAtLeastOnce s ind) → Σ (SetLL (replLL ll ind fll)) (λ z → del s ind fll ≡ ¬∅ z)
+  ¬ho⇒del≡¬∅ {fll = fll} s ind ¬ho with del s ind fll | inspect (del s ind) fll
+  ¬ho⇒del≡¬∅ {fll = fll} s ind ¬ho | ∅ | [ eq ] = ⊥-elim (¬ho⇒¬del≡∅ s ind ¬ho eq)
+  ¬ho⇒del≡¬∅ {fll = fll} s ind ¬ho | ¬∅ x | [ eq ] = x , refl
 
 
 
