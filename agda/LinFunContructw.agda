@@ -5,10 +5,8 @@ module LinFunContructw where
 open import Common
 open import LinLogic
 import IndexLLProp 
-open import LinFun
 open import SetLL
 open import SetLLProp
-open import CTT
 
 open import Relation.Binary.PropositionalEquality
 open import Data.Product
@@ -20,44 +18,7 @@ open import LinFunContruct
 
 module _ where
 
-  private
-    module _ where
-    
-      open import PathPrelude hiding (_≡_)
-    
-      lem1 : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-            → (eq : complLₛ s ≡ ¬∅ x)
-            → (¬ho : ¬ hitsAtLeastOnce s lind)
-            → (teq : truncSetLL s lind ≡ ∅)
-            → ∀{mx}
-            → del s lind ell ≡ ¬∅ mx
-            → ∀{cs}
-            → complLₛ mx ≡ ¬∅ cs
-            → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind (trunc≡∅⇒¬ho s lind (¬ho⇒trunc≡∅ s lind ¬ho))) ell
-            → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind ¬ho) ell
-      lem1 {ll = ll} {ell} {_} {x} s lind eq ¬ho _ _ {cs} _ req = PathPrelude.subst {P = λ x → x} w req where
-        w = PathPrelude.cong (λ z → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind z) ell) (¬fun-eq (trunc≡∅⇒¬ho s lind (¬ho⇒trunc≡∅ s lind ¬ho)) ¬ho) 
-     
-    
-    
   open IndexLLProp
-
-  roo : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-        → (eq : complLₛ s ≡ ¬∅ x)
-        → (¬ho : ¬ hitsAtLeastOnce s lind)
-        → let mx = proj₁ (¬ho⇒del≡¬∅ s lind ¬ho) in
-          ∀{cs}
-          → complLₛ mx ≡ ¬∅ cs
-          → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind ¬ho) ell
-  roo {ell = ell} s lind eq ¬ho cmeq with smx | mx | meq where
-    smx = ¬ho⇒del≡¬∅ {fll = ell} s lind ¬ho
-    mx = proj₁ smx
-    meq = proj₂ smx
-  ... | g | mx | meq = lem1 s lind eq ¬ho ((¬ho⇒trunc≡∅ s lind ¬ho)) meq cmeq r where
-    r = shrink-repl-comm s lind eq (¬ho⇒trunc≡∅ s lind ¬ho) meq cmeq
-
-
-
 
   poo : ∀ {i u ll ell pll tll cs} → (s : SetLL ll) → (eq : complLₛ s ≡ ¬∅ cs) → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL tll ll)
         → (¬hob : ¬ hitsAtLeastOnce s ind)
@@ -70,7 +31,7 @@ module _ where
         (nord : ¬ Orderedᵢ ind lind) →
         let nind = ¬ord-morph ind lind ell (flipNotOrdᵢ nord) in
         let hnord = ( λ z → nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬hob ¬hoh (flipOrdᵢ z))) in
-        ¬ord-morph bind hind ell hnord ≡ subst (λ z → IndexLL pll z) (roo {ell = ell} s lind eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬hob lind nord (sym (proj₂ (¬ho⇒del≡¬∅ s lind ¬hoh)))))  
+        ¬ord-morph bind hind ell hnord ≡ ?
   poo ↓ () ind lind ¬hob ¬hoh ceqi nord
   poo (s ←∧) eq ↓ lind ¬hob ¬hoh ceqi nord = ⊥-elim (¬hob hitsAtLeastOnce←∧↓)
   poo {ell = ell} (s ←∧) eq (ind ←∧) lind ¬hob ¬hoh ceqi nord with complLₛ s | inspect complLₛ s | nhsm where
