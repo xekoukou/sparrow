@@ -1,4 +1,5 @@
 -- {-# OPTIONS --show-implicit #-}
+{-# OPTIONS --show-irrelevant #-}
 
 module LinFunContructw where
 
@@ -65,19 +66,23 @@ module _ where
         → let mx = proj₁ (¬ho⇒del≡¬∅ s lind ¬hoh) in
         ∀{mcs}
         → (ceqi : complLₛ mx ≡ ¬∅ mcs)
-        → let hind = ¬ho-shr-morph s eq lind ¬hoh in
-        let bind = ¬ho-shr-morph s eq ind ¬hob in
+        → let hind = ¬ho-shr-morph s eq lind ¬hoh
+              bind = ¬ho-shr-morph s eq ind ¬hob in
         (nord : ¬ Orderedᵢ ind lind) →
-        let nind = ¬ord-morph ind lind ell (flipNotOrdᵢ nord) in
-        let hnord = ( λ z → nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬hob ¬hoh (flipOrdᵢ z))) in
+        let nind = ¬ord-morph ind lind ell (flipNotOrdᵢ nord)
+            hnord : ¬ (Orderedᵢ hind bind)
+            hnord = ( λ z → nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬hob ¬hoh (flipOrdᵢ z))) in
         ¬ord-morph bind hind ell hnord ≡ subst (λ z → IndexLL pll z) (roo {ell = ell} s lind eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬hob lind nord (sym (proj₂ (¬ho⇒del≡¬∅ s lind ¬hoh)))))  
   poo ↓ () ind lind ¬hob ¬hoh ceqi nord
   poo (s ←∧) eq ↓ lind ¬hob ¬hoh ceqi nord = ⊥-elim (¬hob hitsAtLeastOnce←∧↓)
-  poo {ell = ell} (s ←∧) eq (ind ←∧) lind ¬hob ¬hoh ceqi nord with complLₛ s | inspect complLₛ s | nhsm where
-    nhsm = ¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob
---    hnord = λ z → nord (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) lind ¬hob ¬hoh (flipOrdᵢ z))
---    omh = ¬ord-morph nhsm (¬ho-shr-morph (s ←∧) eq lind ¬hoh) ell hnord
-  ... | g | e | nhsm = {!!}
+  poo {ell = ell} (s ←∧) eq (ind ←∧) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
+  poo {ell = ell} (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ceqi nord = {!!} where -- with complLₛ s | inspect complLₛ s | hind | bind | hnord where
+    hind = ¬ho-shr-morph (s ←∧) eq (lind ←∧) ¬hoh
+    bind = ¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob
+    hnord : ¬ (Orderedᵢ hind bind)
+    hnord z = nord (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh (flipOrdᵢ z))
+--  ... | g | e | hind | bind | hnord = ?
+  poo {ell = ell} (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ceqi nord = {!!}
   poo (s ←∧) eq (∧→ ind) lind ¬hob ¬hoh ceqi nord = {!!}
   poo (∧→ s) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
   poo (s ←∧→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
