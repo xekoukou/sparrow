@@ -14,7 +14,7 @@ import IndexLLProp
 open import LinFun
 open import SetLL
 open import SetLLProp
-open import CTT
+import IndexLLProp
 
 open import Relation.Binary.PropositionalEquality
 open import Data.Product
@@ -23,70 +23,18 @@ open import Data.Product
 open import LinFunContruct
 
 
-
 module _ where
 
-  private
-    module _ where
-    
-      open import PathPrelude hiding (_≡_)
-    
-      lem1 : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-            → (eq : complLₛ s ≡ ¬∅ x)
-            → (¬ho : ¬ hitsAtLeastOnce s lind)
-            → (teq : truncSetLL s lind ≡ ∅)
-            → ∀{mx}
-            → del s lind ell ≡ ¬∅ mx
-            → ∀{cs}
-            → complLₛ mx ≡ ¬∅ cs
-            → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind (trunc≡∅⇒¬ho s lind (¬ho⇒trunc≡∅ s lind ¬ho))) ell
-            → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind ¬ho) ell
-      lem1 {ll = ll} {ell} {_} {x} s lind eq ¬ho _ _ {cs} _ req = PathPrelude.subst {P = λ x → x} w req where
-        w = PathPrelude.cong (λ z → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind z) ell) (¬fun-eq (trunc≡∅⇒¬ho s lind (¬ho⇒trunc≡∅ s lind ¬ho)) ¬ho) 
-     
-    
-    
   open IndexLLProp
 
-  roo : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-        → (eq : complLₛ s ≡ ¬∅ x)
-        → (¬ho : ¬ hitsAtLeastOnce s lind)
-        → let mx = proj₁ (¬ho⇒del≡¬∅ s lind ¬ho) in
-          ∀{cs}
-          → complLₛ mx ≡ ¬∅ cs
-          → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind ¬ho) ell
-  roo {ell = ell} s lind eq ¬ho cmeq with smx | mx | meq where
-    smx = ¬ho⇒del≡¬∅ {fll = ell} s lind ¬ho
-    mx = proj₁ smx
-    meq = proj₂ smx
-  ... | g | mx | meq = lem1 s lind eq ¬ho ((¬ho⇒trunc≡∅ s lind ¬ho)) meq cmeq r where
-    r = shrink-repl-comm s lind eq (¬ho⇒trunc≡∅ s lind ¬ho) meq cmeq
-
-
-
-
-
-  woo : {i : Size} {u : Level} (ls : LinLogic i {u}) (s : SetLL ls) (w : MSetLL ls) (w₁ : Reveal complLₛ · s is w)
-        (rs : LinLogic i) {ell pll tll : LinLogic i} {cs : SetLL (ls ∧ rs)} (eq : (complLₛ (s ←∧) ) ≡ ¬∅ cs)
-        (ind : IndexLL pll ls) (lind : IndexLL tll ls) (¬hob : hitsAtLeastOnce (s ←∧) (ind ←∧) → ⊥) (¬hoh : hitsAtLeastOnce (s ←∧) (lind ←∧) → ⊥)
-        {mcs : SetLL (replLL ls lind ell ∧ rs)} (ceqi : complLₛ   (proj₁    (¬ho⇒del≡¬∅ (s ←∧) (lind ←∧) ¬hoh )) ≡ ¬∅ mcs)
-        (nord : Orderedᵢ (ind ←∧) (lind ←∧) → ⊥) →
---        let mx = proj₁ (¬ho⇒del≡¬∅ {fll = ell} (s ←∧) (lind ←∧) ¬hoh)
---            nind = ¬ord-morph (ind ←∧) (lind ←∧) ell (flipNotOrdᵢ nord) 
---            rgeq = subst (λ z → IndexLL pll z) (roo {ell = ell} (s ←∧) (lind ←∧) eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho (ind ←∧) (s ←∧) ¬hob (lind ←∧) nord (sym (proj₂ (¬ho⇒del≡¬∅ (s ←∧) (lind ←∧) ¬hoh))))) in
-        ¬ord-morph (¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob) (¬ho-shr-morph (s ←∧) eq (lind ←∧) ¬hoh ) ell (λ z → nord   (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh    (flipOrdᵢ z)))
-        ≡ {!!}
-  woo = {!!}
-
-
-  boo : {i : Size} {u : Level} (ls : LinLogic i) (s : SetLL ls) (w : MSetLL ls) (w₁ : Reveal complLₛ · s is w)
+  itActuallyWorks : {i : Size} {u : Level} (ls : LinLogic i) (s : SetLL ls) (w : MSetLL ls) (w₁ : Reveal complLₛ · s is w)
         (rs : LinLogic i) {ell pll tll : LinLogic i} {cs : SetLL (ls ∧ rs)} (eq : (complLₛ (s ←∧)) ≡ ¬∅ cs)
         (ind : IndexLL pll ls) (lind : IndexLL tll ls) (¬hob : hitsAtLeastOnce (s ←∧) (ind ←∧) → ⊥) (¬hoh : hitsAtLeastOnce (s ←∧) (lind ←∧) → ⊥)
         {mcs : SetLL (replLL ls lind ell ∧ rs)} (ceqi : complLₛ   (proj₁    (¬ho⇒del≡¬∅ (s ←∧) (lind ←∧) ¬hoh )) ≡ ¬∅ mcs)
-        (nord : Orderedᵢ (ind ←∧) (lind ←∧) → ⊥) →
+        (nord : Orderedᵢ (ind ←∧) (lind ←∧) → ⊥) {b : IndexLL pll (replLL (shrink (ls ∧ rs) cs) (¬ho-shr-morph (s ←∧) eq (lind ←∧) ¬hoh ) ell)} → 
         ¬ord-morph (¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob )(¬ho-shr-morph (s ←∧) eq (lind ←∧) ¬hoh ) ell (λ z →   nord   (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh    (flipOrdᵢ z)))
-        ≡ {!!}
-  boo = {!!}
+        ≡ b
+  itActuallyWorks = {!!}
 
 
 
@@ -103,20 +51,18 @@ module _ where
         let nind = ¬ord-morph ind lind ell (flipNotOrdᵢ nord)
             hnord : ¬ (Orderedᵢ hind bind)
             hnord = ( λ z → nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬hob ¬hoh (flipOrdᵢ z))) in
-        ¬ord-morph bind hind ell hnord ≡ {!!} -- subst (λ z → IndexLL pll z) (roo {ell = ell} s lind eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬hob lind nord (sym (proj₂ (¬ho⇒del≡¬∅ s lind ¬hoh)))))  
+        ∀{b} →
+        ¬ord-morph bind hind ell hnord ≡ b -- subst (λ z → IndexLL pll z) (roo {ell = ell} s lind eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬hob lind nord (sym (proj₂ (¬ho⇒del≡¬∅ s lind ¬hoh)))))  
   poo ↓ () ind lind ¬hob ¬hoh ceqi nord
   poo (s ←∧) eq ↓ lind ¬hob ¬hoh ceqi nord = ⊥-elim (¬hob hitsAtLeastOnce←∧↓)
   poo {ell = ell} (s ←∧) eq (ind ←∧) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
-  poo {ll = ls ∧ rs} {ell = ell} {pll} {tll} {cs} (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ceqi nord = {!!} where -- with complLₛ s | inspect complLₛ s where
+  poo {ll = ls ∧ rs} {ell = ell} {pll} {tll} {cs} (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ceqi nord with complLₛ s | inspect complLₛ s where
     hind = ¬ho-shr-morph (s ←∧) eq (lind ←∧) ¬hoh
     bind = ¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob
     hnord : ¬ (Orderedᵢ hind bind)
     hnord z = nord (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh (flipOrdᵢ z))
     lgeq = ¬ord-morph bind hind ell hnord
-    mx = proj₁ (¬ho⇒del≡¬∅ {fll = ell} (s ←∧) (lind ←∧) ¬hoh)
-    nind = ¬ord-morph (ind ←∧) (lind ←∧) ell (flipNotOrdᵢ nord)
-    rgeq = subst (λ z → IndexLL pll z) (roo {ell = ell} (s ←∧) (lind ←∧) eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho (ind ←∧) (s ←∧) ¬hob (lind ←∧) nord (sym (proj₂ (¬ho⇒del≡¬∅ (s ←∧) (lind ←∧) ¬hoh)))))
---  ... | g | e = ?
+  ... | g | e = ?
   poo {ell = ell} (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ceqi nord = {!!} -- with complLₛ s | inspect complLₛ s
 --  ... | g | e = {!!}
   poo (s ←∧) eq (∧→ ind) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
