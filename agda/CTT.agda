@@ -3,6 +3,8 @@ module CTT where
 open import PathPrelude
 open import Data.Empty
 open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality hiding (subst) renaming (_≡_ to _≡ᵣ_)
+open import Data.Product
 
 
 

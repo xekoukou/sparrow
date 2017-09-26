@@ -118,7 +118,33 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set u wh
   ∂→_ : ∀{li ri} → IndexLL rll ri → IndexLL rll (li ∂ ri)
 
 
+data IndexLLCT : Set where
+  ic←∧ : IndexLLCT 
+  ic∧→ : IndexLLCT
+  ic←∨ : IndexLLCT
+  ic∨→ : IndexLLCT
+  ic←∂ : IndexLLCT
+  ic∂→ : IndexLLCT
 
+
+expIndLT : ∀{i u} → {ll : LinLogic i {u}}  → IndexLLCT → (tll : LinLogic i {u}) → LinLogic i {u}
+expIndLT {i} {u} {ll} ic←∧ tll = (ll ∧ tll)
+expIndLT {i} {u} {ll} ic∧→ tll = (tll ∧ ll)
+expIndLT {i} {u} {ll} ic←∨ tll = (ll ∨ tll)
+expIndLT {i} {u} {ll} ic∨→ tll = (tll ∨ ll)
+expIndLT {i} {u} {ll} ic←∂ tll = (ll ∂ tll)
+expIndLT {i} {u} {ll} ic∂→ tll = (tll ∂ ll)
+
+
+expInd : ∀{i u} → {rll ll : LinLogic i {u}}  → (ict : IndexLLCT) → (tll : LinLogic i {u}) → IndexLL rll ll → IndexLL {i} {u} rll (expIndLT {ll = ll} ict tll)
+expInd ic←∧ _ ind = ind ←∧
+expInd ic∧→ _ ind = ∧→ ind
+expInd ic←∨ _ ind = ind ←∨
+expInd ic∨→ _ ind = ∨→ ind
+expInd ic←∂ _ ind = ind ←∂
+expInd ic∂→ _ ind = ∂→ ind
+
+-- IndexLL {i} {u} ll → IndexLL  
 
 -- Replaces a node of a linear logic tree with another one.
 replLL : ∀{i u q} → (ll : LinLogic i {u}) → IndexLL q ll → LinLogic i {u} → LinLogic i {u}

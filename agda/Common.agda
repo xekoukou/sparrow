@@ -3,7 +3,7 @@
 module Common where
 
 
-open import Data.Empty public hiding (⊥-elim)
+open import Data.Empty public
 open import Relation.Binary.PropositionalEquality public using (_≡_ ; refl)
 open import Relation.Binary.HeterogeneousEquality public using (_≅_ ; refl ; ≅-to-≡)
 open import Relation.Nullary public
@@ -21,11 +21,6 @@ module _ where
 postulate IMPOSSIBLE : ∀{u} → {A : Set (u)} → A
 
 -- A proof irrelevant eliminator
-
-module _ where
-
-  ⊥-elim : ∀ {w} {Whatever : Set w} → .⊥ → Whatever
-  ⊥-elim ()
 
 
 module _ where
