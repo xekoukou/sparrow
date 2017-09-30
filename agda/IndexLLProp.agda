@@ -56,6 +56,24 @@ data _≤ᵢ_ {i u gll fll} : ∀{ll} → IndexLL {i} {u} gll ll → IndexLL {i}
   ≤ᵢ∂→ : ∀{li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≤ᵢ bind)
          → _≤ᵢ_ {ll = li ∂ ri} (∂→ sind) (∂→ bind)
 
+
+≤ᵢ-spec : ∀{i u ll tll gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → {ict : IndexLLCT} → _≤ᵢ_ {ll = expLLT ict tll} (expInd ict tll sind) (expInd ict tll bind) → (sind ≤ᵢ bind)
+≤ᵢ-spec {sind = sind} {bind} {ic←∧} (≤ᵢ←∧ rl) = rl
+≤ᵢ-spec {sind = sind} {bind} {ic∧→} (≤ᵢ∧→ rl) = rl
+≤ᵢ-spec {sind = sind} {bind} {ic←∨} (≤ᵢ←∨ rl) = rl
+≤ᵢ-spec {sind = sind} {bind} {ic∨→} (≤ᵢ∨→ rl) = rl
+≤ᵢ-spec {sind = sind} {bind} {ic←∂} (≤ᵢ←∂ rl) = rl
+≤ᵢ-spec {sind = sind} {bind} {ic∂→} (≤ᵢ∂→ rl) = rl
+
+≤ᵢ-ext : ∀{i u ll tll gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → {ict : IndexLLCT} → (sind ≤ᵢ bind) → _≤ᵢ_ {ll = expLLT ict tll} (expInd ict tll sind) (expInd ict tll bind)
+≤ᵢ-ext {ict = ic←∧} rl = ≤ᵢ←∧ rl
+≤ᵢ-ext {ict = ic∧→} rl = ≤ᵢ∧→ rl
+≤ᵢ-ext {ict = ic←∨} rl = ≤ᵢ←∨ rl
+≤ᵢ-ext {ict = ic∨→} rl = ≤ᵢ∨→ rl
+≤ᵢ-ext {ict = ic←∂} rl = ≤ᵢ←∂ rl
+≤ᵢ-ext {ict = ic∂→} rl = ≤ᵢ∂→ rl
+
+
 ≤ᵢ-reflexive : ∀{i u gll ll} → (ind : IndexLL {i} {u} gll ll) → ind ≤ᵢ ind
 ≤ᵢ-reflexive ↓ = ≤ᵢ↓
 ≤ᵢ-reflexive (ind ←∧) = ≤ᵢ←∧ (≤ᵢ-reflexive ind)
@@ -242,6 +260,20 @@ indτ&¬ge⇒¬≅ (∂→ ind) (∂→ lind) neq  = λ {(≅ᵢ∂→ x) → r 
 data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {u} fll ll) : Set where
   a≤ᵢb : a ≤ᵢ b → Orderedᵢ a b
   b≤ᵢa : b ≤ᵢ a → Orderedᵢ a b
+
+
+
+ord-spec : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
+           → {ind : IndexLL rll ll} → {ict : IndexLLCT} → ∀ {tll} → Orderedᵢ (expInd ict tll ind) (expInd ict tll emi) → Orderedᵢ ind emi
+ord-spec (a≤ᵢb x) = a≤ᵢb (≤ᵢ-spec x)
+ord-spec (b≤ᵢa x) = b≤ᵢa (≤ᵢ-spec x)
+
+ord-ext : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
+           → {ind : IndexLL rll ll} → {ict : IndexLLCT} → ∀ {tll} → Orderedᵢ ind emi → Orderedᵢ (expInd ict tll ind) (expInd ict tll emi)
+ord-ext (a≤ᵢb x) = a≤ᵢb (≤ᵢ-ext x)
+ord-ext (b≤ᵢa x) = b≤ᵢa (≤ᵢ-ext x)
+
+
 
 isOrdᵢ : ∀{i u gll fll ll} → (a : IndexLL {i} {u} gll ll) → (b : IndexLL {i} {u} fll ll)
          → Dec (Orderedᵢ a b)

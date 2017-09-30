@@ -127,16 +127,16 @@ data IndexLLCT : Set where
   ic∂→ : IndexLLCT
 
 
-expIndLT : ∀{i u} → {ll : LinLogic i {u}}  → IndexLLCT → (tll : LinLogic i {u}) → LinLogic i {u}
-expIndLT {i} {u} {ll} ic←∧ tll = (ll ∧ tll)
-expIndLT {i} {u} {ll} ic∧→ tll = (tll ∧ ll)
-expIndLT {i} {u} {ll} ic←∨ tll = (ll ∨ tll)
-expIndLT {i} {u} {ll} ic∨→ tll = (tll ∨ ll)
-expIndLT {i} {u} {ll} ic←∂ tll = (ll ∂ tll)
-expIndLT {i} {u} {ll} ic∂→ tll = (tll ∂ ll)
+expLLT : ∀{i u} → {ll : LinLogic i {u}}  → IndexLLCT → (tll : LinLogic i {u}) → LinLogic i {u}
+expLLT {i} {u} {ll} ic←∧ tll = (ll ∧ tll)
+expLLT {i} {u} {ll} ic∧→ tll = (tll ∧ ll)
+expLLT {i} {u} {ll} ic←∨ tll = (ll ∨ tll)
+expLLT {i} {u} {ll} ic∨→ tll = (tll ∨ ll)
+expLLT {i} {u} {ll} ic←∂ tll = (ll ∂ tll)
+expLLT {i} {u} {ll} ic∂→ tll = (tll ∂ ll)
 
 
-expInd : ∀{i u} → {rll ll : LinLogic i {u}}  → (ict : IndexLLCT) → (tll : LinLogic i {u}) → IndexLL rll ll → IndexLL {i} {u} rll (expIndLT {ll = ll} ict tll)
+expInd : ∀{i u} → {rll ll : LinLogic i {u}}  → (ict : IndexLLCT) → (tll : LinLogic i {u}) → IndexLL rll ll → IndexLL {i} {u} rll (expLLT {ll = ll} ict tll)
 expInd ic←∧ _ ind = ind ←∧
 expInd ic∧→ _ ind = ∧→ ind
 expInd ic←∨ _ ind = ind ←∨

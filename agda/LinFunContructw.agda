@@ -23,90 +23,94 @@ open import Data.Product
 open import LinFunContruct
 
 
-
+ 
 module _ where
 
-  private
-    module _ where
-    
-      open import PathPrelude hiding (_≡_)
-    
-      lem1 : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-            → (eq : complLₛ s ≡ ¬∅ x)
-            → (¬ho : ¬ hitsAtLeastOnce s lind)
-            → (teq : truncSetLL s lind ≡ ∅)
-            → ∀{mx}
-            → del s lind ell ≡ ¬∅ mx
-            → ∀{cs}
-            → complLₛ mx ≡ ¬∅ cs
-            → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind (trunc≡∅⇒¬ho s lind (¬ho⇒trunc≡∅ s lind ¬ho))) ell
-            → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind ¬ho) ell
-      lem1 {ll = ll} {ell} {_} {x} s lind eq ¬ho _ _ {cs} _ req = PathPrelude.subst {P = λ x → x} w req where
-        w = PathPrelude.cong (λ z → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind z) ell) (¬fun-eq (trunc≡∅⇒¬ho s lind (¬ho⇒trunc≡∅ s lind ¬ho)) ¬ho) 
-     
-    
-    
   open IndexLLProp
 
-  roo : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-        → (eq : complLₛ s ≡ ¬∅ x)
-        → (¬ho : ¬ hitsAtLeastOnce s lind)
-        → let mx = proj₁ (¬ho⇒del≡¬∅ s lind ¬ho) in
-          ∀{cs}
-          → complLₛ mx ≡ ¬∅ cs
-          → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind ¬ho) ell
-  roo {ell = ell} s lind eq ¬ho cmeq with smx | mx | meq where
-    smx = ¬ho⇒del≡¬∅ {fll = ell} s lind ¬ho
-    mx = proj₁ smx
-    meq = proj₂ smx
-  ... | g | mx | meq = lem1 s lind eq ¬ho ((¬ho⇒trunc≡∅ s lind ¬ho)) meq cmeq r where
-    r = shrink-repl-comm s lind eq (¬ho⇒trunc≡∅ s lind ¬ho) meq cmeq
 
 
 
-
-
+ 
+ 
+ 
+ 
   poo : ∀ {i u ll ell pll tll cs} → (s : SetLL ll) → (eq : complLₛ s ≡ ¬∅ cs) → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL tll ll)
         → (¬hob : ¬ hitsAtLeastOnce s ind)
-        → (¬hoh : ¬ hitsAtLeastOnce s lind)
-        → let mx = proj₁ (¬ho⇒del≡¬∅ {fll = ell} s lind ¬hoh) in
-        ∀{mcs}
+        → ∀{mx}
+        → (meq : del s lind ell ≡ ¬∅ mx)
+        →  ∀{mcs}
         → (ceqi : complLₛ mx ≡ ¬∅ mcs)
-        → let hind = ¬ho-shr-morph s eq lind ¬hoh
+        → (teq : truncSetLL s lind ≡ ∅)
+        → let ¬hoh = trunc≡∅⇒¬ho s lind teq
+              hind = ¬ho-shr-morph s eq lind ¬hoh
               bind = ¬ho-shr-morph s eq ind ¬hob in
         (nord : ¬ Orderedᵢ ind lind) →
         let nind = ¬ord-morph ind lind ell (flipNotOrdᵢ nord)
-            hnord : ¬ (Orderedᵢ hind bind)
-            hnord = ( λ z → nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬hob ¬hoh (flipOrdᵢ z))) in
-        ¬ord-morph bind hind ell hnord ≡ subst (λ z → IndexLL pll z) (roo {ell = ell} s lind eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬hob lind nord (sym (proj₂ (¬ho⇒del≡¬∅ s lind ¬hoh)))))  
-  poo ↓ () ind lind ¬hob ¬hoh ceqi nord
-  poo (s ←∧) eq ↓ lind ¬hob ¬hoh ceqi nord = ⊥-elim (¬hob hitsAtLeastOnce←∧↓)
-  poo {ell = ell} (s ←∧) eq (ind ←∧) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
-  poo {ll = ls ∧ rs} {ell = ell} {pll} {tll} {cs} (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ceqi nord with complLₛ s | inspect complLₛ s | hind | bind | hnord | lgeq | rgeq where
-    hind = ¬ho-shr-morph (s ←∧) eq (lind ←∧) ¬hoh
-    bind = ¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob
-    hnord : ¬ (Orderedᵢ hind bind)
-    hnord z = nord (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh (flipOrdᵢ z))
-    lgeq = ¬ord-morph bind hind ell
-    mx = proj₁ (¬ho⇒del≡¬∅ {fll = ell} (s ←∧) (lind ←∧) ¬hoh)
-    nind = ¬ord-morph (ind ←∧) (lind ←∧) ell (flipNotOrdᵢ nord)
-    rgeq = subst (λ z → IndexLL pll z) (roo {ell = ell} (s ←∧) (lind ←∧) eq ¬hoh ceqi) (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho (ind ←∧) (s ←∧) ¬hob (lind ←∧) nord (sym (proj₂ (¬ho⇒del≡¬∅ (s ←∧) (lind ←∧) ¬hoh))))) where
-  ... | g | e | hind | bind | hnord | lgeq | rgeq = {!!}
-  poo {ell = ell} (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ceqi nord = {!!} -- with complLₛ s | inspect complLₛ s
---  ... | g | e = {!!}
-  poo (s ←∧) eq (∧→ ind) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
-  poo (s ←∧) eq (∧→ ind) (lind ←∧) ¬hob ¬hoh ceqi nord = {!!}
-  poo (s ←∧) eq (∧→ ind) (∧→ lind) ¬hob ¬hoh ceqi nord = {!!}
-  poo (∧→ s) eq ↓ lind ¬hob ¬hoh ceqi nord = ⊥-elim (¬hob hitsAtLeastOnce∧→↓)
-  poo (∧→ s) eq (ind ←∧) lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (∧→ s) eq (∧→ ind) lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (s ←∧→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (s ←∨) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (∨→ s) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (s ←∨→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (s ←∂) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (∂→ s) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
-  poo (s ←∂→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+            hord : ¬ (Orderedᵢ bind hind)
+            hord = ( λ z → nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬hob ¬hoh z))
+            l = shrink-repl-comm s lind eq teq meq ceqi in
+        ¬ord-morph bind hind ell (flipNotOrdᵢ hord) ≡ subst (λ z → IndexLL pll z) l (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬hob lind nord (sym meq)))  
+  poo ↓ () ind lind ¬hob meq ceqi teq nord
+  poo (s ←∧) eq ↓ lind ¬hob meq ceqi teq nord = ⊥-elim (¬hob hitsAtLeastOnce←∧↓)
+  poo (s ←∧) eq (ind ←∧) ↓ ¬hob meq ceqi teq nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓) where
+    ¬hoh = trunc≡∅⇒¬ho (s ←∧) ↓ teq
+  poo (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob meq ceqi teq nord with complLₛ s | inspect complLₛ s
+  poo (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob meq ceqi teq nord | ∅ | [ neq ] = ⊥-elim (¬nho (compl≡∅⇒ho s neq ind)) where
+    ¬nho : ¬ (hitsAtLeastOnce s ind)
+    ¬nho x = ¬hob (hitsAtLeastOnce←∧←∧ x)
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob meq ceqi teq nord | ¬∅ x | [ neq ] with del s lind ell | inspect (del s lind) ell
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob () ceqi teq nord | ¬∅ x | [ neq ] | ∅ | t
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob {↓} () ceqi teq nord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ]
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob {.nmx ←∧} refl ceqi teq nord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob {.nmx ←∧} refl ceqi teq nord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob {.nmx ←∧} refl refl teq nord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = {!!}
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob {∧→ mx} meq ceqi teq nord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ] = {!!}
+  poo {ell = ell} (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob {mx ←∧→ mx₁} meq ceqi teq nord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ] = {!!}
+  poo (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob meq ceqi teq nord = {!!}
+  poo (s ←∧) eq (∧→ ind) lind ¬hob meq ceqi teq nord = {!!}
+  poo (∧→ s) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (s ←∧→ s₁) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (s ←∨) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (∨→ s) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (s ←∨→ s₁) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (s ←∂) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (∂→ s) eq ind lind ¬hob meq ceqi teq nord = {!!}
+  poo (s ←∂→ s₁) eq ind lind ¬hob meq ceqi teq nord = {!!}
+
+--   poo {ell = ell} (s ←∧) eq (ind ←∧) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
+--   poo {ll = ls ∧ rs} {ell = ell} {pll} {tll} {cs} (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ceqi nord with complLₛ s | inspect complLₛ s | hindp ¬hoh | lgeq hnord | rgeq rgeqp where
+--     hindp = ¬ho-shr-morph (s ←∧) eq (lind ←∧)
+--     hind = hindp ¬hoh
+--     bind = ¬ho-shr-morph (s ←∧) eq (ind ←∧) ¬hob
+--     hnord : ¬ (Orderedᵢ hind bind)
+--     hnord z = nord (¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh (flipOrdᵢ z))
+--     lgeq = ¬ord-morph bind hind ell
+--     mx = proj₁ (¬ho⇒del≡¬∅ {fll = ell} (s ←∧) (lind ←∧) ¬hoh)
+--     nind = ¬ord-morph (ind ←∧) (lind ←∧) ell (flipNotOrdᵢ nord)
+--     rgeqp = (¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho (ind ←∧) (s ←∧) ¬hob (lind ←∧) nord (sym (proj₂ (¬ho⇒del≡¬∅ (s ←∧) (lind ←∧) ¬hoh)))))
+--     rgeq = subst (λ z → IndexLL pll z) (roo {ell = ell} (s ←∧) (lind ←∧) eq ¬hoh ceqi)
+--   poo {u = _} {ls ∧ rs} {ell} {pll} {tll} {cs} (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ceqi nord | g | [ eq₁ ] | hind | lgeq | rgeq = {!!}
+--   poo {ell = ell} (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ceqi nord = {!!} -- with complLₛ s | inspect complLₛ s
+-- --  ... | g | e = {!!}
+--   poo (s ←∧) eq (∧→ ind) ↓ ¬hob ¬hoh ceqi nord = ⊥-elim (¬hoh hitsAtLeastOnce←∧↓)
+--   poo (s ←∧) eq (∧→ ind) (lind ←∧) ¬hob ¬hoh ceqi nord = {!!}
+--   poo (s ←∧) eq (∧→ ind) (∧→ lind) ¬hob ¬hoh ceqi nord = {!!}
+--   poo (∧→ s) eq ↓ lind ¬hob ¬hoh ceqi nord = ⊥-elim (¬hob hitsAtLeastOnce∧→↓)
+--   poo (∧→ s) eq (ind ←∧) lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (∧→ s) eq (∧→ ind) lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (s ←∧→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (s ←∨) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (∨→ s) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (s ←∨→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (s ←∂) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (∂→ s) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+--   poo (s ←∂→ s₁) eq ind lind ¬hob ¬hoh ceqi nord = {!!}
+-- 
+-- 
+
+
+
 
 
 
@@ -225,8 +229,8 @@ module _ where
 --     nind = ¬∅ (¬ord-morph ind lind ell (flipNotOrdᵢ nord))
 --     n¬ho = ¬ord&¬ho-del⇒¬ho ind s ¬ho lind nord (sym meq)
 --   ... | ∅ () ceq eqs ceqo
---   test {rll = rll} {n = n} {dt} {df} (¬∅ ind) s (¬∅ ¬ho) (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ∅ | [ teq ] | ¬∅ mx | [ meq ] | no ¬p | ¬∅∅ {ind = tind} indeq ceqi eqs cll t
---     = ¬∅∅ refl eq tseq cll (_⊂_ {ind = sind} lf {!l1!}) where 
+--   test {rll = rll} {n = n} {dt} {df} (¬∅ ind) s (¬∅ ¬ho) (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ∅ | [ teq ] | ¬∅ mx | [ meq ] | no ¬p | ¬∅∅ {ind = tind} {cs} indeq ceqi eqs cll t
+--     = ¬∅∅ refl eq tseq cll (_⊂_ {ind = sind} lf (subst (λ z → LFun z rll) l1 l2)) where 
 --     nord = indτ&¬ge⇒¬Ord ind lind ¬p
 --     tseq =  sym (trans (cong (λ z → tranLFMSetLL lf₁ z) (trans (cong (λ z → mreplacePartOf ¬∅ s to tranLFMSetLL lf z at lind) teq) meq)) (sym eqs))
 --     hind = ¬ho-shr-morph s eq lind ((trunc≡∅⇒¬ho s lind teq))
@@ -236,11 +240,19 @@ module _ where
 --     hord x = nord (¬ho-shr-morph-pres-¬ord s eq ind lind ¬ho (trunc≡∅⇒¬ho s lind teq) x)
     
 --     sind = ¬ord-morph hind bind cll hord 
---     l1 = replLL-¬ordab≡ba bind cll hind ell (flipNotOrdᵢ hord)
---     l2 = {!cong (λ z → replLL z (¬ord-morph bind hind ell ?) cll) ?!} 
+--     l1 : replLL (replLL (shrinkcms _ s x eq) hind ell) (¬ord-morph bind hind ell (flipNotOrdᵢ hord)) cll ≡ replLL (replLL (shrinkcms _ s x eq) bind cll) sind ell
+--     l1 = replLL-¬ordab≡ba' bind cll hind ell (flipNotOrdᵢ hord) hord
+--     l5 = shrink-repl-comm s lind eq teq meq ceqi
 
---     find = ¬ord-morph ind lind ell (flipNotOrdᵢ nord)
---     nind = ¬ord-morph lind ind cll nord
+--     nind = ¬ord-morph ind lind ell (flipNotOrdᵢ nord)
+--     find = ¬ord-morph lind ind cll nord
+
+--     l2 : LFun (replLL (replLL (shrinkcms _ s x eq) hind ell) (¬ord-morph bind hind ell (flipNotOrdᵢ hord)) cll) rll
+--     l2 with q | l5 | y | poo s eq ind lind ¬ho meq ceqi teq nord where
+--       q = shrink (replLL _ lind ell) cs
+--       y = ¬ho-shr-morph mx ceqi nind (¬ord&¬ho-del⇒¬ho ind s ¬ho lind nord (sym meq))
+--     l2 | _ | refl | _ | refl = t
+
 --   test {rll = rll} {n = n} {dt} {df} (¬∅ ind) s (¬∅ ¬ho) (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ∅ | [ teq ] | ¬∅ mx | [ meq ] | no ¬p | ¬∅¬∅ ceqi eqs ceqo t = {!!}
 --   test {rll = rll} {n = n} {dt} {df} (¬∅ ind) s (¬∅ ¬ho) (_⊂_ {ell = ell} {ind = lind} lf lf₁) | ¬∅ x | [ eq ] | ∅ | [ teq ] | ¬∅ mx | [ meq ] | yes p = {!!}
 --   test (¬∅ ind₁) s (¬∅ ¬ho) (_⊂_ {ind = ind} lf lf₁) | ¬∅ x₁ | [ eq ] | ¬∅ trs | [ teq ] = {!!}

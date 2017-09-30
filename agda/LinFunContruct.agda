@@ -243,7 +243,9 @@ module _ where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
     ¬nho x = ¬ho (hitsAtLeastOnce←∂→∂→ x)
     r = ¬ho-shr-morph s₁ eq ind ¬nho
-  
+
+
+
   ¬ho-shr-morph-pres-¬ord : ∀{ i u ll pll ell cs} → ∀ s → (eq : complLₛ s ≡ ¬∅ cs) → (ind : IndexLL {i} {u} pll ll) → (lind : IndexLL ell ll) → ∀ ¬hob ¬hoh
         → let bind = ¬ho-shr-morph s eq ind ¬hob in
           let hind = ¬ho-shr-morph s eq lind ¬hoh in
@@ -255,14 +257,8 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∧←∧ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∧←∧ z)) (λ z → ¬hoh (hitsAtLeastOnce←∧←∧ z)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ←∧ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ←∧ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∧←∧ z)) (λ z → ¬hoh (hitsAtLeastOnce←∧←∧ z)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ←∧ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ←∧ x₁)
+  ¬ho-shr-morph-pres-¬ord (s ←∧) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∧←∧ z)) (λ z → ¬hoh (hitsAtLeastOnce←∧←∧ z)) (ord-spec {ict = ic←∧} ord)
   ¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (s ←∧) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -289,14 +285,8 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (∧→ s) eq (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce∧→∧→ x)
-  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∧→∧→ z)) (λ z → ¬hoh (hitsAtLeastOnce∧→∧→ z)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ∧→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ∧→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∧→∧→ z)) (λ z → ¬hoh (hitsAtLeastOnce∧→∧→ z)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ∧→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ∧→ x₁)
+  ¬ho-shr-morph-pres-¬ord (∧→ s) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] = ord-ext r where
+   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∧→∧→ z)) (λ z → ¬hoh (hitsAtLeastOnce∧→∧→ z)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (∧→ s) eq (∧→ ind) (lind ←∧) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (∧→ s) eq (∧→ ind) (lind ←∧) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -323,15 +313,10 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) eq (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∧→←∧ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) ord
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ←∧ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ←∧ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∧ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∧ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∧ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∧ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∧ z)
+  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) ord
+  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (ind ←∧) (lind ←∧) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→←∧ x₁)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
   ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) eq (ind ←∧) (∧→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] | e | r = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -346,15 +331,10 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) eq (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s₁ ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∧→∧→ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→∧→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→∧→ x₁)) ord
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ∧→ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ∧→ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→∧→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→∧→ x₁)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ∧→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ∧→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→∧→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→∧→ x₁)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ∧→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∧→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ∧→ z)
+  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→∧→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→∧→ x₁)) ord
+  ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) refl (∧→ ind) (∧→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→∧→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∧→∧→ x₁)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) eq (∧→ ind) (lind ←∧) ¬hob ¬hoh ord with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (s ←∧→ s₁) eq (∧→ ind) (lind ←∧) ¬hob ¬hoh ord | ∅ | [ ieq ] | e | r = ⊥-elim (¬nho (compl≡∅⇒ho s₁ ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
@@ -370,14 +350,8 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∨) eq (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∨←∨ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∨←∨ z)) (λ z → ¬hoh (hitsAtLeastOnce←∨←∨ z)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ←∨ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ←∨ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∨←∨ z)) (λ z → ¬hoh (hitsAtLeastOnce←∨←∨ z)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ←∨ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ←∨ x₁)
+  ¬ho-shr-morph-pres-¬ord (s ←∨) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] = ord-ext r where
+   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∨←∨ z)) (λ z → ¬hoh (hitsAtLeastOnce←∨←∨ z)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∨) eq (ind ←∨) (∨→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (s ←∨) eq (ind ←∨) (∨→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -404,14 +378,8 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (∨→ s) eq (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce∨→∨→ x)
-  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∨→∨→ z)) (λ z → ¬hoh (hitsAtLeastOnce∨→∨→ z)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ∨→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ∨→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∨→∨→ z)) (λ z → ¬hoh (hitsAtLeastOnce∨→∨→ z)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ∨→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ∨→ x₁)
+  ¬ho-shr-morph-pres-¬ord (∨→ s) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] = ord-ext r where
+   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∨→∨→ z)) (λ z → ¬hoh (hitsAtLeastOnce∨→∨→ z)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (∨→ s) eq (∨→ ind) (lind ←∨) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (∨→ s) eq (∨→ ind) (lind ←∨) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -438,15 +406,10 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) eq (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∨→←∨ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→←∨ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→←∨ x₁)) ord
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ←∨ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ←∨ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→←∨ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→←∨ x₁)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∨ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∨ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→←∨ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→←∨ x₁)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∨ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∨ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∨ z)
+  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→←∨ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→←∨ x₁)) ord
+  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (ind ←∨) (lind ←∨) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→←∨ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→←∨ x₁)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) eq (ind ←∨) (∨→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
   ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) eq (ind ←∨) (∨→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] | e | r = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -461,15 +424,10 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) eq (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s₁ ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∨→∨→ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→∨→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→∨→ x₁)) ord
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ∨→ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ∨→ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→∨→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→∨→ x₁)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ∨→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ∨→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→∨→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→∨→ x₁)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ∨→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∨→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ∨→ z)
+  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→∨→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→∨→ x₁)) ord
+  ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) refl (∨→ ind) (∨→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∨→∨→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∨→∨→ x₁)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) eq (∨→ ind) (lind ←∨) ¬hob ¬hoh ord with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (s ←∨→ s₁) eq (∨→ ind) (lind ←∨) ¬hob ¬hoh ord | ∅ | [ ieq ] | e | r = ⊥-elim (¬nho (compl≡∅⇒ho s₁ ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
@@ -485,14 +443,8 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∂) eq (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∂←∂ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∂←∂ z)) (λ z → ¬hoh (hitsAtLeastOnce←∂←∂ z)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ←∂ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ←∂ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∂←∂ z)) (λ z → ¬hoh (hitsAtLeastOnce←∂←∂ z)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ←∂ x₁)
-  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ←∂ x₁)
+  ¬ho-shr-morph-pres-¬ord (s ←∂) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] = ord-ext r where
+   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce←∂←∂ z)) (λ z → ¬hoh (hitsAtLeastOnce←∂←∂ z)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∂) eq (ind ←∂) (∂→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (s ←∂) eq (ind ←∂) (∂→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -519,14 +471,8 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (∂→ s) eq (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce∂→∂→ x)
-  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∂→∂→ z)) (λ z → ¬hoh (hitsAtLeastOnce∂→∂→ z)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ∂→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ∂→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] with r where
-   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∂→∂→ z)) (λ z → ¬hoh (hitsAtLeastOnce∂→∂→ z)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | a≤ᵢb x₁ = a≤ᵢb (≤ᵢ∂→ x₁)
-  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | b≤ᵢa x₁ = b≤ᵢa (≤ᵢ∂→ x₁)
+  ¬ho-shr-morph-pres-¬ord (∂→ s) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] = ord-ext r where
+   r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ z → ¬hob (hitsAtLeastOnce∂→∂→ z)) (λ z → ¬hoh (hitsAtLeastOnce∂→∂→ z)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (∂→ s) eq (∂→ ind) (lind ←∂) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (∂→ s) eq (∂→ ind) (lind ←∂) ¬hob ¬hoh ord | ∅ | [ ieq ] = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind))  where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -553,15 +499,10 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) eq (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∂→←∂ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→←∂ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→←∂ x₁)) ord
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ←∂ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ←∂ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→←∂ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→←∂ x₁)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∂ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (a≤ᵢb (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∂ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→←∂ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→←∂ x₁)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ←∂ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh (b≤ᵢa (≤ᵢ←∂ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ←∂ z)
+  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→←∂ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→←∂ x₁)) ord
+  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (ind ←∂) (lind ←∂) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→←∂ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→←∂ x₁)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) eq (ind ←∂) (∂→ lind) ¬hob ¬hoh ord with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) eq (ind ←∂) (∂→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] | e | r = ⊥-elim (¬nho (compl≡∅⇒ho s ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s ind)
@@ -576,15 +517,10 @@ module _ where
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) eq (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ∅ | [ ieq ] | e = ⊥-elim (¬nho (compl≡∅⇒ho s₁ ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
     ¬nho x = ¬hob (hitsAtLeastOnce←∂→∂→ x)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→∂→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→∂→ x₁)) ord
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | a≤ᵢb y = a≤ᵢb (≤ᵢ∂→ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ | b≤ᵢa y = b≤ᵢa (≤ᵢ∂→ y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→∂→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→∂→ x₁)) (a≤ᵢb y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ∂→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (a≤ᵢb (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ∂→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ with ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→∂→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→∂→ x₁)) (b≤ᵢa y)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | a≤ᵢb z = a≤ᵢb (≤ᵢ∂→ z)
-  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh (b≤ᵢa (≤ᵢ∂→ y)) | ¬∅ x | [ ieq ] | ¬∅ x₁ | b≤ᵢa z = b≤ᵢa (≤ᵢ∂→ z)
+  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ∅ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→∂→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→∂→ x₁)) ord
+  ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (∂→ lind) ¬hob ¬hoh ord | ¬∅ x | [ ieq ] | ¬∅ x₁ = ord-ext r where
+    r = ¬ho-shr-morph-pres-¬ord s₁ ieq ind lind (λ x₁ → ¬hob (hitsAtLeastOnce←∂→∂→ x₁)) (λ x₁ → ¬hoh (hitsAtLeastOnce←∂→∂→ x₁)) (ord-spec ord)
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) eq (∂→ ind) (lind ←∂) ¬hob ¬hoh ord with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) eq (∂→ ind) (lind ←∂) ¬hob ¬hoh ord | ∅ | [ ieq ] | e | r = ⊥-elim (¬nho (compl≡∅⇒ho s₁ ieq ind)) where
     ¬nho : ¬ (hitsAtLeastOnce s₁ ind)
@@ -594,6 +530,7 @@ module _ where
     ¬nho x = ¬hoh (hitsAtLeastOnce←∂→←∂ x)
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (lind ←∂) ¬hob ¬hoh (a≤ᵢb ()) | ¬∅ x | [ ieq ] | ¬∅ x₁ | [ ieq1 ]
   ¬ho-shr-morph-pres-¬ord (s ←∂→ s₁) refl (∂→ ind) (lind ←∂) ¬hob ¬hoh (b≤ᵢa ()) | ¬∅ x | [ ieq ] | ¬∅ x₁ | [ ieq1 ]
+
 
  
     
@@ -959,8 +896,8 @@ module _ where
   shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {.nmx ←∧} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
   ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  ... | ¬∅ ncs | [ nceq ] with shrink-repl-comm s lind qeq teq deq nceq 
-  shrink-repl-comm {ll = _ ∧ rs} {ell = ell} (s ←∧) (lind ←∧) refl teq {.nmx ←∧} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | r = cong (λ z → z ∧ (shrink rs (fillAllLower rs))) r
+  shrink-repl-comm {ll = _ ∧ rs} {ell = ell} (s ←∧) (lind ←∧) refl teq {.nmx ←∧} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∧ (shrink rs (fillAllLower rs))) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq 
   shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {∧→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {mx ←∧→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ll = _ ∧ rs} {ell} (s ←∧) (∧→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
@@ -983,8 +920,8 @@ module _ where
   shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx ←∧} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {∧→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
   ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  ... | ¬∅ ncs | [ nceq ] with shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) refl teq {∧→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | r = cong (λ z → (shrink ls (fillAllLower ls)) ∧ z) r
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) refl teq {∧→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∧ z) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq
   shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx ←∧→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∧→↓) where
     ¬ho = trunc≡∅⇒¬ho (s ←∧→ s₁) ↓ teq
@@ -1041,8 +978,8 @@ module _ where
   shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {.nmx ←∨} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
   ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  ... | ¬∅ ncs | [ nceq ] with shrink-repl-comm s lind qeq teq deq nceq 
-  shrink-repl-comm {ll = _ ∨ rs} {ell = ell} (s ←∨) (lind ←∨) refl teq {.nmx ←∨} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | r = cong (λ z → z ∨ (shrink rs (fillAllLower rs))) r
+  shrink-repl-comm {ll = _ ∨ rs} {ell = ell} (s ←∨) (lind ←∨) refl teq {.nmx ←∨} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∨ (shrink rs (fillAllLower rs))) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq 
   shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {∨→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {mx ←∨→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ll = _ ∨ rs} {ell} (s ←∨) (∨→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
@@ -1065,8 +1002,8 @@ module _ where
   shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx ←∨} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {∨→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
   ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  ... | ¬∅ ncs | [ nceq ] with shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) refl teq {∨→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | r = cong (λ z → (shrink ls (fillAllLower ls)) ∨ z) r
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) refl teq {∨→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∨ z) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq
   shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx ←∨→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∨→↓) where
     ¬ho = trunc≡∅⇒¬ho (s ←∨→ s₁) ↓ teq
@@ -1123,8 +1060,8 @@ module _ where
   shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {.nmx ←∂} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
   ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  ... | ¬∅ ncs | [ nceq ] with shrink-repl-comm s lind qeq teq deq nceq 
-  shrink-repl-comm {ll = _ ∂ rs} {ell = ell} (s ←∂) (lind ←∂) refl teq {.nmx ←∂} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | r = cong (λ z → z ∂ (shrink rs (fillAllLower rs))) r
+  shrink-repl-comm {ll = _ ∂ rs} {ell = ell} (s ←∂) (lind ←∂) refl teq {.nmx ←∂} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∂ (shrink rs (fillAllLower rs))) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq 
   shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {∂→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {mx ←∂→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
   shrink-repl-comm {ll = _ ∂ rs} {ell} (s ←∂) (∂→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
