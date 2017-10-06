@@ -33,6 +33,52 @@ data MSetLL {i : Size} {u} : LinLogic i {u} → Set where
   ¬∅  : ∀{ll} → SetLL ll → MSetLL ll
 
 
+
+
+sl-ext : ∀{i u ll tll ic} → SetLL {i} {u} (expLLT {ll = ll} ic tll) → MSetLL ll
+sl-ext {ic = ic←∧} ↓ = ¬∅ ↓
+sl-ext {ic = ic←∧} (s ←∧) = ¬∅ s
+sl-ext {ic = ic←∧} (∧→ s) = ∅
+sl-ext {ic = ic←∧} (s ←∧→ s₁) = ¬∅ s
+sl-ext {ic = ic∧→} ↓ = ¬∅ ↓
+sl-ext {ic = ic∧→} (s ←∧) = ∅
+sl-ext {ic = ic∧→} (∧→ s) = ¬∅ s
+sl-ext {ic = ic∧→} (s ←∧→ s₁) = ¬∅ s₁
+sl-ext {ic = ic←∨} ↓ = ¬∅ ↓
+sl-ext {ic = ic←∨} (s ←∨) = ¬∅ s
+sl-ext {ic = ic←∨} (∨→ s) = ∅
+sl-ext {ic = ic←∨} (s ←∨→ s₁) = ¬∅ s
+sl-ext {ic = ic∨→} ↓ = ¬∅ ↓
+sl-ext {ic = ic∨→} (s ←∨) = ∅
+sl-ext {ic = ic∨→} (∨→ s) = ¬∅ s
+sl-ext {ic = ic∨→} (s ←∨→ s₁) = ¬∅ s₁
+sl-ext {ic = ic←∂} ↓ = ¬∅ ↓
+sl-ext {ic = ic←∂} (s ←∂) = ¬∅ s
+sl-ext {ic = ic←∂} (∂→ s) = ∅
+sl-ext {ic = ic←∂} (s ←∂→ s₁) = ¬∅ s
+sl-ext {ic = ic∂→} ↓ = ¬∅ ↓
+sl-ext {ic = ic∂→} (s ←∂) = ∅
+sl-ext {ic = ic∂→} (∂→ s) = ¬∅ s
+sl-ext {ic = ic∂→} (s ←∂→ s₁) = ¬∅ s₁
+
+sl-spec : ∀{i u ll tll ic} → SetLL {i} {u} ll → MSetLL tll → SetLL {i} {u} (expLLT {ll = ll} ic tll)
+sl-spec {ic = ic←∧} s ∅ = s ←∧
+sl-spec {ic = ic←∧} s (¬∅ x) = s ←∧→ x
+sl-spec {ic = ic∧→} s ∅ = ∧→ s
+sl-spec {ic = ic∧→} s (¬∅ x) = x ←∧→ s
+sl-spec {ic = ic←∨} s ∅ = s ←∨
+sl-spec {ic = ic←∨} s (¬∅ x) = s ←∨→ x
+sl-spec {ic = ic∨→} s ∅ = ∨→ s
+sl-spec {ic = ic∨→} s (¬∅ x) = x ←∨→ s
+sl-spec {ic = ic←∂} s ∅ = s ←∂
+sl-spec {ic = ic←∂} s (¬∅ x) = s ←∂→ x
+sl-spec {ic = ic∂→} s ∅ = ∂→ s
+sl-spec {ic = ic∂→} s (¬∅ x) = x ←∂→ s
+
+
+
+
+
 -- Add a node to an empty set (and potentially replace the linear logic sub-tree).
 ∅-add : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → (nrll : LinLogic i )
         → SetLL (replLL ll ind nrll)

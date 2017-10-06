@@ -264,14 +264,30 @@ data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {
 
 
 ord-spec : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
-           → {ind : IndexLL rll ll} → {ict : IndexLLCT} → ∀ {tll} → Orderedᵢ (expInd ict tll ind) (expInd ict tll emi) → Orderedᵢ ind emi
+           → {ind : IndexLL rll ll} → {ic : IndexLLCT} → ∀ {tll} → Orderedᵢ (expInd ic tll ind) (expInd ic tll emi) → Orderedᵢ ind emi
 ord-spec (a≤ᵢb x) = a≤ᵢb (≤ᵢ-spec x)
 ord-spec (b≤ᵢa x) = b≤ᵢa (≤ᵢ-spec x)
 
 ord-ext : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
-           → {ind : IndexLL rll ll} → {ict : IndexLLCT} → ∀ {tll} → Orderedᵢ ind emi → Orderedᵢ (expInd ict tll ind) (expInd ict tll emi)
+           → {ind : IndexLL rll ll} → {ic : IndexLLCT} → ∀ {tll} → Orderedᵢ ind emi → Orderedᵢ (expInd ic tll ind) (expInd ic tll emi)
 ord-ext (a≤ᵢb x) = a≤ᵢb (≤ᵢ-ext x)
 ord-ext (b≤ᵢa x) = b≤ᵢa (≤ᵢ-ext x)
+
+
+ord-spec∘ord-ext≡id : ∀{i u ll fll rll ic tll} → {ind : IndexLL {i} {u} fll ll} → {lind : IndexLL rll ll} → (ord : Orderedᵢ ind lind) → ord-spec {ic = ic} {tll = tll} (ord-ext {ic = ic} {tll = tll} ord) ≡ ord
+ord-spec∘ord-ext≡id {ic = ic←∧} (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id {ic = ic∧→} (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id {ic = ic←∨} (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id {ic = ic∨→} (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id {ic = ic←∂} (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id {ic = ic∂→} (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id {ic = ic←∧} (b≤ᵢa x) = refl
+ord-spec∘ord-ext≡id {ic = ic∧→} (b≤ᵢa x) = refl
+ord-spec∘ord-ext≡id {ic = ic←∨} (b≤ᵢa x) = refl
+ord-spec∘ord-ext≡id {ic = ic∨→} (b≤ᵢa x) = refl
+ord-spec∘ord-ext≡id {ic = ic←∂} (b≤ᵢa x) = refl
+ord-spec∘ord-ext≡id {ic = ic∂→} (b≤ᵢa x) = refl
+
 
 
 
@@ -301,19 +317,9 @@ flipNotOrdᵢ nord = λ x → nord (flipOrdᵢ x)
 ¬lt¬gt⇒¬Ord nlt ngt (b≤ᵢa x) = ngt x
 
 ¬ord-spec : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
-            → {ind : IndexLL rll ll} → {ict : IndexLLCT} → ∀ {tll} → (nord : ¬ Orderedᵢ (expInd ict tll ind) (expInd ict tll emi)) → ¬ Orderedᵢ ind emi
-¬ord-spec {ict = ic←∧ } nord (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ←∧ x))
-¬ord-spec {ict = ic←∧ } nord (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ←∧ x))
-¬ord-spec {ict = ic∧→ } nord (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ∧→ x))
-¬ord-spec {ict = ic∧→ } nord (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ∧→ x))
-¬ord-spec {ict = ic←∨ } nord (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ←∨ x))
-¬ord-spec {ict = ic←∨ } nord (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ←∨ x))
-¬ord-spec {ict = ic∨→ } nord (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ∨→ x))
-¬ord-spec {ict = ic∨→ } nord (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ∨→ x))
-¬ord-spec {ict = ic←∂ } nord (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ←∂ x))
-¬ord-spec {ict = ic←∂ } nord (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ←∂ x))
-¬ord-spec {ict = ic∂→ } nord (a≤ᵢb x) = nord (a≤ᵢb (≤ᵢ∂→ x))
-¬ord-spec {ict = ic∂→ } nord (b≤ᵢa x) = nord (b≤ᵢa (≤ᵢ∂→ x))
+            → {ind : IndexLL rll ll} → {ic : IndexLLCT} → ∀ {tll} → (nord : ¬ Orderedᵢ (expInd ic tll ind) (expInd ic tll emi)) → ¬ Orderedᵢ ind emi
+¬ord-spec nord ord = nord (ord-ext ord)
+
 
 
 
@@ -488,6 +494,33 @@ replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂�
 ¬ord-morph (∂→ emi) (ind ←∂) frll nord = ∂→ emi
 ¬ord-morph (∂→ emi) (∂→ ind) frll nord = 
            ∂→ (¬ord-morph emi ind frll (¬ord-spec nord))
+
+
+
+¬ord-morph-¬ord-ir : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
+                     → (ind : IndexLL rll ll) → ∀ frll → (nord nord2 : ¬ Orderedᵢ ind emi)
+                     → ¬ord-morph emi ind frll nord ≡ ¬ord-morph emi ind frll nord2
+¬ord-morph-¬ord-ir ↓ ind frll nord nord2 = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+¬ord-morph-¬ord-ir (emi ←∧) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+¬ord-morph-¬ord-ir (emi ←∧) (ind ←∧) frll nord nord2 = cong (λ z → z ←∧) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+¬ord-morph-¬ord-ir (emi ←∧) (∧→ ind) frll nord nord2 = refl
+¬ord-morph-¬ord-ir (∧→ emi) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+¬ord-morph-¬ord-ir (∧→ emi) (ind ←∧) frll nord nord2 = refl
+¬ord-morph-¬ord-ir (∧→ emi) (∧→ ind) frll nord nord2 = cong (λ z → ∧→ z) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+¬ord-morph-¬ord-ir (emi ←∨) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+¬ord-morph-¬ord-ir (emi ←∨) (ind ←∨) frll nord nord2 = cong (λ z → z ←∨) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+¬ord-morph-¬ord-ir (emi ←∨) (∨→ ind) frll nord nord2 = refl
+¬ord-morph-¬ord-ir (∨→ emi) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+¬ord-morph-¬ord-ir (∨→ emi) (ind ←∨) frll nord nord2 = refl
+¬ord-morph-¬ord-ir (∨→ emi) (∨→ ind) frll nord nord2 = cong (λ z → ∨→ z) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+¬ord-morph-¬ord-ir (emi ←∂) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+¬ord-morph-¬ord-ir (emi ←∂) (ind ←∂) frll nord nord2 = cong (λ z → z ←∂) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+¬ord-morph-¬ord-ir (emi ←∂) (∂→ ind) frll nord nord2 = refl
+¬ord-morph-¬ord-ir (∂→ emi) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+¬ord-morph-¬ord-ir (∂→ emi) (ind ←∂) frll nord nord2 = refl
+¬ord-morph-¬ord-ir (∂→ emi) (∂→ ind) frll nord nord2 = cong (λ z → ∂→ z) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+
+
 
 module _ where
 

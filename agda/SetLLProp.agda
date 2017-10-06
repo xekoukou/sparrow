@@ -775,6 +775,69 @@ module _ where
 
 
 
+
+  ho-spec : ∀{i u ll rll tll ic ns} → {s : SetLL (expLLT ic tll)} → {ind : IndexLL {i} {u} rll ll} → {{eq : sl-ext {ic = ic} s ≡ ¬∅ ns}} → hitsAtLeastOnce s (expInd ic tll ind) → hitsAtLeastOnce ns ind
+  ho-spec {ic = ic←∧} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-spec {ic = ic←∧} {s = s ←∧} {{eq = refl}} (hitsAtLeastOnce←∧←∧ ho) = ho
+  ho-spec {ic = ic←∧} {s = ∧→ s} {{eq = ()}} ho
+  ho-spec {ic = ic←∧} {s = s ←∧→ s₁} {{eq = refl}} (hitsAtLeastOnce←∧→←∧ ho) = ho
+  ho-spec {ic = ic∧→} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-spec {ic = ic∧→} {s = s ←∧} {{eq = ()}} ho
+  ho-spec {ic = ic∧→} {s = ∧→ s} {{eq = refl}} (hitsAtLeastOnce∧→∧→ ho) = ho
+  ho-spec {ic = ic∧→} {s = s ←∧→ s₁} {{eq = refl}} (hitsAtLeastOnce←∧→∧→ ho) = ho
+  ho-spec {ic = ic←∨} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-spec {ic = ic←∨} {s = s ←∨} {{eq = refl}} (hitsAtLeastOnce←∨←∨ ho) = ho
+  ho-spec {ic = ic←∨} {s = ∨→ s} {{eq = ()}} ho
+  ho-spec {ic = ic←∨} {s = s ←∨→ s₁} {{eq = refl}} (hitsAtLeastOnce←∨→←∨ ho) = ho
+  ho-spec {ic = ic∨→} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-spec {ic = ic∨→} {s = s ←∨} {{eq = ()}} ho
+  ho-spec {ic = ic∨→} {s = ∨→ s} {{eq = refl}} (hitsAtLeastOnce∨→∨→ ho) = ho
+  ho-spec {ic = ic∨→} {s = s ←∨→ s₁} {{eq = refl}} (hitsAtLeastOnce←∨→∨→ ho) = ho
+  ho-spec {ic = ic←∂} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-spec {ic = ic←∂} {s = s ←∂} {{eq = refl}} (hitsAtLeastOnce←∂←∂ ho) = ho
+  ho-spec {ic = ic←∂} {s = ∂→ s} {{eq = ()}} ho
+  ho-spec {ic = ic←∂} {s = s ←∂→ s₁} {{eq = refl}} (hitsAtLeastOnce←∂→←∂ ho) = ho
+  ho-spec {ic = ic∂→} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-spec {ic = ic∂→} {s = s ←∂} {{eq = ()}} ho
+  ho-spec {ic = ic∂→} {s = ∂→ s} {{eq = refl}} (hitsAtLeastOnce∂→∂→ ho) = ho
+  ho-spec {ic = ic∂→} {s = s ←∂→ s₁} {{eq = refl}} (hitsAtLeastOnce←∂→∂→ ho) = ho
+  
+  
+  
+  ho-ext : ∀{i u ll rll tll ic ns} → {s : SetLL (expLLT ic tll)} → {ind : IndexLL {i} {u} rll ll} → {{eq : sl-ext {ic = ic} s ≡ ¬∅ ns}} → hitsAtLeastOnce ns ind → hitsAtLeastOnce s (expInd ic tll ind)
+  ho-ext {ic = ic←∧} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-ext {ic = ic←∧} {s = s ←∧} {{eq = refl}} ho = hitsAtLeastOnce←∧←∧ ho
+  ho-ext {ic = ic←∧} {s = ∧→ s} {{eq = ()}} ho
+  ho-ext {ic = ic←∧} {s = s ←∧→ s₁} {{eq = refl}} ho = hitsAtLeastOnce←∧→←∧ ho
+  ho-ext {ic = ic∧→} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-ext {ic = ic∧→} {s = s ←∧} {{eq = ()}} ho
+  ho-ext {ic = ic∧→} {s = ∧→ s} {{eq = refl}} ho = hitsAtLeastOnce∧→∧→ ho
+  ho-ext {ic = ic∧→} {s = s ←∧→ s₁} {{eq = refl}} ho = hitsAtLeastOnce←∧→∧→ ho
+  ho-ext {ic = ic←∨} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-ext {ic = ic←∨} {s = s ←∨} {{eq = refl}} ho = hitsAtLeastOnce←∨←∨ ho
+  ho-ext {ic = ic←∨} {s = ∨→ s} {{eq = ()}} ho
+  ho-ext {ic = ic←∨} {s = s ←∨→ s₁} {{eq = refl}} ho = hitsAtLeastOnce←∨→←∨ ho
+  ho-ext {ic = ic∨→} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-ext {ic = ic∨→} {s = s ←∨} {{eq = ()}} ho
+  ho-ext {ic = ic∨→} {s = ∨→ s} {{eq = refl}} ho = hitsAtLeastOnce∨→∨→ ho
+  ho-ext {ic = ic∨→} {s = s ←∨→ s₁} {{eq = refl}} ho = hitsAtLeastOnce←∨→∨→ ho
+  ho-ext {ic = ic←∂} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-ext {ic = ic←∂} {s = s ←∂} {{eq = refl}} ho = hitsAtLeastOnce←∂←∂ ho
+  ho-ext {ic = ic←∂} {s = ∂→ s} {{eq = ()}} ho
+  ho-ext {ic = ic←∂} {s = s ←∂→ s₁} {{eq = refl}} ho = hitsAtLeastOnce←∂→←∂ ho
+  ho-ext {ic = ic∂→} {s = ↓} {{eq = refl}} ho = hitsAtLeastOnce↓
+  ho-ext {ic = ic∂→} {s = s ←∂} {{eq = ()}} ho
+  ho-ext {ic = ic∂→} {s = ∂→ s} {{eq = refl}} ho = hitsAtLeastOnce∂→∂→ ho
+  ho-ext {ic = ic∂→} {s = s ←∂→ s₁} {{eq = refl}} ho = hitsAtLeastOnce←∂→∂→ ho
+  
+  
+  
+  ¬ho-spec : ∀{i u ll rll tll ic ns} → {s : SetLL (expLLT ic tll)} → {ind : IndexLL {i} {u} rll ll} → {{eq : sl-ext {ic = ic} s ≡ ¬∅ ns}} → ¬ (hitsAtLeastOnce s (expInd ic tll ind)) → ¬ (hitsAtLeastOnce ns ind)
+  ¬ho-spec {ic = ic} {s = s} {{eq = eq}} ¬ho y = ¬ho (ho-ext y)
+  
+  
+  
+
   oi⇒ho : ∀{i u ll rll} → (s : SetLL ll) → (ind : IndexLL {i} {u} rll ll) → onlyInside s ind → hitsAtLeastOnce s ind
   oi⇒ho ↓ ↓ onlyInsideCs↓ = hitsAtLeastOnce↓
   oi⇒ho ↓ (ind ←∧) ()
@@ -2936,75 +2999,63 @@ module _ where
   ¬ord&¬ho-del⇒¬ho' (lind ←∧) ↓ ¬ho (ind ←∧) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧) ¬ho (ind ←∧) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧) ¬ho (ind ←∧) nord fnord () y | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧) ¬ho (ind ←∧) nord fnord refl (hitsAtLeastOnce←∧←∧ y) | ¬∅ x | [ eq ] = is y where
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧) ¬ho (ind ←∧) nord fnord refl y | ¬∅ x | [ eq ] = is (ho-spec y) where
   
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∧←∧ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   ¬ord&¬ho-del⇒¬ho' (lind ←∧) (∧→ s) ¬ho (ind ←∧) nord fnord refl = λ ()
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl () | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl (hitsAtLeastOnce←∧→←∧ y) | ¬∅ x | [ eq ] = is y where
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord eqd with del s ind tll | inspect (del s ind) tll
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl | ∅ | r = λ ()
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl | ¬∅ x | [ eq ] = λ y → is (ho-spec y) where
   
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∧→←∧ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   ¬ord&¬ho-del⇒¬ho' (lind ←∧) ↓ ¬ho (∧→ ind) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' (lind ←∧) (s ←∧) ¬ho (∧→ ind) nord fnord refl (hitsAtLeastOnce←∧←∧ x) = ¬ho (hitsAtLeastOnce←∧←∧ x)
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (∧→ s) ¬ho (∧→ ind) nord fnord eqd with del s ind tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (∧→ s) ¬ho (∧→ ind) nord fnord () | ∅
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (∧→ s) ¬ho (∧→ ind) nord fnord refl | ¬∅ x = λ ()
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord eqd y with del s₁ ind tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl (hitsAtLeastOnce←∧←∧ y) | ∅ = ¬ho (hitsAtLeastOnce←∧→←∧ y)
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl (hitsAtLeastOnce←∧→←∧ y) | ¬∅ x = ¬ho (hitsAtLeastOnce←∧→←∧ y)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl y | ∅ = ¬ho (hitsAtLeastOnce←∧→←∧ (ho-spec y))
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∧) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl y | ¬∅ x = ¬ho (hitsAtLeastOnce←∧→←∧ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' (∧→ lind) s ¬ho ↓ nord fnord eqd = λ _ → nord (b≤ᵢa ≤ᵢ↓)
   ¬ord&¬ho-del⇒¬ho' (∧→ lind) ↓ ¬ho (ind ←∧) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧) ¬ho (ind ←∧) nord fnord eqd with del s ind tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧) ¬ho (ind ←∧) nord fnord () | ∅
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧) ¬ho (ind ←∧) nord fnord refl | ¬∅ x = λ ()
-  ¬ord&¬ho-del⇒¬ho' (∧→ lind) (∧→ s) ¬ho (ind ←∧) nord fnord refl (hitsAtLeastOnce∧→∧→ x) = ¬ho (hitsAtLeastOnce∧→∧→ x)
+  ¬ord&¬ho-del⇒¬ho' (∧→ lind) (∧→ s) ¬ho (ind ←∧) nord fnord refl y = ¬ho (hitsAtLeastOnce∧→∧→ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord eqd y with del s ind tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl (hitsAtLeastOnce∧→∧→ y) | ∅ = ¬ho (hitsAtLeastOnce←∧→∧→ y)
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl (hitsAtLeastOnce←∧→∧→ y) | ¬∅ x = ¬ho (hitsAtLeastOnce←∧→∧→ y)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl y | ∅ = ¬ho (hitsAtLeastOnce←∧→∧→ (ho-spec y))
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (ind ←∧) nord fnord refl y | ¬∅ x = ¬ho (hitsAtLeastOnce←∧→∧→ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' (∧→ lind) ↓ ¬ho (∧→ ind) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' (∧→ lind) (s ←∧) ¬ho (∧→ ind) nord fnord refl = λ ()
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (∧→ s) ¬ho (∧→ ind) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (∧→ s) ¬ho (∧→ ind) nord fnord () y | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (∧→ s) ¬ho (∧→ ind) nord fnord refl (hitsAtLeastOnce∧→∧→ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce∧→∧→ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (∧→ s) ¬ho (∧→ ind) nord fnord refl y | ¬∅ x | [ eq ] = is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord eqd y with del s₁ ind tll | inspect (del s₁ ind) tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl () | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl (hitsAtLeastOnce←∧→∧→ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s₁ lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∧→∧→ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s₁ hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord eqd with del s₁ ind tll | inspect (del s₁ ind) tll
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl | ∅ | r =  λ ()
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∧→ lind) (s ←∧→ s₁) ¬ho (∧→ ind) nord fnord refl | ¬∅ x | [ eq ] = λ y → is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s₁ (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   
   ¬ord&¬ho-del⇒¬ho' (lind ←∨) s ¬ho ↓ nord fnord eqd = λ _ → nord (b≤ᵢa ≤ᵢ↓)
   ¬ord&¬ho-del⇒¬ho' (lind ←∨) ↓ ¬ho (ind ←∨) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨) ¬ho (ind ←∨) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨) ¬ho (ind ←∨) nord fnord () y | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨) ¬ho (ind ←∨) nord fnord refl (hitsAtLeastOnce←∨←∨ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∨←∨ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨) ¬ho (ind ←∨) nord fnord refl y | ¬∅ x | [ eq ] = is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   ¬ord&¬ho-del⇒¬ho' (lind ←∨) (∨→ s) ¬ho (ind ←∨) nord fnord refl = λ ()
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl () | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl (hitsAtLeastOnce←∨→←∨ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∨→←∨ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord eqd with del s ind tll | inspect (del s ind) tll
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl | ∅ | r = λ ()
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl | ¬∅ x | [ eq ] = λ y → is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   ¬ord&¬ho-del⇒¬ho' (lind ←∨) ↓ ¬ho (∨→ ind) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
-  ¬ord&¬ho-del⇒¬ho' (lind ←∨) (s ←∨) ¬ho (∨→ ind) nord fnord refl (hitsAtLeastOnce←∨←∨ x) = ¬ho (hitsAtLeastOnce←∨←∨ x)
+  ¬ord&¬ho-del⇒¬ho' (lind ←∨) (s ←∨) ¬ho (∨→ ind) nord fnord refl x = ¬ho (hitsAtLeastOnce←∨←∨ (ho-spec x))
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (∨→ s) ¬ho (∨→ ind) nord fnord eqd with del s ind tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (∨→ s) ¬ho (∨→ ind) nord fnord () | ∅
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (∨→ s) ¬ho (∨→ ind) nord fnord refl | ¬∅ x = λ ()
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord eqd y with del s₁ ind tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl (hitsAtLeastOnce←∨←∨ y) | ∅ = ¬ho (hitsAtLeastOnce←∨→←∨ y)
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl (hitsAtLeastOnce←∨→←∨ y) | ¬∅ x = ¬ho (hitsAtLeastOnce←∨→←∨ y)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl y | ∅ = ¬ho (hitsAtLeastOnce←∨→←∨ (ho-spec y))
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∨) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl y | ¬∅ x = ¬ho (hitsAtLeastOnce←∨→←∨ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' (∨→ lind) s ¬ho ↓ nord fnord eqd = λ _ → nord (b≤ᵢa ≤ᵢ↓)
   ¬ord&¬ho-del⇒¬ho' (∨→ lind) ↓ ¬ho (ind ←∨) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨) ¬ho (ind ←∨) nord fnord eqd with del s ind tll
@@ -3012,71 +3063,59 @@ module _ where
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨) ¬ho (ind ←∨) nord fnord refl | ¬∅ x = λ ()
   ¬ord&¬ho-del⇒¬ho' (∨→ lind) (∨→ s) ¬ho (ind ←∨) nord fnord refl (hitsAtLeastOnce∨→∨→ x) = ¬ho (hitsAtLeastOnce∨→∨→ x)
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord eqd y with del s ind tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl (hitsAtLeastOnce∨→∨→ y) | ∅ = ¬ho (hitsAtLeastOnce←∨→∨→ y)
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl (hitsAtLeastOnce←∨→∨→ y) | ¬∅ x = ¬ho (hitsAtLeastOnce←∨→∨→ y)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl y | ∅ = ¬ho (hitsAtLeastOnce←∨→∨→ (ho-spec y))
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (ind ←∨) nord fnord refl y | ¬∅ x = ¬ho (hitsAtLeastOnce←∨→∨→ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' (∨→ lind) ↓ ¬ho (∨→ ind) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' (∨→ lind) (s ←∨) ¬ho (∨→ ind) nord fnord refl = λ ()
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (∨→ s) ¬ho (∨→ ind) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (∨→ s) ¬ho (∨→ ind) nord fnord () y | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (∨→ s) ¬ho (∨→ ind) nord fnord refl (hitsAtLeastOnce∨→∨→ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce∨→∨→ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (∨→ s) ¬ho (∨→ ind) nord fnord refl y | ¬∅ x | [ eq ] = is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord eqd y with del s₁ ind tll | inspect (del s₁ ind) tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl () | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl (hitsAtLeastOnce←∨→∨→ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s₁ lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∨→∨→ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s₁ hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord eqd with del s₁ ind tll | inspect (del s₁ ind) tll
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl | ∅ | r = λ ()
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∨→ lind) (s ←∨→ s₁) ¬ho (∨→ ind) nord fnord refl | ¬∅ x | [ eq ] = λ y → is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s₁ (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   
   ¬ord&¬ho-del⇒¬ho' (lind ←∂) s ¬ho ↓ nord fnord eqd = λ _ → nord (b≤ᵢa ≤ᵢ↓)
   ¬ord&¬ho-del⇒¬ho' (lind ←∂) ↓ ¬ho (ind ←∂) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂) ¬ho (ind ←∂) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂) ¬ho (ind ←∂) nord fnord () y | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂) ¬ho (ind ←∂) nord fnord refl (hitsAtLeastOnce←∂←∂ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∂←∂ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂) ¬ho (ind ←∂) nord fnord refl y | ¬∅ x | [ eq ] = is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   ¬ord&¬ho-del⇒¬ho' (lind ←∂) (∂→ s) ¬ho (ind ←∂) nord fnord refl = λ ()
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl () | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl (hitsAtLeastOnce←∂→←∂ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∂→←∂ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord eqd with del s ind tll | inspect (del s ind) tll
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl | ∅ | r = λ ()
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl | ¬∅ x | [ eq ] = λ y → is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   ¬ord&¬ho-del⇒¬ho' (lind ←∂) ↓ ¬ho (∂→ ind) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
-  ¬ord&¬ho-del⇒¬ho' (lind ←∂) (s ←∂) ¬ho (∂→ ind) nord fnord refl (hitsAtLeastOnce←∂←∂ x) = ¬ho (hitsAtLeastOnce←∂←∂ x)
+  ¬ord&¬ho-del⇒¬ho' (lind ←∂) (s ←∂) ¬ho (∂→ ind) nord fnord refl y = ¬ho (hitsAtLeastOnce←∂←∂ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (∂→ s) ¬ho (∂→ ind) nord fnord eqd with del s ind tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (∂→ s) ¬ho (∂→ ind) nord fnord () | ∅
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (∂→ s) ¬ho (∂→ ind) nord fnord refl | ¬∅ x = λ ()
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord eqd y with del s₁ ind tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl (hitsAtLeastOnce←∂←∂ y) | ∅ = ¬ho (hitsAtLeastOnce←∂→←∂ y)
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl (hitsAtLeastOnce←∂→←∂ y) | ¬∅ x = ¬ho (hitsAtLeastOnce←∂→←∂ y)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl y | ∅ = ¬ho (hitsAtLeastOnce←∂→←∂ (ho-spec y))
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (lind ←∂) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl y | ¬∅ x = ¬ho (hitsAtLeastOnce←∂→←∂ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' (∂→ lind) s ¬ho ↓ nord fnord eqd = λ _ → nord (b≤ᵢa ≤ᵢ↓)
   ¬ord&¬ho-del⇒¬ho' (∂→ lind) ↓ ¬ho (ind ←∂) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂) ¬ho (ind ←∂) nord fnord eqd with del s ind tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂) ¬ho (ind ←∂) nord fnord () | ∅
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂) ¬ho (ind ←∂) nord fnord refl | ¬∅ x = λ ()
-  ¬ord&¬ho-del⇒¬ho' (∂→ lind) (∂→ s) ¬ho (ind ←∂) nord fnord refl (hitsAtLeastOnce∂→∂→ x) = ¬ho (hitsAtLeastOnce∂→∂→ x)
+  ¬ord&¬ho-del⇒¬ho' (∂→ lind) (∂→ s) ¬ho (ind ←∂) nord fnord refl y = ¬ho (hitsAtLeastOnce∂→∂→ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord eqd y with del s ind tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl (hitsAtLeastOnce∂→∂→ y) | ∅ = ¬ho (hitsAtLeastOnce←∂→∂→ y)
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl (hitsAtLeastOnce←∂→∂→ y) | ¬∅ x = ¬ho (hitsAtLeastOnce←∂→∂→ y)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl y | ∅ = ¬ho (hitsAtLeastOnce←∂→∂→ (ho-spec y))
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (ind ←∂) nord fnord refl y | ¬∅ x = ¬ho (hitsAtLeastOnce←∂→∂→ (ho-spec y))
   ¬ord&¬ho-del⇒¬ho' (∂→ lind) ↓ ¬ho (∂→ ind) nord fnord eqd = λ _ → ¬ho hitsAtLeastOnce↓
   ¬ord&¬ho-del⇒¬ho' (∂→ lind) (s ←∂) ¬ho (∂→ ind) nord fnord refl = λ ()
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (∂→ s) ¬ho (∂→ ind) nord fnord eqd y with del s ind tll | inspect (del s ind) tll
   ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (∂→ s) ¬ho (∂→ ind) nord fnord () y | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (∂→ s) ¬ho (∂→ ind) nord fnord refl (hitsAtLeastOnce∂→∂→ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s lind
-    hf2 x = ¬ho (hitsAtLeastOnce∂→∂→ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (∂→ s) ¬ho (∂→ ind) nord fnord refl y | ¬∅ x | [ eq ] = is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord eqd y with del s₁ ind tll | inspect (del s₁ ind) tll
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl () | ∅ | r
-  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl (hitsAtLeastOnce←∂→∂→ y) | ¬∅ x | [ eq ] = is y where
-    hf2 : ¬ hitsAtLeastOnce s₁ lind
-    hf2 x = ¬ho (hitsAtLeastOnce←∂→∂→ x)
-    is =  ¬ord&¬ho-del⇒¬ho' lind s₁ hf2 ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord eqd with del s₁ ind tll | inspect (del s₁ ind) tll
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl | ∅ | r = λ ()
+  ¬ord&¬ho-del⇒¬ho' {tll = tll} (∂→ lind) (s ←∂→ s₁) ¬ho (∂→ ind) nord fnord refl | ¬∅ x | [ eq ] = λ y → is (ho-spec y) where
+    is =  ¬ord&¬ho-del⇒¬ho' lind s₁ (¬ho-spec ¬ho) ind (¬ord-spec nord) (¬ord-spec fnord) (sym eq)
   
   ¬ord&¬ho-del⇒¬ho : ∀{i u rll pll ll tll} → (lind : IndexLL {i} {u} rll ll) → (s : SetLL ll)
         → ¬ (hitsAtLeastOnce s lind) → (ind : IndexLL pll ll) → ∀{ds}
@@ -3084,6 +3123,7 @@ module _ where
         → ¬∅ ds ≡ del s ind tll
         → ¬ (hitsAtLeastOnce ds (¬ord-morph lind ind tll (flipNotOrdᵢ nord)))
   ¬ord&¬ho-del⇒¬ho lind s ¬ho ind nord deq =  ¬ord&¬ho-del⇒¬ho' lind s ¬ho ind nord (flipNotOrdᵢ nord) deq
+
 
 
 rl&¬ho-trunc⇒¬ho : ∀{i u pll rll ll x} → ∀ (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
