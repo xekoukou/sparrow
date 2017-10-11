@@ -909,7 +909,7 @@ module _ where
   shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → z ∧ (shrink rs x)) r where
     r = shrink-repl-comm s lind qeq teq deq nceq
   shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
   shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | eeq | ¬∅ nmx | [ deq ]  with complLₛ nmx | inspect complLₛ nmx
   shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s₁
   shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
