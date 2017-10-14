@@ -20,7 +20,10 @@ module _ where
 
 postulate IMPOSSIBLE : ∀{u} → {A : Set (u)} → A
 
--- A proof irrelevant eliminator
+
+J : {u u' : Level} {A : Set u} {x : A} (P : (y : A) → x ≡ y → Set u') →
+     P x refl → (y : A) (x≡y : x ≡ y) → P y x≡y
+J P p ._ refl = p
 
 
 module _ where
@@ -30,7 +33,7 @@ module _ where
   
   infixr 5 _∷_
   
-  data HVec {u} : ∀{n} -> Vec (Set u) n -> Set u where
+  data HVec {u} : ∀{n} -> Vec (Set u) n -> Set (lsuc u) where
     []  : HVec []
     _∷_ : ∀{n} {A : Set u} {vt : Vec (Set u) n} (x : A) (xs : HVec vt) -> HVec (A ∷ vt)
   
