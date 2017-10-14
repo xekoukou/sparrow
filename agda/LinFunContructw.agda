@@ -136,14 +136,6 @@ module _ where
 --  ... | _ | refl = refl
 --  poo {u = _} {ls ∧ _} {ell} (∧→ s) refl (ind ←∧) (∧→ lind) ¬hob {mx ←∧→ mx₁} () ceqi teq nord fnord | ¬∅ x | [ neq ] | ¬∅ nmx | [ deq ]
 --  poo (∧→ s) eq (∧→ ind) ↓ ¬hob meq ceqi teq nord fnord = ⊥-elim (trunc≡∅⇒¬ho (∧→ s) ↓ teq hitsAtLeastOnce∧→↓)
-
-  poo ↓ eq ind lind ¬hob meq ceqi teq nord fnord = {!!}
-  poo (s ←∧) eq ind lind ¬hob meq ceqi teq nord fnord = {!!}
-  poo (∧→ s) eq ind lind ¬hob meq ceqi teq nord fnord = {!!}
-  poo (s ←∧→ s₁) eq ↓ lind ¬hob meq ceqi teq nord fnord = {!!}
-  poo (s ←∧→ s₁) eq (ind ←∧) ↓ ¬hob meq ceqi teq nord fnord = {!!}
-  poo (s ←∧→ s₁) eq (ind ←∧) (lind ←∧) ¬hob meq ceqi teq nord fnord = {!!}
-
 --  poo {u = _} {ls ∧ _} {ell} (∧→ s) eq (∧→ ind) (lind ←∧) ¬hob refl ceqi teq nord fnord with complLₛ s | inspect complLₛ s
 --  poo {u = _} {ls ∧ _} {ell} (∧→ s) eq (∧→ ind) (lind ←∧) ¬hob refl ceqi teq nord fnord | ∅ | [ neq ] = ⊥-elim (¬hob (hitsAtLeastOnce∧→∧→ (compl≡∅⇒ho s neq ind)))
 --  poo {u = _} {ls ∧ _} {ell} (∧→ s) refl (∧→ ind) (lind ←∧) ¬hob refl refl teq nord fnord | ¬∅ x | [ neq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls
@@ -212,6 +204,14 @@ module _ where
 --    q1 = ¬ho-shr-morph s qeq ind (λ x₁ → ¬hob (hitsAtLeastOnce←∧→←∧ x₁))
 --    q2 = ¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)
 
+  poo ↓ eq ind lind ¬hob meq ceqi teq nord fnord = {!!}
+  poo (s ←∧) eq ind lind ¬hob meq ceqi teq nord fnord = {!!}
+  poo (∧→ s) eq ind lind ¬hob meq ceqi teq nord fnord = {!!}
+  poo (s ←∧→ s₁) eq ↓ lind ¬hob meq ceqi teq nord fnord = {!!}
+  poo (s ←∧→ s₁) eq (ind ←∧) ↓ ¬hob meq ceqi teq nord fnord = {!!}
+  poo (s ←∧→ s₁) eq (ind ←∧) (lind ←∧) ¬hob meq ceqi teq nord fnord = {!!}
+
+
 
   poo {ll = ls ∧ rs} (s ←∧→ s₁) eq (ind ←∧) (∧→ lind) ¬hob meq ceqi teq nord fnord with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
   poo {ll = ls ∧ rs} (s ←∧→ s₁) eq (ind ←∧) (∧→ lind) ¬hob meq ceqi teq nord fnord | ∅ | [ qeq ] | e | [ eeq ] = ⊥-elim (trunc≡∅⇒¬ho s₁ lind teq (compl≡∅⇒ho s₁ qeq lind))
@@ -220,28 +220,10 @@ module _ where
         (hitsAtLeastOnce←∧→←∧ (compl≡∅⇒ho s eeq ind)))
   poo {ll = ls ∧ rs} {ell = ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob meq ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
   poo {ll = ls ∧ rs} {ell = ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob meq ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] = ⊥-elim (¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq) deq)
-  poo {u = _} {ll = ls ∧ rs} {ell = ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with a | inspect ia iah | t | inspect it ith where
-    t = ¬ho-shr-morph s eeq ind (λ x → ¬hob (hitsAtLeastOnce←∧→←∧ x))
-    it = λ z → ¬ho-shr-morph s eeq ind z
-    ith = (λ x → ¬hob (hitsAtLeastOnce←∧→←∧ x))
-    a = ¬ho-shr-morph (s ←∧→ nmx) ceqi (ind ←∧) (λ y → ¬hob (hitsAtLeastOnce←∧→←∧ (ho-spec y)))
-    ia = λ z → ¬ho-shr-morph (s ←∧→ nmx) ceqi (ind ←∧) z
-    iah = (λ y → ¬hob (hitsAtLeastOnce←∧→←∧ (ho-spec y)))
-  ... | a | ia | t | it with complLₛ nmx | inspect complLₛ nmx
-  poo {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | a | ia | t | it | ∅ | u with complLₛ s
-  poo {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl () teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | a | ia | t | it | ∅ | [ u ] | ∅
-  poo {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl refl teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | a | ia | t | it | ∅ | [ u ] | ¬∅ x =
-    ⊥-elim
-       (del⇒¬ho s₁ lind (sym deq)
-        (compl≡∅⇒ho nmx u (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  poo {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | a | ia | t | it | ¬∅ x | [ u ] with complLₛ s
-  poo {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | a | ia | t | it | ¬∅ x | [ u ] | ∅
-  poo {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl refl teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ .x₁ | [ refl ] | ¬∅ nmx | [ deq ] | a | ia | t | it | ¬∅ x | [ u ] | ¬∅ x₁ = {!!}
-  -- complLₛ nmx | inspect complLₛ nmx
---  poo {ll = ls ∧ rs} {ell = ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] = {!!} where
---    t = ¬ho-shr-morph s eeq ind (λ x → ¬hob (hitsAtLeastOnce←∧→←∧ x))
---    a = ¬ho-shr-morph (s ←∧→ nmx) {!ceqi!} (ind ←∧) (λ y → ¬hob (hitsAtLeastOnce←∧→←∧ (ho-spec y)))
---  poo {ell = ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = {!!}
+  poo {u = _} {ll = ls ∧ rs} {ell = ell} (s ←∧→ s₁) refl (ind ←∧) (∧→ lind) ¬hob refl {mcs} ceqi teq nord fnord | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceqi eeq where
+    hf :  complLₛ (s ←∧→ nmx) ≡ ¬∅ mcs → complLₛ s ≡ ¬∅ e → _
+    hf ceqi eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s
+    ... | ncs | [ nceq ] | c = ?
   poo (s ←∧→ s₁) eq (∧→ ind) lind ¬hob meq ceqi teq nord fnord = {!!}
   poo (s ←∨) eq ind lind ¬hob meq ceqi teq nord fnord = {!?!}
   poo (∨→ s) eq ind lind ¬hob meq ceqi teq nord fnord = {!!}

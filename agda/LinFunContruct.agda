@@ -625,8 +625,295 @@ module _ where
     is = ho-shr-morph s₁ eq ind teq ceqt
   ho-shr-morph (s ←∂→ s₁) refl (∂→ ind) teq ceqt | ¬∅ x₁ | [ eq ] | ¬∅ x = ∂→ is where
     is = ho-shr-morph s₁ eq ind teq ceqt
-  
-   
+
+
+
+
+
+  shrink-repl-comm : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
+        → (eq : complLₛ s ≡ ¬∅ x)
+        → (teq : truncSetLL s lind ≡ ∅)
+        → ∀{mx}
+        → del s lind ell ≡ ¬∅ mx
+        → ∀{cs}
+        → complLₛ mx ≡ ¬∅ cs
+        → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind (trunc≡∅⇒¬ho s lind teq)) ell
+  shrink-repl-comm ↓ lind () teq meq ceq
+  shrink-repl-comm (s ←∧) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∧↓) where
+    ¬ho = trunc≡∅⇒¬ho (s ←∧) ↓ teq
+  shrink-repl-comm {ll = _ ∧ rs} {ell = ell} (s ←∧) (lind ←∧) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
+  ... | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {.nmx ←∧} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  shrink-repl-comm {ll = _ ∧ rs} {ell = ell} (s ←∧) (lind ←∧) refl teq {.nmx ←∧} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∧ (shrink rs (fillAllLower rs))) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq 
+  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {∧→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {mx ←∧→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ll = _ ∧ rs} {ell} (s ←∧) (∧→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {_ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ¬∅ q | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
+  shrink-repl-comm {u = _} {_ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
+  shrink-repl-comm {ll = _ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ∅ | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
+  shrink-repl-comm {u = _} {_ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ∅ | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
+  shrink-repl-comm {ll = ls ∧ _} {ell} (∧→ s) ↓ eq teq meq ceq =  ⊥-elim (¬ho hitsAtLeastOnce∧→↓) where
+    ¬ho = trunc≡∅⇒¬ho (∧→ s) ↓ teq
+  shrink-repl-comm {ll = ls ∧ _} {ell} (∧→ s) (lind ←∧) eq teq refl ceq with complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
+  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (lind ←∧) refl teq refl refl | ∅ | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
+  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
+  shrink-repl-comm {ll = ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx} meq ceq | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx} () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx ←∧} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {∧→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) refl teq {∧→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∧ z) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx ←∧→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∧→↓) where
+    ¬ho = trunc≡∅⇒¬ho (s ←∧→ s₁) ↓ teq
+  shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) eq teq meq ceq  with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) eq teq meq ceq | ∅ | [ qeq ] | e | _ = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (nmx ←∧→ s₁) ≡ ¬∅ cs) → (complLₛ s₁ ≡ ¬∅ e) → shrink (replLL ls lind ell ∧ rs) cs ≡ (replLL (shrink ls q) (¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)) ell ∧ shrink rs e)
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s₁
+    hf ceq eeq | ∅ | [ nceq ] | c =  ⊥-elim ((del⇒¬ho s lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+    hf ceq () | ¬∅ ncs | [ nceq ] | ∅
+    hf refl refl | ¬∅ ncs | [ nceq ] | ¬∅ e = cong (λ z → z ∧ (shrink rs e)) r where
+      r = shrink-repl-comm s lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (nmx ←∧→ s₁) ≡ ¬∅ cs) → (complLₛ s₁ ≡ ∅) → shrink (replLL ls lind ell ∧ rs) cs ≡
+                                                               replLL (shrink ls q)
+                                                               (¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)) ell
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx
+    hf ceq eeq | ∅ | [ nceq ] with complLₛ s₁
+    hf () eeq | ∅ | [ nceq ] | ∅
+    hf ceq () | ∅ | [ nceq ] | ¬∅ x
+    hf ceq eeq | ¬∅ x | [ nceq ] with complLₛ s₁
+    hf refl eeq | ¬∅ x | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
+    hf ceq () | ¬∅ x | [ nceq ] | ¬∅ x₁
+  shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) eq teq meq ceq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) eq teq meq ceq | ∅ | [ qeq ] | e | [ eeq ] =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s₁ lind teq
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+     hf : (complLₛ (s ←∧→ nmx) ≡ ¬∅ cs) → (complLₛ s ≡ ¬∅ e) → shrink (ls ∧ replLL rs lind ell) cs ≡
+                                                                 (shrink ls e ∧
+                                                                  replLL (shrink rs q)
+                                                                  (¬ho-shr-morph s₁ qeq lind (trunc≡∅⇒¬ho s₁ lind teq)) ell)
+     hf ceq eeq with complLₛ nmx | inspect complLₛ nmx
+     hf ceq eeq | ∅ | [ nceq ] with complLₛ s
+     hf ceq () | ∅ | [ nceq ] | ∅
+     hf refl refl | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s₁ lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+     hf ceq eeq | ¬∅ ncs | [ nceq ] with complLₛ s
+     hf ceq () | ¬∅ ncs | [ nceq ] | ∅
+     hf refl refl | ¬∅ ncs | [ nceq ] | ¬∅ x = cong (λ z → (shrink ls x) ∧ z) r where
+       r = shrink-repl-comm s₁ lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (s ←∧→ nmx) ≡ ¬∅ cs) → (complLₛ s ≡ ∅) → shrink (ls ∧ replLL rs lind ell) cs ≡
+                                                             replLL (shrink rs q)
+                                                             (¬ho-shr-morph s₁ qeq lind (trunc≡∅⇒¬ho s₁ lind teq)) ell
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s
+    hf () refl | ∅ | [ nceq ] | ∅
+    hf refl refl | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s₁ lind qeq teq deq nceq
+    hf ceq () | ncs | [ nceq ] | ¬∅ x
+  shrink-repl-comm (s ←∨) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∨↓) where
+    ¬ho = trunc≡∅⇒¬ho (s ←∨) ↓ teq
+  shrink-repl-comm {ll = _ ∨ rs} {ell = ell} (s ←∨) (lind ←∨) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
+  ... | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {.nmx ←∨} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  shrink-repl-comm {ll = _ ∨ rs} {ell = ell} (s ←∨) (lind ←∨) refl teq {.nmx ←∨} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∨ (shrink rs (fillAllLower rs))) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq 
+  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {∨→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {mx ←∨→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ll = _ ∨ rs} {ell} (s ←∨) (∨→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {_ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ¬∅ q | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
+  shrink-repl-comm {u = _} {_ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
+  shrink-repl-comm {ll = _ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ∅ | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
+  shrink-repl-comm {u = _} {_ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ∅ | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
+  shrink-repl-comm {ll = ls ∨ _} {ell} (∨→ s) ↓ eq teq meq ceq =  ⊥-elim (¬ho hitsAtLeastOnce∨→↓) where
+    ¬ho = trunc≡∅⇒¬ho (∨→ s) ↓ teq
+  shrink-repl-comm {ll = ls ∨ _} {ell} (∨→ s) (lind ←∨) eq teq refl ceq with complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (lind ←∨) refl teq refl refl | ¬∅ q | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
+  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (lind ←∨) refl teq refl refl | ∅ | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
+  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
+  shrink-repl-comm {ll = ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx} meq ceq | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx} () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx ←∨} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {∨→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) refl teq {∨→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∨ z) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx ←∨→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∨→↓) where
+    ¬ho = trunc≡∅⇒¬ho (s ←∨→ s₁) ↓ teq
+  shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) eq teq meq ceq  with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) eq teq meq ceq | ∅ | [ qeq ] | e | _ = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (nmx ←∨→ s₁) ≡ ¬∅ cs) → (complLₛ s₁ ≡ ¬∅ e) → shrink (replLL ls lind ell ∨ rs) cs ≡ (replLL (shrink ls q) (¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)) ell ∨ shrink rs e)
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s₁
+    hf ceq eeq | ∅ | [ nceq ] | c =  ⊥-elim ((del⇒¬ho s lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+    hf ceq () | ¬∅ ncs | [ nceq ] | ∅
+    hf refl refl | ¬∅ ncs | [ nceq ] | ¬∅ e = cong (λ z → z ∨ (shrink rs e)) r where
+      r = shrink-repl-comm s lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (nmx ←∨→ s₁) ≡ ¬∅ cs) → (complLₛ s₁ ≡ ∅) → shrink (replLL ls lind ell ∨ rs) cs ≡
+                                                               replLL (shrink ls q)
+                                                               (¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)) ell
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx
+    hf ceq eeq | ∅ | [ nceq ] with complLₛ s₁
+    hf () eeq | ∅ | [ nceq ] | ∅
+    hf ceq () | ∅ | [ nceq ] | ¬∅ x
+    hf ceq eeq | ¬∅ x | [ nceq ] with complLₛ s₁
+    hf refl eeq | ¬∅ x | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
+    hf ceq () | ¬∅ x | [ nceq ] | ¬∅ x₁
+  shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) eq teq meq ceq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) eq teq meq ceq | ∅ | [ qeq ] | e | [ eeq ] =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s₁ lind teq
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+     hf : (complLₛ (s ←∨→ nmx) ≡ ¬∅ cs) → (complLₛ s ≡ ¬∅ e) → shrink (ls ∨ replLL rs lind ell) cs ≡
+                                                                 (shrink ls e ∨
+                                                                  replLL (shrink rs q)
+                                                                  (¬ho-shr-morph s₁ qeq lind (trunc≡∅⇒¬ho s₁ lind teq)) ell)
+     hf ceq eeq with complLₛ nmx | inspect complLₛ nmx
+     hf ceq eeq | ∅ | [ nceq ] with complLₛ s
+     hf ceq () | ∅ | [ nceq ] | ∅
+     hf refl refl | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s₁ lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+     hf ceq eeq | ¬∅ ncs | [ nceq ] with complLₛ s
+     hf ceq () | ¬∅ ncs | [ nceq ] | ∅
+     hf refl refl | ¬∅ ncs | [ nceq ] | ¬∅ x = cong (λ z → (shrink ls x) ∨ z) r where
+       r = shrink-repl-comm s₁ lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (s ←∨→ nmx) ≡ ¬∅ cs) → (complLₛ s ≡ ∅) → shrink (ls ∨ replLL rs lind ell) cs ≡
+                                                             replLL (shrink rs q)
+                                                             (¬ho-shr-morph s₁ qeq lind (trunc≡∅⇒¬ho s₁ lind teq)) ell
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s
+    hf () refl | ∅ | [ nceq ] | ∅
+    hf refl refl | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s₁ lind qeq teq deq nceq
+    hf ceq () | ncs | [ nceq ] | ¬∅ x
+  shrink-repl-comm (s ←∂) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∂↓) where
+    ¬ho = trunc≡∅⇒¬ho (s ←∂) ↓ teq
+  shrink-repl-comm {ll = _ ∂ rs} {ell = ell} (s ←∂) (lind ←∂) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
+  ... | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {.nmx ←∂} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  shrink-repl-comm {ll = _ ∂ rs} {ell = ell} (s ←∂) (lind ←∂) refl teq {.nmx ←∂} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∂ (shrink rs (fillAllLower rs))) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq 
+  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {∂→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {mx ←∂→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ll = _ ∂ rs} {ell} (s ←∂) (∂→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {_ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ¬∅ q | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
+  shrink-repl-comm {u = _} {_ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
+  shrink-repl-comm {ll = _ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ∅ | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
+  shrink-repl-comm {u = _} {_ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ∅ | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
+  shrink-repl-comm {ll = ls ∂ _} {ell} (∂→ s) ↓ eq teq meq ceq =  ⊥-elim (¬ho hitsAtLeastOnce∂→↓) where
+    ¬ho = trunc≡∅⇒¬ho (∂→ s) ↓ teq
+  shrink-repl-comm {ll = ls ∂ _} {ell} (∂→ s) (lind ←∂) eq teq refl ceq with complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (lind ←∂) refl teq refl refl | ¬∅ q | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
+  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (lind ←∂) refl teq refl refl | ∅ | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
+  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
+  shrink-repl-comm {ll = ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx} meq ceq | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx} () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx ←∂} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {∂→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
+  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) refl teq {∂→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∂ z) r where
+    r = shrink-repl-comm s lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx ←∂→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
+  shrink-repl-comm {ll = ls ∂ rs} {ell} (s ←∂→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∂→↓) where
+    ¬ho = trunc≡∅⇒¬ho (s ←∂→ s₁) ↓ teq
+  shrink-repl-comm {ll = ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) eq teq meq ceq  with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) eq teq meq ceq | ∅ | [ qeq ] | e | _ = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s lind teq
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (nmx ←∂→ s₁) ≡ ¬∅ cs) → (complLₛ s₁ ≡ ¬∅ e) → shrink (replLL ls lind ell ∂ rs) cs ≡ (replLL (shrink ls q) (¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)) ell ∂ shrink rs e)
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s₁
+    hf ceq eeq | ∅ | [ nceq ] | c =  ⊥-elim ((del⇒¬ho s lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+    hf ceq () | ¬∅ ncs | [ nceq ] | ∅
+    hf refl refl | ¬∅ ncs | [ nceq ] | ¬∅ e = cong (λ z → z ∂ (shrink rs e)) r where
+      r = shrink-repl-comm s lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (nmx ←∂→ s₁) ≡ ¬∅ cs) → (complLₛ s₁ ≡ ∅) → shrink (replLL ls lind ell ∂ rs) cs ≡
+                                                               replLL (shrink ls q)
+                                                               (¬ho-shr-morph s qeq lind (trunc≡∅⇒¬ho s lind teq)) ell
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx
+    hf ceq eeq | ∅ | [ nceq ] with complLₛ s₁
+    hf () eeq | ∅ | [ nceq ] | ∅
+    hf ceq () | ∅ | [ nceq ] | ¬∅ x
+    hf ceq eeq | ¬∅ x | [ nceq ] with complLₛ s₁
+    hf refl eeq | ¬∅ x | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
+    hf ceq () | ¬∅ x | [ nceq ] | ¬∅ x₁
+  shrink-repl-comm {ll = ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) eq teq meq ceq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) eq teq meq ceq | ∅ | [ qeq ] | e | [ eeq ] =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ qeq lind)) where
+    ¬nho = trunc≡∅⇒¬ho s₁ lind teq
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+     hf : (complLₛ (s ←∂→ nmx) ≡ ¬∅ cs) → (complLₛ s ≡ ¬∅ e) → shrink (ls ∂ replLL rs lind ell) cs ≡
+                                                                 (shrink ls e ∂
+                                                                  replLL (shrink rs q)
+                                                                  (¬ho-shr-morph s₁ qeq lind (trunc≡∅⇒¬ho s₁ lind teq)) ell)
+     hf ceq eeq with complLₛ nmx | inspect complLₛ nmx
+     hf ceq eeq | ∅ | [ nceq ] with complLₛ s
+     hf ceq () | ∅ | [ nceq ] | ∅
+     hf refl refl | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s₁ lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
+     hf ceq eeq | ¬∅ ncs | [ nceq ] with complLₛ s
+     hf ceq () | ¬∅ ncs | [ nceq ] | ∅
+     hf refl refl | ¬∅ ncs | [ nceq ] | ¬∅ x = cong (λ z → (shrink ls x) ∂ z) r where
+       r = shrink-repl-comm s₁ lind qeq teq deq nceq
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
+  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl {cs} ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] = hf ceq eeq where
+    hf : (complLₛ (s ←∂→ nmx) ≡ ¬∅ cs) → (complLₛ s ≡ ∅) → shrink (ls ∂ replLL rs lind ell) cs ≡
+                                                             replLL (shrink rs q)
+                                                             (¬ho-shr-morph s₁ qeq lind (trunc≡∅⇒¬ho s₁ lind teq)) ell
+    hf ceq eeq with complLₛ nmx | inspect complLₛ nmx | complLₛ s
+    hf () refl | ∅ | [ nceq ] | ∅
+    hf refl refl | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s₁ lind qeq teq deq nceq
+    hf ceq () | ncs | [ nceq ] | ¬∅ x
+
+ 
   
   
   shrink-repl≡∅ : ∀{i u ll ell pll x trs} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
@@ -844,266 +1131,6 @@ module _ where
   shrink-repl≡∅ {u = _} {lll ∂ rll} (s ←∂→ s₁) (∂→ lind) refl teq cteq vs cveq refl | ¬∅ icms | [ icmeq ] | ¬∅ x₁ | [ ieq ] | ¬∅ x = cong (λ z → (shrink lll x) ∂ z) is where
     is = shrink-repl≡∅ s₁ lind ieq teq cteq vs cveq icmeq
   
-  
-  
-  
-  
-  shrink-repl-comm : ∀{i u ll ell pll x} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
-        → (eq : complLₛ s ≡ ¬∅ x)
-        → (teq : truncSetLL s lind ≡ ∅)
-        → ∀{mx}
-        → del s lind ell ≡ ¬∅ mx
-        → ∀{cs}
-        → complLₛ mx ≡ ¬∅ cs
-        → (shrink (replLL ll lind ell) cs) ≡ replLL (shrink ll x) (¬ho-shr-morph s eq lind (trunc≡∅⇒¬ho s lind teq)) ell
-  shrink-repl-comm ↓ lind () teq meq ceq
-  shrink-repl-comm (s ←∧) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∧↓) where
-    ¬ho = trunc≡∅⇒¬ho (s ←∧) ↓ teq
-  shrink-repl-comm {ll = _ ∧ rs} {ell = ell} (s ←∧) (lind ←∧) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
-  ... | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {.nmx ←∧} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {ll = _ ∧ rs} {ell = ell} (s ←∧) (lind ←∧) refl teq {.nmx ←∧} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∧ (shrink rs (fillAllLower rs))) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq 
-  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {∧→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∧) (lind ←∧) eq teq {mx ←∧→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ll = _ ∧ rs} {ell} (s ←∧) (∧→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {_ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ¬∅ q | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
-  shrink-repl-comm {u = _} {_ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
-  shrink-repl-comm {ll = _ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ∅ | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
-  shrink-repl-comm {u = _} {_ ∧ rs} {ell} (s ←∧) (∧→ lind) refl teq refl refl | ∅ | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
-  shrink-repl-comm {ll = ls ∧ _} {ell} (∧→ s) ↓ eq teq meq ceq =  ⊥-elim (¬ho hitsAtLeastOnce∧→↓) where
-    ¬ho = trunc≡∅⇒¬ho (∧→ s) ↓ teq
-  shrink-repl-comm {ll = ls ∧ _} {ell} (∧→ s) (lind ←∧) eq teq refl ceq with complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
-  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (lind ←∧) refl teq refl refl | ∅ | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
-  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
-  shrink-repl-comm {ll = ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx} meq ceq | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx} () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx ←∧} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {∧→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) refl teq {∧→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∧ z) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∧ _} {ell} (∧→ s) (∧→ lind) eq teq {mx ←∧→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∧→↓) where
-    ¬ho = trunc≡∅⇒¬ho (s ←∧→ s₁) ↓ teq
-  shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) eq teq meq ceq  with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) eq teq meq ceq | ∅ | [ qeq ] | e | _ = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl () | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))) 
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → z ∧ (shrink rs x)) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | eeq | ¬∅ nmx | [ deq ]  with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ¬∅ x
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl () | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (lind ←∧) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x
-  shrink-repl-comm {ll = ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) eq teq meq ceq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) eq teq meq ceq | ∅ | [ qeq ] | e | [ eeq ] =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s₁ lind teq
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl () | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s₁ lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → (shrink ls x) ∧ z) r where
-    r = shrink-repl-comm s₁ lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s₁ lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ¬∅ x
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl () | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∧ rs} {ell} (s ←∧→ s₁) (∧→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x
-  shrink-repl-comm (s ←∨) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∨↓) where
-    ¬ho = trunc≡∅⇒¬ho (s ←∨) ↓ teq
-  shrink-repl-comm {ll = _ ∨ rs} {ell = ell} (s ←∨) (lind ←∨) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
-  ... | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {.nmx ←∨} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {ll = _ ∨ rs} {ell = ell} (s ←∨) (lind ←∨) refl teq {.nmx ←∨} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∨ (shrink rs (fillAllLower rs))) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq 
-  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {∨→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∨) (lind ←∨) eq teq {mx ←∨→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ll = _ ∨ rs} {ell} (s ←∨) (∨→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {_ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ¬∅ q | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
-  shrink-repl-comm {u = _} {_ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
-  shrink-repl-comm {ll = _ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ∅ | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
-  shrink-repl-comm {u = _} {_ ∨ rs} {ell} (s ←∨) (∨→ lind) refl teq refl refl | ∅ | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
-  shrink-repl-comm {ll = ls ∨ _} {ell} (∨→ s) ↓ eq teq meq ceq =  ⊥-elim (¬ho hitsAtLeastOnce∨→↓) where
-    ¬ho = trunc≡∅⇒¬ho (∨→ s) ↓ teq
-  shrink-repl-comm {ll = ls ∨ _} {ell} (∨→ s) (lind ←∨) eq teq refl ceq with complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (lind ←∨) refl teq refl refl | ¬∅ q | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
-  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (lind ←∨) refl teq refl refl | ∅ | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
-  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
-  shrink-repl-comm {ll = ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx} meq ceq | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx} () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx ←∨} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {∨→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) refl teq {∨→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → (shrink ls (fillAllLower ls)) ∨ z) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∨ _} {ell} (∨→ s) (∨→ lind) eq teq {mx ←∨→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∨→↓) where
-    ¬ho = trunc≡∅⇒¬ho (s ←∨→ s₁) ↓ teq
-  shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) eq teq meq ceq  with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) eq teq meq ceq | ∅ | [ qeq ] | e | _ = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl () | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))) 
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → z ∨ (shrink rs x)) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | eeq | ¬∅ nmx | [ deq ]  with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ¬∅ x
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl () | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (lind ←∨) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x
-  shrink-repl-comm {ll = ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) eq teq meq ceq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) eq teq meq ceq | ∅ | [ qeq ] | e | [ eeq ] =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s₁ lind teq
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl () | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s₁ lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → (shrink ls x) ∨ z) r where
-    r = shrink-repl-comm s₁ lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s₁ lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ¬∅ x
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl () | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∨ rs} {ell} (s ←∨→ s₁) (∨→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x
-  shrink-repl-comm (s ←∂) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∂↓) where
-    ¬ho = trunc≡∅⇒¬ho (s ←∂) ↓ teq
-  shrink-repl-comm {ll = _ ∂ rs} {ell = ell} (s ←∂) (lind ←∂) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
-  ... | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {.nmx ←∂} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {ll = _ ∂ rs} {ell = ell} (s ←∂) (lind ←∂) refl teq {.nmx ←∂} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] = cong (λ z → z ∂ (shrink rs (fillAllLower rs))) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq 
-  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {∂→ mx} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ell = ell} (s ←∂) (lind ←∂) eq teq {mx ←∂→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ll = _ ∂ rs} {ell} (s ←∂) (∂→ lind) eq teq refl ceq with complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {_ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ¬∅ q | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
-  shrink-repl-comm {u = _} {_ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
-  shrink-repl-comm {ll = _ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ∅ | [ qeq ] with shrink rs (fillAllLower rs) | shr-fAL-id rs | shrink (replLL rs lind ell) (fillAllLower (replLL rs lind ell)) | shr-fAL-id (replLL rs lind ell)
-  shrink-repl-comm {u = _} {_ ∂ rs} {ell} (s ←∂) (∂→ lind) refl teq refl refl | ∅ | [ qeq ] | .rs | refl | .(replLL rs lind ell) | refl = refl
-  shrink-repl-comm {ll = ls ∂ _} {ell} (∂→ s) ↓ eq teq meq ceq =  ⊥-elim (¬ho hitsAtLeastOnce∂→↓) where
-    ¬ho = trunc≡∅⇒¬ho (∂→ s) ↓ teq
-  shrink-repl-comm {ll = ls ∂ _} {ell} (∂→ s) (lind ←∂) eq teq refl ceq with complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (lind ←∂) refl teq refl refl | ¬∅ q | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
-  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (lind ←∂) refl teq refl refl | ∅ | [ qeq ] with shrink ls (fillAllLower ls) | shr-fAL-id ls | shrink (replLL ls lind ell) (fillAllLower (replLL ls lind ell)) | shr-fAL-id (replLL ls lind ell)
-  ... | .ls | refl | .(replLL ls lind ell) | refl = refl
-  shrink-repl-comm {ll = ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx} meq ceq with complLₛ s | inspect complLₛ s | del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx} meq ceq | ∅ | [ qeq ] | w | t = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx} () ceq | ¬∅ q | [ qeq ] | ∅ | [ deq ]
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {↓} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx ←∂} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {∂→ .nmx} refl ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  ... | ∅ | [ nceq ] = ⊥-elim (del⇒¬ho s lind (sym deq) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  ... | ¬∅ ncs | [ nceq ] with shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) refl teq {∂→ .nmx} refl refl | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | r = cong (λ z → (shrink ls (fillAllLower ls)) ∂ z) r
-  shrink-repl-comm {u = _} {ls ∂ _} {ell} (∂→ s) (∂→ lind) eq teq {mx ←∂→ mx₁} () ceq | ¬∅ q | [ qeq ] | ¬∅ nmx | [ deq ]
-  shrink-repl-comm {ll = ls ∂ rs} {ell} (s ←∂→ s₁) ↓ eq teq meq ceq = ⊥-elim (¬ho hitsAtLeastOnce←∂→↓) where
-    ¬ho = trunc≡∅⇒¬ho (s ←∂→ s₁) ↓ teq
-  shrink-repl-comm {ll = ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) eq teq meq ceq  with complLₛ s | inspect complLₛ s | complLₛ s₁ | inspect complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) eq teq meq ceq | ∅ | [ qeq ] | e | _ = ⊥-elim (¬nho (compl≡∅⇒ho s qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s lind teq
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl () | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)))) 
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → z ∂ (shrink rs x)) r where
-    r = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | eeq with del s lind ell | inspect (del s lind) ell
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s lind (trunc≡∅⇒¬ho s lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | eeq | ¬∅ nmx | [ deq ]  with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ¬∅ x
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s₁
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl () | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (lind ←∂) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x
-  shrink-repl-comm {ll = ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) eq teq meq ceq with complLₛ s₁ | inspect complLₛ s₁ | complLₛ s | inspect complLₛ s
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) eq teq meq ceq | ∅ | [ qeq ] | e | [ eeq ] =  ⊥-elim (¬nho (compl≡∅⇒ho s₁ qeq lind)) where
-    ¬nho = trunc≡∅⇒¬ho s₁ lind teq
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ∅ | [ deq ] =  ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl () | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x = ⊥-elim ((del⇒¬ho s₁ lind (sym deq)) (compl≡∅⇒ho nmx nceq (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))))
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ¬∅ e | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ x | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | ¬∅ .x | [ refl ] | ¬∅ nmx | [ deq ] | ¬∅ x₁ | [ nceq ] | ¬∅ x = cong (λ z → (shrink ls x) ∂ z) r where
-    r = shrink-repl-comm s₁ lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] with del s₁ lind ell | inspect (del s₁ lind) ell
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq meq ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ∅ | [ deq ] = ⊥-elim ((¬ho⇒¬del≡∅ s₁ lind (trunc≡∅⇒¬ho s₁ lind teq)) deq)
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] with complLₛ nmx | inspect complLₛ nmx
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl refl | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ∅ = shrink-repl-comm s₁ lind qeq teq deq nceq
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ¬∅ ncs | [ nceq ] | ¬∅ x
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] with complLₛ s
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl () | ¬∅ q | [ qeq ] | ∅ | [ eeq ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ∅
-  shrink-repl-comm {u = _} {ls ∂ rs} {ell} (s ←∂→ s₁) (∂→ lind) refl teq refl ceq | ¬∅ q | [ qeq ] | ∅ | [ () ] | ¬∅ nmx | [ deq ] | ∅ | [ nceq ] | ¬∅ x
-   
   
   
    
@@ -1348,7 +1375,7 @@ module _ where
   fltr {ll = l₁ ∂ (l₂ ∂ r)} (¬∂∂d ltr) = ((l₁ ∂ l₂) ∂ r) , ¬∂∂d I
 
 -- ( shrink tran Irrelevance)
-  data STrIr {i u rll} : ∀ {ll} → (s : SetLL {i} {u} ll) → LLTr rll ll → Set where
+  data STrIr {i u rll} : ∀ {ll} → (s : SetLL {i} {u} ll) → LLTr rll ll → Set (lsuc u) where
     sti∧c : ∀{ll rl s ltr} → (¬ hitsAtLeastOnce s (↓ ←∧)) ⊎ (¬ hitsAtLeastOnce s (∧→ ↓)) → STrIr {ll = ll ∧ rl} s (∧c ltr)
     sti∨c : ∀{ll rl s ltr} → (¬ hitsAtLeastOnce s (↓ ←∨)) ⊎ (¬ hitsAtLeastOnce s (∨→ ↓)) → STrIr {ll = ll ∨ rl} s (∨c ltr)
     sti∂c : ∀{ll rl s ltr} → (¬ hitsAtLeastOnce s (↓ ←∂)) ⊎ (¬ hitsAtLeastOnce s (∂→ ↓)) → STrIr {ll = ll ∂ rl} s (∂c ltr)
