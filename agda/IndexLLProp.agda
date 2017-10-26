@@ -1,4 +1,3 @@
-{-# OPTIONS --exact-split #-}
 -- {-# OPTIONS --show-implicit #-}
 
 module IndexLLProp where
@@ -6,34 +5,32 @@ module IndexLLProp where
 open import Common
 open import LinLogic
 open import Data.Maybe
-open import Data.Product
 import Relation.Binary.HeterogeneousEquality
-open import Relation.Binary.PropositionalEquality using (subst ; cong ; subst₂)
+open import Relation.Binary.PropositionalEquality using (trans ; sym ; subst ; cong ; subst₂)
 
 data _≅ᵢ_ {i u gll} : ∀{fll ll} → IndexLL {i} {u} gll ll → IndexLL {i} {u} fll ll → Set (lsuc u) where
   ≅ᵢ↓ :  ↓ ≅ᵢ ↓
-  ≅ᵢ←∧ : ∀{fll li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≅ᵢ bind)
-         → _≅ᵢ_ {ll = li ∧ ri} (sind ←∧) (bind ←∧)
-  ≅ᵢ∧→ : ∀{fll li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≅ᵢ bind)
-         → _≅ᵢ_ {ll = li ∧ ri} (∧→ sind) (∧→ bind)
-  ≅ᵢ←∨ : ∀{fll li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≅ᵢ bind)
-         → _≅ᵢ_ {ll = li ∨ ri} (sind ←∨) (bind ←∨)
-  ≅ᵢ∨→ : ∀{fll li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≅ᵢ bind)
-         → _≅ᵢ_ {ll = li ∨ ri} (∨→ sind) (∨→ bind)
-  ≅ᵢ←∂ : ∀{fll li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≅ᵢ bind)
-         → _≅ᵢ_ {ll = li ∂ ri} (sind ←∂) (bind ←∂)
-  ≅ᵢ∂→ : ∀{fll li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≅ᵢ bind)
-         → _≅ᵢ_ {ll = li ∂ ri} (∂→ sind) (∂→ bind)
+  ≅ᵢic : ∀{fll ict ll tll il eq} → {sind : IndexLL gll ll} → {bind : IndexLL fll ll} → (sind ≅ᵢ bind)
+         → _≅ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}})
 
+
+-- TODO Is this needed ?
+≅ᵢ-spec : ∀{i u ll ict tll il eq gll fll} → {sind : IndexLL {i} {u} gll ll}
+          → {bind : IndexLL fll ll} → _≅ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}})
+          → (sind ≅ᵢ bind)
+≅ᵢ-spec (≅ᵢic a) = a
+
+¬≅ᵢ-spec : ∀{i u ll ict tll il eq gll fll} → {sind : IndexLL {i} {u} gll ll}
+          → {bind : IndexLL fll ll}
+          → ¬ (_≅ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}}))
+           → ¬ (sind ≅ᵢ bind)
+¬≅ᵢ-spec rl = λ z → rl (≅ᵢic z)
 
 ≅ᵢ-reflexive : ∀{i u rll ll} → (a : IndexLL {i} {u} rll ll) → a ≅ᵢ a
 ≅ᵢ-reflexive ↓ = ≅ᵢ↓
-≅ᵢ-reflexive (x ←∧) = ≅ᵢ←∧ (≅ᵢ-reflexive x)
-≅ᵢ-reflexive (∧→ x) = ≅ᵢ∧→ (≅ᵢ-reflexive x)
-≅ᵢ-reflexive (x ←∨) = ≅ᵢ←∨ (≅ᵢ-reflexive x)
-≅ᵢ-reflexive (∨→ x) = ≅ᵢ∨→ (≅ᵢ-reflexive x)
-≅ᵢ-reflexive (x ←∂) = ≅ᵢ←∂ (≅ᵢ-reflexive x)
-≅ᵢ-reflexive (∂→ x) = ≅ᵢ∂→ (≅ᵢ-reflexive x)
+≅ᵢ-reflexive (ic x) = ≅ᵢic (≅ᵢ-reflexive x)
+
+
 
 ≡-to-≅ᵢ : ∀{i u rll ll} → (a b : IndexLL {i} {u} rll ll) → a ≡ b → a ≅ᵢ b
 ≡-to-≅ᵢ a .a refl = ≅ᵢ-reflexive a
@@ -42,204 +39,122 @@ data _≅ᵢ_ {i u gll} : ∀{fll ll} → IndexLL {i} {u} gll ll → IndexLL {i}
 
 data _≤ᵢ_ {i u gll fll} : ∀{ll} → IndexLL {i} {u} gll ll → IndexLL {i} {u} fll ll → Set (lsuc u) where
   ≤ᵢ↓ : {ind : IndexLL fll gll} → ↓ ≤ᵢ ind
-  ≤ᵢ←∧ : ∀{li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≤ᵢ bind)
-         → _≤ᵢ_ {ll = li ∧ ri} (sind ←∧) (bind ←∧)
-  ≤ᵢ∧→ : ∀{li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≤ᵢ bind)
-         → _≤ᵢ_ {ll = li ∧ ri} (∧→ sind) (∧→ bind)
-  ≤ᵢ←∨ : ∀{li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≤ᵢ bind)
-         → _≤ᵢ_ {ll = li ∨ ri} (sind ←∨) (bind ←∨)
-  ≤ᵢ∨→ : ∀{li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≤ᵢ bind)
-         → _≤ᵢ_ {ll = li ∨ ri} (∨→ sind) (∨→ bind)
-  ≤ᵢ←∂ : ∀{li ri} → {sind : IndexLL gll li} → {bind : IndexLL fll li} → (sind ≤ᵢ bind)
-         → _≤ᵢ_ {ll = li ∂ ri} (sind ←∂) (bind ←∂)
-  ≤ᵢ∂→ : ∀{li ri} → {sind : IndexLL gll ri} → {bind : IndexLL fll ri} → (sind ≤ᵢ bind)
-         → _≤ᵢ_ {ll = li ∂ ri} (∂→ sind) (∂→ bind)
+  ≤ᵢic : ∀{ll ict tll il eq} → {sind : IndexLL gll ll} → {bind : IndexLL fll ll} → (sind ≤ᵢ bind)
+         → _≤ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}})
 
-≤ᵢ-spec : ∀{i u ll tll gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → {ict : IndexLLCT} → _≤ᵢ_ {ll = expLLT ict tll} (expInd ict tll sind) (expInd ict tll bind) → (sind ≤ᵢ bind)
-≤ᵢ-spec {sind = sind} {bind} {ic←∧} (≤ᵢ←∧ rl) = rl
-≤ᵢ-spec {sind = sind} {bind} {ic∧→} (≤ᵢ∧→ rl) = rl
-≤ᵢ-spec {sind = sind} {bind} {ic←∨} (≤ᵢ←∨ rl) = rl
-≤ᵢ-spec {sind = sind} {bind} {ic∨→} (≤ᵢ∨→ rl) = rl
-≤ᵢ-spec {sind = sind} {bind} {ic←∂} (≤ᵢ←∂ rl) = rl
-≤ᵢ-spec {sind = sind} {bind} {ic∂→} (≤ᵢ∂→ rl) = rl
+module _ where
 
-¬≤ᵢ-ext : ∀{i u ll tll gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → {ict : IndexLLCT} → ¬ (sind ≤ᵢ bind) → ¬ (_≤ᵢ_ {ll = expLLT ict tll} (expInd ict tll sind) (expInd ict tll bind))
+  open import Relation.Binary.PropositionalEquality
+
+  ≤ᵢ-spec : ∀{i u ll ict tll il eq gll fll} → {sind : IndexLL {i} {u} gll ll}
+            → {bind : IndexLL fll ll} → _≤ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}})
+            → (sind ≤ᵢ bind)
+  ≤ᵢ-spec (≤ᵢic rl) = rl
+
+
+¬≤ᵢ-ext : ∀{i u ll tll ict il eq gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → ¬ (sind ≤ᵢ bind) → ¬ ( _≤ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}}))
 ¬≤ᵢ-ext rl = λ z → rl (≤ᵢ-spec z)
 
-≤ᵢ-extT : ∀{i u ll tll gll fll} → (sind : IndexLL {i} {u} gll ll) → (bind : IndexLL fll ll) → {ict : IndexLLCT} → Set (lsuc u)
-≤ᵢ-extT {i} {u} {ll} {tll} {gll} {fll} sind bind {ict} = _≤ᵢ_ {ll = expLLT ict tll} (expInd ict tll sind) (expInd ict tll bind)
+≤ᵢ-extT : ∀{i u ll tll ict il eq gll fll} → (sind : IndexLL {i} {u} gll ll) → (bind : IndexLL fll ll) → Set (lsuc u)
+≤ᵢ-extT {i} {u} {ll} {tll} {ict} {il} {eq} {gll} {fll} sind bind = _≤ᵢ_ {ll = il[ il ]} (ic {ll = ll} {tll} {ict} sind {{eq}}) (ic {ll = ll} {tll} {ict} bind {{eq}})
 
-≤ᵢ-ext : ∀{i u ll tll gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → {ict : IndexLLCT} → (sind ≤ᵢ bind) → ≤ᵢ-extT {tll = tll} sind bind {ict = ict}
-≤ᵢ-ext {ict = ic←∧} rl = ≤ᵢ←∧ rl
-≤ᵢ-ext {ict = ic∧→} rl = ≤ᵢ∧→ rl
-≤ᵢ-ext {ict = ic←∨} rl = ≤ᵢ←∨ rl
-≤ᵢ-ext {ict = ic∨→} rl = ≤ᵢ∨→ rl
-≤ᵢ-ext {ict = ic←∂} rl = ≤ᵢ←∂ rl
-≤ᵢ-ext {ict = ic∂→} rl = ≤ᵢ∂→ rl
+
+≤ᵢ-ext : ∀{i u ll tll ict all eq gll fll} → {sind : IndexLL {i} {u} gll ll} → {bind : IndexLL fll ll} → (sind ≤ᵢ bind) → ≤ᵢ-extT {tll = tll} {ict} {all} {eq} sind bind
+≤ᵢ-ext {i} {u} {ll} {tll} {ict} {all} {eq} {gll} {fll} {sind} {bind} rl = ≤ᵢic {ll = ll} {ict} {tll} {all} {eq} {sind = sind} {bind} rl
 
 
 ≤ᵢ-reflexive : ∀{i u gll ll} → (ind : IndexLL {i} {u} gll ll) → ind ≤ᵢ ind
 ≤ᵢ-reflexive ↓ = ≤ᵢ↓
-≤ᵢ-reflexive (ind ←∧) = ≤ᵢ←∧ (≤ᵢ-reflexive ind)
-≤ᵢ-reflexive (∧→ ind) = ≤ᵢ∧→ (≤ᵢ-reflexive ind)
-≤ᵢ-reflexive (ind ←∨) = ≤ᵢ←∨ (≤ᵢ-reflexive ind)
-≤ᵢ-reflexive (∨→ ind) = ≤ᵢ∨→ (≤ᵢ-reflexive ind)
-≤ᵢ-reflexive (ind ←∂) = ≤ᵢ←∂ (≤ᵢ-reflexive ind)
-≤ᵢ-reflexive (∂→ ind) = ≤ᵢ∂→ (≤ᵢ-reflexive ind)
+≤ᵢ-reflexive (ic {ll = ll} {tll} {ict} x {{eq}}) = ≤ᵢic {ll = ll} {ict} {tll} {_} {eq} (≤ᵢ-reflexive x)
+
 
 ≤ᵢ-transitive : ∀{i u gll fll mll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL fll ll} → {c : IndexLL mll ll} → (a ≤ᵢ b) → (b ≤ᵢ c) → (a ≤ᵢ c)
-≤ᵢ-transitive ≤ᵢ↓ ltbc = ≤ᵢ↓
-≤ᵢ-transitive (≤ᵢ←∧ ltab) (≤ᵢ←∧ ltbc) = ≤ᵢ←∧ (≤ᵢ-transitive ltab ltbc)
-≤ᵢ-transitive (≤ᵢ∧→ ltab) (≤ᵢ∧→ ltbc) = ≤ᵢ∧→ (≤ᵢ-transitive ltab ltbc)
-≤ᵢ-transitive (≤ᵢ←∨ ltab) (≤ᵢ←∨ ltbc) = ≤ᵢ←∨ (≤ᵢ-transitive ltab ltbc)
-≤ᵢ-transitive (≤ᵢ∨→ ltab) (≤ᵢ∨→ ltbc) = ≤ᵢ∨→ (≤ᵢ-transitive ltab ltbc)
-≤ᵢ-transitive (≤ᵢ←∂ ltab) (≤ᵢ←∂ ltbc) = ≤ᵢ←∂ (≤ᵢ-transitive ltab ltbc)
-≤ᵢ-transitive (≤ᵢ∂→ ltab) (≤ᵢ∂→ ltbc) = ≤ᵢ∂→ (≤ᵢ-transitive ltab ltbc)
-
-module _ where
-
-  isLTi-abs : ∀{i u gll ll fll} → {s : IndexLL {i} {u} gll ll} → {b : IndexLL fll ll} → {ict : IndexLLCT} → ∀ {tll} → Dec (s ≤ᵢ b) → Dec (≤ᵢ-extT {tll = tll} s b {ict = ict})
-  isLTi-abs (yes p) = yes (≤ᵢ-ext p)
-  isLTi-abs (no ¬p) = no (λ p → ¬p (≤ᵢ-spec p))
-
-  isLTi : ∀{i u gll ll fll} → (s : IndexLL {i} {u} gll ll) → (b : IndexLL fll ll) → Dec (s ≤ᵢ b)
-  isLTi ↓ b = yes ≤ᵢ↓
-  isLTi (s ←∧) ↓ = no (λ ())
-  isLTi (s ←∧) (b ←∧) = isLTi-abs (isLTi s b)
-  isLTi (s ←∧) (∧→ b) = no (λ ())
-  isLTi (∧→ s) ↓ = no (λ ())
-  isLTi (∧→ s) (b ←∧) = no (λ ())
-  isLTi (∧→ s) (∧→ b) = isLTi-abs (isLTi s b)
-  isLTi (s ←∨) ↓ = no (λ ())
-  isLTi (s ←∨) (b ←∨) = isLTi-abs (isLTi s b)
-  isLTi (s ←∨) (∨→ b) = no (λ ())
-  isLTi (∨→ s) ↓ = no (λ ())
-  isLTi (∨→ s) (b ←∨) = no (λ ())
-  isLTi (∨→ s) (∨→ b) = isLTi-abs (isLTi s b)
-  isLTi (s ←∂) ↓ = no (λ ())
-  isLTi (s ←∂) (b ←∂) = isLTi-abs (isLTi s b)
-  isLTi (s ←∂) (∂→ b) = no (λ ())
-  isLTi (∂→ s) ↓ = no (λ ())
-  isLTi (∂→ s) (b ←∂) = no (λ ())
-  isLTi (∂→ s) (∂→ b) = isLTi-abs (isLTi s b)
+≤ᵢ-transitive ≤ᵢ↓ b = ≤ᵢ↓
+≤ᵢ-transitive (≤ᵢic {ict = ict} {tll} {_} {eq} x) (≤ᵢic y) = ≤ᵢic {ict = ict} {tll} {_} {eq} (≤ᵢ-transitive x y)
 
 
 module _ where
+
+  mutual
   
-  isEqᵢ-abs : ∀{u i ll rll} → {a : IndexLL {i} {u} rll ll} → {b : IndexLL rll ll} → {ict : IndexLLCT} → ∀ {tll} → Dec (a ≡ b) → Dec (expInd ict tll a ≡ expInd ict tll b)
-  isEqᵢ-abs (yes refl) = yes refl
-  isEqᵢ-abs {ict = ic←∧} (no ¬p) = no (λ { refl → ¬p refl})
-  isEqᵢ-abs {ict = ic∧→} (no ¬p) = no (λ { refl → ¬p refl})
-  isEqᵢ-abs {ict = ic←∨} (no ¬p) = no (λ { refl → ¬p refl})
-  isEqᵢ-abs {ict = ic∨→} (no ¬p) = no (λ { refl → ¬p refl})
-  isEqᵢ-abs {ict = ic←∂} (no ¬p) = no (λ { refl → ¬p refl})
-  isEqᵢ-abs {ict = ic∂→} (no ¬p) = no (λ { refl → ¬p refl})
+    isLTi-abs1 : ∀{u i ll tll ict il eq rll gll ica icb} → ∀ a b
+                 → ica ≡ ic {i} {u} {rll} {ll = ll} {tll} {ict} {il} a {{eq}}
+                 → icb ≡ ic {i} {u} {gll} {ll = ll} {tll} {ict} {il} b {{eq}}
+                 → Dec (a ≤ᵢ b)
+                 → Dec (ica ≤ᵢ icb)
+    isLTi-abs1 a b refl refl (yes p) = yes (≤ᵢ-ext p)
+    isLTi-abs1 a b refl refl (no ¬p) = no (λ p → ¬p (≤ᵢ-spec p))
 
 
-  isEqᵢ : ∀{u i ll rll} → (a : IndexLL {i} {u} rll ll) → (b : IndexLL rll ll) → Dec (a ≡ b)
-  isEqᵢ ↓ ↓ = yes refl
-  isEqᵢ ↓ (b ←∧) = no (λ ())
-  isEqᵢ ↓ (∧→ b) = no (λ ())
-  isEqᵢ ↓ (b ←∨) = no (λ ())
-  isEqᵢ ↓ (∨→ b) = no (λ ())
-  isEqᵢ ↓ (b ←∂) = no (λ ())
-  isEqᵢ ↓ (∂→ b) = no (λ ())
-  isEqᵢ (a ←∧) ↓ = no (λ ())
-  isEqᵢ (a ←∧) (b ←∧) = isEqᵢ-abs (isEqᵢ a b) 
-  isEqᵢ (a ←∧) (∧→ b) = no (λ ())
-  isEqᵢ (∧→ a) ↓ = no (λ ())
-  isEqᵢ (∧→ a) (b ←∧) = no (λ ())
-  isEqᵢ (∧→ a) (∧→ b) = isEqᵢ-abs (isEqᵢ a b)
-  isEqᵢ (a ←∨) ↓ = no (λ ())
-  isEqᵢ (a ←∨) (b ←∨) = isEqᵢ-abs (isEqᵢ a b)
-  isEqᵢ (a ←∨) (∨→ b) = no (λ ())
-  isEqᵢ (∨→ a) ↓ = no (λ ())
-  isEqᵢ (∨→ a) (b ←∨) = no (λ ())
-  isEqᵢ (∨→ a) (∨→ b) = isEqᵢ-abs (isEqᵢ a b)
-  isEqᵢ (a ←∂) ↓ = no (λ ())
-  isEqᵢ (a ←∂) (b ←∂) = isEqᵢ-abs (isEqᵢ a b)
-  isEqᵢ (a ←∂) (∂→ b) = no (λ ())
-  isEqᵢ (∂→ a) ↓ = no (λ ())
-  isEqᵢ (∂→ a) (b ←∂) = no (λ ())
-  isEqᵢ (∂→ a) (∂→ b) = isEqᵢ-abs (isEqᵢ a b)
-  
-  
+    isLTi-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb rll gll ica icb} → ∀ a b
+                → ica ≡ ic {i} {u} {rll} {ll = lla} {tlla} {icta} {il} a {{eqa}}
+                → icb ≡ ic {i} {u} {gll} {ll = llb} {tllb} {ictb} {il} b {{eqb}}
+               → IndU icta ictb eqa eqb
+                → Dec (ica ≤ᵢ icb)
+    isLTi-abs a b iceqa iceqb (ictEq refl refl refl refl) = isLTi-abs1 a b iceqa iceqb (isLTi a b)
+    isLTi-abs a b refl refl (ict¬Eq ¬icteq reqa reqb) = no λ { (≤ᵢic x) → ¬icteq refl}
+    
+    isLTi : ∀{i u gll ll fll} → (a : IndexLL {i} {u} gll ll) → (b : IndexLL fll ll) → Dec (a ≤ᵢ b)
+    isLTi ↓ b = yes ≤ᵢ↓
+    isLTi (ic a) ↓ = no (λ ())
+    isLTi (ic a) (ic b) = isLTi-abs a b refl refl compIndU
 
+
+
+
+module _ where
+  mutual 
+    isEqᵢ-abs1 : ∀{u i ll tll ict il eq rll} → {a : IndexLL {i} {u} rll ll} → {b : IndexLL rll ll} → Dec (a ≡ b) → Dec (ic {ll = ll} {tll} {ict} {il} a {{eq}} ≡ ic {ll = ll} {tll} {ict} b {{eq}})
+    isEqᵢ-abs1 (yes refl) = yes refl
+    isEqᵢ-abs1 (no ¬p) = no λ { refl → ¬p refl}
+
+    isEqᵢ-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb rll ica icb} → ∀ a b
+            → ica ≡ ic {i} {u} {rll} {ll = lla} {tlla} {icta} {il} a {{eqa}}
+            → icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}}
+            → IndU icta ictb eqa eqb
+            → Dec (ica ≡ icb)
+    isEqᵢ-abs a b refl refl (ictEq refl refl refl refl) = isEqᵢ-abs1 (isEqᵢ a b)
+    isEqᵢ-abs a b refl refl (ict¬Eq ¬icteq reqa reqb) = no λ { refl → ¬icteq refl}
+    
+    isEqᵢ : ∀{u i ll rll} → (a : IndexLL {i} {u} rll ll) → (b : IndexLL rll ll) → Dec (a ≡ b)
+    isEqᵢ ↓ ↓ = yes refl
+    isEqᵢ ↓ (ic b) = no λ ()
+    isEqᵢ (ic a) ↓ = no λ ()
+    isEqᵢ ica@(ic a) icb@(ic b) = isEqᵢ-abs a b refl refl compIndU
+   
 
 
 module _ where
 
   open import Data.Vec
 
--- Is there a better way to express that?
-  indτ⇒¬le : ∀{i u rll ll n dt df} → (ind : IndexLL {i} {u} (τ {i} {u} {n} {dt} df) ll) → (ind2 : IndexLL rll ll) → ¬ (ind2 ≅ᵢ ind) → ¬ (ind ≤ᵢ ind2)
-  indτ⇒¬le ↓ ↓ neq = λ _ → neq ≅ᵢ↓
-  indτ⇒¬le (x ←∧) ↓ neq = λ ()
-  indτ⇒¬le (x ←∧) (y ←∧) neq = ¬≤ᵢ-ext r where
-    ineq : ¬ (y ≅ᵢ x)
-    ineq z = neq (≅ᵢ←∧ z)
-    r = indτ⇒¬le x y ineq
-  indτ⇒¬le (x ←∧) (∧→ y) neq = λ ()
-  indτ⇒¬le (∧→ x) ↓ neq = λ ()
-  indτ⇒¬le (∧→ x) (y ←∧) neq = λ ()
-  indτ⇒¬le (∧→ x) (∧→ y) neq = ¬≤ᵢ-ext r where
-    ineq : ¬ (y ≅ᵢ x)
-    ineq z = neq (≅ᵢ∧→ z)
-    r = indτ⇒¬le x y ineq
-  indτ⇒¬le (x ←∨) ↓ neq = λ ()
-  indτ⇒¬le (x ←∨) (y ←∨) neq = ¬≤ᵢ-ext r where
-    ineq : ¬ (y ≅ᵢ x)
-    ineq z = neq (≅ᵢ←∨ z)
-    r = indτ⇒¬le x y ineq
-  indτ⇒¬le (x ←∨) (∨→ y) neq = λ ()
-  indτ⇒¬le (∨→ x) ↓ neq = λ ()
-  indτ⇒¬le (∨→ x) (y ←∨) neq = λ ()
-  indτ⇒¬le (∨→ x) (∨→ y) neq = ¬≤ᵢ-ext r where
-    ineq : ¬ (y ≅ᵢ x)
-    ineq z = neq (≅ᵢ∨→ z)
-    r = indτ⇒¬le x y ineq
-  indτ⇒¬le (x ←∂) ↓ neq = λ ()
-  indτ⇒¬le (x ←∂) (y ←∂) neq = ¬≤ᵢ-ext r where
-    ineq : ¬ (y ≅ᵢ x)
-    ineq z = neq (≅ᵢ←∂ z)
-    r = indτ⇒¬le x y ineq
-  indτ⇒¬le (x ←∂) (∂→ y) neq = λ ()
-  indτ⇒¬le (∂→ x) ↓ neq = λ ()
-  indτ⇒¬le (∂→ x) (y ←∂) neq = λ ()
-  indτ⇒¬le (∂→ x) (∂→ y) neq = ¬≤ᵢ-ext r where
-    ineq : ¬ (y ≅ᵢ x)
-    ineq z = neq (≅ᵢ∂→ z)
-    r = indτ⇒¬le x y ineq
-  
+  mutual
+
+    indτ⇒¬le-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb rll n dt df ica icb} → ∀ a b
+            → ica ≡ ic {i} {u} {τ {n = n} {dt} df} {ll = lla} {tlla} {icta} {il} a {{eqa}}
+            → icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}}
+            → ¬ icb ≅ᵢ ica
+            → IndU icta ictb eqa eqb
+            → ¬ ica ≤ᵢ icb
+    indτ⇒¬le-abs a b refl refl neq (ictEq refl refl refl refl) = ¬≤ᵢ-ext (indτ⇒¬le a b (¬≅ᵢ-spec neq))
+    indτ⇒¬le-abs a b refl refl neq (ict¬Eq ¬icteq reqa reqb) = λ { (≤ᵢic x) → ¬icteq refl}
+
+-- Is there a better way to express this?
+    indτ⇒¬le : ∀{i u rll ll n dt df} → (ind : IndexLL {i} {u} (τ {i} {u} {n} {dt} df) ll) → (ind2 : IndexLL rll ll) → ¬ (ind2 ≅ᵢ ind) → ¬ (ind ≤ᵢ ind2)
+    indτ⇒¬le ↓ ↓ neq = λ _ → neq ≅ᵢ↓
+    indτ⇒¬le (ic ind1) ↓ neq = λ ()
+    indτ⇒¬le (ic ind1) (ic ind2 ) neq = indτ⇒¬le-abs ind1 ind2 refl refl neq compIndU
 
 
-indτ&¬ge⇒¬≅ : ∀{i u rll ll n dt df} → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll)
-                          (lind : IndexLL rll ll) → ¬ (lind ≤ᵢ ind) → ¬ (lind ≅ᵢ ind)
-indτ&¬ge⇒¬≅ ↓ ↓ neq = λ _ → neq ≤ᵢ↓
-indτ&¬ge⇒¬≅ (ind ←∧) ↓ neq = λ ()
-indτ&¬ge⇒¬≅ (ind ←∧) (lind ←∧) neq = λ {(≅ᵢ←∧ x) → r x} where
-  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ←∧ z))
-indτ&¬ge⇒¬≅ (ind ←∧) (∧→ lind) neq = λ ()
-indτ&¬ge⇒¬≅ (∧→ ind) ↓ neq = λ ()
-indτ&¬ge⇒¬≅ (∧→ ind) (lind ←∧) neq = λ ()
-indτ&¬ge⇒¬≅ (∧→ ind) (∧→ lind) neq  = λ {(≅ᵢ∧→ x) → r x} where
-  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ∧→ z))
-indτ&¬ge⇒¬≅ (ind ←∨) ↓ neq = λ ()
-indτ&¬ge⇒¬≅ (ind ←∨) (lind ←∨) neq = λ {(≅ᵢ←∨ x) → r x} where
-  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ←∨ z))
-indτ&¬ge⇒¬≅ (ind ←∨) (∨→ lind) neq = λ ()
-indτ&¬ge⇒¬≅ (∨→ ind) ↓ neq = λ ()
-indτ&¬ge⇒¬≅ (∨→ ind) (lind ←∨) neq = λ ()
-indτ&¬ge⇒¬≅ (∨→ ind) (∨→ lind) neq  = λ {(≅ᵢ∨→ x) → r x} where
-  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ∨→ z))
-indτ&¬ge⇒¬≅ (ind ←∂) ↓ neq = λ ()
-indτ&¬ge⇒¬≅ (ind ←∂) (lind ←∂) neq = λ {(≅ᵢ←∂ x) → r x} where
-  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ←∂ z))
-indτ&¬ge⇒¬≅ (ind ←∂) (∂→ lind) neq = λ ()
-indτ&¬ge⇒¬≅ (∂→ ind) ↓ neq = λ ()
-indτ&¬ge⇒¬≅ (∂→ ind) (lind ←∂) neq = λ ()
-indτ&¬ge⇒¬≅ (∂→ ind) (∂→ lind) neq  = λ {(≅ᵢ∂→ x) → r x} where
-  r = indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢ∂→ z))
+module _ where
+
+
+  indτ&¬ge⇒¬≅ : ∀{i u rll ll n dt df}
+                → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll) (lind : IndexLL rll ll)
+                → ¬ (lind ≤ᵢ ind) → ¬ (lind ≅ᵢ ind)
+  indτ&¬ge⇒¬≅ ↓ ↓ neq = λ _ → neq ≤ᵢ↓
+  indτ&¬ge⇒¬≅ (ic ind) ↓ neq = λ ()
+  indτ&¬ge⇒¬≅ (ic ind) (ic lind) neq = λ { (≅ᵢic x) → indτ&¬ge⇒¬≅ ind lind (λ z → neq (≤ᵢic z)) x}
 
  
 
@@ -249,30 +164,20 @@ data Orderedᵢ {i u gll fll ll} (a : IndexLL {i} {u} gll ll) (b : IndexLL {i} {
 
 
 
-ord-spec : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
-           → {ind : IndexLL rll ll} → {ic : IndexLLCT} → ∀ {tll} → Orderedᵢ (expInd ic tll ind) (expInd ic tll emi) → Orderedᵢ ind emi
+ord-spec : ∀{i u rll ll ict tll il eq fll} → {emi : IndexLL {i} {u} fll ll}
+           → {ind : IndexLL rll ll} → Orderedᵢ (ic {tll = tll} {ict} {il} ind {{eq}}) (ic {tll = tll} {ict} {il} emi {{eq}}) → Orderedᵢ ind emi
 ord-spec (a≤ᵢb x) = a≤ᵢb (≤ᵢ-spec x)
 ord-spec (b≤ᵢa x) = b≤ᵢa (≤ᵢ-spec x)
 
-ord-ext : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
-           → {ind : IndexLL rll ll} → {ic : IndexLLCT} → ∀ {tll} → Orderedᵢ ind emi → Orderedᵢ (expInd ic tll ind) (expInd ic tll emi)
+ord-ext : ∀{i u rll ll ict tll il eq fll} → {emi : IndexLL {i} {u} fll ll}
+           → {ind : IndexLL rll ll} → Orderedᵢ ind emi → Orderedᵢ (ic {tll = tll} {ict} {il} ind {{eq}}) (ic {tll = tll} {ict} {il} emi {{eq}})
 ord-ext (a≤ᵢb x) = a≤ᵢb (≤ᵢ-ext x)
 ord-ext (b≤ᵢa x) = b≤ᵢa (≤ᵢ-ext x)
 
 
-ord-spec∘ord-ext≡id : ∀{i u ll fll rll ic tll} → {ind : IndexLL {i} {u} fll ll} → {lind : IndexLL rll ll} → (ord : Orderedᵢ ind lind) → ord-spec {ic = ic} {tll = tll} (ord-ext {ic = ic} {tll = tll} ord) ≡ ord
-ord-spec∘ord-ext≡id {ic = ic←∧} (a≤ᵢb x) = refl
-ord-spec∘ord-ext≡id {ic = ic∧→} (a≤ᵢb x) = refl
-ord-spec∘ord-ext≡id {ic = ic←∨} (a≤ᵢb x) = refl
-ord-spec∘ord-ext≡id {ic = ic∨→} (a≤ᵢb x) = refl
-ord-spec∘ord-ext≡id {ic = ic←∂} (a≤ᵢb x) = refl
-ord-spec∘ord-ext≡id {ic = ic∂→} (a≤ᵢb x) = refl
-ord-spec∘ord-ext≡id {ic = ic←∧} (b≤ᵢa x) = refl
-ord-spec∘ord-ext≡id {ic = ic∧→} (b≤ᵢa x) = refl
-ord-spec∘ord-ext≡id {ic = ic←∨} (b≤ᵢa x) = refl
-ord-spec∘ord-ext≡id {ic = ic∨→} (b≤ᵢa x) = refl
-ord-spec∘ord-ext≡id {ic = ic←∂} (b≤ᵢa x) = refl
-ord-spec∘ord-ext≡id {ic = ic∂→} (b≤ᵢa x) = refl
+ord-spec∘ord-ext≡id : ∀{i u ll ict tll il eq fll rll} → {ind : IndexLL {i} {u} fll ll} → {lind : IndexLL rll ll} → (ord : Orderedᵢ ind lind) → ord-spec {ict = ict} {tll = tll} {il} {eq} (ord-ext {ict = ict} {tll = tll} ord) ≡ ord
+ord-spec∘ord-ext≡id (a≤ᵢb x) = refl
+ord-spec∘ord-ext≡id (b≤ᵢa x) = refl
 
 
 
@@ -307,11 +212,19 @@ flipNotOrdᵢ nord = λ x → nord (flipOrdᵢ x)
 ¬lt¬gt⇒¬Ord nlt ngt (a≤ᵢb x) = nlt x
 ¬lt¬gt⇒¬Ord nlt ngt (b≤ᵢa x) = ngt x
 
-¬ord-spec : ∀{i u rll ll fll} → {emi : IndexLL {i} {u} fll ll}
-            → {ind : IndexLL rll ll} → {ic : IndexLLCT} → ∀ {tll} → (nord : ¬ Orderedᵢ (expInd ic tll ind) (expInd ic tll emi)) → ¬ Orderedᵢ ind emi
+¬ord-spec : ∀{i u rll ll ict tll il eq fll} → {emi : IndexLL {i} {u} fll ll}
+            → {ind : IndexLL rll ll} → (nord : ¬ Orderedᵢ (ic {tll = tll} {ict} {il} ind {{eq}}) (ic {tll = tll} {ict} {il} emi {{eq}})) → ¬ Orderedᵢ ind emi
 ¬ord-spec nord ord = nord (ord-ext ord)
 
 
+
+¬ict⇒¬ord : ∀{u i lla tlla icta il eqa llb tllb ictb eqb fll rll ica icb} → ∀ a b
+       → (iceqa : ica ≡ ic {i} {u} {fll} {ll = lla} {tlla} {icta} {il} a {{eqa}})
+       → (iceqb : icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}})
+       → ¬ icta ≡ ictb
+       → ¬ Orderedᵢ icb ica
+¬ict⇒¬ord a b refl refl ¬p (a≤ᵢb (≤ᵢic x)) = ¬p refl
+¬ict⇒¬ord a b refl refl ¬p (b≤ᵢa (≤ᵢic x)) = ¬p refl
 
 
 indτ&¬ge⇒¬Ord : ∀{i u rll ll n dt df} → (ind : IndexLL (τ {i} {u} {n} {dt} df) ll)
@@ -320,20 +233,12 @@ indτ&¬ge⇒¬Ord ind lind neq (a≤ᵢb x) = indτ⇒¬le ind lind (indτ&¬ge
 indτ&¬ge⇒¬Ord ind lind neq (b≤ᵢa x) = neq x                        
 
 
+
 a,c≤ᵢb⇒ordac : ∀{i u gll fll mll ll} → {a : IndexLL {i} {u} gll ll} → {b : IndexLL fll ll} → {c : IndexLL mll ll} → (a ≤ᵢ b) → (c ≤ᵢ b) → Orderedᵢ a c
-a,c≤ᵢb⇒ordac ltab ≤ᵢ↓ = b≤ᵢa ≤ᵢ↓
-a,c≤ᵢb⇒ordac ≤ᵢ↓ (≤ᵢ←∧ ltac) = a≤ᵢb ≤ᵢ↓
-a,c≤ᵢb⇒ordac (≤ᵢ←∧ ltab) (≤ᵢ←∧ ltac) = ord-ext (a,c≤ᵢb⇒ordac ltab ltac)
-a,c≤ᵢb⇒ordac ≤ᵢ↓ (≤ᵢ∧→ ltac) = a≤ᵢb ≤ᵢ↓
-a,c≤ᵢb⇒ordac (≤ᵢ∧→ ltab) (≤ᵢ∧→ ltac) = ord-ext (a,c≤ᵢb⇒ordac ltab ltac)
-a,c≤ᵢb⇒ordac ≤ᵢ↓ (≤ᵢ←∨ ltac) = a≤ᵢb ≤ᵢ↓
-a,c≤ᵢb⇒ordac (≤ᵢ←∨ ltab) (≤ᵢ←∨ ltac) = ord-ext (a,c≤ᵢb⇒ordac ltab ltac)
-a,c≤ᵢb⇒ordac ≤ᵢ↓ (≤ᵢ∨→ ltac) = a≤ᵢb ≤ᵢ↓
-a,c≤ᵢb⇒ordac (≤ᵢ∨→ ltab) (≤ᵢ∨→ ltac) = ord-ext (a,c≤ᵢb⇒ordac ltab ltac)
-a,c≤ᵢb⇒ordac ≤ᵢ↓ (≤ᵢ←∂ ltac) = a≤ᵢb ≤ᵢ↓
-a,c≤ᵢb⇒ordac (≤ᵢ←∂ ltab) (≤ᵢ←∂ ltac) = ord-ext (a,c≤ᵢb⇒ordac ltab ltac)
-a,c≤ᵢb⇒ordac ≤ᵢ↓ (≤ᵢ∂→ ltac) = a≤ᵢb ≤ᵢ↓
-a,c≤ᵢb⇒ordac (≤ᵢ∂→ ltab) (≤ᵢ∂→ ltac) = ord-ext (a,c≤ᵢb⇒ordac ltab ltac)
+a,c≤ᵢb⇒ordac ≤ᵢ↓ ltbc = a≤ᵢb ≤ᵢ↓
+a,c≤ᵢb⇒ordac (≤ᵢic ltab) ≤ᵢ↓ = b≤ᵢa ≤ᵢ↓
+a,c≤ᵢb⇒ordac (≤ᵢic ltab) (≤ᵢic ltcb) = ord-ext (a,c≤ᵢb⇒ordac ltab ltcb)
+
 
 
 
@@ -345,42 +250,31 @@ a≤ᵢb&¬ordac⇒¬ordbc lt nord (b≤ᵢa x) = ⊥-elim (nord (a,c≤ᵢb⇒o
 _-ᵢ_ : ∀ {i u pll cll ll} → (bind : IndexLL {i} {u} cll ll) → (sind : IndexLL pll ll) → (sind ≤ᵢ bind)
        → IndexLL cll pll
 (bind -ᵢ .↓) ≤ᵢ↓ = bind
-((bind ←∧) -ᵢ (sind ←∧)) (≤ᵢ←∧ eq) = (bind -ᵢ sind) eq
-((∧→ bind) -ᵢ (∧→ sind)) (≤ᵢ∧→ eq) = (bind -ᵢ sind) eq
-((bind ←∨) -ᵢ (sind ←∨)) (≤ᵢ←∨ eq) = (bind -ᵢ sind) eq
-((∨→ bind) -ᵢ (∨→ sind)) (≤ᵢ∨→ eq) = (bind -ᵢ sind) eq
-((bind ←∂) -ᵢ (sind ←∂)) (≤ᵢ←∂ eq) = (bind -ᵢ sind) eq
-((∂→ bind) -ᵢ (∂→ sind)) (≤ᵢ∂→ eq) = (bind -ᵢ sind) eq
+((ic bind) -ᵢ (ic sind)) (≤ᵢic lt) = (bind -ᵢ sind) lt
+
+
 
 
 replLL-↓ : ∀{i u pll ell ll} → ∀(ind : IndexLL {i} {u} pll ll)
-           → replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell ≡ ell
+           → replLL ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell ≡ ell
 replLL-↓ ↓ = refl
-replLL-↓ (ind ←∧) = replLL-↓ ind
-replLL-↓ (∧→ ind) = replLL-↓ ind
-replLL-↓ (ind ←∨) = replLL-↓ ind
-replLL-↓ (∨→ ind) = replLL-↓ ind
-replLL-↓ (ind ←∂) = replLL-↓ ind
-replLL-↓ (∂→ ind) = replLL-↓ ind
+replLL-↓ (ic ind) = replLL-↓ ind
+
 
 
 ind-rpl↓ : ∀{i u ll pll cll ell} → (ind : IndexLL {i} {u} pll ll)
-        → IndexLL cll (replLL pll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell) → IndexLL cll ell
+        → IndexLL cll (replLL ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) ell) → IndexLL cll ell
 ind-rpl↓ {_} {_} {_} {pll} {cll} {ell} ind x
   =  subst (λ x → x) (cong (λ x → IndexLL cll x) (replLL-↓ {ell = ell} ind)) x 
 
 
 
 a≤ᵢb-morph : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
-             → (ind : IndexLL rll ll) → ∀ frll → (lt : emi ≤ᵢ ind)
-             → IndexLL (replLL fll ((ind -ᵢ emi) lt) frll) (replLL ll ind frll) 
-a≤ᵢb-morph ↓ ind frll ≤ᵢ↓ = ↓
-a≤ᵢb-morph (emi ←∧) (ind ←∧) frll (≤ᵢ←∧ lt) = a≤ᵢb-morph emi ind frll lt ←∧
-a≤ᵢb-morph (∧→ emi) (∧→ ind) frll (≤ᵢ∧→ lt) = ∧→ a≤ᵢb-morph emi ind frll lt
-a≤ᵢb-morph (emi ←∨) (ind ←∨) frll (≤ᵢ←∨ lt) = a≤ᵢb-morph emi ind frll lt ←∨
-a≤ᵢb-morph (∨→ emi) (∨→ ind) frll (≤ᵢ∨→ lt) = ∨→ a≤ᵢb-morph emi ind frll lt
-a≤ᵢb-morph (emi ←∂) (ind ←∂) frll (≤ᵢ←∂ lt) = a≤ᵢb-morph emi ind frll lt ←∂
-a≤ᵢb-morph (∂→ emi) (∂→ ind) frll (≤ᵢ∂→ lt) = ∂→ a≤ᵢb-morph emi ind frll lt
+             → (ind : IndexLL rll ll) → ∀ {frll} → (lt : emi ≤ᵢ ind)
+             → IndexLL (replLL ((ind -ᵢ emi) lt) frll) (replLL ind frll) 
+a≤ᵢb-morph .↓ ind ≤ᵢ↓ = ↓
+a≤ᵢb-morph (ic {tll = tll} {ict = ict} emi) (ic ind) (≤ᵢic lt) = ic {tll = tll} {ict = ict} (a≤ᵢb-morph emi ind lt)
+
 
 
 
@@ -388,319 +282,248 @@ module _ where
 
   a≤ᵢb-morph-id-abs : ∀{i u ll tll ict rll}
                → {ind : IndexLL {i} {u} rll ll}
-               → ∀ w → (w₁ : w ≡ rll) → ∀ w₂ → (w₃ : w₂ ≡ ll) → (w₄ : IndexLL w w₂) → (w₅ :  subst₂ (λ x y → IndexLL x y) w₁ w₃ w₄ ≡ ind)
-               → subst₂ IndexLL w₁ (cong (λ x → expLLT {ll = x} ict tll) w₃) (expInd ict tll w₄) ≡ expInd ict tll ind
-  a≤ᵢb-morph-id-abs w refl w2 refl w4 refl = refl
+               → ∀ {w₁T} → (w₁ : w₁T ≡ rll)  -- w₁T : replLL ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll
+               → ∀ {w₂T} → (w₂ : w₂T ≡ ll) -- w₂T : replLL li ind rl
+               → (w₃ : IndexLL w₁T w₂T) -- w₃ : (a≤ᵢb-morph ind ind (≤ᵢ-reflexive ind))
+               → (w₄ : subst₂ (λ x y → IndexLL x y) w₁ w₂ w₃ ≡ ind) -- recursive step
+               → subst₂ IndexLL w₁ 
+                   (cong (λ x → il[ expLLT x ict tll ]) w₂)
+                     (ic {tll = tll} {ict} w₃) ≡ ic {tll = tll} {ict} ind
+  a≤ᵢb-morph-id-abs refl refl _ refl = refl
+
 
   a≤ᵢb-morph-id : ∀{i u ll rll}
                → (ind : IndexLL {i} {u} rll ll)
-               → subst₂ (λ x y → IndexLL x y) (replLL-↓ {ell = rll} ind) (replLL-id ll ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) ≡ ind
-  a≤ᵢb-morph-id {i} {u} {ll} {.ll} ↓ = refl
-  a≤ᵢb-morph-id {i} {u} {(li ∧ _)} {rll} (ind ←∧) = a≤ᵢb-morph-id-abs (replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) (replLL-↓ {ell = rll} ind) (replLL li ind rll) (replLL-id li ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
-  a≤ᵢb-morph-id {i} {u} {(_ ∧ ri)} {rll} (∧→ ind) = a≤ᵢb-morph-id-abs (replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) (replLL-↓ {ell = rll} ind) (replLL ri ind rll) (replLL-id ri ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
-  a≤ᵢb-morph-id {i} {u} {(li ∨ _)} {rll} (ind ←∨) = a≤ᵢb-morph-id-abs (replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) (replLL-↓ {ell = rll} ind) (replLL li ind rll) (replLL-id li ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
-  a≤ᵢb-morph-id {i} {u} {(_ ∨ ri)} {rll} (∨→ ind) = a≤ᵢb-morph-id-abs (replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) (replLL-↓ {ell = rll} ind) (replLL ri ind rll) (replLL-id ri ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
-  a≤ᵢb-morph-id {i} {u} {(li ∂ _)} {rll} (ind ←∂) = a≤ᵢb-morph-id-abs (replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) (replLL-↓ {ell = rll} ind) (replLL li ind rll) (replLL-id li ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
-  a≤ᵢb-morph-id {i} {u} {(_ ∂ ri)} {rll} (∂→ ind) = a≤ᵢb-morph-id-abs (replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll) (replLL-↓ {ell = rll} ind) (replLL ri ind rll) (replLL-id ri ind rll refl) (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
+               → subst₂ (λ x y → IndexLL x y) (replLL-↓ {ell = rll} ind) (replLL-id ind rll refl) (a≤ᵢb-morph ind ind (≤ᵢ-reflexive ind)) ≡ ind
+  a≤ᵢb-morph-id ↓ = refl
+  a≤ᵢb-morph-id {rll = rll} (ic ind {{refl}}) = a≤ᵢb-morph-id-abs (replLL-↓ {ell = rll} ind) (replLL-id ind rll refl) (a≤ᵢb-morph ind ind (≤ᵢ-reflexive ind)) (a≤ᵢb-morph-id ind)
+
+
+
+replLL-a≤b≡a : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll) → ∀ {gll}
+               → (ind : IndexLL rll ll) → ∀ {frll} → (lt : emi ≤ᵢ ind)
+               → replLL (a≤ᵢb-morph emi ind {frll = frll} lt) gll ≡ replLL emi gll
+replLL-a≤b≡a .↓ ind ≤ᵢ↓ = refl
+replLL-a≤b≡a (ic {tll = tll} {ict} emi) (ic ind) (≤ᵢic lt) = cong (λ x → il[ expLLT x ict tll ]) (replLL-a≤b≡a emi ind lt)
+
+module _ where
+
+  mutual
   
-
--- module _ where
-
---   open Relation.Binary.HeterogeneousEquality
-
---   a≤ᵢb-morph-hid : ∀{i u ll rll}
---                → (ind : IndexLL {i} {u} rll ll)
---                → (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) ≅ ind
---   a≤ᵢb-morph-hid {ll = ll} {rll = rll} ind with replLL rll ((ind -ᵢ ind) (≤ᵢ-reflexive ind)) rll | replLL-↓ {ell = rll} ind | replLL ll ind rll | replLL-id ll ind rll refl | (a≤ᵢb-morph ind ind rll (≤ᵢ-reflexive ind)) | a≤ᵢb-morph-id ind
---   a≤ᵢb-morph-hid {_} {_} {.r} {.q} .y | q | refl | r | refl | y | refl = refl
-
-
-
--- replLL-a≤b≡a : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll) → ∀ gll
---                → (ind : IndexLL rll ll) → ∀ frll → (lt : emi ≤ᵢ ind)
---                → replLL (replLL ll ind frll) (a≤ᵢb-morph emi ind frll lt) gll ≡ replLL ll emi gll
--- replLL-a≤b≡a ↓ gll ind frll ≤ᵢ↓ = refl
--- replLL-a≤b≡a {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll (≤ᵢ←∧ lt)
---   with (replLL (replLL li ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
---        | (replLL-a≤b≡a emi gll ind frll lt)
--- replLL-a≤b≡a {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll (≤ᵢ←∧ lt) | .(replLL li emi gll) | refl = refl
--- replLL-a≤b≡a {ll = li ∧ ri} (∧→ emi) gll (∧→ ind) frll (≤ᵢ∧→ lt)
---   with (replLL (replLL ri ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
---        | (replLL-a≤b≡a emi gll ind frll lt)
--- replLL-a≤b≡a {ll = li ∧ ri} (∧→ emi) gll (∧→ ind) frll (≤ᵢ∧→ lt) | .(replLL ri emi gll) | refl = refl
--- replLL-a≤b≡a {ll = li ∨ ri} (emi ←∨) gll (ind ←∨) frll (≤ᵢ←∨ lt)
---   with (replLL (replLL li ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
---        | (replLL-a≤b≡a emi gll ind frll lt)
--- replLL-a≤b≡a {ll = li ∨ ri} (emi ←∨) gll (ind ←∨) frll (≤ᵢ←∨ lt) | .(replLL li emi gll) | refl = refl
--- replLL-a≤b≡a {ll = li ∨ ri} (∨→ emi) gll (∨→ ind) frll (≤ᵢ∨→ lt)
---   with (replLL (replLL ri ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
---        | (replLL-a≤b≡a emi gll ind frll lt)
--- replLL-a≤b≡a {ll = li ∨ ri} (∨→ emi) gll (∨→ ind) frll (≤ᵢ∨→ lt) | .(replLL ri emi gll) | refl = refl
--- replLL-a≤b≡a {ll = li ∂ ri} (emi ←∂) gll (ind ←∂) frll (≤ᵢ←∂ lt)
---   with (replLL (replLL li ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
---        | (replLL-a≤b≡a emi gll ind frll lt)
--- replLL-a≤b≡a {ll = li ∂ ri} (emi ←∂) gll (ind ←∂) frll (≤ᵢ←∂ lt) | .(replLL li emi gll) | refl = refl
--- replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂→ lt)
---   with (replLL (replLL ri ind frll) (a≤ᵢb-morph emi ind frll lt) gll)
---        | (replLL-a≤b≡a emi gll ind frll lt)
--- replLL-a≤b≡a {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll (≤ᵢ∂→ lt) | .(replLL ri emi gll) | refl = refl
+    ¬ord-morph-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb fll rll frll ica icb} → ∀ a b
+              → ica ≡ ic {i} {u} {fll} {ll = lla} {tlla} {icta} {il} a {{eqa}}
+              → icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}}
+              → ¬ Orderedᵢ icb ica
+              → IndU icta ictb eqa eqb
+              → IndexLL fll il[ expLLT (replLL b frll) ictb tllb ]
+    ¬ord-morph-abs {tllb = tllb} {ictb} {frll = frll} a b refl refl nord (ictEq _ _ _ refl)
+        = ic {ll = _} {tllb} {ictb} (¬ord-morph a b {frll = frll} (¬ord-spec nord))
+    ¬ord-morph-abs {icta = icta} {eqa = eqa} {eqb = eqb} {frll = frll} a b refl refl nord (ict¬Eq ¬icteq refl refl) = ic {tll
+        = replLL b frll} {ict = icta} a {{rexpLLT⇒req ¬icteq eqa eqb}}
 
 
+    ¬ord-morph : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
+                 → (ind : IndexLL rll ll) → ∀ {frll} → (nord : ¬ Orderedᵢ ind emi)
+                 → IndexLL fll (replLL ind frll)
+    ¬ord-morph emi ↓ nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    ¬ord-morph ↓ (ic ind) nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+    ¬ord-morph (ic {ll = lle} {tlle} {icte} {il} emi {{eqe}}) (ic {ll = lli} {tlli} {icti} ind {{eqi}}) {frll} nord
+        = ¬ord-morph-abs emi ind refl refl nord compIndU
 
--- ¬ord-morph : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
---              → (ind : IndexLL rll ll) → ∀ frll → (nord : ¬ Orderedᵢ ind emi)
---              → IndexLL fll (replLL ll ind frll)
--- ¬ord-morph ↓ ind frll nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- ¬ord-morph (emi ←∧) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓)) 
--- ¬ord-morph (emi ←∧) (ind ←∧) frll nord =
---             (¬ord-morph emi ind frll (¬ord-spec nord)) ←∧
--- ¬ord-morph (emi ←∧) (∧→ ind) frll nord = emi ←∧
--- ¬ord-morph (∧→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph (∧→ emi) (ind ←∧) frll nord = ∧→ emi
--- ¬ord-morph (∧→ emi) (∧→ ind) frll nord = 
---            ∧→ (¬ord-morph emi ind frll (¬ord-spec nord))
--- ¬ord-morph (emi ←∨) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓)) 
--- ¬ord-morph (emi ←∨) (ind ←∨) frll nord = 
---            (¬ord-morph emi ind frll (¬ord-spec nord)) ←∨
--- ¬ord-morph (emi ←∨) (∨→ ind) frll nord = emi ←∨
--- ¬ord-morph (∨→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph (∨→ emi) (ind ←∨) frll nord = ∨→ emi
--- ¬ord-morph (∨→ emi) (∨→ ind) frll nord = 
---            ∨→ (¬ord-morph emi ind frll (¬ord-spec nord))
--- ¬ord-morph (emi ←∂) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓) )
--- ¬ord-morph (emi ←∂) (ind ←∂) frll nord =
---            (¬ord-morph emi ind frll (¬ord-spec nord)) ←∂
--- ¬ord-morph (emi ←∂) (∂→ ind) frll nord = emi ←∂
--- ¬ord-morph (∂→ emi) ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph (∂→ emi) (ind ←∂) frll nord = ∂→ emi
--- ¬ord-morph (∂→ emi) (∂→ ind) frll nord = 
---            ∂→ (¬ord-morph emi ind frll (¬ord-spec nord))
+
+module _ where
+
+mutual
+
+    ¬ord-morph-¬ord-ir-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb fll rll ica icb frll} → ∀ a b
+      → (iceqa : ica ≡ ic {i} {u} {fll} {ll = lla} {tlla} {icta} {il} a {{eqa}})
+      → (iceqb : icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}})
+      → (nord1 nord2 : ¬ Orderedᵢ icb ica)
+      → (w : IndU icta ictb eqa eqb)
+      →  ¬ord-morph-abs {frll = frll} a b iceqa iceqb nord1 w ≡ ¬ord-morph-abs a b iceqa iceqb nord2 w
+    ¬ord-morph-¬ord-ir-abs {tllb = tllb} {ictb} {frll = frll} a b refl refl nord1 nord2 (ictEq refl refl refl refl)
+        = cong (λ z → ic {ll = _} {tllb} {ictb} z) (¬ord-morph-¬ord-ir a b {frll} (¬ord-spec nord1) (¬ord-spec nord2))
+    ¬ord-morph-¬ord-ir-abs ica icb refl refl nord1 nord2 (ict¬Eq ¬icteq refl refl) = refl
+
+
+    ¬ord-morph-¬ord-ir : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
+                         → (ind : IndexLL rll ll) → ∀ {frll} → (nord nord2 : ¬ Orderedᵢ ind emi)
+                         → ¬ord-morph emi ind {frll} nord ≡ ¬ord-morph emi ind {frll} nord2
+    ¬ord-morph-¬ord-ir ↓ ind {frll} nord nord2 = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+    ¬ord-morph-¬ord-ir (ic emi) ↓ {frll} nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    ¬ord-morph-¬ord-ir ice@(ic emi) ici@(ic ind) {frll} nord nord2 = ¬ord-morph-¬ord-ir-abs emi ind refl refl nord nord2 compIndU 
 
 
 
--- ¬ord-morph-¬ord-ir : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
---                      → (ind : IndexLL rll ll) → ∀ frll → (nord nord2 : ¬ Orderedᵢ ind emi)
---                      → ¬ord-morph emi ind frll nord ≡ ¬ord-morph emi ind frll nord2
--- ¬ord-morph-¬ord-ir ↓ ind frll nord nord2 = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (emi ←∧) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (emi ←∧) (ind ←∧) frll nord nord2 = cong (λ z → z ←∧) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
--- ¬ord-morph-¬ord-ir (emi ←∧) (∧→ ind) frll nord nord2 = refl
--- ¬ord-morph-¬ord-ir (∧→ emi) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (∧→ emi) (ind ←∧) frll nord nord2 = refl
--- ¬ord-morph-¬ord-ir (∧→ emi) (∧→ ind) frll nord nord2 = cong (λ z → ∧→ z) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
--- ¬ord-morph-¬ord-ir (emi ←∨) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (emi ←∨) (ind ←∨) frll nord nord2 = cong (λ z → z ←∨) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
--- ¬ord-morph-¬ord-ir (emi ←∨) (∨→ ind) frll nord nord2 = refl
--- ¬ord-morph-¬ord-ir (∨→ emi) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (∨→ emi) (ind ←∨) frll nord nord2 = refl
--- ¬ord-morph-¬ord-ir (∨→ emi) (∨→ ind) frll nord nord2 = cong (λ z → ∨→ z) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
--- ¬ord-morph-¬ord-ir (emi ←∂) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (emi ←∂) (ind ←∂) frll nord nord2 = cong (λ z → z ←∂) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
--- ¬ord-morph-¬ord-ir (emi ←∂) (∂→ ind) frll nord nord2 = refl
--- ¬ord-morph-¬ord-ir (∂→ emi) ↓ frll nord nord2 = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- ¬ord-morph-¬ord-ir (∂→ emi) (ind ←∂) frll nord nord2 = refl
--- ¬ord-morph-¬ord-ir (∂→ emi) (∂→ ind) frll nord nord2 = cong (λ z → ∂→ z) (¬ord-morph-¬ord-ir emi ind frll (¬ord-spec nord) (¬ord-spec nord2))
+module _ where
+
+  mutual
+
+    replLL-¬ordab≡ba-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb fll rll ica icb gll frll} → ∀ a b
+      → (iceqa : ica ≡ ic {i} {u} {fll} {ll = lla} {tlla} {icta} {il} a {{eqa}})
+      → (iceqb : icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}})
+      → (nord : ¬ Orderedᵢ icb ica)
+      → ∀ w1 w2
+      → replLL
+          (¬ord-morph-abs {frll = frll} a b iceqa iceqb nord w1) gll
+        ≡
+        replLL
+          (¬ord-morph-abs {frll = gll} b a iceqb iceqa (λ x → nord (flipOrdᵢ x)) w2) frll
+    replLL-¬ordab≡ba-abs {tllb = tllb} {ictb} {eqb} {gll = gll} {frll} a b refl refl nord (ictEq refl refl refl refl) (ictEq refl refl refl refl)
+      =  cong (λ z → il[ expLLT z ictb tllb ])
+            (subst
+              (λ z → replLL (¬ord-morph a b (¬ord-spec nord)) gll ≡ replLL z frll)
+              (¬ord-morph-¬ord-ir b a (flipNotOrdᵢ (¬ord-spec nord)) (¬ord-spec (flipNotOrdᵢ nord)))
+              (replLL-¬ordab≡ba a b (¬ord-spec nord)))
+    replLL-¬ordab≡ba-abs a b iceqa iceqb nord (ictEq icteq lleq tlleq eqeq) (ict¬Eq ¬icteq reqa reqb) = ⊥-elim (¬icteq (sym icteq))
+    replLL-¬ordab≡ba-abs a b iceqa iceqb nord (ict¬Eq ¬icteq reqa reqb) (ictEq icteq lleq tlleq eqeq) = ⊥-elim (¬icteq (sym icteq))
+    replLL-¬ordab≡ba-abs {eqa = eqa} {eqb = eqb} a b refl refl nord (ict¬Eq _ refl refl) (ict¬Eq ¬icteq refl refl) = cong il[_] (rexpLLT⇒req ¬icteq eqb eqa)
+
+
+    replLL-¬ordab≡ba : ∀{i u rll ll fll}
+      → (emi : IndexLL {i} {u} fll ll) → ∀ {gll}
+      → (ind : IndexLL rll ll) → ∀ {frll}
+      → (nord : ¬ Orderedᵢ ind emi)
+      → replLL (¬ord-morph emi ind {frll} nord) gll ≡ replLL (¬ord-morph ind emi {gll} (flipNotOrdᵢ nord)) frll
+    replLL-¬ordab≡ba ↓ ind nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+    replLL-¬ordab≡ba (ic emi) ↓ nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    replLL-¬ordab≡ba ice@(ic emi) ici@(ic ind) nord = replLL-¬ordab≡ba-abs emi ind refl refl nord compIndU compIndU 
 
 
 
--- module _ where
 
---   replLL-¬ordab≡ba' : ∀{i u rll ll fll}
---     → (emi : IndexLL {i} {u} fll ll) → ∀ gll
---     → (ind : IndexLL rll ll) → ∀ frll
---     → (nord : ¬ Orderedᵢ ind emi)
---     → (fnord : ¬ Orderedᵢ emi ind)
---     → replLL (replLL ll ind frll) (¬ord-morph emi ind frll nord) gll ≡ replLL (replLL ll emi gll) (¬ord-morph ind emi gll fnord) frll
---   replLL-¬ordab≡ba' ↓ gll ind frll nord _ = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
---   replLL-¬ordab≡ba' (emi ←∧) gll ↓ frll nord _ = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
---   replLL-¬ordab≡ba' {ll = li ∧ ri} (emi ←∧) gll (ind ←∧) frll nord fnord
---     with replLL-¬ordab≡ba' emi gll ind frll (¬ord-spec nord) (¬ord-spec fnord) where
---   ... | r = cong (λ x → x ∧ ri) r 
---   replLL-¬ordab≡ba' (emi ←∧) gll (∧→ ind) frll nord _ = refl
---   replLL-¬ordab≡ba' (∧→ emi) gll ↓ frll nord _ = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
---   replLL-¬ordab≡ba' {ll = li ∧ ri} (∧→ emi) gll (∧→ ind) frll nord fnord
---     with replLL-¬ordab≡ba' emi gll ind frll (¬ord-spec nord) (¬ord-spec fnord) where
---   ... | r = cong (λ x → li ∧ x) r
---   replLL-¬ordab≡ba' (∧→ emi) gll (ind ←∧) frll nord _ = refl
---   replLL-¬ordab≡ba' (emi ←∨) gll ↓ frll nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
---   replLL-¬ordab≡ba' {ll = li ∨ ri} (emi ←∨) gll (ind ←∨) frll nord fnord
---     with replLL-¬ordab≡ba' emi gll ind frll (¬ord-spec nord) (¬ord-spec fnord) where
---   ... | r = cong (λ x → x ∨ ri) r
---   replLL-¬ordab≡ba' (emi ←∨) gll (∨→ ind) frll nord _ = refl
---   replLL-¬ordab≡ba' (∨→ emi) gll ↓ frll nord _ = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
---   replLL-¬ordab≡ba' {ll = li ∨ ri} (∨→ emi) gll (∨→ ind) frll nord fnord
---     with replLL-¬ordab≡ba' emi gll ind frll (¬ord-spec nord) (¬ord-spec fnord) where
---   ... | r = cong (λ x → li ∨ x) r
---   replLL-¬ordab≡ba' (∨→ emi) gll (ind ←∨) frll nord _ = refl
---   replLL-¬ordab≡ba' (emi ←∂) gll ↓ frll nord _ = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
---   replLL-¬ordab≡ba' {ll = li ∂ ri} (emi ←∂) gll (ind ←∂) frll nord fnord
---     with replLL-¬ordab≡ba' emi gll ind frll (¬ord-spec nord) (¬ord-spec fnord) where
---   ... | r = cong (λ x → x ∂ ri) r
---   replLL-¬ordab≡ba' (emi ←∂) gll (∂→ ind) frll nord _ = refl
---   replLL-¬ordab≡ba' (∂→ emi) gll ↓ frll nord _ = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
---   replLL-¬ordab≡ba' {ll = li ∂ ri} (∂→ emi) gll (∂→ ind) frll nord fnord
---     with replLL-¬ordab≡ba' emi gll ind frll (¬ord-spec nord) (¬ord-spec fnord) where
---   ... | r = cong (λ x → li ∂ x) r
---   replLL-¬ordab≡ba' (∂→ emi) gll (ind ←∂) frll nord _ = refl
-   
---   replLL-¬ordab≡ba : ∀{i u rll ll fll}
---     → (emi : IndexLL {i} {u} fll ll) → ∀ gll
---     → (ind : IndexLL rll ll) → ∀ frll
---     → (nord : ¬ Orderedᵢ ind emi)
---     → replLL (replLL ll ind frll) (¬ord-morph emi ind frll nord) gll ≡ replLL (replLL ll emi gll) (¬ord-morph ind emi gll (flipNotOrdᵢ nord)) frll
---   replLL-¬ordab≡ba emi gll ind frll nord = replLL-¬ordab≡ba' emi gll ind frll nord (flipNotOrdᵢ nord)
+module _ where
+
+  mutual
+
+    lemma₁-¬ord-a≤ᵢb-abs : ∀{u i ll tll ict il eq llc tllc ictc fll rll pll ica icb ell} → ∀ a b c
+               → ∀ {icc eqc}
+               → ica ≡ ic {i} {u} {fll} {ll = ll} {tll} {ict} {il} a {{eq}}
+               → icb ≡ ic {i} {u} {rll} {ll = ll} {tll} {ict} {il} b {{eq}}
+               → icc ≡ ic {i} {u} {pll} {ll = llc} {tllc} {ictc} {expLLT (replLL b ell) ict tll} c {{eqc}}
+               → ∀ lt
+               → ¬ Orderedᵢ (ic {tll = tll} {ict} (a≤ᵢb-morph a b {ell} lt)) icc
+               → IndU ict ictc refl eqc
+               → IndexLL pll il[ il ]
+    lemma₁-¬ord-a≤ᵢb-abs {tll = tll} {ict} {eq = eq} {ell = ell} a b c iceqa iceqb refl lt nord (ictEq _ _ _ refl) = ic {tll = tll} {ict = ict} (lemma₁-¬ord-a≤ᵢb a b ell lt c (¬ord-spec nord)) {{eq}}
+    lemma₁-¬ord-a≤ᵢb-abs {ll = ll} {eq = eq} {ictc = ictc} a b c {eqc = eqc} iceqa iceqb iceqc lt nord (ict¬Eq ¬icteq refl refl) = ic {tll = ll} {ictc} c {{trans eq (sym (rexpLLT⇒req ¬icteq refl eqc))}}
+
+
+    lemma₁-¬ord-a≤ᵢb : ∀{i u ll pll rll fll}
+          → (emi : IndexLL {i} {u} fll ll)
+          → (ind : IndexLL rll ll) → ∀ ell → (lt : emi ≤ᵢ ind)
+          → (omi : IndexLL pll (replLL ind ell))
+          → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind {ell} lt) omi)
+          → IndexLL pll ll
+    lemma₁-¬ord-a≤ᵢb .↓ ind ell ≤ᵢ↓ omi nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    lemma₁-¬ord-a≤ᵢb .(ic _) .(ic _) ell (≤ᵢic lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+    lemma₁-¬ord-a≤ᵢb ica@(ic a) icb@(ic b {{eq}}) ell (≤ᵢic lt) icc@(ic c) nord = lemma₁-¬ord-a≤ᵢb-abs {eq = eq} a b c refl refl refl lt nord compIndU
+
+
+
+module _ where
+
+mutual
+
+    ¬ord-morph⇒¬ord-abs : ∀{u i lla tlla icta il eqa llb tllb ictb eqb fll rll frll ica icb} → ∀ a b
+           → (iceqa : ica ≡ ic {i} {u} {fll} {ll = lla} {tlla} {icta} {il} a {{eqa}})
+           → (iceqb : icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}})
+           → (nord : ¬ Orderedᵢ icb ica)
+           → (w : IndU icta ictb eqa eqb)
+           →  ¬ Orderedᵢ (ic {tll = tllb} {ict = ictb} (a≤ᵢb-morph b b {frll = frll} (≤ᵢ-reflexive b)))
+                         (¬ord-morph-abs {frll = frll} a b iceqa iceqb nord w)
+    ¬ord-morph⇒¬ord-abs {frll = frll} a b refl refl nord (ictEq icteq lleq tlleq refl) = λ x → r (ord-spec x) where
+      r = ¬ord-morph⇒¬ord a b {frll} (¬ord-spec nord)
+    ¬ord-morph⇒¬ord-abs a b refl refl nord (ict¬Eq ¬icteq refl refl) = ¬ict⇒¬ord a (a≤ᵢb-morph b b (≤ᵢ-reflexive b)) refl refl ¬icteq
   
-
--- lemma₁-¬ord-a≤ᵢb : ∀{i u ll pll rll fll}
---       → (emi : IndexLL {i} {u} fll ll)
---       → (ind : IndexLL rll ll) → ∀ ell → (lt : emi ≤ᵢ ind)
---       → (omi : IndexLL pll (replLL ll ind ell))
---       → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind ell lt) omi)
---       → IndexLL pll ll
--- lemma₁-¬ord-a≤ᵢb ↓ ind ell ≤ᵢ↓ omi nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) (omi ←∧) nord
---      = (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (¬ord-spec nord)) ←∧
--- lemma₁-¬ord-a≤ᵢb (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) (∧→ omi) nord = ∧→ omi
--- lemma₁-¬ord-a≤ᵢb (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) (omi ←∧) nord = omi ←∧
--- lemma₁-¬ord-a≤ᵢb (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) (∧→ omi) nord
---      = ∧→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (¬ord-spec nord)) 
--- lemma₁-¬ord-a≤ᵢb (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) (omi ←∨) nord
---      = (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (¬ord-spec nord)) ←∨
--- lemma₁-¬ord-a≤ᵢb (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) (∨→ omi) nord = ∨→ omi
--- lemma₁-¬ord-a≤ᵢb (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) (omi ←∨) nord = omi ←∨
--- lemma₁-¬ord-a≤ᵢb (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) (∨→ omi) nord
---      = ∨→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (¬ord-spec nord)) 
--- lemma₁-¬ord-a≤ᵢb (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) (omi ←∂) nord
---      = (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (¬ord-spec nord)) ←∂
--- lemma₁-¬ord-a≤ᵢb (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) (∂→ omi) nord = ∂→ omi
--- lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (omi ←∂) nord = omi ←∂
--- lemma₁-¬ord-a≤ᵢb (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (∂→ omi) nord
---      = ∂→ (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi (¬ord-spec nord)) 
+  
+    ¬ord-morph⇒¬ord : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
+          → (ind : IndexLL rll ll) → ∀ {frll} → (nord : ¬ Orderedᵢ ind emi)
+          → ¬ Orderedᵢ (a≤ᵢb-morph ind ind {frll} (≤ᵢ-reflexive ind)) (¬ord-morph emi ind nord)
+    ¬ord-morph⇒¬ord ↓ ind nord = λ _ → nord (b≤ᵢa ≤ᵢ↓)
+    ¬ord-morph⇒¬ord (ic emi) ↓ nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
+    ¬ord-morph⇒¬ord (ic emi) (ic ind) nord = ¬ord-morph⇒¬ord-abs emi ind refl refl nord compIndU
 
 
 
--- ¬ord-morph⇒¬ord : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
---       → (ind : IndexLL rll ll) → ∀ frll → (nord : ¬ Orderedᵢ ind emi)
---       → ¬ Orderedᵢ (a≤ᵢb-morph ind ind frll (≤ᵢ-reflexive ind)) (¬ord-morph emi ind frll nord)
--- ¬ord-morph⇒¬ord ↓ ind frll nord = λ _ → nord (b≤ᵢa ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (emi ←∧) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (emi ←∧) (ind ←∧) frll nord x with ¬ord-morph⇒¬ord emi ind frll (¬ord-spec nord) where
--- ¬ord-morph⇒¬ord (emi ←∧) (ind ←∧) frll nord (a≤ᵢb (≤ᵢ←∧ x)) | r = r (a≤ᵢb x)
--- ¬ord-morph⇒¬ord (emi ←∧) (ind ←∧) frll nord (b≤ᵢa (≤ᵢ←∧ x)) | r = r (b≤ᵢa x)
--- ¬ord-morph⇒¬ord (emi ←∧) (∧→ ind) frll nord (a≤ᵢb ())
--- ¬ord-morph⇒¬ord (emi ←∧) (∧→ ind) frll nord (b≤ᵢa ())
--- ¬ord-morph⇒¬ord (∧→ emi) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (∧→ emi) (ind ←∧) frll nord (a≤ᵢb ())
--- ¬ord-morph⇒¬ord (∧→ emi) (ind ←∧) frll nord (b≤ᵢa ())
--- ¬ord-morph⇒¬ord (∧→ emi) (∧→ ind) frll nord x with ¬ord-morph⇒¬ord emi ind frll (¬ord-spec nord) where
--- ¬ord-morph⇒¬ord (∧→ emi) (∧→ ind) frll nord (a≤ᵢb (≤ᵢ∧→ x)) | r = r (a≤ᵢb x)
--- ¬ord-morph⇒¬ord (∧→ emi) (∧→ ind) frll nord (b≤ᵢa (≤ᵢ∧→ x)) | r = r (b≤ᵢa x)
--- ¬ord-morph⇒¬ord (emi ←∨) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (emi ←∨) (ind ←∨) frll nord x with ¬ord-morph⇒¬ord emi ind frll (¬ord-spec nord) where
--- ¬ord-morph⇒¬ord (emi ←∨) (ind ←∨) frll nord (a≤ᵢb (≤ᵢ←∨ x)) | r = r (a≤ᵢb x)
--- ¬ord-morph⇒¬ord (emi ←∨) (ind ←∨) frll nord (b≤ᵢa (≤ᵢ←∨ x)) | r = r (b≤ᵢa x)
--- ¬ord-morph⇒¬ord (emi ←∨) (∨→ ind) frll nord (a≤ᵢb ())
--- ¬ord-morph⇒¬ord (emi ←∨) (∨→ ind) frll nord (b≤ᵢa ())
--- ¬ord-morph⇒¬ord (∨→ emi) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (∨→ emi) (ind ←∨) frll nord (a≤ᵢb ())
--- ¬ord-morph⇒¬ord (∨→ emi) (ind ←∨) frll nord (b≤ᵢa ())
--- ¬ord-morph⇒¬ord (∨→ emi) (∨→ ind) frll nord x with ¬ord-morph⇒¬ord emi ind frll (¬ord-spec nord) where
--- ¬ord-morph⇒¬ord (∨→ emi) (∨→ ind) frll nord (a≤ᵢb (≤ᵢ∨→ x)) | r = r (a≤ᵢb x)
--- ¬ord-morph⇒¬ord (∨→ emi) (∨→ ind) frll nord (b≤ᵢa (≤ᵢ∨→ x)) | r = r (b≤ᵢa x)
--- ¬ord-morph⇒¬ord (emi ←∂) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (emi ←∂) (ind ←∂) frll nord x with ¬ord-morph⇒¬ord emi ind frll (¬ord-spec nord) where
--- ¬ord-morph⇒¬ord (emi ←∂) (ind ←∂) frll nord (a≤ᵢb (≤ᵢ←∂ x)) | r = r (a≤ᵢb x)
--- ¬ord-morph⇒¬ord (emi ←∂) (ind ←∂) frll nord (b≤ᵢa (≤ᵢ←∂ x)) | r = r (b≤ᵢa x)
--- ¬ord-morph⇒¬ord (emi ←∂) (∂→ ind) frll nord (a≤ᵢb ())
--- ¬ord-morph⇒¬ord (emi ←∂) (∂→ ind) frll nord (b≤ᵢa ())
--- ¬ord-morph⇒¬ord (∂→ emi) ↓ frll nord = λ _ → nord (a≤ᵢb ≤ᵢ↓)
--- ¬ord-morph⇒¬ord (∂→ emi) (ind ←∂) frll nord (a≤ᵢb ())
--- ¬ord-morph⇒¬ord (∂→ emi) (ind ←∂) frll nord (b≤ᵢa ())
--- ¬ord-morph⇒¬ord (∂→ emi) (∂→ ind) frll nord x with ¬ord-morph⇒¬ord emi ind frll (¬ord-spec nord) where
--- ¬ord-morph⇒¬ord (∂→ emi) (∂→ ind) frll nord (a≤ᵢb (≤ᵢ∂→ x)) | r = r (a≤ᵢb x)
--- ¬ord-morph⇒¬ord (∂→ emi) (∂→ ind) frll nord (b≤ᵢa (≤ᵢ∂→ x)) | r = r (b≤ᵢa x)
+module _ where
+
+  mutual
+
+    rlemma₁⇒¬ord-abs : ∀{u i ll tll ict il eq llc tllc ictc fll rll pll ica icb ell} → ∀ a b c
+           → ∀{eqc icc}
+           → (iceqa : ica ≡ ic {i} {u} {fll} {ll = ll} {tll} {ict} {il} a {{eq}})
+           → (iceqb : icb ≡ ic {i} {u} {rll} {ll = ll} {tll} {ict} {il} b {{eq}})
+           → (iceqc : icc ≡ ic {i} {u} {pll} {ll = llc} {tllc} {ictc} {expLLT (replLL b ell) ict tll} c {{eqc}})
+           → ∀ lt
+           → (nord : ¬ Orderedᵢ (ic {tll = tll} {ict} (a≤ᵢb-morph a b {ell} lt)) icc)
+           → (w : IndU ict ictc refl eqc)
+           → ¬ Orderedᵢ ica
+                        (lemma₁-¬ord-a≤ᵢb-abs a b c iceqa iceqb iceqc lt nord w)
+    rlemma₁⇒¬ord-abs {ell = ell} a b c refl refl refl lt nord (ictEq icteq lleq tlleq refl) = λ x → r (ord-spec x) where
+      r = rlemma₁⇒¬ord a b ell lt c (¬ord-spec nord)
+    rlemma₁⇒¬ord-abs a b c refl refl refl lt nord (ict¬Eq ¬icteq refl refl) = ¬ict⇒¬ord c a refl refl (λ x → ¬icteq (sym x))
+
+    rlemma₁⇒¬ord : ∀{i u ll pll rll fll}
+       → (emi : IndexLL {i} {u} fll ll)
+       → (ind : IndexLL rll ll) → ∀ ell → (lt : emi ≤ᵢ ind)
+       → (omi : IndexLL pll (replLL ind ell))
+       → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind lt) omi)
+       → ¬ Orderedᵢ emi (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi nord)
+    rlemma₁⇒¬ord .↓ ind ell ≤ᵢ↓ omi nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    rlemma₁⇒¬ord .(ic _) .(ic _) ell (≤ᵢic lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+    rlemma₁⇒¬ord (ic emi) (ic ind) ell (≤ᵢic lt) (ic omi) nord = rlemma₁⇒¬ord-abs emi ind omi refl refl refl lt nord compIndU
 
 
 
--- rlemma₁⇒¬ord : ∀{i u ll pll rll fll}
---       → (emi : IndexLL {i} {u} fll ll)
---       → (ind : IndexLL rll ll) → ∀ ell → (lt : emi ≤ᵢ ind)
---       → (omi : IndexLL pll (replLL ll ind ell))
---       → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind ell lt) omi)
---       → ¬ Orderedᵢ emi (lemma₁-¬ord-a≤ᵢb emi ind ell lt omi nord)
--- rlemma₁⇒¬ord ↓ ind ell ≤ᵢ↓ omi nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
--- rlemma₁⇒¬ord (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- rlemma₁⇒¬ord (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) (omi ←∧) nord
---   = λ { (a≤ᵢb (≤ᵢ←∧ x)) → n (a≤ᵢb x)
---       ; (b≤ᵢa (≤ᵢ←∧ x)) → n (b≤ᵢa x) } where
---   n = (rlemma₁⇒¬ord emi ind ell lt omi (¬ord-spec nord))
--- rlemma₁⇒¬ord {i} {u} {pll = pll} {fll = fll} (emi ←∧) (ind ←∧) ell (≤ᵢ←∧ lt) (∧→ omi) nord = hf emi omi  where
---   hf : ∀{li ri} → (emi : IndexLL {i} {u} fll li)
---        → (omi : IndexLL pll ri)
---        → ¬ Orderedᵢ (emi ←∧) (∧→ omi)
---   hf emi omi (a≤ᵢb ())
---   hf emi omi (b≤ᵢa ())
--- rlemma₁⇒¬ord (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- rlemma₁⇒¬ord (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) (∧→ omi) nord
---   = λ { (a≤ᵢb (≤ᵢ∧→ x)) → n (a≤ᵢb x)
---       ; (b≤ᵢa (≤ᵢ∧→ x)) → n (b≤ᵢa x) } where
---   n = (rlemma₁⇒¬ord emi ind ell lt omi (¬ord-spec nord))
--- rlemma₁⇒¬ord {i} {u} {pll = pll} {fll = fll} (∧→ emi) (∧→ ind) ell (≤ᵢ∧→ lt) (omi ←∧) nord = hf emi omi  where
---   hf : ∀{li ri} → (emi : IndexLL {i} {u} fll ri)
---        → (omi : IndexLL pll li)
---        → ¬ Orderedᵢ (∧→ emi) (omi ←∧)
---   hf emi omi (a≤ᵢb ())
---   hf emi omi (b≤ᵢa ())
--- rlemma₁⇒¬ord (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- rlemma₁⇒¬ord (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) (omi ←∨) nord
---   = λ { (a≤ᵢb (≤ᵢ←∨ x)) → n (a≤ᵢb x)
---       ; (b≤ᵢa (≤ᵢ←∨ x)) → n (b≤ᵢa x) } where
---   n = (rlemma₁⇒¬ord emi ind ell lt omi (¬ord-spec nord))
--- rlemma₁⇒¬ord {i} {u} {pll = pll} {fll = fll} (emi ←∨) (ind ←∨) ell (≤ᵢ←∨ lt) (∨→ omi) nord = hf emi omi  where
---   hf : ∀{li ri} → (emi : IndexLL {i} {u} fll li)
---        → (omi : IndexLL pll ri)
---        → ¬ Orderedᵢ (emi ←∨) (∨→ omi)
---   hf emi omi (a≤ᵢb ())
---   hf emi omi (b≤ᵢa ())
--- rlemma₁⇒¬ord (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- rlemma₁⇒¬ord (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) (∨→ omi) nord
---   = λ { (a≤ᵢb (≤ᵢ∨→ x)) → n (a≤ᵢb x)
---       ; (b≤ᵢa (≤ᵢ∨→ x)) → n (b≤ᵢa x) } where
---   n = (rlemma₁⇒¬ord emi ind ell lt omi (¬ord-spec nord))
--- rlemma₁⇒¬ord {i} {u} {pll = pll} {fll = fll} (∨→ emi) (∨→ ind) ell (≤ᵢ∨→ lt) (omi ←∨) nord = hf emi omi  where
---   hf : ∀{li ri} → (emi : IndexLL {i} {u} fll ri)
---        → (omi : IndexLL pll li)
---        → ¬ Orderedᵢ (∨→ emi) (omi ←∨)
---   hf emi omi (a≤ᵢb ())
---   hf emi omi (b≤ᵢa ())
--- rlemma₁⇒¬ord (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- rlemma₁⇒¬ord (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) (omi ←∂) nord
---   = λ { (a≤ᵢb (≤ᵢ←∂ x)) → n (a≤ᵢb x)
---       ; (b≤ᵢa (≤ᵢ←∂ x)) → n (b≤ᵢa x) } where
---   n = (rlemma₁⇒¬ord emi ind ell lt omi (¬ord-spec nord))
--- rlemma₁⇒¬ord {i} {u} {pll = pll} {fll = fll} (emi ←∂) (ind ←∂) ell (≤ᵢ←∂ lt) (∂→ omi) nord = hf emi omi  where
---   hf : ∀{li ri} → (emi : IndexLL {i} {u} fll li)
---        → (omi : IndexLL pll ri)
---        → ¬ Orderedᵢ (emi ←∂) (∂→ omi)
---   hf emi omi (a≤ᵢb ())
---   hf emi omi (b≤ᵢa ())
--- rlemma₁⇒¬ord (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
--- rlemma₁⇒¬ord (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (∂→ omi) nord
---   = λ { (a≤ᵢb (≤ᵢ∂→ x)) → n (a≤ᵢb x)
---       ; (b≤ᵢa (≤ᵢ∂→ x)) → n (b≤ᵢa x) } where
---   n = (rlemma₁⇒¬ord emi ind ell lt omi (¬ord-spec nord))
--- rlemma₁⇒¬ord {i} {u} {pll = pll} {fll = fll} (∂→ emi) (∂→ ind) ell (≤ᵢ∂→ lt) (omi ←∂) nord = hf emi omi  where
---   hf : ∀{li ri} → (emi : IndexLL {i} {u} fll ri)
---        → (omi : IndexLL pll li)
---        → ¬ Orderedᵢ (∂→ emi) (omi ←∂)
---   hf emi omi (a≤ᵢb ())
---   hf emi omi (b≤ᵢa ())
+module _ where
+
+  mutual 
+
+    ¬ord-morph$lemma₁≡I-abs1 : ∀{u i ll tll ict il eq fll rll pll ica icb ell} → ∀ a b c
+               → ∀ {icc}
+               → (iceqa : ica ≡ ic {i} {u} {fll} {ll = ll} {tll} {ict} {il} a {{eq}})
+               → (iceqb : icb ≡ ic {i} {u} {rll} {ll = ll} {tll} {ict} {il} b {{eq}})
+               → (iceqc : icc ≡ ic {i} {u} {pll} {ll = replLL b ell} {tll} {ict} {expLLT (replLL b ell) ict tll} c {{refl}})
+               → ∀ lt
+               → (nord : ¬ Orderedᵢ (ic {tll = tll} {ict} (a≤ᵢb-morph a b {ell} lt)) (ic {tll = tll} {ict} c {{refl}}))
+               → (w : IndU ict ict eq eq)
+               → ¬ord-morph-abs
+                   (lemma₁-¬ord-a≤ᵢb a b ell lt c (λ ord → nord (ord-ext ord))) b refl refl
+                     (a≤ᵢb&¬ordac⇒¬ordbc (≤ᵢic lt)
+                       (λ x → rlemma₁⇒¬ord a b ell lt c (λ ord → nord (ord-ext ord)) (ord-spec x))) w
+                 ≡ ic {tll = tll} {ict} c {{refl}}
+    ¬ord-morph$lemma₁≡I-abs1 {ell = ell} a b c refl refl refl lt nord (ictEq icteq lleq tlleq refl) = {!r!} where
+      r = ¬ord-morph$lemma₁≡I ell a b lt c (¬ord-spec nord)
+    ¬ord-morph$lemma₁≡I-abs1 a b c refl refl refl lt nord (ict¬Eq ¬icteq reqa reqb) = {!!}          
+
+
+    ¬ord-morph$lemma₁≡I-abs : ∀{u i ll tll ict il eq llc tllc ictc fll rll pll ica icb ell} → ∀ a b c
+               → ∀ {icc eqc}
+               → (iceqa : ica ≡ ic {i} {u} {fll} {ll = ll} {tll} {ict} {il} a {{eq}})
+               → (iceqb : icb ≡ ic {i} {u} {rll} {ll = ll} {tll} {ict} {il} b {{eq}})
+               → (iceqc : icc ≡ ic {i} {u} {pll} {ll = llc} {tllc} {ictc} {expLLT (replLL b ell) ict tll} c {{eqc}})
+               → ∀ lt
+               → (nord : ¬ Orderedᵢ (ic {tll = tll} {ict} (a≤ᵢb-morph a b {ell} lt)) (ic c))
+               → (w : IndU ict ictc refl eqc)
+               → ¬ord-morph
+                   (lemma₁-¬ord-a≤ᵢb-abs {eq = eq} {ell = ell} a b c refl refl refl lt nord w) (ic b) {frll = ell} (a≤ᵢb&¬ordac⇒¬ordbc (≤ᵢic lt) (rlemma₁⇒¬ord-abs a b c refl refl refl lt nord w)) ≡ icc
+    ¬ord-morph$lemma₁≡I-abs a b c refl refl refl lt nord (ictEq icteq lleq tlleq refl) = {!!} -- ¬ord-morph$lemma₁≡I-abs1 a b c refl refl refl lt nord compIndU where
+--      r = ¬ord-morph$lemma₁≡I ell a b lt c (¬ord-spec nord)
+    ¬ord-morph$lemma₁≡I-abs a b c refl refl refl lt nord (ict¬Eq ¬icteq refl refl) = {!!} 
+
+
+
+    ¬ord-morph$lemma₁≡I : ∀{i u pll ll cll fll} → ∀ ell → (emi : IndexLL {i} {u} fll ll) → (ind : IndexLL {i} {u} pll ll) → (lt : emi ≤ᵢ ind) → (lind : IndexLL cll (replLL ind ell)) → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind {ell} lt) lind)
+          → (¬ord-morph (lemma₁-¬ord-a≤ᵢb emi ind ell lt lind nord) ind (a≤ᵢb&¬ordac⇒¬ordbc lt (rlemma₁⇒¬ord emi ind ell lt lind nord)) ≡ lind)
+    ¬ord-morph$lemma₁≡I ell .↓ ind ≤ᵢ↓ lind nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    ¬ord-morph$lemma₁≡I ell .(ic _) .(ic _) (≤ᵢic lt) ↓ nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
+    ¬ord-morph$lemma₁≡I ell ice@(ic emi) ici@(ic ind) clt@(≤ᵢic lt) icl@(ic lind) nord = {!!} -- ¬ord-morph$lemma₁≡I-abs emi ind lind refl refl refl lt nord  compIndU compIndU (a≤ᵢb&¬ordac⇒¬ordbc clt (rlemma₁⇒¬ord ice ici ell clt icl nord))
+
+
+    ¬ord-morph$lemma₁≡I' : ∀{i u pll ll cll fll} → ∀ ell → (emi : IndexLL {i} {u} fll ll) → (ind : IndexLL {i} {u} pll ll) → (lt : emi ≤ᵢ ind) → (lind : IndexLL cll (replLL ind ell)) → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind lt) lind) → (lnord : ¬ Orderedᵢ ind (lemma₁-¬ord-a≤ᵢb emi ind ell lt lind nord))
+        → (¬ord-morph (lemma₁-¬ord-a≤ᵢb emi ind ell lt lind nord) ind lnord ≡ lind)
+    ¬ord-morph$lemma₁≡I' = {!!}
 
 
 -- module _ where

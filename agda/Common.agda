@@ -12,6 +12,7 @@ open import Function public
 open import Level public renaming (suc to lsuc ; _⊔_ to _l⊔_ ; zero to lzero) 
 open import Data.Nat public
 open import Data.Vec
+open import Data.Product public
 
 
 -- postulates
