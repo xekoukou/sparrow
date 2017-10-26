@@ -363,31 +363,30 @@ module _ where
       → (iceqa : ica ≡ ic {i} {u} {fll} {ll = lla} {tlla} {icta} {il} a {{eqa}})
       → (iceqb : icb ≡ ic {i} {u} {rll} {ll = llb} {tllb} {ictb} {il} b {{eqb}})
       → (nord : ¬ Orderedᵢ icb ica)
+      → (fnord : ¬ Orderedᵢ ica icb)
       → ∀ w1 w2
       → replLL
           (¬ord-morph-abs {frll = frll} a b iceqa iceqb nord w1) gll
         ≡
         replLL
-          (¬ord-morph-abs {frll = gll} b a iceqb iceqa (λ x → nord (flipOrdᵢ x)) w2) frll
-    replLL-¬ordab≡ba-abs {tllb = tllb} {ictb} {eqb} {gll = gll} {frll} a b refl refl nord (ictEq refl refl refl refl) (ictEq refl refl refl refl)
+          (¬ord-morph-abs {frll = gll} b a iceqb iceqa fnord w2) frll
+    replLL-¬ordab≡ba-abs {tllb = tllb} {ictb} {eqb} {gll = gll} {frll} a b refl refl nord fnord (ictEq _ _ _ refl) (ictEq _ _ _ refl)
       =  cong (λ z → il[ expLLT z ictb tllb ])
-            (subst
-              (λ z → replLL (¬ord-morph a b (¬ord-spec nord)) gll ≡ replLL z frll)
-              (¬ord-morph-¬ord-ir b a (flipNotOrdᵢ (¬ord-spec nord)) (¬ord-spec (flipNotOrdᵢ nord)))
-              (replLL-¬ordab≡ba a b (¬ord-spec nord)))
-    replLL-¬ordab≡ba-abs a b iceqa iceqb nord (ictEq icteq lleq tlleq eqeq) (ict¬Eq ¬icteq reqa reqb) = ⊥-elim (¬icteq (sym icteq))
-    replLL-¬ordab≡ba-abs a b iceqa iceqb nord (ict¬Eq ¬icteq reqa reqb) (ictEq icteq lleq tlleq eqeq) = ⊥-elim (¬icteq (sym icteq))
-    replLL-¬ordab≡ba-abs {eqa = eqa} {eqb = eqb} a b refl refl nord (ict¬Eq _ refl refl) (ict¬Eq ¬icteq refl refl) = cong il[_] (rexpLLT⇒req ¬icteq eqb eqa)
+              (replLL-¬ordab≡ba a b (¬ord-spec nord) (¬ord-spec fnord))
+    replLL-¬ordab≡ba-abs a b iceqa iceqb nord fnord (ictEq icteq lleq tlleq eqeq) (ict¬Eq ¬icteq reqa reqb) = ⊥-elim (¬icteq (sym icteq))
+    replLL-¬ordab≡ba-abs a b iceqa iceqb nord fnord (ict¬Eq ¬icteq reqa reqb) (ictEq icteq lleq tlleq eqeq) = ⊥-elim (¬icteq (sym icteq))
+    replLL-¬ordab≡ba-abs {eqa = eqa} {eqb = eqb} a b refl refl nord fnord (ict¬Eq _ refl refl) (ict¬Eq ¬icteq refl refl) = cong il[_] (rexpLLT⇒req ¬icteq eqb eqa)
 
 
     replLL-¬ordab≡ba : ∀{i u rll ll fll}
       → (emi : IndexLL {i} {u} fll ll) → ∀ {gll}
       → (ind : IndexLL rll ll) → ∀ {frll}
       → (nord : ¬ Orderedᵢ ind emi)
-      → replLL (¬ord-morph emi ind {frll} nord) gll ≡ replLL (¬ord-morph ind emi {gll} (flipNotOrdᵢ nord)) frll
+      → (fnord : ¬ Orderedᵢ emi ind)
+      → replLL (¬ord-morph emi ind {frll} nord) gll ≡ replLL (¬ord-morph ind emi {gll} fnord) frll
     replLL-¬ordab≡ba ↓ ind nord = ⊥-elim (nord (b≤ᵢa ≤ᵢ↓))
-    replLL-¬ordab≡ba (ic emi) ↓ nord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
-    replLL-¬ordab≡ba ice@(ic emi) ici@(ic ind) nord = replLL-¬ordab≡ba-abs emi ind refl refl nord compIndU compIndU 
+    replLL-¬ordab≡ba (ic emi) ↓ nord fnord = ⊥-elim (nord (a≤ᵢb ≤ᵢ↓))
+    replLL-¬ordab≡ba ice@(ic emi) ici@(ic ind) nord fnord = replLL-¬ordab≡ba-abs emi ind refl refl nord fnord compIndU compIndU 
 
 
 
