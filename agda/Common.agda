@@ -17,14 +17,16 @@ open import Data.Product public
 
 -- postulates
 
-module _ where
-
 postulate IMPOSSIBLE : ∀{u} → {A : Set (u)} → A
 
 
 J : {u u' : Level} {A : Set u} {x : A} (P : (y : A) → x ≡ y → Set u') →
      P x refl → (y : A) (x≡y : x ≡ y) → P y x≡y
 J P p ._ refl = p
+
+
+it : ∀ {a} {A : Set a} {{_ : A}} → A
+it {{x}} = x
 
 
 module _ where
