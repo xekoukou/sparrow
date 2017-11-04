@@ -54,3 +54,12 @@ module _ where
   applyH [] y = y
   applyH (x ∷ xs) y = applyH xs (y x)
   
+
+infixr 0 _asInst_
+
+_asInst_ : ∀ {a b} {A : Set a} {B : A → Set b} (x : A) → ({{y : A}} → B y) → B x
+x asInst f = f {{x}}
+
+
+eqEq : ∀{u} → {A : Set u} → {x y : A} → (eqa : x ≡ y) → (eqb : x ≡ y) → eqa ≡ eqb
+eqEq refl refl = refl

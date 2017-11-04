@@ -127,12 +127,13 @@ data IndexLLCT : Set where
 
 
 data IndOpLLCT : (a b : IndexLLCT) → Set where
-  ∧op : IndOpLLCT ic←∧ ic∧→
-  ∨op : IndOpLLCT ic←∨ ic∨→
-  ∂op : IndOpLLCT ic←∂ ic∂→
-  ∧opi : IndOpLLCT ic∧→ ic←∧
-  ∨opi : IndOpLLCT ic∨→ ic←∨
-  ∂opi : IndOpLLCT ic∂→ ic←∂
+  instance
+    ∧op : IndOpLLCT ic←∧ ic∧→
+    ∨op : IndOpLLCT ic←∨ ic∨→
+    ∂op : IndOpLLCT ic←∂ ic∂→
+    ∧opi : IndOpLLCT ic∧→ ic←∧
+    ∨opi : IndOpLLCT ic∨→ ic←∨
+    ∂opi : IndOpLLCT ic∂→ ic←∂
 
 module _ where
 
@@ -191,85 +192,86 @@ expLLT {i} {u} ll ic←∂ tll = ll ∂ tll
 expLLT {i} {u} ll ic∂→ tll = tll ∂ ll
 
   
-expLLT⇒eq : ∀{i u lla llb tlla tllb icta ictb il}
+expLLT⇒eq : ∀{i u lla llb tlla tllb icta ictb}
+            → ∀ il
             → icta ≡ ictb
-            → (eqa : il ≡ expLLT {i} {u} lla icta tlla)
-            → (eqb : il ≡ expLLT llb ictb tllb)
+            → {{eqa : il ≡ expLLT {i} {u} lla icta tlla}}
+            → {{eqb : il ≡ expLLT llb ictb tllb}}
             → (lla ≡ llb) × (tlla ≡ tllb) × ((icta , lla , tlla , eqa) ≡ (ictb , llb , tllb , eqb))
-expLLT⇒eq {icta = ic←∧} refl refl refl = refl , refl , refl
-expLLT⇒eq {icta = ic∧→} refl refl refl = refl , refl , refl
-expLLT⇒eq {icta = ic←∨} refl refl refl = refl , refl , refl
-expLLT⇒eq {icta = ic∨→} refl refl refl = refl , refl , refl
-expLLT⇒eq {icta = ic←∂} refl refl refl = refl , refl , refl
-expLLT⇒eq {icta = ic∂→} refl refl refl = refl , refl , refl
+expLLT⇒eq {icta = ic←∧} _ refl {{refl}} {{refl}} = refl , refl , refl
+expLLT⇒eq {icta = ic∧→} _ refl {{refl}} {{refl}} = refl , refl , refl
+expLLT⇒eq {icta = ic←∨} _ refl {{refl}} {{refl}} = refl , refl , refl
+expLLT⇒eq {icta = ic∨→} _ refl {{refl}} {{refl}} = refl , refl , refl
+expLLT⇒eq {icta = ic←∂} _ refl {{refl}} {{refl}} = refl , refl , refl
+expLLT⇒eq {icta = ic∂→} _ refl {{refl}} {{refl}} = refl , refl , refl
 
 
-
-rexpLLT⇒IndOp : ∀{i u ict1 ict2 il x1 x2 y1 y2} → ¬ ict1 ≡ ict2
-      → il ≡ expLLT {i} {u} x1 ict1 x2  
-      → il ≡ expLLT {i} {u} y1 ict2 y2
-      → IndOpLLCT ict1 ict2
-rexpLLT⇒IndOp {ict1 = ic←∧} {ic←∧} ¬p eqa eqb = ⊥-elim (¬p refl)
-rexpLLT⇒IndOp {ict1 = ic←∧} {ic∧→} ¬p eqa eqb = ∧op
-rexpLLT⇒IndOp {ict1 = ic←∧} {ic←∨} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∧} {ic∨→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∧} {ic←∂} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∧} {ic∂→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∧→} {ic←∧} ¬p eqa eqb = ∧opi
-rexpLLT⇒IndOp {ict1 = ic∧→} {ic∧→} ¬p eqa eqb = ⊥-elim (¬p refl)
-rexpLLT⇒IndOp {ict1 = ic∧→} {ic←∨} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∧→} {ic∨→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∧→} {ic←∂} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∧→} {ic∂→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∨} {ic←∧} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∨} {ic∧→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∨} {ic←∨} ¬p eqa eqb = ⊥-elim (¬p refl)
-rexpLLT⇒IndOp {ict1 = ic←∨} {ic∨→} ¬p eqa eqb = ∨op
-rexpLLT⇒IndOp {ict1 = ic←∨} {ic←∂} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∨} {ic∂→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∨→} {ic←∧} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∨→} {ic∧→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∨→} {ic←∨} ¬p eqa eqb = ∨opi
-rexpLLT⇒IndOp {ict1 = ic∨→} {ic∨→} ¬p eqa eqb = ⊥-elim (¬p refl)
-rexpLLT⇒IndOp {ict1 = ic∨→} {ic←∂} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∨→} {ic∂→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∂} {ic←∧} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∂} {ic∧→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∂} {ic←∨} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∂} {ic∨→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic←∂} {ic←∂} ¬p eqa eqb = ⊥-elim (¬p refl)
-rexpLLT⇒IndOp {ict1 = ic←∂} {ic∂→} ¬p eqa eqb = ∂op
-rexpLLT⇒IndOp {ict1 = ic∂→} {ic←∧} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∂→} {ic∧→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∂→} {ic←∨} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∂→} {ic∨→} ¬p refl ()
-rexpLLT⇒IndOp {ict1 = ic∂→} {ic←∂} ¬p eqa eqb = ∂opi
-rexpLLT⇒IndOp {ict1 = ic∂→} {ic∂→} ¬p eqa eqb = ⊥-elim (¬p refl)
-
+instance
+  rexpLLT⇒IndOp : ∀{i u ict1 ict2 il x1 x2 y1 y2} → ¬ ict1 ≡ ict2
+        → il ≡ expLLT {i} {u} x1 ict1 x2
+        → il ≡ expLLT {i} {u} y1 ict2 y2
+        → IndOpLLCT ict1 ict2
+  rexpLLT⇒IndOp {ict1 = ic←∧} {ic←∧} ¬p _ _ = ⊥-elim (¬p refl)
+  rexpLLT⇒IndOp {ict1 = ic←∧} {ic∧→} ¬p _ _ = ∧op
+  rexpLLT⇒IndOp {ict1 = ic←∧} {ic←∨} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∧} {ic∨→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∧} {ic←∂} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∧} {ic∂→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∧→} {ic←∧} ¬p _ _ = ∧opi
+  rexpLLT⇒IndOp {ict1 = ic∧→} {ic∧→} ¬p _ _ = ⊥-elim (¬p refl)
+  rexpLLT⇒IndOp {ict1 = ic∧→} {ic←∨} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∧→} {ic∨→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∧→} {ic←∂} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∧→} {ic∂→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∨} {ic←∧} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∨} {ic∧→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∨} {ic←∨} ¬p _ _ = ⊥-elim (¬p refl)
+  rexpLLT⇒IndOp {ict1 = ic←∨} {ic∨→} ¬p _ _ = ∨op
+  rexpLLT⇒IndOp {ict1 = ic←∨} {ic←∂} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∨} {ic∂→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∨→} {ic←∧} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∨→} {ic∧→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∨→} {ic←∨} ¬p _ _ = ∨opi
+  rexpLLT⇒IndOp {ict1 = ic∨→} {ic∨→} ¬p _ _ = ⊥-elim (¬p refl)
+  rexpLLT⇒IndOp {ict1 = ic∨→} {ic←∂} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∨→} {ic∂→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∂} {ic←∧} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∂} {ic∧→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∂} {ic←∨} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∂} {ic∨→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic←∂} {ic←∂} ¬p _ _ = ⊥-elim (¬p refl)
+  rexpLLT⇒IndOp {ict1 = ic←∂} {ic∂→} ¬p _ _ = ∂op
+  rexpLLT⇒IndOp {ict1 = ic∂→} {ic←∧} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∂→} {ic∧→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∂→} {ic←∨} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∂→} {ic∨→} ¬p refl ()
+  rexpLLT⇒IndOp {ict1 = ic∂→} {ic←∂} ¬p _ _ = ∂opi
+  rexpLLT⇒IndOp {ict1 = ic∂→} {ic∂→} ¬p _ _ = ⊥-elim (¬p refl)
+  
 module _ where
 
-  expLLT⇒req-abs : ∀{i u ll1 ll2 tll1 tll2 ict1 ict2 il} → IndOpLLCT ict1 ict2 → il ≡ expLLT {i} {u} ll1 ict1 tll1 → il ≡ expLLT ll2 ict2 tll2 → (ll1 ≡ tll2) × (ll2 ≡ tll1)
-  expLLT⇒req-abs ∧op refl refl = refl , refl
-  expLLT⇒req-abs ∨op refl refl = refl , refl
-  expLLT⇒req-abs ∂op refl refl = refl , refl
-  expLLT⇒req-abs ∧opi refl refl = refl , refl
-  expLLT⇒req-abs ∨opi refl refl = refl , refl
-  expLLT⇒req-abs ∂opi refl refl = refl , refl
+  expLLT⇒req-abs : ∀{i u ll1 ll2 tll1 tll2 ict1 ict2} → ∀ il → IndOpLLCT ict1 ict2 → {{eqa : il ≡ expLLT {i} {u} ll1 ict1 tll1}} → {{eqb : il ≡ expLLT ll2 ict2 tll2}} → (ll1 ≡ tll2) × (ll2 ≡ tll1)
+  expLLT⇒req-abs _ ∧op {{refl}} {{refl}} = refl , refl
+  expLLT⇒req-abs _ ∨op {{refl}} {{refl}} = refl , refl
+  expLLT⇒req-abs _ ∂op {{refl}} {{refl}} = refl , refl
+  expLLT⇒req-abs _ ∧opi {{refl}} {{refl}} = refl , refl
+  expLLT⇒req-abs _ ∨opi {{refl}} {{refl}} = refl , refl
+  expLLT⇒req-abs _ ∂opi {{refl}} {{refl}} = refl , refl
 
-  expLLT⇒req : ∀{i u ll1 ll2 tll1 tll2 ict1 ict2 il} → ¬ ict1 ≡ ict2 → il ≡ expLLT {i} {u} ll1 ict1 tll1 → il ≡ expLLT ll2 ict2 tll2 → (ll1 ≡ tll2) × (ll2 ≡ tll1)
-  expLLT⇒req  ¬p eqa eqb = expLLT⇒req-abs (rexpLLT⇒IndOp ¬p eqa eqb) eqa eqb
+  expLLT⇒req : ∀{i u ll1 ll2 tll1 tll2 ict1 ict2} → ∀ il → ¬ ict1 ≡ ict2 → {{eqa : il ≡ expLLT {i} {u} ll1 ict1 tll1}} → {{eqb : il ≡ expLLT ll2 ict2 tll2}} → (ll1 ≡ tll2) × (ll2 ≡ tll1)
+  expLLT⇒req il ¬p {{eqa = eqa}} {{eqb = eqb}} = expLLT⇒req-abs il (rexpLLT⇒IndOp ¬p eqa eqb)
   
 
 
 indOp⇒rexpLLT : ∀{i u ll tll ict1 ict2}
-      → IndOpLLCT ict1 ict2
+      → {{iop : IndOpLLCT ict1 ict2}}
       → expLLT {i} {u} ll ict2 tll ≡ expLLT tll ict1 ll
-indOp⇒rexpLLT ∧op = refl
-indOp⇒rexpLLT ∨op = refl
-indOp⇒rexpLLT ∂op = refl
-indOp⇒rexpLLT ∧opi = refl
-indOp⇒rexpLLT ∨opi = refl
-indOp⇒rexpLLT ∂opi = refl
+indOp⇒rexpLLT {{iop = ∧op}}  = refl
+indOp⇒rexpLLT {{iop = ∨op}}  = refl
+indOp⇒rexpLLT {{iop = ∂op}}  = refl
+indOp⇒rexpLLT {{iop = ∧opi}} = refl
+indOp⇒rexpLLT {{iop = ∨opi}} = refl
+indOp⇒rexpLLT {{iop = ∂opi}} = refl
 
 
 data IndU {i u il} (icta ictb : IndexLLCT) {lla llb tlla tllb : LinLogic i {u}} (eqa : il ≡ expLLT lla icta tlla) (eqb : il ≡ expLLT llb ictb tllb) : Set (lsuc u) where
@@ -278,14 +280,14 @@ data IndU {i u il} (icta ictb : IndexLLCT) {lla llb tlla tllb : LinLogic i {u}} 
 
 module _ where
 
-  compIndU-abs : ∀{i u il} {icta ictb : IndexLLCT} {lla llb tlla tllb : LinLogic i {u}} {eqa : il ≡ expLLT lla icta tlla} {eqb : il ≡ expLLT llb ictb tllb} → Dec (icta ≡ ictb) → IndU icta ictb eqa eqb
-  compIndU-abs {eqa = eqa} {eqb} (yes p) = ictEq p (proj₁ r) (proj₁ (proj₂ r)) (proj₂ (proj₂ r)) where
-    r = expLLT⇒eq p eqa eqb
-  compIndU-abs {eqa = eqa} {eqb} (no ¬p) = ict¬Eq ¬p (proj₁ r) (proj₂ r) where
-    r = expLLT⇒req ¬p eqa eqb
+  compIndU-abs : ∀{i u il} → {icta ictb : IndexLLCT} {lla llb tlla tllb : LinLogic i {u}} {{eqa : il ≡ expLLT lla icta tlla}} {{eqb : il ≡ expLLT llb ictb tllb}} → Dec (icta ≡ ictb) → IndU icta ictb eqa eqb
+  compIndU-abs {il = il} (yes p) = ictEq p (proj₁ r) (proj₁ (proj₂ r)) (proj₂ (proj₂ r)) where
+    r = expLLT⇒eq il p
+  compIndU-abs {il = il} (no ¬p) = ict¬Eq ¬p (proj₁ r) (proj₂ r) where
+    r = expLLT⇒req il ¬p
   
-  compIndU : ∀{i u il} {icta ictb : IndexLLCT} {lla llb tlla tllb : LinLogic i {u}} {eqa : il ≡ expLLT lla icta tlla} {eqb : il ≡ expLLT llb ictb tllb} → IndU icta ictb eqa eqb
-  compIndU = compIndU-abs (isEqICT _ _)
+  compIndU : ∀{i u il} (icta ictb : IndexLLCT) {lla llb tlla tllb : LinLogic i {u}} (eqa : il ≡ expLLT lla icta tlla) (eqb : il ≡ expLLT llb ictb tllb) → IndU icta ictb eqa eqb
+  compIndU icta ictb eqa eqb = compIndU-abs (isEqICT _ _)
 
 
 
@@ -293,7 +295,7 @@ module _ where
 -- Indexes over a specific node of a linear logic tree. 
 data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsuc u) where
   ↓   :                             IndexLL rll rll
-  ic : ∀{ll il} → ∀ tll ict → IndexLL rll ll → {{eq : il ≡ (expLLT ll ict tll)}} → IndexLL rll il[ il ]
+  ic : ∀{ll tll il} → ∀ ict → (eq : il ≡ (expLLT ll ict tll)) → IndexLL rll ll → IndexLL rll il[ il ]
 
 
 
@@ -307,7 +309,7 @@ data IndexLL {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsu
 
 elimIndexLL : ∀{u u' i rll} → (P : ∀{ll} → IndexLL {i} {u} rll ll → Set u')
               → P ↓
-              → (∀{ll tll all} → {ict : IndexLLCT} → {ind : IndexLL rll ll} → {{eq : all ≡ (expLLT ll ict tll)}} → P ind → P (ic tll ict ind))
+              → (∀{ll tll all} → {ict : IndexLLCT} → {ind : IndexLL rll ll} → {eq : all ≡ (expLLT ll ict tll)} → P ind → P (ic ict eq ind))
               → {ll : LinLogic i {u}} → (ind : IndexLL rll ll) → P ind 
 elimIndexLL P p↓ pic ↓ = p↓
 elimIndexLL P p↓ pic (ic _ _ ind) = pic (elimIndexLL P p↓ pic ind)
@@ -317,7 +319,7 @@ module _ where
 
   replLL : ∀{i u q ll} → (ind : IndexLL {i} {u} q ll) → LinLogic i {u} → LinLogic i {u}
   replLL ↓ c = c
-  replLL (ic tll ict ind) c = il[ expLLT (replLL ind c) ict tll ]
+  replLL (ic {tll = tll} ict _ ind) c = il[ expLLT (replLL ind c) ict tll ]
 
   
 module _ where
@@ -326,6 +328,6 @@ module _ where
 
   replLL-id : ∀{i u q ll} → (ind : IndexLL {i} {u} q ll) → replLL ind q ≡ ll
   replLL-id ↓ = refl
-  replLL-id (ic _ ict ind {{refl}}) = cong (λ x → il[ expLLT x ict _ ]) (replLL-id ind)
+  replLL-id (ic ict refl ind) = cong (λ x → il[ expLLT x ict _ ]) (replLL-id ind)
   
   
