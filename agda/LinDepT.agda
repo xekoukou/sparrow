@@ -11,6 +11,12 @@ open import Category.Monad
 
 open import Level
 
+
+-- IMPORTANT LinDepT is a local Data type. It only has meaning as the output of a specific Com of LinFun.
+-- As soon as LinDepT is computed , we send the outputs with their type determined by LinDepT,
+-- then LinDepT is forgotten.
+
+
 mutual
 -- This type is computed by the protocol specification and all input/output
 -- types depend on it.
@@ -24,7 +30,7 @@ mutual
     ∨→_   : ∀{l r} → (rd : LinDepT r)                    → LinDepT (l ∨ r)
     -- ∂ takes a specific value. Only one of the two possible.
     ∂     : ∀{l r} → LinDepT l ⊎ LinDepT r → LinDepT (l ∂ r)
-    -- Is call needed here?
+    -- Is call needed here? No it is not needed.
     call  : ∀{∞ll} → ∞LinDepT ∞ll          → LinDepT (call ∞ll)
 
 

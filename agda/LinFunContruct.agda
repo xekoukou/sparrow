@@ -1361,7 +1361,7 @@ module _ where
 
 
 
-
+ -- ?? ?? TODO This can be made much simpler with the introduction of a new local ltr type.
   fltr : ∀{i u rll ll} → LLTr {i} {u} rll ll → Σ (LinLogic i) (λ z → LLTr z ll)
   fltr {ll = ll} I = ll , I
   fltr {ll = l ∂ r} (∂c ltr) = (r ∂ l) , ∂c I
