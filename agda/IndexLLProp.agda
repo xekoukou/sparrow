@@ -188,11 +188,15 @@ rpl↓ : ∀{i u ll pll} → ∀ ell → (ind : IndexLL {i} {u} pll ll)
         → (replLL (ind -ᵢ ind) ell) ≡ ell
 rpl↓ ell ind = cong (λ z → replLL z ell) (ind-ᵢind≡↓ ind)
 
-ind-rpl↓ : ∀{i u ll pll cll ell} → (ind : IndexLL {i} {u} pll ll)
+ind-rpl↓1 : ∀{i u ll pll cll ell} → (ind : IndexLL {i} {u} pll ll)
         → IndexLL cll (replLL (ind -ᵢ ind) ell) → IndexLL cll ell
-ind-rpl↓ {_} {_} {_} {pll} {cll} {ell} ind y
+ind-rpl↓1 {_} {_} {_} {pll} {cll} {ell} ind y
   =  subst (λ x → x) (cong (λ x → IndexLL cll x) (rpl↓ ell ind)) y 
 
+ind-rpl↓2 : ∀{i u ll pll cll ell} → (ind : IndexLL {i} {u} pll ll)
+        → IndexLL (replLL (ind -ᵢ ind) ell) cll → IndexLL ell cll
+ind-rpl↓2 {_} {_} {_} {pll} {cll} {ell} ind y
+  =  subst (λ x → x) (cong (λ x → IndexLL x cll) (rpl↓ ell ind)) y 
 
 
 a≤ᵢb-morph : ∀{i u rll ll fll} → (emi : IndexLL {i} {u} fll ll)
@@ -874,7 +878,7 @@ repl-r⇒l-lemma {d = ic→} {l = l} {il = il} {lteq = refl} eq = cong (λ z →
 
 repl-r⇒l : ∀{i u pll ll cll} → ∀ frll ell → (ind : IndexLL {i} {u} pll ll) → (x : IndexLL cll (replLL ind ell)) → let uind = a≤ᵢb-morph ind ind {ell}
         in {{lt : uind ≤ᵢ x}}
-        → (replLL ind (replLL (ind-rpl↓ ind (x -ᵢ uind)) frll) ≡ replLL x frll)
+        → (replLL ind (replLL (ind-rpl↓1 ind (x -ᵢ uind)) frll) ≡ replLL x frll)
 repl-r⇒l _ _ ↓ x {{≤ᵢ↓}} = refl
 repl-r⇒l {cll = cll} frll ell (ic {l = l} {r = r} d ind) (ic .d x) {{≤ᵢic {{lt}}}} = repl-r⇒l-lemma {d = d} {{w = nlt}} {refl} is where
   nx = subst (IndexLL _) (trans (pickLL-eq d pickLL pickLL _ l r _ refl refl) (sym (pickLL-id d (replLL ind ell)))) x

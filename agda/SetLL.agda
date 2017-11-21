@@ -81,88 +81,6 @@ pickLLₛ ic→ a b = b
 
 
 
-∅-add-abs : ∀ {i u} {l r rll : LinLogic i {u}} {ds}
-                {ind : IndexLL rll (pickLL ds l r)} {nrll : LinLogic i} →
-              SetLL (replLL ind nrll) →
-              SetLL
-              (pickLL ds (pickLL ds (replLL ind nrll) l)
-               (pickLL ds r (replLL ind nrll)))
-∅-add-abs {ds = ic←} s = s
-∅-add-abs {ds = ic→} s = s
-
--- Add a node to an empty set (and potentially replace the linear logic sub-tree).
-∅-add : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → {nrll : LinLogic i}
-        → SetLL (replLL ind nrll)
-∅-add ↓ = ↓
-∅-add (ic ds ind) {nrll} = sic ds (∅-add-abs {ds = ds} {ind} (∅-add ind))
-
-
-
-
-
-
-
-
-
-add-abs3 : ∀ {i u} {l : LinLogic i {u}} {r : LinLogic i} {ds d}
-             {q : LinLogic i} {ind : IndexLL q (pickLL d l r)}
-             {rll : LinLogic i} →
-           (ds ≡ d → ⊥) →
-           SetLL (pickLL ds l r) →
-           SetLL (replLL ind rll) → SetLL (pickLL d (replLL ind rll) l) × SetLL (pickLL d r (replLL ind rll))
-add-abs3 {ds = ic←} {ic←} ¬p s r = ⊥-elim (¬p refl)
-add-abs3 {ds = ic←} {ic→} ¬p s r = s , r
-add-abs3 {ds = ic→} {ic←} ¬p s r = r , s
-add-abs3 {ds = ic→} {ic→} ¬p s r = ⊥-elim (¬p refl)
-
-
-
-add-abs2 : ∀ {ds i u} {l r q : LinLogic i {u}}
-             {ind : IndexLL q (pickLL ds l r)} {rll : LinLogic i} →
-           SetLL (replLL ind rll) →
-           SetLL
-           (pickLL ds (pickLL ds (replLL ind rll) l)
-            (pickLL ds r (replLL ind rll)))
-add-abs2 {ic←} ns = ns
-add-abs2 {ic→} ns = ns
-
-
-
-
-mutual
-
-  add-abs : ∀ {i u} {l r : LinLogic i {u}} {ds d} →
-            SetLL (pickLL ds l r) →
-            Dec (ds ≡ d) →
-            ∀ {il} {q : LinLogic i} {ind : IndexLL q (pickLL d l r)}
-              {rll : LinLogic i} →
-            SetLL
-            (pickLL d (replLL ind rll) l < il > pickLL d r (replLL ind rll))
-  add-abs {ds = ds} s (yes refl) {ind = ind} {rll} = sic ds (add-abs2 {ds = ds} {ind = ind} (add s ind))
-  add-abs s (no ¬p) {ind = ind} {rll} = sbc (proj₁ q) (proj₂ q) where
-    r = ∅-add ind {rll}
-    q = add-abs3 {ind = ind} ¬p s r
-
-
-  -- Add a node to a set (and potentially replace the linear logic sub-tree).
-  add : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → {rll : LinLogic i}
-        → SetLL (replLL ind rll)
-  add ↓ ind = ↓
-  add (sic ds s) ↓ = ↓
-  add (sic ds s) (ic d ind) = add-abs s (isEqICT ds d) {ind = ind}
-  add (sbc s s₁) ↓ = ↓
-  add (sbc s s₁) (ic ic← ind) = sbc (add s ind) s₁
-  add (sbc s s₁) (ic ic→ ind) = sbc s (add s₁ ind) 
-
-
-
-madd : ∀{i u ll q} → MSetLL ll → (ind : IndexLL {i} {u} q ll) → (rll : LinLogic i)
-      → MSetLL (replLL ind rll)
-madd ∅ ind rll = ¬∅ (∅-add ind)
-madd (¬∅ x) ind rll = ¬∅ (add x ind)
-
-
-
 
 mutual
 
@@ -230,6 +148,7 @@ mutual
 fillAllLower : ∀{i u} → ∀ {ll} → SetLL {i} {u} ll
 fillAllLower {ll = ∅} = ↓
 fillAllLower {ll = (τ _)} = ↓
+fillAllLower {ll = abs} = ↓
 fillAllLower {ll = (call _)} = ↓
 fillAllLower {ll = (_ < _ > _)} = sbc fillAllLower fillAllLower
 
@@ -283,49 +202,98 @@ mutual
 
 
 
-s-extendg : ∀{i u ll q} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {i} rll → SetLL (replLL ind rll)
-s-extendg ↓ s = s
-s-extendg {rll = rll} (ic d ind) s = sic d (subst SetLL (trans (pickLL-id d (replLL ind rll)) (sym (pickLL-eq d pickLL pickLL _ _ _ _ refl refl))) (s-extendg ind s))
 
 
 s-extend : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → SetLL {i} rll → SetLL ll
-s-extend {ll = ll} {rll = rll} ind b = subst (λ x → SetLL x) (replLL-id ind) (s-extendg ind b)
+s-extend {ll = ll} {.ll} ↓ s = s
+s-extend {ll = .(_ < _ > _)} {rll} (ic d ind) s = sic d (s-extend ind s)
+
+s-extendG : ∀{i u ll q} → ∀{rll} → (ind : IndexLL {i} {u} q ll) → SetLL {i} rll → SetLL (replLL ind rll)
+s-extendG ind s = s-extend (ind-rpl↓2 ind (a≤ᵢb-morph ind ind)) s
 
 
 mutual
 
-  replacePartOf-abs : ∀ {i u} {l r q rll : LinLogic i {u}} {ds d} →
-                    SetLL (pickLL ds l r) →
-                    SetLL rll →
-                    (ind : IndexLL q (pickLL d l r)) →
-                    Dec (ds ≡ d) →
-                    ∀ {il} →
-                    SetLL
-                    (pickLL d (replLL ind rll) l < il > pickLL d r (replLL ind rll))
-  replacePartOf-abs {rll = rll} {ds = ds} a b ind (yes refl) = sic ds (subst SetLL (trans (pickLL-id ds (replLL ind rll)) (sym (pickLL-eq ds pickLL pickLL _ _ _ _ refl refl))) is) where
-    is = replacePartOf a to b at ind
+  replacePartOf-abs : ∀ {i u} {l r rll : LinLogic i {u}} {ds d} →
+                       SetLL (pickLL ds l r) →
+                       SetLL rll →
+                       IndexLL rll (pickLL d l r) →
+                       Dec (ds ≡ d) → ∀ {il} → SetLL (l < il > r)
+  replacePartOf-abs {ds = ds} a b ind (yes refl) = sic ds (replacePartOf a to b at ind)
   replacePartOf-abs {ds = ic←} {ic←} a b ind (no ¬p) = ⊥-elim (¬p refl)
-  replacePartOf-abs {ds = ic←} {ic→} a b ind (no ¬p) = sbc a (s-extendg ind b)
-  replacePartOf-abs {ds = ic→} {ic←} a b ind (no ¬p) = sbc (s-extendg ind b) a
+  replacePartOf-abs {ds = ic←} {ic→} a b ind (no ¬p) = sbc a (s-extend ind b)
+  replacePartOf-abs {ds = ic→} {ic←} a b ind (no ¬p) = sbc (s-extend ind b) a
   replacePartOf-abs {ds = ic→} {ic→} a b ind (no ¬p) = ⊥-elim (¬p refl)
 
 
-  replacePartOf_to_at_ : ∀{i u ll q} → ∀{rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} q ll)
-               → SetLL (replLL ind rll)
+
+  replacePartOf_to_at_ : ∀{i u ll rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} rll ll)
+                 → SetLL ll
   replacePartOf a to b at ↓ = b
-  replacePartOf_to_at_ {rll = rll} ↓ b (ic {l = l} {r = r} {il = il} d ind) = sbc (pickLLₛ d is ↓) (pickLLₛ d ↓ is) where
-    is = replacePartOf ↓ to b at ind
+  replacePartOf ↓ to b at ic d ind = sic d (replacePartOf ↓ to b at ind)
   replacePartOf sic ds a to b at ic d ind = replacePartOf-abs a b ind (isEqICT ds d)
   replacePartOf sbc a a₁ to b at ic ic← ind = sbc (replacePartOf a to b at ind) a₁
   replacePartOf sbc a a₁ to b at ic ic→ ind = sbc a (replacePartOf a₁ to b at ind)
 
 
-mreplacePartOf_to_at_ : ∀{i u ll q} → ∀{rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} q ll)
-          → MSetLL (replLL ind rll)
-mreplacePartOf ∅ to ∅ at ind = ∅
-mreplacePartOf_to_at_ {q = q} {rll = rll} ∅ (¬∅ x) ind = ¬∅ (s-extendg ind x)
-mreplacePartOf_to_at_ {rll = rll} (¬∅ x) ∅ ind = del x ind
+-- Add a node to an empty set (and potentially replace the linear logic sub-tree).
+∅-add : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) 
+        → SetLL ll
+∅-add ind = s-extend ind ↓
+
+-- Add a node to an empty set (and potentially replace the linear logic sub-tree).
+∅-addG : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → {nrll : LinLogic i}
+        → SetLL (replLL ind nrll)
+∅-addG ind = ∅-add (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+
+
+  -- Add a node to a set (and potentially replace the linear logic sub-tree).
+add : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll)
+        → SetLL ll
+add s ind = replacePartOf s to ↓ at ind
+
+
+madd : ∀{i u ll q} → MSetLL ll → (ind : IndexLL {i} {u} q ll)
+      → MSetLL ll
+madd ∅ ind = ¬∅ (∅-add ind)
+madd (¬∅ x) ind = ¬∅ (add x ind)
+
+mutual
+
+  replacePartOfG-abs : ∀ {i u} {ll q rll : LinLogic i {u}}
+                       {ind : IndexLL q ll} →
+                     MSetLL (replLL ind rll) →
+                     SetLL rll → IndexLL rll (replLL ind rll) → SetLL (replLL ind rll)
+  replacePartOfG-abs ∅ b mind = s-extend mind b
+  replacePartOfG-abs (¬∅ x) b mind = replacePartOf x to b at mind
+
+  replacePartOfG_to_at_ : ∀{i u ll q} → ∀{rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} q ll)
+               → SetLL (replLL ind rll)
+  replacePartOfG_to_at_ {rll = rll} a b ind = replacePartOfG-abs {ind = ind} (del a ind {rll}) b (ind-rpl↓2 ind (a≤ᵢb-morph ind ind {frll = rll}))
+
+
+  -- Add a node to a set (and potentially replace the linear logic sub-tree).
+addG : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → {rll : LinLogic i}
+        → SetLL (replLL ind rll)
+addG s ind {rll} = replacePartOfG s to ↓ at ind
+
+
+
+
+mreplacePartOf_to_at_ : ∀{i u ll rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} rll ll)
+          → MSetLL ll
+mreplacePartOf ∅ to mb at ind = mapₛ (s-extend ind) mb
+mreplacePartOf ¬∅ x to ∅ at ind = subst MSetLL (replLL-id ind) (del x ind)
 mreplacePartOf ¬∅ x to ¬∅ x₁ at ind = ¬∅ (replacePartOf x to x₁ at ind)
+
+
+
+mreplacePartOfG_to_at_ : ∀{i u ll q} → ∀{rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} q ll)
+          → MSetLL (replLL ind rll)
+mreplacePartOfG_to_at_ {rll = rll} ∅ mb ind = mapₛ (s-extendG ind) mb
+mreplacePartOfG ¬∅ x to ∅ at ind = del x ind
+mreplacePartOfG ¬∅ x to ¬∅ x₁ at ind = mreplacePartOf (del x ind) to (¬∅ x₁) at (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+
 
 
 -- -- module _ {u} where
@@ -497,6 +465,7 @@ contr$fillallL≡↓-abs refl refl = refl
 contr$fillallL≡↓ : ∀{i u ll} → contruct (fillAllLower {i} {u} {ll = ll}) ≡ ↓
 contr$fillallL≡↓ {ll = ∅} = refl
 contr$fillallL≡↓ {ll = τ x} = refl
+contr$fillallL≡↓ {ll = abs} = refl
 contr$fillallL≡↓ {ll = call x} = refl
 contr$fillallL≡↓ {ll = ll < x > ll₁} = contr$fillallL≡↓-abs (contr$fillallL≡↓ {ll = ll}) (contr$fillallL≡↓ {ll = ll₁})
 
@@ -551,89 +520,18 @@ tran s I = s
 tran ↓ (cₜᵣ tr) = ↓
 tran (sic ds s) (cₜᵣ tr) = tran (sic (~ict ds) (~ₛ ds s)) tr
 tran (sbc s s₁) (cₜᵣ tr) = tran (sbc s₁ s) tr
-tran ↓ (dₜᵣ tr) = ↓
-tran (sic ic← s) (dₜᵣ tr) = {!!}
-tran (sic ic→ s) (dₜᵣ tr) = {!!} -- tran {!!} tr
-tran (sbc s s₁) (dₜᵣ tr) = {!!}
-tran s (¬dₜᵣ tr) = {!!}
+tran ↓ (aₜᵣ tr) = ↓
+tran (sic ic← ↓) (aₜᵣ tr) = tran (sbc ↓ (sic ic← ↓)) tr
+tran (sic ic← (sic ic← s)) (aₜᵣ tr) = tran (sic ic← s) tr
+tran (sic ic← (sic ic→ s)) (aₜᵣ tr) = tran (sic ic→ (sic ic← s)) tr
+tran (sic ic← (sbc s s₁)) (aₜᵣ tr) = tran (sbc s (sic ic← s₁)) tr
+tran (sic ic→ s) (aₜᵣ tr) = tran (sic ic→ (sic ic→ s)) tr
+tran (sbc ↓ s₁) (aₜᵣ tr) = tran (sbc ↓ (sbc ↓ s₁)) tr
+tran (sbc (sic ic← s) s₁) (aₜᵣ tr) = tran (sbc s (sic ic→ s₁)) tr
+tran (sbc (sic ic→ s) s₁) (aₜᵣ tr) = tran (sic ic→ (sbc s s₁)) tr
+tran (sbc (sbc s s₂) s₁) (aₜᵣ tr) = tran (sbc s (sbc s₂ s₁)) tr
 
 
--- -- -- If we transform the linear logic tree, we need to transform the SetLL as well.
--- -- tran : ∀ {i u ll rll} → SetLL ll → (tr : LLTr {i} {u} rll ll)
--- --        → SetLL rll
--- -- tran s I                           = s
--- -- tran ↓ (∂c tr)                     = ↓
--- -- tran (s ←∂) (∂c tr)                = tran (∂→ s) tr
--- -- tran (∂→ s) (∂c tr)                = tran (s ←∂) tr
--- -- tran (s ←∂→ s₁) (∂c tr)            = tran (s₁ ←∂→ s) tr
--- -- tran ↓ (∨c tr)                     = ↓
--- -- tran (s ←∨) (∨c tr)                = tran (∨→ s) tr
--- -- tran (∨→ s) (∨c tr)                = tran (s ←∨) tr
--- -- tran (s ←∨→ s₁) (∨c tr)            = tran (s₁ ←∨→ s) tr
--- -- tran ↓ (∧c tr)                     = ↓
--- -- tran (s ←∧) (∧c tr)                = tran (∧→ s) tr
--- -- tran (∧→ s) (∧c tr)                = tran (s ←∧) tr
--- -- tran (s ←∧→ s₁) (∧c tr)            = tran (s₁ ←∧→ s) tr
--- -- tran ↓ (∧∧d tr)                    = ↓
--- -- tran (↓ ←∧) (∧∧d tr)               = tran (↓ ←∧→ (↓ ←∧)) tr
--- -- tran ((s ←∧) ←∧) (∧∧d tr)          = tran (s ←∧) tr
--- -- tran ((∧→ s) ←∧) (∧∧d tr)          = tran (∧→ (s ←∧)) tr
--- -- tran ((s ←∧→ s₁) ←∧) (∧∧d tr)      = tran (s ←∧→ (s₁ ←∧)) tr
--- -- tran (∧→ s) (∧∧d tr)               = tran (∧→ (∧→ s)) tr
--- -- tran (↓ ←∧→ s₁) (∧∧d tr)           = tran (↓ ←∧→ (↓ ←∧→ s₁)) tr
--- -- tran ((s ←∧) ←∧→ s₁) (∧∧d tr)      = tran (s ←∧→ (∧→ s₁)) tr
--- -- tran ((∧→ s) ←∧→ s₁) (∧∧d tr)      = tran (∧→ (s ←∧→ s₁)) tr
--- -- tran ((s ←∧→ s₁) ←∧→ s₂) (∧∧d tr)  = tran (s ←∧→ (s₁ ←∧→ s₂)) tr
--- -- tran ↓ (¬∧∧d tr)                   = ↓
--- -- tran (s ←∧) (¬∧∧d tr)              = tran ((s ←∧) ←∧) tr
--- -- tran (∧→ ↓) (¬∧∧d tr)              = tran ((∧→ ↓) ←∧→ ↓) tr
--- -- tran (∧→ (s ←∧)) (¬∧∧d tr)         = tran ((∧→ s) ←∧) tr
--- -- tran (∧→ (∧→ s)) (¬∧∧d tr)         = tran (∧→ s) tr
--- -- tran (∧→ (s ←∧→ s₁)) (¬∧∧d tr)     = tran ((∧→ s) ←∧→ s₁) tr
--- -- tran (s ←∧→ ↓) (¬∧∧d tr)           = tran ((s ←∧→ ↓) ←∧→ ↓) tr
--- -- tran (s ←∧→ (s₁ ←∧)) (¬∧∧d tr)     = tran ((s ←∧→ s₁) ←∧) tr
--- -- tran (s ←∧→ (∧→ s₁)) (¬∧∧d tr)     = tran ((s ←∧) ←∧→ s₁) tr
--- -- tran (s ←∧→ (s₁ ←∧→ s₂)) (¬∧∧d tr) = tran ((s ←∧→ s₁) ←∧→ s₂) tr
--- -- tran ↓ (∨∨d tr)                    = ↓
--- -- tran (↓ ←∨) (∨∨d tr)               = tran (↓ ←∨→ (↓ ←∨)) tr
--- -- tran ((s ←∨) ←∨) (∨∨d tr)          = tran (s ←∨) tr
--- -- tran ((∨→ s) ←∨) (∨∨d tr)          = tran (∨→ (s ←∨)) tr
--- -- tran ((s ←∨→ s₁) ←∨) (∨∨d tr)      = tran (s ←∨→ (s₁ ←∨)) tr
--- -- tran (∨→ s) (∨∨d tr)               = tran (∨→ (∨→ s)) tr
--- -- tran (↓ ←∨→ s₁) (∨∨d tr)           = tran (↓ ←∨→ (↓ ←∨→ s₁)) tr
--- -- tran ((s ←∨) ←∨→ s₁) (∨∨d tr)      = tran (s ←∨→ (∨→ s₁)) tr
--- -- tran ((∨→ s) ←∨→ s₁) (∨∨d tr)      = tran (∨→ (s ←∨→ s₁)) tr
--- -- tran ((s ←∨→ s₁) ←∨→ s₂) (∨∨d tr)  = tran (s ←∨→ (s₁ ←∨→ s₂)) tr
--- -- tran ↓ (¬∨∨d tr)                   = ↓
--- -- tran (s ←∨) (¬∨∨d tr)              = tran ((s ←∨) ←∨) tr
--- -- tran (∨→ ↓) (¬∨∨d tr)              = tran ((∨→ ↓) ←∨→ ↓) tr
--- -- tran (∨→ (s ←∨)) (¬∨∨d tr)         = tran ((∨→ s) ←∨) tr
--- -- tran (∨→ (∨→ s)) (¬∨∨d tr)         = tran (∨→ s) tr
--- -- tran (∨→ (s ←∨→ s₁)) (¬∨∨d tr)     = tran ((∨→ s) ←∨→ s₁) tr
--- -- tran (s ←∨→ ↓) (¬∨∨d tr)           = tran ((s ←∨→ ↓) ←∨→ ↓) tr
--- -- tran (s ←∨→ (s₁ ←∨)) (¬∨∨d tr)     = tran ((s ←∨→ s₁) ←∨) tr
--- -- tran (s ←∨→ (∨→ s₁)) (¬∨∨d tr)     = tran ((s ←∨) ←∨→ s₁) tr
--- -- tran (s ←∨→ (s₁ ←∨→ s₂)) (¬∨∨d tr) = tran ((s ←∨→ s₁) ←∨→ s₂) tr
--- -- tran ↓ (∂∂d tr)                    = ↓
--- -- tran (↓ ←∂) (∂∂d tr)               = tran (↓ ←∂→ (↓ ←∂)) tr
--- -- tran ((s ←∂) ←∂) (∂∂d tr)          = tran (s ←∂) tr
--- -- tran ((∂→ s) ←∂) (∂∂d tr)          = tran (∂→ (s ←∂)) tr
--- -- tran ((s ←∂→ s₁) ←∂) (∂∂d tr)      = tran (s ←∂→ (s₁ ←∂)) tr
--- -- tran (∂→ s) (∂∂d tr)               = tran (∂→ (∂→ s)) tr
--- -- tran (↓ ←∂→ s₁) (∂∂d tr)           = tran (↓ ←∂→ (↓ ←∂→ s₁)) tr
--- -- tran ((s ←∂) ←∂→ s₁) (∂∂d tr)      = tran (s ←∂→ (∂→ s₁)) tr
--- -- tran ((∂→ s) ←∂→ s₁) (∂∂d tr)      = tran (∂→ (s ←∂→ s₁)) tr
--- -- tran ((s ←∂→ s₁) ←∂→ s₂) (∂∂d tr)  = tran (s ←∂→ (s₁ ←∂→ s₂)) tr
--- -- tran ↓ (¬∂∂d tr)                   = ↓
--- -- tran (s ←∂) (¬∂∂d tr)              = tran ((s ←∂) ←∂) tr
--- -- tran (∂→ ↓) (¬∂∂d tr)              = tran ((∂→ ↓) ←∂→ ↓) tr
--- -- tran (∂→ (s ←∂)) (¬∂∂d tr)         = tran ((∂→ s) ←∂) tr
--- -- tran (∂→ (∂→ s)) (¬∂∂d tr)         = tran (∂→ s) tr
--- -- tran (∂→ (s ←∂→ s₁)) (¬∂∂d tr)     = tran ((∂→ s) ←∂→ s₁) tr
--- -- tran (s ←∂→ ↓) (¬∂∂d tr)           = tran ((s ←∂→ ↓) ←∂→ ↓) tr
--- -- tran (s ←∂→ (s₁ ←∂)) (¬∂∂d tr)     = tran ((s ←∂→ s₁) ←∂) tr
--- -- tran (s ←∂→ (∂→ s₁)) (¬∂∂d tr)     = tran ((s ←∂) ←∂→ s₁) tr
--- -- tran (s ←∂→ (s₁ ←∂→ s₂)) (¬∂∂d tr) = tran ((s ←∂→ s₁) ←∂→ s₂) tr
 
 
 
@@ -668,57 +566,35 @@ tran s (¬dₜᵣ tr) = {!!}
 -- -- itran (s ←∂→ s₁) (∂→ ind) tr = s ←∂→ itran s₁ ind tr
 
 
+mutual
+
+  truncₛ-abs : ∀ {i u} {l r pll : LinLogic i {u}} {ds d} →
+             SetLL (pickLL ds l r) →
+             IndexLL pll (pickLL d l r) → Dec (ds ≡ d) → MSetLL pll
+  truncₛ-abs s ind (yes refl) = truncₛ s ind
+  truncₛ-abs s ind (no ¬p) = ∅
+
+  truncₛ : ∀ {i u ll pll} → SetLL ll → (ind : IndexLL {i} {u} pll ll)
+                → MSetLL pll
+  truncₛ s ↓ = ¬∅ s
+  truncₛ ↓ (ic d ind) = ¬∅ ↓
+  truncₛ (sic ds s) (ic d ind) = truncₛ-abs s ind (isEqICT ds d)
+  truncₛ (sbc s s₁) (ic ic← ind) = truncₛ s ind
+  truncₛ (sbc s s₁) (ic ic→ ind) = truncₛ s₁ ind
 
 
--- -- truncSetLL : ∀ {i u ll pll} → SetLL ll → (ind : IndexLL {i} {u} pll ll)
--- --              → MSetLL pll
--- -- truncSetLL s ↓ = ¬∅ s
--- -- truncSetLL ↓ (ind ←∧) = ¬∅ ↓
--- -- truncSetLL (s ←∧) (ind ←∧) = truncSetLL s ind
--- -- truncSetLL (∧→ s) (ind ←∧) = ∅
--- -- truncSetLL (s ←∧→ s₁) (ind ←∧) = truncSetLL s ind
--- -- truncSetLL ↓ (∧→ ind) = ¬∅ ↓
--- -- truncSetLL (s ←∧) (∧→ ind) = ∅
--- -- truncSetLL (∧→ s) (∧→ ind) = truncSetLL s ind
--- -- truncSetLL (s ←∧→ s₁) (∧→ ind) = truncSetLL s₁ ind
--- -- truncSetLL ↓ (ind ←∨) = ¬∅ ↓
--- -- truncSetLL (s ←∨) (ind ←∨) = truncSetLL s ind
--- -- truncSetLL (∨→ s) (ind ←∨) = ∅
--- -- truncSetLL (s ←∨→ s₁) (ind ←∨) = truncSetLL s ind
--- -- truncSetLL ↓ (∨→ ind) = ¬∅ ↓
--- -- truncSetLL (s ←∨) (∨→ ind) = ∅
--- -- truncSetLL (∨→ s) (∨→ ind) = truncSetLL s ind
--- -- truncSetLL (s ←∨→ s₁) (∨→ ind) = truncSetLL s₁ ind
--- -- truncSetLL ↓ (ind ←∂) = ¬∅ ↓
--- -- truncSetLL (s ←∂) (ind ←∂) = truncSetLL s ind
--- -- truncSetLL (∂→ s) (ind ←∂) = ∅
--- -- truncSetLL (s ←∂→ s₁) (ind ←∂) = truncSetLL s ind
--- -- truncSetLL ↓ (∂→ ind) = ¬∅ ↓
--- -- truncSetLL (s ←∂) (∂→ ind) = ∅
--- -- truncSetLL (∂→ s) (∂→ ind) = truncSetLL s ind
--- -- truncSetLL (s ←∂→ s₁) (∂→ ind) = truncSetLL s₁ ind
+mutual
 
+  tr-ext⇒id-abs : ∀ {i u} {l r pll : LinLogic i {u}} {d} (s : SetLL pll)
+                  (ind : IndexLL pll (pickLL d l r)) (w : Dec (d ≡ d)) →
+                  truncₛ-abs (s-extend ind s) ind w ≡ ¬∅ s
+  tr-ext⇒id-abs s ind (yes refl) = tr-ext⇒id ind
+  tr-ext⇒id-abs s ind (no ¬p) = ⊥-elim (¬p refl)
 
--- -- tr-ext⇒id : ∀{i u pll ll} → ∀ s → (ind : IndexLL {i} {u} pll ll) →  truncSetLL (extend ind s) ind ≡ ¬∅ s
--- -- tr-ext⇒id s ↓ = refl
--- -- tr-ext⇒id {pll = pll} {ll = li ∧ ri} s (ind ←∧)
--- --   with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | tr-ext⇒id s ind
--- -- ... | .li | refl | q | e = e
--- -- tr-ext⇒id {pll = pll} {ll = li ∧ ri} s (∧→ ind)
--- --   with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | tr-ext⇒id s ind
--- -- ... | .ri | refl | g | e = e
--- -- tr-ext⇒id {pll = pll} {ll = li ∨ ri} s (ind ←∨)
--- --   with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | tr-ext⇒id s ind
--- -- ... | .li | refl | q | e = e
--- -- tr-ext⇒id {pll = pll} {ll = li ∨ ri} s (∨→ ind)
--- --   with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | tr-ext⇒id s ind
--- -- ... | .ri | refl | g | e = e
--- -- tr-ext⇒id {pll = pll} {ll = li ∂ ri} s (ind ←∂)
--- --   with replLL li ind pll | replLL-id li ind pll refl | extendg ind s | tr-ext⇒id s ind
--- -- ... | .li | refl | q | e = e
--- -- tr-ext⇒id {pll = pll} {ll = li ∂ ri} s (∂→ ind)
--- --   with replLL ri ind pll | replLL-id ri ind pll refl | extendg ind s | tr-ext⇒id s ind
--- -- ... | .ri | refl | g | e = e
+  tr-ext⇒id : ∀{i u pll ll} → ∀ {s} → (ind : IndexLL {i} {u} pll ll) →  truncₛ (s-extend ind s) ind ≡ ¬∅ s
+  tr-ext⇒id ↓ = refl
+  tr-ext⇒id {s = s} (ic d ind) = tr-ext⇒id-abs s ind (isEqICT d d)
+
 
 
 -- -- module _ where
@@ -743,159 +619,94 @@ tran s (¬dₜᵣ tr) = {!!}
 -- --   tr-extg⇒id {pll = pll} {rll = .g} s (∂→ ind) | g | refl | e | is = is
 
 
+mutual
 
--- --   tr-repl⇒id : ∀{i u ll ell pll} → (s : SetLL ll) → (lind : IndexLL {i} {u} pll ll)
--- --           → (vs : SetLL ell) 
--- --           → let mx = replacePartOf s to vs at lind in
--- --             let tlind = subst (λ z → IndexLL z (replLL ll lind ell)) (replLL-↓ lind) ((a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind))) in
--- --           truncSetLL mx tlind ≡ ¬∅ vs
--- --   tr-repl⇒id s ↓ vs = refl
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} ↓ (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} ↓ (lind ←∧) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧) (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧) (lind ←∧) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (∧→ s) (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (∧→ s) (lind ←∧) vs | g | refl | t | m = m
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧→ s₁) (lind ←∧) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧→ s₁) (lind ←∧) vs | g | refl | e | is = is
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} ↓ (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} ↓ (∧→ lind) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧) (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧) (∧→ lind) vs | g | refl | t | m = m
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (∧→ s) (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (∧→ s) (∧→ lind) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∧ rll} {ell} {pll} (s ←∧→ s₁) (∧→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s₁ lind vs
--- --   tr-repl⇒id {u = _} {lll ∧ rll} {.g} {pll} (s ←∧→ s₁) (∧→ lind) vs | g | refl | e | is = is
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} ↓ (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} ↓ (lind ←∨) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨) (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨) (lind ←∨) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (∨→ s) (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (∨→ s) (lind ←∨) vs | g | refl | t | m = m
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨→ s₁) (lind ←∨) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨→ s₁) (lind ←∨) vs | g | refl | e | is = is
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} ↓ (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} ↓ (∨→ lind) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨) (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨) (∨→ lind) vs | g | refl | t | m = m
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (∨→ s) (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (∨→ s) (∨→ lind) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∨ rll} {ell} {pll} (s ←∨→ s₁) (∨→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s₁ lind vs
--- --   tr-repl⇒id {u = _} {lll ∨ rll} {.g} {pll} (s ←∨→ s₁) (∨→ lind) vs | g | refl | e | is = is
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} ↓ (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} ↓ (lind ←∂) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂) (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂) (lind ←∂) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (∂→ s) (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (∂→ s) (lind ←∂) vs | g | refl | t | m = m
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂→ s₁) (lind ←∂) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂→ s₁) (lind ←∂) vs | g | refl | e | is = is
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} ↓ (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id ↓ lind vs
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} ↓ (∂→ lind) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂) (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-extg⇒id vs lind
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂) (∂→ lind) vs | g | refl | t | m = m
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (∂→ s) (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s lind vs
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (∂→ s) (∂→ lind) vs | g | refl | t | r = r
--- --   tr-repl⇒id {ll = lll ∂ rll} {ell} {pll} (s ←∂→ s₁) (∂→ lind) vs with replLL pll ((lind -ᵢ lind) (≤ᵢ-reflexive lind)) ell | replLL-↓ {ell = ell} lind | (a≤ᵢb-morph lind lind ell (≤ᵢ-reflexive lind)) | tr-repl⇒id s₁ lind vs
--- --   tr-repl⇒id {u = _} {lll ∂ rll} {.g} {pll} (s ←∂→ s₁) (∂→ lind) vs | g | refl | e | is = is
+  tr-repl⇒id-abs : ∀ {d} (w : Dec (d ≡ d)) {i u}
+                   {l r pll : LinLogic i {u}} {s : SetLL (pickLL d l r)} {ind : IndexLL pll (pickLL d l r)}
+                   {vs : SetLL pll} →
+                 truncₛ-abs (replacePartOf s to vs at ind) ind w ≡ ¬∅ vs
+  tr-repl⇒id-abs (yes refl) {ind = ind} {vs} = tr-repl⇒id ind
+  tr-repl⇒id-abs (no ¬p) {ind = ind} {vs} = ⊥-elim (¬p refl)
+
+
+  tr-repl⇒id-abs1 : ∀ {ds d} (w : Dec (ds ≡ d)) {i u}
+                    {l : LinLogic i {u}} {il} {r pll : LinLogic i}
+                    {s : SetLL (pickLL ds l r)} {ind : IndexLL pll (pickLL d l r)}
+                    {vs : SetLL pll} →
+                  truncₛ (replacePartOf-abs s vs ind w {il}) (ic d ind) ≡ ¬∅ vs
+  tr-repl⇒id-abs1 {ds} (yes refl) {s = s} {ind} {vs} = tr-repl⇒id-abs (isEqICT ds ds)
+  tr-repl⇒id-abs1 {ic←} {ic←} (no ¬p) {s = s} {ind} {vs} = ⊥-elim (¬p refl)
+  tr-repl⇒id-abs1 {ic←} {ic→} (no ¬p) {s = s} {ind} {vs} = tr-ext⇒id ind
+  tr-repl⇒id-abs1 {ic→} {ic←} (no ¬p) {s = s} {ind} {vs} = tr-ext⇒id ind
+  tr-repl⇒id-abs1 {ic→} {ic→} (no ¬p) {s = s} {ind} {vs} = ⊥-elim (¬p refl)
 
 
 
+  tr-repl⇒id : ∀{i u ll pll} → {s : SetLL ll} → (ind : IndexLL {i} {u} pll ll)
+             → {vs : SetLL pll} 
+             → let mx = replacePartOf s to vs at ind in
+             truncₛ mx ind ≡ ¬∅ vs
+  tr-repl⇒id {s = s} ↓ {vs} = refl
+  tr-repl⇒id {s = ↓} (ic d ind) {vs} = tr-repl⇒id-abs (isEqICT d d)
+  tr-repl⇒id {s = sic ds s} (ic d ind) {vs} = tr-repl⇒id-abs1 (isEqICT ds d)
+  tr-repl⇒id {s = sbc s s₁} (ic ic← ind) {vs} = tr-repl⇒id ind
+  tr-repl⇒id {s = sbc s s₁} (ic ic→ ind) {vs} = tr-repl⇒id ind
+
+
+mutual
+
+  tr-repl⇒idG-abs : ∀ {i u} {ll ell pll : LinLogic i {u}}
+                (ind : IndexLL pll ll) {vs : SetLL ell}
+                (w : MSetLL (replLL ind ell)) →
+             let tind = ind-rpl↓2 ind (a≤ᵢb-morph ind ind) in
+              truncₛ
+              (replacePartOfG-abs {ind = ind} w vs tind) tind
+              ≡ ¬∅ vs
+  tr-repl⇒idG-abs ind ∅ = tr-ext⇒id (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+  tr-repl⇒idG-abs ind (¬∅ x) = tr-repl⇒id (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+
+
+  tr-repl⇒idG : ∀{i u ll ell pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+           → (vs : SetLL ell) 
+           → let mx = replacePartOfG s to vs at ind in
+             let tind = ind-rpl↓2 ind (a≤ᵢb-morph ind ind) in
+           truncₛ mx tind ≡ ¬∅ vs
+  tr-repl⇒idG s ind vs = tr-repl⇒idG-abs ind (del s ind)
 
 
 
+data _⊂ₛ_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
+  instance
+    ⊂↓   : ∀{ll s} → _⊂ₛ_ {ll = ll} s ↓
+    ⊂sic : ∀{lll llr il d sx sy} → {{ieq : _⊂ₛ_ {ll = pickLL d lll llr} sx sy}} → _⊂ₛ_ {ll = lll < il > llr} (sic d sx) (sic d sy)
+    ⊂sbc : ∀{lll llr il slx sly srx sry} → {{ieql : _⊂ₛ_ {ll = lll} slx sly}} → {{ieqr : _⊂ₛ_ {ll = llr} srx sry}} → _⊂ₛ_ {ll = lll < il > llr} (sbc slx srx) (sbc sly sry)
+    ⊂dsbc : ∀{lll llr il d sx sly sry} → {{ieq : _⊂ₛ_ sx (pickLLₛ d sly sry)}} → _⊂ₛ_ {ll = lll < il > llr} (sic d sx) (sbc sly sry)
 
 
--- -- data _≤s_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll → Set where
--- --   ≤↓   : ∀{ll s} → _≤s_ {ll = ll} s ↓
--- --   ≤←∧  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧)
--- --   ≤∧→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (∧→ sy)
--- --   ≤←∨  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨)
--- --   ≤∨→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (∨→ sy)
--- --   ≤←∂  : ∀{lll llr sx sy} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂)
--- --   ≤∂→  : ∀{lll llr sx sy} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (∂→ sy)
--- --   ≤←∧→ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∧ llr} (slx ←∧→ srx) (sly ←∧→ sry)
--- --   ≤←∨→ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∨ llr} (slx ←∨→ srx) (sly ←∨→ sry)
--- --   ≤←∂→ : ∀{lll llr slx sly srx sry} → _≤s_ {ll = lll} slx sly → _≤s_ {ll = llr} srx sry → _≤s_ {ll = lll ∂ llr} (slx ←∂→ srx) (sly ←∂→ sry)
--- --   ≤d←∧ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∧ llr} (sx ←∧) (sy ←∧→ s)
--- --   ≤d∧→ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∧ llr} (∧→ sx) (s ←∧→ sy)
--- --   ≤d←∨ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∨ llr} (sx ←∨) (sy ←∨→ s)
--- --   ≤d∨→ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∨ llr} (∨→ sx) (s ←∨→ sy)
--- --   ≤d←∂ : ∀{lll llr sx sy s} → _≤s_ {ll = lll} sx sy → _≤s_ {ll = lll ∂ llr} (sx ←∂) (sy ←∂→ s)
--- --   ≤d∂→ : ∀{lll llr sx sy s} → _≤s_ {ll = llr} sx sy → _≤s_ {ll = lll ∂ llr} (∂→ sx) (s ←∂→ sy)
+⊂ₛ-ext : ∀{i u pll ll ss} → (ind : IndexLL {i} {u} pll ll) → {s : SetLL pll} → {{rl : ss ⊂ₛ s }} → s-extend ind ss ⊂ₛ s-extend ind s
+⊂ₛ-ext ↓ {{rl}} = rl
+⊂ₛ-ext (ic d ind) = ⊂sic {{ieq = ⊂ₛ-ext ind}}
+
+
+instance
+  ⊂ₛ-refl : ∀{i u ll} → {s : SetLL {i} {u} ll} → s ⊂ₛ s
+  ⊂ₛ-refl {s = ↓} = ⊂↓
+  ⊂ₛ-refl {s = sic ds s} = ⊂sic
+  ⊂ₛ-refl {s = sbc s s₁} = ⊂sbc
 
 
 
 
-
--- -- ≤s-ext : ∀{i u pll ll q ss} → (ind : IndexLL {i} {u} q ll) → {s : SetLL pll} → ss ≤s s → extendg ind ss ≤s extendg ind s
--- -- ≤s-ext ↓ ss≤s = ss≤s
--- -- ≤s-ext (ind ←∧) ss≤s = ≤←∧ (≤s-ext ind ss≤s)
--- -- ≤s-ext (∧→ ind) ss≤s = ≤∧→ (≤s-ext ind ss≤s)
--- -- ≤s-ext (ind ←∨) ss≤s = ≤←∨ (≤s-ext ind ss≤s)
--- -- ≤s-ext (∨→ ind) ss≤s = ≤∨→ (≤s-ext ind ss≤s)
--- -- ≤s-ext (ind ←∂) ss≤s = ≤←∂ (≤s-ext ind ss≤s)
--- -- ≤s-ext (∂→ ind) ss≤s = ≤∂→ (≤s-ext ind ss≤s)
+⊂ₛ-trans : ∀{i u ll b c} → {a : SetLL {i} {u} ll} → a ⊂ₛ b → b ⊂ₛ c → a ⊂ₛ c
+⊂ₛ-trans x ⊂↓ = ⊂↓
+⊂ₛ-trans ⊂sic (⊂sic {{ieq = ieqy}}) = ⊂sic {{ieq = ⊂ₛ-trans it ieqy}}
+⊂ₛ-trans ⊂sbc (⊂sbc {{ieql = ieql}} {{ieqr = ieqr}}) = ⊂sbc {{ieql = ⊂ₛ-trans it ieql}} {{ieqr = ⊂ₛ-trans it ieqr}}
+⊂ₛ-trans (⊂dsbc {d = ic←}) (⊂sbc {{ieql = ieq}}) = ⊂dsbc {{ieq = ⊂ₛ-trans it ieq}}
+⊂ₛ-trans (⊂dsbc {d = ic→}) (⊂sbc {{ieqr = ieq}}) = ⊂dsbc {{ieq = ⊂ₛ-trans it ieq}}
+⊂ₛ-trans ⊂sic (⊂dsbc {{ieq = ieq}}) = ⊂dsbc {{ieq = ⊂ₛ-trans it ieq}}
 
 
-
-
--- -- ≤s-refl : ∀{i u ll} → (s : SetLL {i} {u} ll) → s ≤s s
--- -- ≤s-refl ↓ = ≤↓
--- -- ≤s-refl (s ←∧) = ≤←∧ (≤s-refl s)
--- -- ≤s-refl (∧→ s) = ≤∧→ (≤s-refl s)
--- -- ≤s-refl (s ←∧→ s₁) = ≤←∧→ (≤s-refl s) (≤s-refl s₁)
--- -- ≤s-refl (s ←∨) = ≤←∨ (≤s-refl s)
--- -- ≤s-refl (∨→ s) = ≤∨→ (≤s-refl s)
--- -- ≤s-refl (s ←∨→ s₁) = ≤←∨→ (≤s-refl s) (≤s-refl s₁)
--- -- ≤s-refl (s ←∂) = ≤←∂ (≤s-refl s)
--- -- ≤s-refl (∂→ s) = ≤∂→ (≤s-refl s)
--- -- ≤s-refl (s ←∂→ s₁) = ≤←∂→ (≤s-refl s) (≤s-refl s₁)
-
-
-
-
--- -- ≤s-trans : ∀{i u ll b c} → {a : SetLL {i} {u} ll} → a ≤s b → b ≤s c → a ≤s c
--- -- ≤s-trans ≤↓ ≤↓ = ≤↓
--- -- ≤s-trans (≤←∧ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤←∧ x) (≤←∧ x₁) = ≤←∧ (≤s-trans x x₁)
--- -- ≤s-trans (≤←∧ x) (≤d←∧ x₁) = ≤d←∧ (≤s-trans x x₁)
--- -- ≤s-trans (≤∧→ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤∧→ x) (≤∧→ x₁) = ≤∧→ (≤s-trans x x₁)
--- -- ≤s-trans (≤∧→ x) (≤d∧→ x₁) = ≤d∧→ (≤s-trans x x₁)
--- -- ≤s-trans (≤←∨ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤←∨ x) (≤←∨ x₁) = ≤←∨ (≤s-trans x x₁)
--- -- ≤s-trans (≤←∨ x) (≤d←∨ x₁) = ≤d←∨ (≤s-trans x x₁)
--- -- ≤s-trans (≤∨→ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤∨→ x) (≤∨→ x₁) = ≤∨→ (≤s-trans x x₁)
--- -- ≤s-trans (≤∨→ x) (≤d∨→ x₁) = ≤d∨→ (≤s-trans x x₁)
--- -- ≤s-trans (≤←∂ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤←∂ x) (≤←∂ x₁) = ≤←∂ (≤s-trans x x₁)
--- -- ≤s-trans (≤←∂ x) (≤d←∂ x₁) = ≤d←∂ (≤s-trans x x₁)
--- -- ≤s-trans (≤∂→ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤∂→ x) (≤∂→ x₁) = ≤∂→ (≤s-trans x x₁)
--- -- ≤s-trans (≤∂→ x) (≤d∂→ x₁) = ≤d∂→ (≤s-trans x x₁)
--- -- ≤s-trans (≤←∧→ x x₁) ≤↓ = ≤↓
--- -- ≤s-trans (≤←∧→ x x₁) (≤←∧→ x₂ x₃) = ≤←∧→ (≤s-trans x x₂) (≤s-trans x₁ x₃)
--- -- ≤s-trans (≤←∨→ x x₁) ≤↓ = ≤↓
--- -- ≤s-trans (≤←∨→ x x₁) (≤←∨→ x₂ x₃) = ≤←∨→ (≤s-trans x x₂) (≤s-trans x₁ x₃)
--- -- ≤s-trans (≤←∂→ x x₁) ≤↓ = ≤↓
--- -- ≤s-trans (≤←∂→ x x₁) (≤←∂→ x₂ x₃) = ≤←∂→ (≤s-trans x x₂) (≤s-trans x₁ x₃)
--- -- ≤s-trans (≤d←∧ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤d←∧ x) (≤←∧→ x₁ x₂) = ≤d←∧ (≤s-trans x x₁)
--- -- ≤s-trans (≤d∧→ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤d∧→ x) (≤←∧→ x₁ x₂) = ≤d∧→ (≤s-trans x x₂)
--- -- ≤s-trans (≤d←∨ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤d←∨ x) (≤←∨→ x₁ x₂) = ≤d←∨ (≤s-trans x x₁)
--- -- ≤s-trans (≤d∨→ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤d∨→ x) (≤←∨→ x₁ x₂) = ≤d∨→ (≤s-trans x x₂)
--- -- ≤s-trans (≤d←∂ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤d←∂ x) (≤←∂→ x₁ x₂) = ≤d←∂ (≤s-trans x x₁)
--- -- ≤s-trans (≤d∂→ x) ≤↓ = ≤↓
--- -- ≤s-trans (≤d∂→ x) (≤←∂→ x₁ x₂) = ≤d∂→ (≤s-trans x x₂)
-
-
-
+-- TODO This could very well be emulated by ((∅-add ind) ⊂ₛ s)
 -- -- data _∈ₛ_ {i u rll} : ∀{ll} → IndexLL {i} {u} rll ll → SetLL ll → Set where
 -- --   inS ↓ : ∀{ll ind} → _∈ₛ_ {ll = ll} ind ↓
 -- --   inS←∧←∧ : ∀{li ri ind s} → _∈ₛ_ {ll = li} ind s → _∈ₛ_ {ll = li ∧ ri} (ind ←∧) (s ←∧)

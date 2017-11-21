@@ -8,15 +8,11 @@ import Relation.Binary.PropositionalEquality
 
 data LLCT : Set where
       -- Both sub-trees need to be sent or received.
+      -- Corresponds to the tensor connective.
   ∧ : LLCT
       -- Only one sub-tree can be sent or received
-      -- and the protocol specification has no control
-      -- over which choice will be made.
+      -- Corresponds to the sum connective.
   ∨ : LLCT
-      -- Only one sub-tree can be sent or received
-      -- and the protocol specification determines the choice
-      -- based on the previous input of the agent.
-  ∂ : LLCT
 
 module _ where
 
@@ -37,6 +33,9 @@ module _ where
       ∅    :                                            LinLogic i
       -- Contains a function that computes a dependent type.
       τ    : ∀{n} {dt : Vec (Set u) n} → genT dt      → LinLogic i
+      -- This is a constructor that indicates that this part of LinLogic is abstract.
+      -- It can be considered a variable.
+      abs    :                                          LinLogic i
       -- The input or output of a linear function.
       -- The function can be recursive or corecursive.
       call : ∞LinLogic i {u}                          → LinLogic i
@@ -51,10 +50,14 @@ module _ where
   open ∞LinLogic public
 
 
--- TODO. This needs to be reviewed and we need to uncomment many of the transformations here
--- because they are needed.
+-- According to https://ncatlab.org/nlab/show/linear+logic , we have associativity and distributive rules.
+-- Since we do not have the 'par' connective, I haven't added its distributive rule.
 
--- Transformations of the Linear Logic so as to construct
+
+-- IMPORTANT : The transformations here are contrained by the information that an agent has to where to send
+-- his output. His version of LinFun should provide him enough information to do so.
+
+-- Transformations so as to construct
 -- the correct sub-tree that is to be the input of a linear function.
 data LLTr {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsuc u) where
   -- Identity
@@ -62,49 +65,56 @@ data LLTr {i : Size} {u} (rll : LinLogic i {u}) : LinLogic i {u} → Set (lsuc u
   -- Commutative transformations for ∂, ∧ and ∨.
   cₜᵣ    : ∀{r l il} → LLTr rll (r < il > l) → LLTr rll (l < il > r)
   -- Distributive transformations.
--- The agent to whom to send r depends on the knowledge of ∂'s answer, this is impossible.
+  
+-- IMPORTANT : The agent to whom to send r depends on the knowledge of ∨'s answer, this is impossible.
 -- If all l₁ l₂ and r were sent to the same agent , then it would be possible, but the same function is
 -- done with a com that simply performs the transformation and send the output to oneself.
---  ∧∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ r) ∂ (l₂ ∧ r)) → LLTr rll ((l₁ ∂ l₂) ∧ r)
+-- Based on ncatlab, this should have been possible, but is not because our system is multi-agent.
+--  ∧∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ < ∧ > r) < ∨ > (l₂ < ∧ > r)) → LLTr rll ((l₁ < ∨ > l₂) < ∧ > r)
 
-  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
-  -- Possible only one possible LinDepT r can exist because the previous is not possible, thus the answer of ∂
-  -- is derived from a single com and only one brunch is executed.
---  ¬∧∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ l₂) ∧ r) → LLTr rll ((l₁ ∧ r) ∂ (l₂ ∧ r))                
--- The agent to whom to send r depends on the knowledge of ∨'s answer, this this is impossible.  
---  ∧∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ r) ∨ (l₂ ∧ r)) → LLTr rll ((l₁ ∨ l₂) ∧ r)                   
-  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
---  ¬∧∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ l₂) ∧ r) → LLTr rll ((l₁ ∧ r) ∨ (l₂ ∧ r))
--- Not possible to duplicate resources.  
---  ∧∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ r) ∧ (l₂ ∧ r)) → LLTr rll ((l₁ ∧ l₂) ∧ r)
--- Not possible to choose which path to take if r arrives, since ∂ might not be triggered at all.
--- The two are not the same.
---   ∨∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ r) ∂ (l₂ ∨ r)) → LLTr rll ((l₁ ∂ l₂) ∨ r)
-  -- Not possible because there are two instances of LinDepT r and we do not know which to choose.
---  ¬∨∂d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ l₂) ∨ r) → LLTr rll ((l₁ ∨ r) ∂ (l₂ ∨ r))
--- Not possible to duplicate resources.  
---  ∨∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ r) ∧ (l₂ ∨ r)) → LLTr rll ((l₁ ∧ l₂) ∨ r)
--- Not possible to choose which path to take if r arrives, since ∂ might not be triggered at all.
--- The two are not the same.
---  ∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r)) → LLTr rll ((l₁ ∨ l₂) ∂ r)
+-- IMPORTANT : Possible only one possible LinDepT r can exist because the previous is not possible, thus the answer of ∨
+-- is derived from a single com and only one brunch is executed.
+--  ¬∧∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ < ∨ > l₂) < ∧ > r) → LLTr rll ((l₁ < ∧ > r) < ∨ > (l₂ < ∧ > r))
 
--- Not possible because there are two instances of LinDepT r and we do not know which to choose.
---  ¬∂∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ l₂) ∂ r) → LLTr rll ((l₁ ∂ r) ∨ (l₂ ∂ r))
--- Not possible to duplicate resources.  
---  ∂∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∂ r) ∧ (l₂ ∂ r)) → LLTr rll ((l₁ ∧ l₂) ∂ r)
+
+-- IMPORTANT : POSSIBLE to duplicate resources but unnecessary because It is COM that should be doing that. 
+--  ∧∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ < ∧ > r) < ∧ > (l₂ < ∧ > r)) → LLTr rll ((l₁ < ∧ > l₂) < ∧ > r)
+
+-- IMPORTANT : Not possible to halve resources. Both agents will send the same type of data because they have
+-- no knowledge of what the other is doing.
+--  ¬∧∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ < ∧ > l₂) < ∧ > r) → LLTr rll ((l₁ < ∧ > r) < ∧ > (l₂ < ∧ > r))
+
+-- IMPORTANT : This is not possible because the choice of the left ∨ will not happen if r happens.
+-- Thus the choice where to send r is undetermined.
+--   ∨∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∨ r) ∨ (l₂ ∨ r)) → LLTr rll ((l₁ ∨ l₂) ∨ r)
+
+  -- IMPORTANT : The creator of output r can derive the choices for both ∨.
+  -- Thus it must send the decision to the rest of the agents, so that they do not wait.
+--  ¬∨∨d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ < ∨ > l₂) < ∨ > r) → LLTr rll ((l₁ < ∨ > r) < ∨ > (l₂ < ∨ > r))
+
+-- Here , we need to guarantee that ∅ is not the input of any other com. ∅ should be at the edges ,
+-- not in the middle.
+--  ∨∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ < ∨ > r) < ∧ > (l₂ < ∨ > ∅)) → LLTr rll ((l₁ < ∧ > l₂) < ∨ > r)
+  
+-- IMPORTANT : The two ∨ are different from one another, thus they can have different answers.
+--  ¬∨∧d   : ∀{l₁ l₂ r} → LLTr rll ((l₁ ∧ l₂) ∨ r) → LLTr rll ((l₁ ∨ r) ∧ (l₂ ∨ r))
+
 -- Associative transformations
-  dₜᵣ   : ∀{l₁ l₂ r il} → LLTr rll (l₁ < il > (l₂ < il > r)) → LLTr rll ((l₁ < il > l₂ ) < il > r )
+  aₜᵣ   : ∀{l₁ l₂ r il} → LLTr rll (l₁ < il > (l₂ < il > r)) → LLTr rll ((l₁ < il > l₂ ) < il > r )
 --  ¬dₜᵣ is derivable from dₜᵣ and cₜᵣ
-  ¬dₜᵣ   : ∀{l₁ l₂ r il} → LLTr rll ((l₁ < il > l₂ ) < il > r ) → LLTr rll (l₁ < il > (l₂ < il > r))
+--  ¬aₜᵣ   : ∀{l₁ l₂ r il} → LLTr rll ((l₁ < il > l₂ ) < il > r ) → LLTr rll (l₁ < il > (l₂ < il > r))
 
+-- TODO Associative transformations where il is different per tr.
+-- TODO
 
-revTr : ∀{i u rll ll} → LLTr {i} {u} rll ll → LLTr ll rll
-revTr {i} {u} {orll} {oll} ltr = revTr` ltr I where
-  revTr` : ∀{x} → LLTr {i} {u} orll x → LLTr oll x → LLTr oll orll
-  revTr` I nltr = nltr
-  revTr` (cₜᵣ ltr) nltr = revTr` ltr (cₜᵣ nltr)
-  revTr` (dₜᵣ ltr) nltr = revTr` ltr (¬dₜᵣ nltr)
-  revTr` (¬dₜᵣ ltr) nltr = revTr` ltr (dₜᵣ nltr)
+--
+--revTr : ∀{i u rll ll} → LLTr {i} {u} rll ll → LLTr ll rll
+--revTr {i} {u} {orll} {oll} ltr = revTr` ltr I where
+--  revTr` : ∀{x} → LLTr {i} {u} orll x → LLTr oll x → LLTr oll orll
+--  revTr` I nltr = nltr
+--  revTr` (cₜᵣ ltr) nltr = revTr` ltr (cₜᵣ nltr)
+--  revTr` (aₜᵣ ltr) nltr = revTr` ltr (¬aₜᵣ nltr)
+--  revTr` (¬aₜᵣ ltr) nltr = revTr` ltr (aₜᵣ nltr)
 
 
 data IndexLLCT : Set where

@@ -6,4 +6,25 @@ We need to take the complement and expand it if other inputs are part of the com
 
 
 
-IMPORTANT. In every \partial or \or the sender sends to both options. the one contains data, the other informs the recipient that this path was not chosen.
+IMPORTANT : In every \or the sender sends to both options. the one contains data, the other informs the recipient that this path was not chosen.
+
+?? ?? ?? IMPORTANT : If no data are received in an \or , since the receiver does not know the selection that was taken, both options are reduced ,cut till there is a single com that accepts both options as its input.
+Then the reduction/cut continues according to the remaining rules.
+
+----->
+----->
+
+The previous is not necessary. If the agent has coms in both paths, he simply waits the specified timeout before removing the path.
+If the agent does not have a com in a path, the path is reduced anyway.
+
+The com that receives both paths as inputs will eventually know whether any of the paths were performed.
+
+
+IMPORTANT : the & linear connective can be created as an operator that tries to compose either of two LinFun to another LinFun.
+The LinLogic needs to match to do so.
+
+IMPORTANT : The sum linear connective can be created as an operator as well.
+
+-- Both the sum and & operators sutisfy the rules of Girard linear logic.
+
+-- The sum operator can and should be an operator of LinFun as well.
