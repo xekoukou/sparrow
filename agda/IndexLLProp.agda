@@ -57,7 +57,9 @@ isLTi (ic d a) (ic d1 b) with isEqICT d d1
 isLTi (ic d a) (ic .d b) | yes refl with isLTi a b
 isLTi (ic d a) (ic .d b) | yes refl | yes p = p asInst yes it 
 isLTi (ic d a) (ic .d b) | yes refl | no ¬p = no λ { (≤ᵢic {{ieq}}) → ¬p ieq}
-isLTi (ic d a) (ic d1 b) | no ¬p = no λ { ≤ᵢic → ¬p refl}
+isLTi (ic d a) (ic d1 b) | no ~p = no λ { ≤ᵢic → ~ict⇒¬≡ ~p refl}
+
+
 
 isEqᵢ : ∀{u i ll rll} → (a : IndexLL {i} {u} rll ll) → (b : IndexLL rll ll) → Dec (a ≡ b)
 isEqᵢ ↓ ↓ = yes refl
@@ -67,7 +69,7 @@ isEqᵢ (ic d a) (ic d1 b) with isEqICT d d1
 isEqᵢ (ic d a) (ic .d b) | yes refl with isEqᵢ a b
 isEqᵢ (ic d a) (ic .d .a) | yes refl | yes refl = yes refl
 isEqᵢ (ic d a) (ic .d b) | yes refl | no ¬p = no λ { refl → ¬p refl}
-isEqᵢ (ic d a) (ic d1 b) | no ¬p = no λ { refl → ¬p refl}
+isEqᵢ (ic d a) (ic d1 b) | no ~p = no λ { refl → ~ict⇒¬≡ ~p refl}
 
 
 
@@ -275,7 +277,7 @@ mutual
       {emi  : IndexLL fll (pickLL de l r)}
       {ind : IndexLL rll (pickLL di l r)}
       {frll : LinLogic i}
-      → Dec (de ≡ di)
+      → DecICT de di
       → (nord : ¬ Orderedᵢ (ic {il = il} di ind) (ic de emi))
       → IndexLL fll
          (pickLL di (replLL ind frll) l < il > pickLL di r (replLL ind frll))
@@ -304,7 +306,7 @@ mutual
   ¬ord-morph-¬ord-ir-abs : ∀ {i u} {l : LinLogic i {u}} {il}
        {r rll fll : LinLogic i} {de} {emi : IndexLL fll (pickLL de l r)}
        {di} {ind : IndexLL rll (pickLL di l r)} {frll : LinLogic i}
-       → (deq : Dec (de ≡ di))
+       → (deq : DecICT de di)
        → (nord nord2 : Orderedᵢ (ic {il = il} di ind) (ic de emi) → ⊥)
        →   ¬ord-morph-abs {frll = frll} deq nord
          ≡
@@ -402,12 +404,12 @@ mutual
   replLL-¬ordab≡ba-abs {l = l} {r = r} {de = de} gll {di = di} frll nord fnord (yes refl) (yes refl) = replLL-¬ordab≡ba-abs2 {de = de} {l = l} {r = r} nnord nfnord (replLL-¬ordab≡ba gll frll nnord nfnord) where
     nnord = (λ p → nord (ord-ext p))
     nfnord = (λ p → fnord (ord-ext p))
-  replLL-¬ordab≡ba-abs gll frll nord fnord (yes p) (no ¬p) = ⊥-elim (¬p (sym p))
-  replLL-¬ordab≡ba-abs gll frll nord fnord (no ¬p) (yes p) = ⊥-elim (¬p (sym p))
-  replLL-¬ordab≡ba-abs {de = ic←} gll {ic←} frll nord fnord (no ¬p) (no ¬p₁) = ⊥-elim (¬p₁ refl)
-  replLL-¬ordab≡ba-abs {de = ic←} gll {ic→} frll nord fnord (no ¬p) (no ¬p₁) = refl
-  replLL-¬ordab≡ba-abs {de = ic→} gll {ic←} frll nord fnord (no ¬p) (no ¬p₁) = refl
-  replLL-¬ordab≡ba-abs {de = ic→} gll {ic→} frll nord fnord (no ¬p) (no ¬p₁) = ⊥-elim (¬p₁ refl)
+  replLL-¬ordab≡ba-abs gll frll nord fnord (yes p) (no ~p) = ⊥-elim (~ict⇒¬≡ ~p (sym p))
+  replLL-¬ordab≡ba-abs gll frll nord fnord (no ~p) (yes p) = ⊥-elim (~ict⇒¬≡ ~p (sym p))
+  replLL-¬ordab≡ba-abs {de = ic←} gll {ic←} frll nord fnord (no ()) (no p₁)
+  replLL-¬ordab≡ba-abs {de = ic←} gll {ic→} frll nord fnord (no p) (no p₁) = refl
+  replLL-¬ordab≡ba-abs {de = ic→} gll {ic←} frll nord fnord (no p) (no p₁) = refl
+  replLL-¬ordab≡ba-abs {de = ic→} gll {ic→} frll nord fnord (no ()) (no p₁)
 
   replLL-¬ordab≡ba : ∀{i u rll ll fll}
     → {emi : IndexLL {i} {u} fll ll} → ∀ gll
@@ -467,13 +469,10 @@ mutual
                         (sym (pickLL-id d (replLL b ell)))))
                       (a≤ᵢb-morph a b)))
                     (ic dc c))
-            → Dec (d ≡ dc)
+            → DecICT d dc
             → IndexLL pll (l < il > r)
   lemma₁-¬ord-a≤ᵢb-abs {d = d} nord (yes refl) = ic d (lemma₁-¬ord-a≤ᵢb (proj₂ (lemma₁-¬ord-a≤ᵢb-abs2 {d = d} nord)))
-  lemma₁-¬ord-a≤ᵢb-abs {d = ic←} {ic←} nord (no ¬p) = ⊥-elim (¬p refl)
-  lemma₁-¬ord-a≤ᵢb-abs {d = ic←} {dc = ic→} {c = c} nord (no ¬p) = ic ic→ c
-  lemma₁-¬ord-a≤ᵢb-abs {d = ic→} {dc = ic←} {c = c} nord (no ¬p) = ic ic← c
-  lemma₁-¬ord-a≤ᵢb-abs {d = ic→} {ic→} nord (no ¬p) = ⊥-elim (¬p refl)
+  lemma₁-¬ord-a≤ᵢb-abs {d = d} {dc = dc} {l = l} {r} {ell = ell} {b = b} {c = c} nord (no p) = ic dc (subst (IndexLL _) (pickLL-neq dc d (sym (~ict-sym p)) pickLL pickLL (replLL b ell) l r (replLL b ell) refl refl) c )
 
 
 -- This is the reverse of ¬ord-morph
@@ -530,7 +529,7 @@ mutual
        {r rll fll : LinLogic i} {de} {emi : IndexLL fll (pickLL de l r)}
        {di} {ind : IndexLL rll (pickLL di l r)} {frll : LinLogic i}
        (nord : Orderedᵢ (ic {il = il} di ind) (ic de emi) → ⊥)
-       → (w : Dec (de ≡ di))
+       → (w : DecICT de di)
        → Orderedᵢ
             (ic di
              (subst (IndexLL (replLL (ind -ᵢ ind) frll))
@@ -543,10 +542,7 @@ mutual
             (¬ord-morph-abs w nord) → ⊥
   ¬ord-morph⇒¬ord-abs {frll = frll} nord (yes refl) = ¬ord-morph⇒¬ord-abs2 (¬ord-morph⇒¬ord nnord) where
     nnord = λ p → nord (ord-ext p)
-  ¬ord-morph⇒¬ord-abs {de = ic←} {di = ic←} nord (no ¬p) = ⊥-elim (¬p refl)
-  ¬ord-morph⇒¬ord-abs {de = ic←} {di = ic→} nord (no ¬p) = λ x → (¬p (ord⇒icteq refl refl x))
-  ¬ord-morph⇒¬ord-abs {de = ic→} {di = ic←} nord (no ¬p) = λ x → (¬p (ord⇒icteq refl refl x))
-  ¬ord-morph⇒¬ord-abs {de = ic→} {di = ic→} nord (no ¬p) = ⊥-elim (¬p refl)
+  ¬ord-morph⇒¬ord-abs {de = de} {di = di} nord (no p) = λ x → ~ict⇒¬≡ p (ord⇒icteq refl refl x)
 
 
 
@@ -583,14 +579,11 @@ mutual
                       (a≤ᵢb-morph emi ind)))
                     (ic dc omi) →
                     ⊥)
-                 (w : Dec (d ≡ dc)) →
+                 (w : DecICT d dc) →
                Orderedᵢ (ic d emi) (lemma₁-¬ord-a≤ᵢb-abs nord w) → ⊥
   rlemma₁⇒¬ord-abs {d = d} nord (yes refl) = λ x → r (ord-spec x) where
     r = rlemma₁⇒¬ord (proj₂ (lemma₁-¬ord-a≤ᵢb-abs2 {d = d} {w = d} nord))
-  rlemma₁⇒¬ord-abs {d = ic←} {dc = ic←} nord (no ¬p) = ⊥-elim (¬p refl)
-  rlemma₁⇒¬ord-abs {d = ic←} {dc = ic→} nord (no ¬p) = λ x → (¬p (sym (ord⇒icteq refl refl x)))
-  rlemma₁⇒¬ord-abs {d = ic→} {dc = ic←} nord (no ¬p) = λ x → (¬p (sym (ord⇒icteq refl refl x)))
-  rlemma₁⇒¬ord-abs {d = ic→} {dc = ic→} nord (no ¬p) = ⊥-elim (¬p refl)
+  rlemma₁⇒¬ord-abs {d = d} {dc = dc} nord (no p) = λ x → ~ict⇒¬≡ p (sym (ord⇒icteq refl refl x)) 
 
 
   rlemma₁⇒¬ord : ∀{i u ll pll rll fll}
@@ -659,7 +652,7 @@ mutual
                               : IndexLL cll
                                 (pickLL d (pickLL d (replLL bind ell) l)
                                  (pickLL d r (replLL bind ell)))}
-                             (w : Dec (d ≡ d))
+                             (w : DecICT d d)
                              (nord
                               : Orderedᵢ
                                 (ic {il = il} d
@@ -679,7 +672,7 @@ mutual
                            ¬ord-morph-abs w lnord ≡ ic d lind
   ¬ord-morph$lemma₁≡I-abs2 (yes refl) nord lnord = ¬ord-morph$lemma₁≡I-abs3 nord lnord r where
     r = ¬ord-morph$lemma₁≡I (proj₂ (lemma₁-¬ord-a≤ᵢb-abs2 nord)) (λ z → lnord (ord-ext z))
-  ¬ord-morph$lemma₁≡I-abs2 (no ¬p) nord lnord = ⊥-elim (¬p refl)
+  ¬ord-morph$lemma₁≡I-abs2 (no p) nord lnord = ⊥-elim (~ict⇒¬≡ p refl) 
 
 
   ¬ord-morph$lemma₁≡I-abs : ∀ {i u} {l r : LinLogic i {u}} {d}
@@ -691,7 +684,7 @@ mutual
                              : IndexLL cll
                                (pickLL dc (pickLL d (replLL bind ell) l)
                                 (pickLL d r (replLL bind ell)))}
-                            (w : Dec (d ≡ dc))
+                            (w : DecICT d dc)
                             (nord
                              : Orderedᵢ
                                (ic  {il = il} d
@@ -707,10 +700,10 @@ mutual
                             (lnord : Orderedᵢ (ic d bind) (lemma₁-¬ord-a≤ᵢb-abs nord w) → ⊥) →
                           ¬ord-morph (lemma₁-¬ord-a≤ᵢb-abs nord w) lnord ≡ ic dc lind
   ¬ord-morph$lemma₁≡I-abs {d = d}(yes refl) nord lnord = ¬ord-morph$lemma₁≡I-abs2 (isEqICT d d) nord lnord
-  ¬ord-morph$lemma₁≡I-abs {d = ic←} {dc = ic←} (no ¬p) nord lnord = ⊥-elim (¬p refl)
-  ¬ord-morph$lemma₁≡I-abs {d = ic←} {dc = ic→} (no ¬p) nord lnord = refl
-  ¬ord-morph$lemma₁≡I-abs {d = ic→} {dc = ic←} (no ¬p) nord lnord = refl
-  ¬ord-morph$lemma₁≡I-abs {d = ic→} {dc = ic→} (no ¬p) nord lnord = ⊥-elim (¬p refl)
+  ¬ord-morph$lemma₁≡I-abs {d = ic←} {dc = ic←} (no p) nord lnord = ⊥-elim (~ict⇒¬≡ p refl)
+  ¬ord-morph$lemma₁≡I-abs {d = ic←} {dc = ic→} (no p) nord lnord = refl
+  ¬ord-morph$lemma₁≡I-abs {d = ic→} {dc = ic←} (no p) nord lnord = refl
+  ¬ord-morph$lemma₁≡I-abs {d = ic→} {dc = ic→} (no p) nord lnord = ⊥-elim (~ict⇒¬≡ p refl)
 
 
   ¬ord-morph$lemma₁≡I : ∀{i u pll ll cll fll ell} → {emi : IndexLL {i} {u} fll ll} → {ind : IndexLL {i} {u} pll ll} → {{lt : emi ≤ᵢ ind}} → {lind : IndexLL cll (replLL ind ell)} → (nord : ¬ Orderedᵢ (a≤ᵢb-morph emi ind {ell}) lind) → (lnord : ¬ Orderedᵢ ind (lemma₁-¬ord-a≤ᵢb nord))

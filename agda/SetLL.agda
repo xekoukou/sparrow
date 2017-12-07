@@ -25,10 +25,19 @@ data MSetLL {i : Size} {u} : LinLogic i {u} → Set where
   ¬∅  : ∀{ll} → SetLL ll → MSetLL ll
 
 
-
+-- Defining a functor and a Monad from SetLL to MSetLL
 mapₛ : ∀{i u ll1 ll2} → (SetLL {i} {u} ll1 → SetLL {i} {u} ll2) → (MSetLL ll1 → MSetLL ll2)
 mapₛ f ∅ = ∅
 mapₛ f (¬∅ x) = ¬∅ (f x)
+
+mapₛ-id : ∀{i u ll} → (x : MSetLL ll) → mapₛ {i} {u} {ll} (λ z → z) x ≡ x
+mapₛ-id ∅ = refl
+mapₛ-id (¬∅ x) = refl
+
+_>>=ₛ_ : ∀{i u ll1 ll2} → MSetLL {i} {u} ll1 → (SetLL ll1 → MSetLL {i} {u} ll2) → MSetLL ll2
+∅ >>=ₛ f = ∅
+¬∅ x >>=ₛ f = f x
+
 
 
 pickLLₛ : ∀{i u l r} → ∀ d → SetLL {i} {u} l → SetLL r → SetLL (pickLL d l r)
@@ -38,6 +47,15 @@ pickLLₛ ic→ a b = b
 ~ₛ : ∀{i u l r} → ∀ d → SetLL {i} {u} (pickLL d l r) → SetLL (pickLL (~ict d) r l)
 ~ₛ ic← s = s
 ~ₛ ic→ s = s
+
+pickLLₛ-sbc : ∀{i u il l r} → ∀ d → SetLL {i} {u} (pickLL d l r) → SetLL (pickLL (~ict d) l r) → SetLL (l < il > r)
+pickLLₛ-sbc {l = l} {r} ic← s1 s2 = sbc s1 s2
+pickLLₛ-sbc {l = l} {r} ic→ s1 s2 = sbc s2 s1
+
+pickLLₛ-sbc-id : ∀{i u il l r} → ∀ d → {s : SetLL {i} {u} l} → {s1 : SetLL r} → pickLLₛ-sbc {il =  il} d (pickLLₛ d s s1) (pickLLₛ (~ict d) s s1) ≡ sbc s s1
+pickLLₛ-sbc-id ic← {s} {s1} = refl
+pickLLₛ-sbc-id ic→ {s} {s1} = refl
+
 
 -- -- sl-ext : ∀{i u ll tll ic} → SetLL {i} {u} (expLLT {ll = ll} ic tll) → MSetLL ll
 -- -- sl-ext {ic = ic←∧} ↓ = ¬∅ ↓
@@ -81,17 +99,24 @@ pickLLₛ ic→ a b = b
 
 
 
+-- It hits at least once.
+
+data hitsAtLeastOnce {i u} : ∀{ll rll} → SetLL ll → (ind : IndexLL {i} {u} rll ll) → Set where
+  instance
+    hLO↓ic     : ∀{d il l r rll ind}                      → hitsAtLeastOnce {ll = l < il > r} {rll = rll} ↓ (ic d ind)
+    hLOs↓   : ∀{rll s}                                  → hitsAtLeastOnce {rll = rll} s ↓
+    hLOsic  : ∀{d il ll rll  q s ind} → {{ieq : hitsAtLeastOnce s ind}}  → hitsAtLeastOnce {ll = q < il > ll} {rll = rll} (sic d s) (ic d ind) 
+    hLOsbc : ∀{d il ll rll s q s₁ ind} → {{ieq : hitsAtLeastOnce (pickLLₛ d s s₁) ind}}  → hitsAtLeastOnce {ll = ll < il > q} {rll = rll} (sbc s s₁) (ic d ind)
+
+
 
 mutual
 
   ∪ₛ-abs : ∀ {i u} {l : LinLogic i {u}} {il} {r : LinLogic i} {ds ds₁} →
          SetLL (pickLL ds l r) →
-         SetLL (pickLL ds₁ l r) → Dec (ds ≡ ds₁) → SetLL (l < il > r)
+         SetLL (pickLL ds₁ l r) → DecICT ds ds₁ → SetLL (l < il > r)
   ∪ₛ-abs {ds = ds} a b (yes refl) = sic ds (a ∪ₛ b)
-  ∪ₛ-abs {ds = ic←} {ic←} a b (no ¬p) = ⊥-elim (¬p refl)
-  ∪ₛ-abs {ds = ic←} {ic→} a b (no ¬p) = sbc a b
-  ∪ₛ-abs {ds = ic→} {ic←} a b (no ¬p) = sbc b a
-  ∪ₛ-abs {ds = ic→} {ic→} a b (no ¬p) = ⊥-elim (¬p refl) 
+  ∪ₛ-abs {ds = .(~ict ds₁)} {ds₁} a b (no refl) = pickLLₛ-sbc ds₁ b a
 
   _∪ₛ_ : ∀{i u ll} → SetLL {i} {u} ll → SetLL ll → SetLL ll
   ↓ ∪ₛ b = ↓
@@ -120,6 +145,19 @@ sbcm ∅ (¬∅ b)= ¬∅ (sic ic→ b)
 sbcm (¬∅ x) ∅ = ¬∅ (sic ic← x)
 sbcm (¬∅ x) (¬∅ b) = ¬∅ (sbc x b)
 
+pickLLₛ-sbcm : ∀ {i u} {l : LinLogic i {u}} {il} {r : LinLogic i} → ∀ d →
+          MSetLL (pickLL d l r) → MSetLL (pickLL (~ict d) l r) → MSetLL (l < il > r)
+pickLLₛ-sbcm ic← ms1 ms2 = sbcm ms1 ms2
+pickLLₛ-sbcm ic→ ms1 ms2 = sbcm ms2 ms1
+
+
+pickLLₛ-sbcm&¬∅⇒pickLLₛ-sbc : ∀ {i u} {l : LinLogic i {u}} {il} {r : LinLogic i} → ∀ d → ∀{s s1} →
+          (ms : MSetLL (pickLL d l r)) → (ms1 : MSetLL (pickLL (~ict d) l r)) → (ms ≡ ¬∅ s) → (ms1 ≡ ¬∅ s1) → pickLLₛ-sbcm {il = il} d ms ms1 ≡ ¬∅ (pickLLₛ-sbc d s s1)
+pickLLₛ-sbcm&¬∅⇒pickLLₛ-sbc ic← .(¬∅ _) .(¬∅ _) refl refl = refl
+pickLLₛ-sbcm&¬∅⇒pickLLₛ-sbc ic→ .(¬∅ _) .(¬∅ _) refl refl = refl  
+
+
+
 ∩ₛ-abs1 : ∀ {ds i u} {l : LinLogic i {u}} {il} {r : LinLogic i} →
           MSetLL (pickLL ds l r) → MSetLL (l < il > r)
 ∩ₛ-abs1 ∅ = ∅
@@ -129,7 +167,7 @@ mutual
 
   ∩ₛ-abs : ∀ {i u} {l : LinLogic i {u}} {il} {r : LinLogic i} {ds ds₁} →
            SetLL (pickLL ds l r) →
-           SetLL (pickLL ds₁ l r) → Dec (ds ≡ ds₁) → MSetLL (l < il > r)
+           SetLL (pickLL ds₁ l r) → DecICT ds ds₁ → MSetLL (l < il > r)
   ∩ₛ-abs {ds = ds} {.ds} a b (yes refl) = ∩ₛ-abs1 {ds} (a ∩ₛ b)
   ∩ₛ-abs {ds = ds} {ds₁} a b (no ¬p) = ∅
 
@@ -154,54 +192,113 @@ fillAllLower {ll = (_ < _ > _)} = sbc fillAllLower fillAllLower
 
 
 
-complLₛ-abs : ∀ {i u} {l r : LinLogic i {u}} {il ds} →
-              MSetLL (pickLL ds l r) → MSetLL (l < il > r)
-complLₛ-abs {ds = ds} ∅ = ¬∅ (sic ds fillAllLower)
-complLₛ-abs {ds = ic←} (¬∅ x) = ¬∅ (sbc x fillAllLower)
-complLₛ-abs {ds = ic→} (¬∅ x) = ¬∅ (sbc fillAllLower x)
-
 complLₛ : ∀{i u ll} → SetLL {i} {u} ll → MSetLL ll
 complLₛ ↓ = ∅
-complLₛ (sic ds s) = complLₛ-abs {ds = ds} (complLₛ s)
+complLₛ (sic ds s) = pickLLₛ-sbcm ds (complLₛ s) (¬∅ (pickLLₛ (~ict ds) fillAllLower fillAllLower))
 complLₛ (sbc s s₁) = sbcm (complLₛ s) (complLₛ s₁)
 
 
-
-
-del-abs : ∀ {i u} {l r : LinLogic i {u}} {il} {q : LinLogic i} {d}
-            {ind : IndexLL q (pickLL d l r)} {rll : LinLogic i} →
-          MSetLL (replLL ind rll) →
-          MSetLL
-          (pickLL d (replLL ind rll) l < il > pickLL d r (replLL ind rll))
-del-abs {d = ic←} is = sbcm is (¬∅ ↓)
-del-abs {d = ic→} is = sbcm (¬∅ ↓) is
+mcomplLₛ : ∀{i u ll} → MSetLL {i} {u} ll → MSetLL ll
+mcomplLₛ ∅ = ¬∅ fillAllLower
+mcomplLₛ (¬∅ x) = complLₛ x
 
 
 
 mutual
 
-  del-abs1 : ∀ {i u} {l r q : LinLogic i {u}} {ds d} →
-             SetLL (pickLL ds l r) →
-             (ind : IndexLL q (pickLL d l r)) →
-             Dec (ds ≡ d) →
-             ∀ {il} {rll : LinLogic i} →
-             MSetLL
-             (pickLL d (replLL ind rll) l < il > pickLL d r (replLL ind rll))
-  del-abs1 {d = d} s ind (yes refl) {rll = rll} = mapₛ (sic d) (subst MSetLL (trans (pickLL-id d (replLL ind rll)) (sym (pickLL-eq d pickLL pickLL _ _ _ _ refl refl))) (del s ind {rll}))
-  del-abs1 s ind (no ¬p) = ∅
-  
+  del-abs : ∀ {i u} {l r q : LinLogic i {u}} {ds d}
+            {s : SetLL (pickLL ds l r)} →
+          IndexLL q (pickLL d l r) →
+          DecICT ds d → ∀ {il} → MSetLL (l < il > r)
+  del-abs {ds = ds} {s = s} ind (yes refl) = del s ind >>=ₛ (λ z → ¬∅ (sic ds z))
+  del-abs {ds = ds} {s = s} ind (no x) = ¬∅ (sic ds s)
   
   -- Deletes an index if it is present, otherwise does nothing.
-  del : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → {rll : LinLogic i}
-        → MSetLL (replLL ind rll)
+  del : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll)
+        → MSetLL ll
   del s ↓ = ∅
-  del ↓ (ic d ind) {rll} = del-abs {d = d} {ind} (del ↓ ind {rll})
-  del (sic ds s) (ic d ind) = del-abs1 s ind (isEqICT ds d)
-  del (sbc s s₁) (ic ic← ind) = sbcm (del s ind) (¬∅ s₁)
-  del (sbc s s₁) (ic ic→ ind) = sbcm (¬∅ s) (del s₁ ind)
+  del ↓ (ic d ind) = pickLLₛ-sbcm d (del ↓ ind) (¬∅ (pickLLₛ (~ict d) ↓ ↓))
+  del (sic ds s) (ic d ind) = del-abs {s = s} ind (isEqICT ds d) 
+  del (sbc s s₁) (ic d ind) = pickLLₛ-sbcm d (del (pickLLₛ d s s₁) ind) (¬∅ (pickLLₛ (~ict d) s s₁))
+
+mutual
+
+  del⇒¬ho-abs3 : ∀ {i u} {l : LinLogic i {u}} {il} {r pll : LinLogic i}
+                 {d} {dls : SetLL (l < il > r)} (lind : IndexLL pll (pickLL d l r))
+                 (s : SetLL l) (s₁ : SetLL r) (w : MSetLL (pickLL d l r)) → (is : w ≡ del (pickLLₛ d s s₁) lind) →
+               ¬∅ dls ≡ pickLLₛ-sbcm d w (¬∅ (pickLLₛ (~ict d) s s₁)) →
+               hitsAtLeastOnce dls (ic d lind) → ⊥
+  del⇒¬ho-abs3 {d = ic←} lind s s₁ ∅ is refl = λ { ()}
+  del⇒¬ho-abs3 {d = ic→} lind s s₁ ∅ is refl = λ { ()}
+  del⇒¬ho-abs3 {d = ic←} lind s s₁ (¬∅ x) is refl = λ { hLOsbc → del⇒¬ho lind is it}
+  del⇒¬ho-abs3 {d = ic→} lind s s₁ (¬∅ x) is refl = λ { hLOsbc →  del⇒¬ho lind is it}
 
 
+  del⇒¬ho-abs2 : ∀ {ds i u} {l : LinLogic i {u}} {il}
+                 {r pll : LinLogic i} {dls : SetLL (l < il > r)} {s : SetLL (pickLL ds l r)}
+                 {lind : IndexLL pll (pickLL ds l r)} (w : MSetLL (pickLL ds l r)) → (is : w ≡ del s lind) →
+               ¬∅ dls ≡ (w >>=ₛ (λ z → ¬∅ (sic ds z))) →
+               hitsAtLeastOnce dls (ic ds lind) → ⊥
+  del⇒¬ho-abs2 ∅ is ()
+  del⇒¬ho-abs2 {lind = lind} (¬∅ x) is refl = λ { hLOsic → del⇒¬ho lind is it}
 
+  del⇒¬ho-abs1 : ∀ {i u} {l : LinLogic i {u}} {il} {r pll : LinLogic i}
+                 {ds d} {dls : SetLL (l < il > r)} (s : SetLL (pickLL ds l r))
+                 (lind : IndexLL pll (pickLL d l r)) (w : DecICT ds d) →
+               ¬∅ dls ≡ del-abs {s = s} lind w → hitsAtLeastOnce dls (ic d lind) → ⊥
+  del⇒¬ho-abs1 s lind (yes refl) deq = del⇒¬ho-abs2 (del s lind) refl deq
+  del⇒¬ho-abs1 s lind (no x) refl = λ { hLOsic → ⊥-elim (~ict-eq⇒¬ x)}
+
+  del⇒¬ho-abs : ∀ {i u} {l r : LinLogic i {u}} {il} {pll : LinLogic i}
+                {d} {lind : IndexLL pll (pickLL d l r)} {dls : SetLL (l < il > r)}
+                (w : MSetLL (pickLL d l r)) → (ieq : w ≡ del ↓ lind) →
+              ¬∅ dls ≡ pickLLₛ-sbcm d w (¬∅ (pickLLₛ (~ict d) ↓ ↓)) →
+              hitsAtLeastOnce dls (ic d lind) → ⊥
+  del⇒¬ho-abs {d = ic←} {lind} ∅ ieq refl = λ {()}
+  del⇒¬ho-abs {d = ic←} {lind} (¬∅ x) ieq refl = λ { hLOsbc → del⇒¬ho lind ieq it} 
+  del⇒¬ho-abs {d = ic→} {lind} ∅ ieq refl = λ {()}
+  del⇒¬ho-abs {d = ic→} {lind} (¬∅ x) ieq refl = λ { hLOsbc → del⇒¬ho lind ieq it}
+
+
+  del⇒¬ho : ∀{i u pll ll} → {s : SetLL ll}
+            → (lind : IndexLL {i} {u} pll ll) → ∀{dls}
+            → ¬∅ dls ≡ del s lind
+            → ¬ (hitsAtLeastOnce dls lind)
+  del⇒¬ho {s = s} ↓ ()
+  del⇒¬ho {s = ↓} (ic d lind) deq =  del⇒¬ho-abs (del ↓ lind) refl deq 
+  del⇒¬ho {s = sic ds s} (ic d lind) deq = del⇒¬ho-abs1 s lind (isEqICT ds d) deq
+  del⇒¬ho {s = sbc s s₁} (ic d lind) deq = del⇒¬ho-abs3 lind s s₁ (del (pickLLₛ d s s₁) lind) refl deq
+
+mutual
+  
+  s-morph-abs : ∀ {i u} {l : LinLogic i {u}} {il} {r q : LinLogic i}
+                {ds d} →
+              DecICT ds d →
+              (s : SetLL (pickLL ds l r)) (ind : IndexLL q (pickLL d l r)) →
+              (hitsAtLeastOnce (sic {il = il} ds s) (ic d ind) → ⊥) →
+              {rll : LinLogic i} →
+              SetLL
+              (pickLL d (replLL ind rll) l < il > pickLL d r (replLL ind rll))
+  s-morph-abs {ds = ds} (yes refl) s ind ¬ho = sic ds (subst SetLL (trans (pickLL-id ds (replLL ind _)) (sym (pickLL-eq ds pickLL pickLL (replLL ind _)  _ _ (replLL ind _) refl refl)) ) is) where
+    is = s-morph s ind λ x → ¬ho (hLOsic {{ieq = x}})
+  s-morph-abs {ds = ds} {d = d} (no x) s ind ¬ho = sic ds (subst SetLL (sym (pickLL-neq ds d x pickLL pickLL (replLL ind _)  _ _ (replLL ind _) refl refl)) s)
+
+  s-morph : ∀{i u ll rll q} → (s : SetLL {i} {u} ll) → (ind : IndexLL q ll) → ¬ (hitsAtLeastOnce s ind) → SetLL (replLL ind rll)
+  s-morph s ↓ ¬ho = ⊥-elim (¬ho hLOs↓)
+  s-morph ↓ (ic d ind) ¬ho = ⊥-elim (¬ho hLO↓ic)
+  s-morph (sic ds s) (ic d ind) ¬ho = s-morph-abs (isEqICT ds d) s ind ¬ho
+  s-morph (sbc s s₁) (ic d ind) ¬ho = sbc (pickLLₛ d is s) (pickLLₛ d s₁ is) where
+    is = s-morph (pickLLₛ d s s₁) ind λ {x → ¬ho (hLOsbc {{ieq = x}})}
+  
+
+delG-abs : ∀ {i u} {ll q rll : LinLogic i {u}} {s : SetLL ll} (ind : IndexLL q ll) →
+           (w : MSetLL ll) → (eq : w ≡ del s ind) → MSetLL (replLL ind rll)
+delG-abs ind ∅ eq = ∅
+delG-abs ind (¬∅ x) eq = ¬∅ (s-morph _ ind (del⇒¬ho ind eq))
+
+delG : ∀{i u ll q} → SetLL ll → (ind : IndexLL {i} {u} q ll) → {rll : LinLogic i}
+      → MSetLL (replLL ind rll)
+delG s ind = delG-abs {s = s} ind (del s ind) refl
 
 
 s-extend : ∀{i u ll rll} → (ind : IndexLL {i} {u} rll ll) → SetLL {i} rll → SetLL ll
@@ -214,26 +311,36 @@ s-extendG ind s = s-extend (ind-rpl↓2 ind (a≤ᵢb-morph ind ind)) s
 
 mutual
 
-  replacePartOf-abs : ∀ {i u} {l r rll : LinLogic i {u}} {ds d} →
+  `replacePartOf-abs : ∀ {i u} {l r rll : LinLogic i {u}} {ds d} →
                        SetLL (pickLL ds l r) →
                        SetLL rll →
                        IndexLL rll (pickLL d l r) →
-                       Dec (ds ≡ d) → ∀ {il} → SetLL (l < il > r)
-  replacePartOf-abs {ds = ds} a b ind (yes refl) = sic ds (replacePartOf a to b at ind)
-  replacePartOf-abs {ds = ic←} {ic←} a b ind (no ¬p) = ⊥-elim (¬p refl)
-  replacePartOf-abs {ds = ic←} {ic→} a b ind (no ¬p) = sbc a (s-extend ind b)
-  replacePartOf-abs {ds = ic→} {ic←} a b ind (no ¬p) = sbc (s-extend ind b) a
-  replacePartOf-abs {ds = ic→} {ic→} a b ind (no ¬p) = ⊥-elim (¬p refl)
+                       DecICT ds d → ∀ {il} → SetLL (l < il > r)
+  `replacePartOf-abs {ds = ds} a b ind (yes refl) = sic ds (`replacePartOf a to b at ind)
+  `replacePartOf-abs {ds = .(~ict d)} {d} a b ind (no refl) = pickLLₛ-sbc d (s-extend ind b) a
 
 
-
-  replacePartOf_to_at_ : ∀{i u ll rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} rll ll)
+-- It does not delete the contents before replacing, thus it does not work like replacePartOfG.
+  `replacePartOf_to_at_ : ∀{i u ll rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} rll ll)
                  → SetLL ll
-  replacePartOf a to b at ↓ = b
-  replacePartOf ↓ to b at ic d ind = sic d (replacePartOf ↓ to b at ind)
-  replacePartOf sic ds a to b at ic d ind = replacePartOf-abs a b ind (isEqICT ds d)
-  replacePartOf sbc a a₁ to b at ic ic← ind = sbc (replacePartOf a to b at ind) a₁
-  replacePartOf sbc a a₁ to b at ic ic→ ind = sbc a (replacePartOf a₁ to b at ind)
+  `replacePartOf a to b at ↓ = b
+  `replacePartOf ↓ to b at ic {il = il} d ind = pickLLₛ-sbc {il = il} d (`replacePartOf ↓ to b at ind) ↓ -- sic d (`replacePartOf ↓ to b at ind)
+  `replacePartOf sic ds a to b at ic d ind = `replacePartOf-abs a b ind (isEqICT ds d)
+  `replacePartOf sbc a a₁ to b at ic d ind = pickLLₛ-sbc d (`replacePartOf (pickLLₛ d a a₁) to b at ind) (pickLLₛ (~ict d) a a₁)
+
+
+
+
+replacePartOf-abs : ∀ {i u} {ll rll : LinLogic i {u}} {b : SetLL rll} →
+                    IndexLL rll ll → MSetLL ll → SetLL ll
+replacePartOf-abs {b = b} ind ∅ = s-extend ind b
+replacePartOf-abs {b = b} ind (¬∅ x) = `replacePartOf x to b at ind
+
+-- It deletes the contents before replacing so as to be consistent with replacePartOfG.
+replacePartOf_to_at_ : ∀{i u ll rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} rll ll)
+                       → SetLL ll
+replacePartOf a to b at ind = replacePartOf-abs {b = b} ind (del a ind) 
+
 
 
 -- Add a node to an empty set (and potentially replace the linear logic sub-tree).
@@ -258,6 +365,7 @@ madd : ∀{i u ll q} → MSetLL ll → (ind : IndexLL {i} {u} q ll)
 madd ∅ ind = ¬∅ (∅-add ind)
 madd (¬∅ x) ind = ¬∅ (add x ind)
 
+
 mutual
 
   replacePartOfG-abs : ∀ {i u} {ll q rll : LinLogic i {u}}
@@ -269,7 +377,7 @@ mutual
 
   replacePartOfG_to_at_ : ∀{i u ll q} → ∀{rll} → SetLL ll → SetLL {i} rll → (ind : IndexLL {i} {u} q ll)
                → SetLL (replLL ind rll)
-  replacePartOfG_to_at_ {rll = rll} a b ind = replacePartOfG-abs {ind = ind} (del a ind {rll}) b (ind-rpl↓2 ind (a≤ᵢb-morph ind ind {frll = rll}))
+  replacePartOfG_to_at_ {rll = rll} a b ind = replacePartOfG-abs {ind = ind} (delG a ind {rll}) b (ind-rpl↓2 ind (a≤ᵢb-morph ind ind {frll = rll}))
 
 
   -- Add a node to a set (and potentially replace the linear logic sub-tree).
@@ -283,7 +391,7 @@ addG s ind {rll} = replacePartOfG s to ↓ at ind
 mreplacePartOf_to_at_ : ∀{i u ll rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} rll ll)
           → MSetLL ll
 mreplacePartOf ∅ to mb at ind = mapₛ (s-extend ind) mb
-mreplacePartOf ¬∅ x to ∅ at ind = subst MSetLL (replLL-id ind) (del x ind)
+mreplacePartOf ¬∅ x to ∅ at ind = del x ind
 mreplacePartOf ¬∅ x to ¬∅ x₁ at ind = ¬∅ (replacePartOf x to x₁ at ind)
 
 
@@ -291,8 +399,8 @@ mreplacePartOf ¬∅ x to ¬∅ x₁ at ind = ¬∅ (replacePartOf x to x₁ at 
 mreplacePartOfG_to_at_ : ∀{i u ll q} → ∀{rll} → MSetLL ll → MSetLL {i} rll → (ind : IndexLL {i} {u} q ll)
           → MSetLL (replLL ind rll)
 mreplacePartOfG_to_at_ {rll = rll} ∅ mb ind = mapₛ (s-extendG ind) mb
-mreplacePartOfG ¬∅ x to ∅ at ind = del x ind
-mreplacePartOfG ¬∅ x to ¬∅ x₁ at ind = mreplacePartOf (del x ind) to (¬∅ x₁) at (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+mreplacePartOfG ¬∅ x to ∅ at ind = delG x ind
+mreplacePartOfG ¬∅ x to ¬∅ x₁ at ind = mreplacePartOf (delG x ind) to (¬∅ x₁) at (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
 
 
 
@@ -402,9 +510,9 @@ mutual
   
   isEqₛ-abs : ∀ {i u} {l : LinLogic i {u}} {il} {r : LinLogic i} {ds ds₁}
                 (a : SetLL (pickLL ds l r)) (b : SetLL (pickLL ds₁ l r)) →
-              Dec (ds ≡ ds₁) → Dec (sic {il = il} ds a ≡ sic ds₁ b)
+              DecICT ds ds₁ → Dec (sic {il = il} ds a ≡ sic ds₁ b)
   isEqₛ-abs a b (yes refl) = isEqₛ-abs1 (isEqₛ a b)
-  isEqₛ-abs a b (no ¬p) = no λ { refl → ¬p refl}
+  isEqₛ-abs a b (no p) = no λ { refl → ~ict⇒¬≡ p refl}
   
   -- Decidable Equality
   isEqₛ : {i : Size} → ∀{u} → {ll : LinLogic i {u}} → (a : SetLL ll) → (b : SetLL ll) → Dec (a ≡ b)
@@ -570,32 +678,52 @@ mutual
 
   truncₛ-abs : ∀ {i u} {l r pll : LinLogic i {u}} {ds d} →
              SetLL (pickLL ds l r) →
-             IndexLL pll (pickLL d l r) → Dec (ds ≡ d) → MSetLL pll
+             IndexLL pll (pickLL d l r) → DecICT ds d → MSetLL pll
   truncₛ-abs s ind (yes refl) = truncₛ s ind
-  truncₛ-abs s ind (no ¬p) = ∅
+  truncₛ-abs s ind (no p) = ∅
 
   truncₛ : ∀ {i u ll pll} → SetLL ll → (ind : IndexLL {i} {u} pll ll)
                 → MSetLL pll
   truncₛ s ↓ = ¬∅ s
   truncₛ ↓ (ic d ind) = ¬∅ ↓
   truncₛ (sic ds s) (ic d ind) = truncₛ-abs s ind (isEqICT ds d)
-  truncₛ (sbc s s₁) (ic ic← ind) = truncₛ s ind
-  truncₛ (sbc s s₁) (ic ic→ ind) = truncₛ s₁ ind
+  truncₛ (sbc s s₁) (ic d ind) = truncₛ (pickLLₛ d s s₁) ind
 
+truncₛ-psbc← : ∀ {i u il l r pll} → ∀ d → ∀{s s1} → (ind : IndexLL {i} {u} pll (pickLL d l r)) → truncₛ (pickLLₛ-sbc {il = il} d s s1) (ic d ind) ≡ truncₛ s ind
+truncₛ-psbc← ic← ind = refl
+truncₛ-psbc← ic→ ind = refl
+
+
+truncₛ-psbc→ : ∀ {i u il l r pll} → ∀ d → ∀{s s1} → (ind : IndexLL {i} {u} pll (pickLL (~ict d) l r)) → truncₛ (pickLLₛ-sbc {il = il} d s s1) (ic (~ict d) ind) ≡ truncₛ s1 ind
+truncₛ-psbc→ ic← ind = refl
+truncₛ-psbc→ ic→ ind = refl
+
+mutual
+
+  tr-fAL : ∀{i u pll ll} → (ind : IndexLL {i} {u} pll ll) →  truncₛ fillAllLower ind ≡ ¬∅ fillAllLower
+  tr-fAL ↓ = refl
+  tr-fAL (ic d ind) = tr-fAL-p d ind
+  
+  tr-fAL-p : ∀{i u pll l r} → ∀ d → (ind : IndexLL {i} {u} pll (pickLL d l r))
+             →  truncₛ (pickLLₛ d fillAllLower fillAllLower) ind ≡ ¬∅ fillAllLower
+  tr-fAL-p ic← ind = tr-fAL ind
+  tr-fAL-p ic→ ind = tr-fAL ind
+
+
+-- truncₛ-psbc : truncₛ (pickLLₛ-sbc d s s1) (ic d ind) ≡
 
 mutual
 
   tr-ext⇒id-abs : ∀ {i u} {l r pll : LinLogic i {u}} {d} (s : SetLL pll)
-                  (ind : IndexLL pll (pickLL d l r)) (w : Dec (d ≡ d)) →
+                  (ind : IndexLL pll (pickLL d l r)) (w : DecICT d d) →
                   truncₛ-abs (s-extend ind s) ind w ≡ ¬∅ s
   tr-ext⇒id-abs s ind (yes refl) = tr-ext⇒id ind
-  tr-ext⇒id-abs s ind (no ¬p) = ⊥-elim (¬p refl)
+  tr-ext⇒id-abs s ind (no p) = ⊥-elim (~ict⇒¬≡ p refl)
 
   tr-ext⇒id : ∀{i u pll ll} → ∀ {s} → (ind : IndexLL {i} {u} pll ll) →  truncₛ (s-extend ind s) ind ≡ ¬∅ s
   tr-ext⇒id ↓ = refl
   tr-ext⇒id {s = s} (ic d ind) = tr-ext⇒id-abs s ind (isEqICT d d)
-
-
+ 
 
 -- -- module _ where
 
@@ -619,51 +747,82 @@ mutual
 -- --   tr-extg⇒id {pll = pll} {rll = .g} s (∂→ ind) | g | refl | e | is = is
 
 
+
 mutual
 
-  tr-repl⇒id-abs : ∀ {d} (w : Dec (d ≡ d)) {i u}
+  `tr-repl⇒id-abs : ∀ {d} (w : DecICT d d) {i u}
                    {l r pll : LinLogic i {u}} {s : SetLL (pickLL d l r)} {ind : IndexLL pll (pickLL d l r)}
                    {vs : SetLL pll} →
-                 truncₛ-abs (replacePartOf s to vs at ind) ind w ≡ ¬∅ vs
-  tr-repl⇒id-abs (yes refl) {ind = ind} {vs} = tr-repl⇒id ind
-  tr-repl⇒id-abs (no ¬p) {ind = ind} {vs} = ⊥-elim (¬p refl)
+                 truncₛ-abs (`replacePartOf s to vs at ind) ind w ≡ ¬∅ vs
+  `tr-repl⇒id-abs (yes refl) {ind = ind} {vs} = `tr-repl⇒id ind
+  `tr-repl⇒id-abs (no p) {ind = ind} {vs} = ⊥-elim (~ict⇒¬≡ p refl)
 
 
-  tr-repl⇒id-abs1 : ∀ {ds d} (w : Dec (ds ≡ d)) {i u}
+  `tr-repl⇒id-abs1 : ∀ {ds d} (w : DecICT ds d) {i u}
                     {l : LinLogic i {u}} {il} {r pll : LinLogic i}
                     {s : SetLL (pickLL ds l r)} {ind : IndexLL pll (pickLL d l r)}
                     {vs : SetLL pll} →
-                  truncₛ (replacePartOf-abs s vs ind w {il}) (ic d ind) ≡ ¬∅ vs
-  tr-repl⇒id-abs1 {ds} (yes refl) {s = s} {ind} {vs} = tr-repl⇒id-abs (isEqICT ds ds)
-  tr-repl⇒id-abs1 {ic←} {ic←} (no ¬p) {s = s} {ind} {vs} = ⊥-elim (¬p refl)
-  tr-repl⇒id-abs1 {ic←} {ic→} (no ¬p) {s = s} {ind} {vs} = tr-ext⇒id ind
-  tr-repl⇒id-abs1 {ic→} {ic←} (no ¬p) {s = s} {ind} {vs} = tr-ext⇒id ind
-  tr-repl⇒id-abs1 {ic→} {ic→} (no ¬p) {s = s} {ind} {vs} = ⊥-elim (¬p refl)
+                  truncₛ (`replacePartOf-abs s vs ind w {il}) (ic d ind) ≡ ¬∅ vs
+  `tr-repl⇒id-abs1 {ds} (yes refl) {s = s} {ind} {vs} = `tr-repl⇒id-abs (isEqICT ds ds)
+  `tr-repl⇒id-abs1 {.(~ict d)} {d} (no refl) {s = s} {ind} {vs} = trans (truncₛ-psbc← d ind) (tr-ext⇒id ind)
 
 
+
+  `tr-repl⇒id : ∀{i u ll pll} → {s : SetLL ll} → (ind : IndexLL {i} {u} pll ll)
+             → {vs : SetLL pll} 
+             → let mx = `replacePartOf s to vs at ind in
+             truncₛ mx ind ≡ ¬∅ vs
+  `tr-repl⇒id {s = s} ↓ {vs} = refl
+  `tr-repl⇒id {s = ↓} (ic d ind) {vs} = trans (truncₛ-psbc← d ind) (`tr-repl⇒id ind) 
+  `tr-repl⇒id {s = sic ds s} (ic d ind) {vs} = `tr-repl⇒id-abs1 (isEqICT ds d)
+  `tr-repl⇒id {s = sbc s s₁} (ic d ind) {vs} = trans (truncₛ-psbc← d ind) (`tr-repl⇒id ind)
+
+mutual
+
+  tr-repl⇒id-abs : ∀ {i u} {ll pll : LinLogic i {u}} {s : SetLL ll}
+                   (ind : IndexLL pll ll) {vs : SetLL pll} (w : MSetLL ll) →
+                 truncₛ (replacePartOf-abs {b = vs} ind w) ind ≡ ¬∅ vs
+  tr-repl⇒id-abs {s = s} ind {vs} ∅ = tr-ext⇒id ind
+  tr-repl⇒id-abs {s = s} ind {vs} (¬∅ x) = `tr-repl⇒id ind
 
   tr-repl⇒id : ∀{i u ll pll} → {s : SetLL ll} → (ind : IndexLL {i} {u} pll ll)
-             → {vs : SetLL pll} 
-             → let mx = replacePartOf s to vs at ind in
-             truncₛ mx ind ≡ ¬∅ vs
-  tr-repl⇒id {s = s} ↓ {vs} = refl
-  tr-repl⇒id {s = ↓} (ic d ind) {vs} = tr-repl⇒id-abs (isEqICT d d)
-  tr-repl⇒id {s = sic ds s} (ic d ind) {vs} = tr-repl⇒id-abs1 (isEqICT ds d)
-  tr-repl⇒id {s = sbc s s₁} (ic ic← ind) {vs} = tr-repl⇒id ind
-  tr-repl⇒id {s = sbc s s₁} (ic ic→ ind) {vs} = tr-repl⇒id ind
+           → {vs : SetLL pll} 
+           → let mx = replacePartOf s to vs at ind in
+           truncₛ mx ind ≡ ¬∅ vs
+  tr-repl⇒id {s = s} ind {vs} = tr-repl⇒id-abs {s = s} ind {vs} (del s ind)
+
+
+
+mutual
+
+  tr-del⇒id-abs : ∀ {i u} {l : LinLogic i {u}} {il} {r pll : LinLogic i}
+              {ds d} {s : SetLL (pickLL ds l r)}
+              (ind : IndexLL pll (pickLL d l r)) (w : DecICT ds d) →
+              truncₛ-abs s ind w ≡ ∅ → del-abs {s = s} ind w ≡ ¬∅ (sic {il = il} ds s)
+  tr-del⇒id-abs {s = s} ind (yes refl) eq = cong (λ z → z >>=ₛ _) is  where
+    is = tr-del⇒id ind eq
+  tr-del⇒id-abs {s = s} ind (no x) eq = refl 
+
+  tr-del⇒id : ∀{i u ll pll} → {s : SetLL ll} → (ind : IndexLL {i} {u} pll ll) → truncₛ s ind ≡ ∅ → del s ind ≡ ¬∅ s
+  tr-del⇒id {s = s} ↓ ()
+  tr-del⇒id {s = ↓} (ic d ind) ()
+  tr-del⇒id {s = sic ds s} (ic d ind) eq = tr-del⇒id-abs {s = s} ind (isEqICT ds d) eq
+  tr-del⇒id {s = sbc s s₁} (ic d ind) eq = trans (cong (λ z → pickLLₛ-sbcm d z (¬∅ (pickLLₛ (~ict d) s s₁))) is) (trans (pickLLₛ-sbcm&¬∅⇒pickLLₛ-sbc d (¬∅ (pickLLₛ d s s₁)) (¬∅ (pickLLₛ (~ict d) s s₁)) refl refl) (cong ¬∅ (pickLLₛ-sbc-id d))) where
+    is = tr-del⇒id ind eq
+
 
 
 mutual
 
   tr-repl⇒idG-abs : ∀ {i u} {ll ell pll : LinLogic i {u}}
-                (ind : IndexLL pll ll) {vs : SetLL ell}
-                (w : MSetLL (replLL ind ell)) →
+                (ind : IndexLL pll ll) {s : SetLL ll} {vs : SetLL ell}
+                (w : MSetLL ll) → (eq : w ≡ del s ind) →
              let tind = ind-rpl↓2 ind (a≤ᵢb-morph ind ind) in
               truncₛ
-              (replacePartOfG-abs {ind = ind} w vs tind) tind
+              (replacePartOfG-abs {ind = ind} (delG-abs ind w eq) vs tind) tind
               ≡ ¬∅ vs
-  tr-repl⇒idG-abs ind ∅ = tr-ext⇒id (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
-  tr-repl⇒idG-abs ind (¬∅ x) = tr-repl⇒id (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+  tr-repl⇒idG-abs ind ∅ eq = tr-ext⇒id (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
+  tr-repl⇒idG-abs ind (¬∅ x) eq = tr-repl⇒id (ind-rpl↓2 ind (a≤ᵢb-morph ind ind))
 
 
   tr-repl⇒idG : ∀{i u ll ell pll} → (s : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
@@ -671,7 +830,7 @@ mutual
            → let mx = replacePartOfG s to vs at ind in
              let tind = ind-rpl↓2 ind (a≤ᵢb-morph ind ind) in
            truncₛ mx tind ≡ ¬∅ vs
-  tr-repl⇒idG s ind vs = tr-repl⇒idG-abs ind (del s ind)
+  tr-repl⇒idG s ind vs = tr-repl⇒idG-abs ind (del s ind) refl
 
 
 
@@ -681,6 +840,12 @@ data _⊂ₛ_ {i : Size} {u} : {ll : LinLogic i {u}} → SetLL ll → SetLL ll �
     ⊂sic : ∀{lll llr il d sx sy} → {{ieq : _⊂ₛ_ {ll = pickLL d lll llr} sx sy}} → _⊂ₛ_ {ll = lll < il > llr} (sic d sx) (sic d sy)
     ⊂sbc : ∀{lll llr il slx sly srx sry} → {{ieql : _⊂ₛ_ {ll = lll} slx sly}} → {{ieqr : _⊂ₛ_ {ll = llr} srx sry}} → _⊂ₛ_ {ll = lll < il > llr} (sbc slx srx) (sbc sly sry)
     ⊂dsbc : ∀{lll llr il d sx sly sry} → {{ieq : _⊂ₛ_ sx (pickLLₛ d sly sry)}} → _⊂ₛ_ {ll = lll < il > llr} (sic d sx) (sbc sly sry)
+
+
+data _⊂ₘₛ_ {i : Size} {u} : {ll : LinLogic i {u}} → MSetLL ll → MSetLL ll → Set where
+  instance
+    ⊂∅ : ∀{ll ms} → _⊂ₘₛ_ {ll = ll} ∅ ms
+    ⊂ic : ∀{ll s s₁} → {{eq : _⊂ₛ_ {ll = ll} s s₁}} → (¬∅ s) ⊂ₘₛ (¬∅ s₁)
 
 
 ⊂ₛ-ext : ∀{i u pll ll ss} → (ind : IndexLL {i} {u} pll ll) → {s : SetLL pll} → {{rl : ss ⊂ₛ s }} → s-extend ind ss ⊂ₛ s-extend ind s
@@ -694,8 +859,10 @@ instance
   ⊂ₛ-refl {s = sic ds s} = ⊂sic
   ⊂ₛ-refl {s = sbc s s₁} = ⊂sbc
 
-
-
+⊂ₛ-pickLLₛ : ∀{i u l r} → {s ss : SetLL {i} {u} l} → {s₁ ss₁ : SetLL {i} {u} r} → ∀ d
+             → {{eq : s ⊂ₛ ss}} → {{eq1 : s₁ ⊂ₛ ss₁}} → pickLLₛ d s s₁ ⊂ₛ pickLLₛ d ss ss₁
+⊂ₛ-pickLLₛ ic← = it
+⊂ₛ-pickLLₛ ic→ = it
 
 ⊂ₛ-trans : ∀{i u ll b c} → {a : SetLL {i} {u} ll} → a ⊂ₛ b → b ⊂ₛ c → a ⊂ₛ c
 ⊂ₛ-trans x ⊂↓ = ⊂↓
@@ -704,6 +871,78 @@ instance
 ⊂ₛ-trans (⊂dsbc {d = ic←}) (⊂sbc {{ieql = ieq}}) = ⊂dsbc {{ieq = ⊂ₛ-trans it ieq}}
 ⊂ₛ-trans (⊂dsbc {d = ic→}) (⊂sbc {{ieqr = ieq}}) = ⊂dsbc {{ieq = ⊂ₛ-trans it ieq}}
 ⊂ₛ-trans ⊂sic (⊂dsbc {{ieq = ieq}}) = ⊂dsbc {{ieq = ⊂ₛ-trans it ieq}}
+
+
+instance
+  ⊂ₘₛ↓ : ∀{i u} {ll : LinLogic i {u}} → {ms : MSetLL ll} → ms ⊂ₘₛ ¬∅ ↓
+  ⊂ₘₛ↓ {ms = ∅} = ⊂∅
+  ⊂ₘₛ↓ {ms = ¬∅ x} = ⊂ic
+
+mutual
+
+  ⊂&tr⇒⊂-abs1 : ∀ {i u} {l r : LinLogic i {u}} {ds} {pll : LinLogic i}
+                {d} (ind : IndexLL pll (pickLL d l r)) (w : DecICT ds d)
+                {s : SetLL (pickLL ds l r)} {ss : SetLL l} {ss₁ : SetLL r} → {{eq : s ⊂ₛ pickLLₛ ds ss ss₁ }} →
+              truncₛ-abs s ind w ⊂ₘₛ truncₛ (pickLLₛ d ss ss₁) ind
+  ⊂&tr⇒⊂-abs1 ind (yes refl) = ⊂&tr⇒⊂ ind
+  ⊂&tr⇒⊂-abs1 ind (no x) = ⊂∅
+
+  ⊂&tr⇒⊂-abs : ∀ {i u} {l r : LinLogic i {u}} {ds} {pll : LinLogic i} {d}
+               (ind : IndexLL pll (pickLL d l r)) (w : DecICT ds d)
+               {s ss : SetLL (pickLL ds l r)} → {{eq : s ⊂ₛ ss}} →
+             truncₛ-abs s ind w ⊂ₘₛ truncₛ-abs ss ind w
+  ⊂&tr⇒⊂-abs ind (yes refl) = ⊂&tr⇒⊂ ind
+  ⊂&tr⇒⊂-abs ind (no x) = ⊂∅
+
+
+  ⊂&tr⇒⊂ : ∀{i u pll ll} → ∀{s ss} → (ind : IndexLL {i} {u} pll ll) → {{eq : s ⊂ₛ ss}}
+           → truncₛ s ind ⊂ₘₛ truncₛ ss ind
+  ⊂&tr⇒⊂ {s = s} {ss} ↓ = ⊂ic
+  ⊂&tr⇒⊂ {s = ↓} {.↓} (ic d ind) {{⊂↓}} = ⊂ic
+  ⊂&tr⇒⊂ {s = sic ds s} {↓} (ic d ind) = ⊂ₘₛ↓
+  ⊂&tr⇒⊂ {s = sic ds s} {sic .ds ss} (ic d ind) {{⊂sic}} = ⊂&tr⇒⊂-abs ind (isEqICT ds d) 
+  ⊂&tr⇒⊂ {s = sic ds s} {sbc ss ss₁} (ic d ind) {{⊂dsbc}} = ⊂&tr⇒⊂-abs1 ind (isEqICT ds d)
+  ⊂&tr⇒⊂ {s = sbc s s₁} {↓} (ic d ind) {{eq}} = it 
+  ⊂&tr⇒⊂ {s = sbc s s₁} {sic ds ss} (ic d ind) {{()}}
+  ⊂&tr⇒⊂ {s = sbc s s₁} {sbc ss ss₁} (ic d ind) {{⊂sbc}} = ⊂&tr⇒⊂ ind {{eq = ⊂ₛ-pickLLₛ d}}
+
+
+
+tr-ext⇒⊂-abs : ∀ {i u} {l : LinLogic i {u}} {il} {r pll : LinLogic i}
+                 {s : SetLL l} {s₁ : SetLL r} {d} (ind : IndexLL pll (pickLL d l r))
+                 (w : MSetLL pll) →
+               (w >>=ₛ (λ z → ¬∅ (s-extend ind z))) ⊂ₘₛ ¬∅ (pickLLₛ d s s₁) →
+               (w >>=ₛ (λ z → ¬∅ (sic {il = il} d (s-extend ind z)))) ⊂ₘₛ ¬∅ (sbc s s₁)
+tr-ext⇒⊂-abs ind ∅ is = ⊂∅
+tr-ext⇒⊂-abs ind (¬∅ x) ⊂ic = it
+
+
+tr-ext⇒⊂-abs2 : ∀ {ds i u} {l r pll : LinLogic i {u}} {il}
+                  {s : SetLL (pickLL ds l r)} (ind : IndexLL pll (pickLL ds l r))
+                  (w : MSetLL pll) →
+                (w >>=ₛ (λ z → ¬∅ (s-extend ind z))) ⊂ₘₛ ¬∅ s →
+                (w >>=ₛ (λ z → ¬∅ (sic {il = il} ds (s-extend ind z)))) ⊂ₘₛ ¬∅ (sic ds s)
+tr-ext⇒⊂-abs2 ind ∅ is = ⊂∅
+tr-ext⇒⊂-abs2 ind (¬∅ x) ⊂ic = ⊂ic
+
+mutual
+
+  tr-ext⇒⊂-abs1 : ∀ {i u} {l r pll : LinLogic i {u}} {ds d}
+                  (ind : IndexLL pll (pickLL d l r)) (w : DecICT ds d) {il}
+                  {s : SetLL (pickLL ds l r)} →
+                (truncₛ-abs s ind w >>=ₛ (λ z → ¬∅ (sic {il = il} d (s-extend ind z)))) ⊂ₘₛ
+                ¬∅ (sic ds s)
+  tr-ext⇒⊂-abs1 {ds = ds} ind (yes refl) {s = s} =  tr-ext⇒⊂-abs2 ind (truncₛ s ind) is   where
+    is = tr-ext⇒⊂ {s = s} ind
+  tr-ext⇒⊂-abs1 ind (no x) = ⊂∅
+
+  instance
+    tr-ext⇒⊂ : ∀{i u pll ll} → ∀ {s} → (ind : IndexLL {i} {u} pll ll) → (truncₛ s ind >>=ₛ (λ z → ¬∅ (s-extend ind z))) ⊂ₘₛ (¬∅ s)
+    tr-ext⇒⊂ {s = s} ↓ = ⊂ic
+    tr-ext⇒⊂ {s = ↓} (ic d ind) = ⊂ic
+    tr-ext⇒⊂ {s = sic ds s} (ic d ind) = tr-ext⇒⊂-abs1 ind (isEqICT ds d)
+    tr-ext⇒⊂ {s = sbc s s₁} (ic d ind) = tr-ext⇒⊂-abs ind (truncₛ (pickLLₛ d s s₁) ind) is where
+      is = tr-ext⇒⊂ {s = pickLLₛ d s s₁} ind
 
 
 -- TODO This could very well be emulated by ((∅-add ind) ⊂ₛ s)

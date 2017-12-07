@@ -125,16 +125,35 @@ data IndexLLCT : Set where
 ~ict ic← = ic→
 ~ict ic→ = ic←
 
+~ict-dp : {a : IndexLLCT} → ~ict (~ict a) ≡ a
+~ict-dp {ic←} = refl
+~ict-dp {ic→} = refl
+
+~ict-sym : ∀{a b} → a ≡ ~ict b → ~ict a ≡ b
+~ict-sym refl = ~ict-dp
+
+~ict-eq⇒¬ : ∀{a} → ¬ a ≡ ~ict a
+~ict-eq⇒¬ {ic←} = λ ()
+~ict-eq⇒¬ {ic→} = λ ()
+
 module _ where
 
   open Relation.Binary.PropositionalEquality
 
-isEqICT : (a b : IndexLLCT) → Dec (a ≡ b)
+data DecICT (a b : IndexLLCT) : Set where
+  yes : a ≡ b → DecICT a b
+  no  : a ≡ ~ict b → DecICT a b
+
+isEqICT : (a b : IndexLLCT) → DecICT a b
 isEqICT ic← ic← = yes refl
-isEqICT ic← ic→ = no (λ ())
-isEqICT ic→ ic← = no (λ ())
+isEqICT ic← ic→ = no refl
+isEqICT ic→ ic← = no refl
 isEqICT ic→ ic→ = yes refl
 
+
+~ict⇒¬≡ : {a b : IndexLLCT} → a ≡ ~ict b → ¬ a ≡ b
+~ict⇒¬≡ {b = ic←} refl = λ ()
+~ict⇒¬≡ {b = ic→} refl = λ ()
 
 
 expLLT : ∀{i u} → {il : LLCT} → (ll : LinLogic i {u}) → IndexLLCT → (rl : LinLogic i {u}) → LinLogic i {u}
@@ -262,13 +281,15 @@ pickLL-eq : ∀{u i} → (d : IndexLLCT) → (f g : IndexLLCT → (x y : LinLogi
 pickLL-eq ic← f g _ _ _ _ eqf eqg = eqf
 pickLL-eq ic→ f g _ _ _ _ eqf eqg = eqg
 
-pickLL-neq : ∀{u i} → (d1 d2 : IndexLLCT) → ¬ d1 ≡ d2 → (f g : IndexLLCT → (x y : LinLogic i {u}) → LinLogic i {u})
+
+-- TODO This is not necessary at all.
+pickLL-neq : ∀{u i} → (d1 d2 : IndexLLCT) → d1 ≡ ~ict d2 → (f g : IndexLLCT → (x y : LinLogic i {u}) → LinLogic i {u})
              → ∀ xf yf xg yg → ∀ {q a} → f ic→ xf yf ≡ q → g ic← xg yg ≡ a
              → pickLL d1 (f d2 xf yf) (g d2 xg yg) ≡ pickLL d1 q a
-pickLL-neq ic← ic← eq f g _ _ _ _ eqf eqg = ⊥-elim (eq refl)
+pickLL-neq ic← ic← () f g _ _ _ _ eqf eqg
 pickLL-neq ic← ic→ eq f g _ _ _ _ eqf eqg = eqf
 pickLL-neq ic→ ic← eq f g _ _ _ _ eqf eqg = eqg
-pickLL-neq ic→ ic→ eq f g _ _ _ _ eqf eqg = ⊥-elim (eq refl)
+pickLL-neq ic→ ic→ () f g _ _ _ _ eqf eqg
 
 
 -- -- boo : ∀{u i lla tlla icta il eqa llb tllb ictb eqb fll rll ica icb} → ∀ a b
