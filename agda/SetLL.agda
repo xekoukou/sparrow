@@ -214,6 +214,16 @@ pickLLₛ-sbcm&¬∅⇒pickLLₛ-sbc ic← .(¬∅ _) .(¬∅ _) refl refl = ref
 pickLLₛ-sbcm&¬∅⇒pickLLₛ-sbc ic→ .(¬∅ _) .(¬∅ _) refl refl = refl  
 
 
+pickLLₛ-sbcm⇒¬sic : ∀ d → ∀{ i u} {l : LinLogic i {u}} {il}
+                       {r : LinLogic i} (a : MSetLL (pickLL d l r)) {b : SetLL (pickLL (~ict d) l r)}
+                       {x : SetLL (pickLL d l r)} 
+                     → ¬ (¬∅ (sic {il = il} d x) ≡ pickLLₛ-sbcm d a (¬∅ b))
+pickLLₛ-sbcm⇒¬sic ic← ∅ = λ ()
+pickLLₛ-sbcm⇒¬sic ic→ ∅ = λ ()
+pickLLₛ-sbcm⇒¬sic ic← (¬∅ x) = λ ()
+pickLLₛ-sbcm⇒¬sic ic→ (¬∅ x) = λ ()
+
+
 
 ∩ₛ-abs1 : ∀ {ds i u} {l : LinLogic i {u}} {il} {r : LinLogic i} →
           MSetLL (pickLL ds l r) → MSetLL (l < il > r)
@@ -1092,6 +1102,47 @@ instance
   ⊂ₘₛ↓ : ∀{i u} {ll : LinLogic i {u}} → {ms : MSetLL ll} → ms ⊂ₘₛ ¬∅ ↓
   ⊂ₘₛ↓ {ms = ∅} = ⊂∅
   ⊂ₘₛ↓ {ms = ¬∅ x} = ⊂ic
+
+
+
+
+
+
+
+-- The ⊂ₛs relationship and hitsAtLeastOnce and onlyInside
+
+oi&ss⊂ₛs⇒oiss : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+               → {{oi : onlyInside s ind}} → {{eq : ss ⊂ₛ s}} → onlyInside ss ind
+oi&ss⊂ₛs⇒oiss .↓ ss .↓ {{oIs↓}} {{⊂↓}} = oIs↓
+oi&ss⊂ₛs⇒oiss .(sic _ _) .(sic _ _) .↓ {{oIs↓}} {{⊂sic}} = oIs↓
+oi&ss⊂ₛs⇒oiss (sic _ s) (sic _ ss) (ic _ ind) {{oIic}} {{⊂sic}} = oIic {{ieq = oi&ss⊂ₛs⇒oiss s ss ind}}
+oi&ss⊂ₛs⇒oiss .(sbc _ _) .(sbc _ _) .↓ {{oIs↓}} {{⊂sbc}} = oIs↓
+oi&ss⊂ₛs⇒oiss .(sbc _ _) .(sic _ _) .↓ {{oIs↓}} {{⊂dsbc}} = oIs↓
+
+
+
+ho&s⊂ₛss⇒hoss : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+               → {{ho : hitsAtLeastOnce s ind}} → {{eq : s ⊂ₛ ss}} → hitsAtLeastOnce ss ind
+ho&s⊂ₛss⇒hoss .↓ .↓ .(ic _ _) {{hLO↓ic}} {{⊂↓}} = hLO↓ic
+ho&s⊂ₛss⇒hoss s .↓ .↓ {{hLOs↓}} {{⊂↓}} = hLOs↓
+ho&s⊂ₛss⇒hoss .(sic _ _) .↓ .(ic _ _) {{hLOsic}} {{⊂↓}} = hLO↓ic
+ho&s⊂ₛss⇒hoss .(sbc _ _) .↓ .(ic _ _) {{hLOsbc}} {{⊂↓}} = hLO↓ic
+ho&s⊂ₛss⇒hoss .(sic _ _) .(sic _ _) .↓ {{hLOs↓}} {{⊂sic}} = hLOs↓
+ho&s⊂ₛss⇒hoss (sic _ s) (sic _ ss) (ic _ ind) {{hLOsic}} {{⊂sic}} = hLOsic {{ieq = ho&s⊂ₛss⇒hoss s ss ind}}
+ho&s⊂ₛss⇒hoss (sbc _ s) (sbc _ ss) .↓ {{hLOs↓}} {{⊂sbc}} = hLOs↓
+ho&s⊂ₛss⇒hoss (sbc s s1) (sbc ss ss1) (ic d ind) {{hLOsbc}} {{⊂sbc}} = hLOsbc {{ieq = ho&s⊂ₛss⇒hoss (pickLLₛ d s s1) (pickLLₛ d ss ss1) ind {{eq = ⊂ₛ-pickLLₛ d}}}}
+ho&s⊂ₛss⇒hoss (sic _ s) (sbc _ ss) .↓ {{hLOs↓}} {{⊂dsbc}} = hLOs↓
+ho&s⊂ₛss⇒hoss (sic _ s) (sbc ss ss1) (ic d ind) {{hLOsic}} {{⊂dsbc}} = hLOsbc {{ieq = ho&s⊂ₛss⇒hoss s (pickLLₛ d ss ss1) ind}}
+
+
+
+¬ho&s⊂ₛss⇒¬hos : ∀ {i u ll pll} → (s ss : SetLL ll) → (ind : IndexLL {i} {u} pll ll)
+                → ¬ (hitsAtLeastOnce ss ind) → {{eq : s ⊂ₛ ss}} → ¬ (hitsAtLeastOnce s ind)
+¬ho&s⊂ₛss⇒¬hos s ss ind ¬ho x = x asInst ¬ho (ho&s⊂ₛss⇒hoss s ss ind)
+
+
+
+
 
 mutual
 
